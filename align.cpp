@@ -9,6 +9,8 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 #include "common.h"
 #include "align.h"
+#include "fasttime.h"
+#include "ezsift/ezsift.h"
 
 #include <set>
 #include <mutex>
@@ -319,6 +321,8 @@ bool is_tiles_overlap(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2) {
 
 void compute_SIFT_parallel(align_data_t *p_align_data) {
 
+    static double totalTime = 0;
+    
     TRACE_1("compute_SIFT_parallel: start\n");
     
     cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
@@ -382,14 +386,55 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                     int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
                     int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
                     int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
-                   
+#define USE_EZSIFT
+#ifdef USE_EZSIFT
+			  // Create a ezSIFT image object
+			  ImageObj<unsigned char> image(sub_im.rows, sub_im.cols);
+			  for (int i=0; i<sub_im.rows; i++)
+				for (int j=0; j<sub_im.cols; j++)
+					image.data[i*sub_im.cols+j]=sub_im.at<unsigned char>(i,j);
+			
+                    // ezSIFT setup code below, not really sure what it does..
+			  bool bExtractDescriptor = true;
+			  std::list<SiftKeypoint> kpt_list;
+
+			  // Double the original image as the first octive.
+			  double_original_image(true);
+			  // ezSIFT setup end
+			  
+			  // Perform SIFT computation on CPU.
+			  fasttime_t tstart=gettime();
+			  sift_cpu(image, kpt_list, bExtractDescriptor);
+			  fasttime_t tend=gettime();
+			  
+			  // convert ezSIFT style to openCV style
+			  m_kps_desc[sub_im_id]=cv::Mat(kpt_list.size(), 128, CV_8UC1);
+			  int currow=0;
+			  rept(it, kpt_list)
+			  {
+				  v_kps[sub_im_id].push_back(cv::KeyPoint(cv::Point2f(it->r, it->c),	//point
+											it->scale,	//size
+											it->ori,	//orientation
+											0,		//response, not sure what it is
+											it->octave	//octave
+									   ));
+				  rep(i,0,127)
+					m_kps_desc[sub_im_id].at<unsigned char>(currow, i)=it->descriptors[i];
+			  
+				  currow++;
+			  }
+#else
                     // Detect the SIFT features within the subimage. 
+			  fasttime_t tstart=gettime();
                     p_sift->detectAndCompute(
                         sub_im,
                         sum_im_mask,
                         v_kps[sub_im_id],
                         m_kps_desc[sub_im_id]);
-                     
+                    fasttime_t tend=gettime();
+#endif
+			  totalTime += tdiff(tstart,tend); 
+			  
                     for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
                         v_kps[sub_im_id][i].pt.x += cur_d2;
                         v_kps[sub_im_id][i].pt.y += cur_d1;
@@ -445,6 +490,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             exit(0); 
         }
     }
+    
+    printf("net processing time = %.6lf\n", totalTime);
     
     TRACE_1("compute_SIFT_parallel: finish\n");
 }
