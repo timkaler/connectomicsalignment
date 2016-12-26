@@ -168,6 +168,12 @@
 #define LOG_KPS(p_tile_data)
 #endif
 
+// haoran's favorite ugly macros
+#define rep(i,l,r) for (int i=(l); i<=(r); i++)
+#define repd(i,r,l) for (int i=(r); i>=(l); i--)
+#define rept(i,c) for (__typeof((c).begin()) i=(c).begin(); i!=(c).end(); i++)
+
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // TYPES
 /////////////////////////////////////////////////////////////////////////////////////////

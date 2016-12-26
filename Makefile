@@ -49,6 +49,12 @@ BINS = run_align
 
 all: $(BINS)
 
+img_io.o: ezsift/img_io.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+ezsift.o: ezsift/ezsift.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
 common.o: common.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
@@ -58,7 +64,7 @@ align.o: align.cpp
 run.o: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: common.o align.o run.o
+run_align: common.o align.o run.o ezsift.o img_io.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:
