@@ -386,7 +386,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                     int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
                     int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
                     int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
-#define USE_EZSIFT
+//#define USE_EZSIFT
 #ifdef USE_EZSIFT
 			  // Create a ezSIFT image object
 			  ImageObj<unsigned char> image(sub_im.rows, sub_im.cols);
