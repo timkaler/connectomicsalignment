@@ -5,7 +5,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/armafire/tools/opencv-3-install-te
 WORKINGDIR=$PWD 
 OUTPUTDIR=$PWD/temp
 
-    ./run_align 1 \
+time ./run_align 1 \
     9 1 \
     $PWD/data/txtspecs.txt \
     $OUTPUTDIR \
