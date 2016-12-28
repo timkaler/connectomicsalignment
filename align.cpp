@@ -319,6 +319,11 @@ bool is_tiles_overlap(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2) {
     
 }
 
+void SIFT_initialize()
+{
+	cv::xfeatures2d::generateBoxBlurExecutionPlan();
+}
+
 void compute_SIFT_parallel(align_data_t *p_align_data) {
 
     static double totalTime = 0;
@@ -326,6 +331,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     int imageProcessed = 0;
     
     TRACE_1("compute_SIFT_parallel: start\n");
+    
+    SIFT_initialize();
     
     cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
         section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);

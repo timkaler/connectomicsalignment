@@ -55,6 +55,7 @@ void generateBoxBlurExecutionPlan()
 {
 	if (BoxBlurExecutionPlan.initialized) return;
 	BoxBlurExecutionPlan.initialized = 1;
+	
 	std::map< std::vector<int>, int > T;
 	int all=0;
 	T[std::vector<int>()]=0;
@@ -125,7 +126,7 @@ void BuildGaussianPyramid_BoxBlurApproximation( const cv::Mat& baseimg, std::vec
 	
 	assert(nOctaveLayers==6);
 	
-	generateBoxBlurExecutionPlan();
+	//generateBoxBlurExecutionPlan();	//moved to SIFT_initialize() to avoid races
 	
 	pyr.resize(nOctaves*(nOctaveLayers + 3));
 	
