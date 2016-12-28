@@ -327,10 +327,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     
     TRACE_1("compute_SIFT_parallel: start\n");
     
-    for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+    cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
         section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
         
-        for (int tile_id = 0; tile_id < p_sec_data->n_tiles; tile_id++) {
+        cilk_for (int tile_id = 0; tile_id < p_sec_data->n_tiles; tile_id++) {
             tile_data_t *p_tile_data = &(p_sec_data->tiles[tile_id]);
             
             int rows = p_tile_data->p_image->rows;

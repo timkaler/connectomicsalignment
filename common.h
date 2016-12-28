@@ -15,6 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <mutex>
 
 #include <opencv2/opencv.hpp>
 #include "opencv2/features2d.hpp"

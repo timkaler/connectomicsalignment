@@ -79,6 +79,8 @@ void generateBoxBlurExecutionPlan()
 	BoxBlurExecutionPlan.nodeCount=all;
 }
 
+static std::mutex GaussianPyramidBoxBlurTimer_mutex;
+
 /*
  * A faster implementation of BuildGaussianPyramid
  * It uses BoxBlur to approximate Gaussian, 18% faster than default version.
@@ -127,7 +129,7 @@ void BuildGaussianPyramid_BoxBlurApproximation( const cv::Mat& baseimg, std::vec
 	
 	pyr.resize(nOctaves*(nOctaveLayers + 3));
 	
-	pyr[0]=cv::Mat(baseimg.rows, baseimg.cols, CV_8U);
+	//pyr[0]=cv::Mat(baseimg.rows, baseimg.cols, CV_8U);
 	cv::Mat &base = pyr[0]; 
 	
 	/*
@@ -179,7 +181,10 @@ void BuildGaussianPyramid_BoxBlurApproximation( const cv::Mat& baseimg, std::vec
 
 	}
 	fasttime_t tend=gettime();
+	
+	GaussianPyramidBoxBlurTimer_mutex.lock();
 	GBlurTime+=tdiff(tstart,tend);
+	GaussianPyramidBoxBlurTimer_mutex.unlock();
 	
 	printf("cumulative myGaussianBlur time = %.6lf\n",GBlurTime);
 }

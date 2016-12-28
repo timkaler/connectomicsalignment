@@ -269,6 +269,8 @@ static Mat createInitialImage( const Mat& img, bool doubleImageSize, float sigma
     }
 }	
 
+static std::mutex GaussianPyramidTimer_mutex;
+
 void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, int nOctaves ) const
 {
 #define USE_BOXBLUR_GAUSSIANPYRAMID
@@ -317,7 +319,9 @@ void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, in
         }
     }
     fasttime_t tend=gettime();
+    GaussianPyramidTimer_mutex.lock();
     GBlurTime+=tdiff(tstart,tend);
+    GaussianPyramidTimer_mutex.unlock();
     printf("cumulative gaussian blur time: %.6lf\n",GBlurTime);
 #endif
 }
