@@ -491,13 +491,14 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             TRACE_1("    -- n_kps_desc : %d %d\n", p_tile_data->p_kps_desc->rows, p_tile_data->p_kps_desc->cols);
 
             LOG_KPS(p_tile_data);
-		
+		/*
 		imageProcessed++;
 		if (imageProcessed == 10) 
 		{
-			printf("net processing time = %.6lf\n", totalTime);
+			printf("first 10 images processed, net processing time = %.6lf\n", totalTime);
 			exit(0);
 		}
+		*/
         }
     }
     

@@ -99,23 +99,15 @@ void ApplyBoxBlur(int row, int col, int boxWidth)
 			tmp.data[i*tmp.col+j]=tmp.data[(i+boxWidth/2)*tmp.col+j+boxWidth/2];
 }
 
-void myGaussianBlur(const Matrix<uint8_t> &src, Matrix<uint8_t> &dst, int *plan)
+void myGaussianBlur(const cv::Mat &src, cv::Mat &dst, int *plan)
 {
-	rep(i,0,src.row-1)
-		rep(j,0,src.col-1)
-			tmp.data[(i+11)*tmp.col+(j+11)]=src.data[i*src.col+j];
-			
+	dst = src;
 	int i=0;
 	while (plan[i]!=-1) 
 	{
-		ApplyBoxBlur(src.row, src.col, plan[i]);
+		cv::boxFilter(dst, dst, -1, cv::Size(plan[i], plan[i]));
 		i++;
 	}
-	
-	dst=Matrix<uint8_t>(src.row, src.col);
-	rep(i,0,src.row-1)
-		rep(j,0,src.col-1)
-			dst.data[i*src.col+j]=tmp.data[(i+11)*tmp.col+(j+11)];
 }
 
 void gen_pic(const Matrix<uint8_t> &A, std::string filename)
@@ -128,39 +120,75 @@ void gen_pic(const Matrix<uint8_t> &A, std::string filename)
         imwrite(filename.c_str(), convertToMat(A));
 }
 
-void compare_matrix(const Matrix<uint8_t> &A, const cv::Mat &B)
+void compare_matrix(const cv::Mat &A, const cv::Mat &B)
 {
-	if (A.row != B.rows || A.col != B.cols) 
+	if (A.rows != B.rows || A.cols != B.cols) 
 	{
 		printf("!!!ERROR!!! compare_matrix: dimensions differ!\n");
 		return;
 	}
 	double sumdiff=0, sum=0;
-	rep(i,0,A.row-1)
-		rep(j,0,A.col-1)
+	rep(i,0,A.rows-1)
+		rep(j,0,A.cols-1)
 		{
-			sumdiff+=abs((int)A.data[i*A.col+j]-(int)B.at<float>(i,j));
+			sumdiff+=abs((int)A.at<uint8_t>(i,j)-(int)B.at<float>(i,j));
 			sum+=(int)B.at<float>(i,j);
 		}
 	printf("compare_matrix: Relative Error = %.6lf\n",sumdiff/sum);
-	Matrix<uint8_t> tmp(A.row,A.col);
-	rep(i,0,A.row-1)
-		rep(j,0,A.col-1)
-			tmp.data[i*A.col+j]=B.at<float>(i,j);
-	
-	static int cnt=0;
-	cnt++;
-	char buf[100];
-	sprintf(buf,"%d.png",cnt);
-	gen_pic(A,buf);
-	cnt++;
-	sprintf(buf,"%d.png",cnt);
-	gen_pic(tmp,buf);
 }
 
+static const int BoxBlurPlan[9][6]={
+	{-1,-1,-1,-1,-1,-1},
+	{3,3,3,3,3,-1},
+	{3,3,3,5,-1,0},
+	{3,3,5,5,-1,0},
+	{5,5,5,-1,0,0},
+	{5,5,7,-1,0,0},
+	{7,7,5,-1,0,0},
+	{7,7,7,-1,0,0},
+	{7,7,7,7,-1,0}
+};
+
+struct BoxBlurExecutionPlan_t
+{
+	int initialized, nodeCount;
+	std::pair<int,int> parent[60];
+	int target[9];
+	BoxBlurExecutionPlan_t() { initialized = 0; }
+} BoxBlurExecutionPlan;
+
+void generateBoxBlurExecutionPlan()
+{
+	if (BoxBlurExecutionPlan.initialized) return;
+	BoxBlurExecutionPlan.initialized = 1;
+	std::map< std::vector<int>, int > T;
+	int all=0;
+	T[std::vector<int>()]=0;
+	rep(i,1,8)
+	{
+		std::vector<int> lis;
+		int j=0, p=0;
+		while (BoxBlurPlan[i][j]!=-1)
+		{
+			lis.push_back(BoxBlurPlan[i][j]);
+			if (!T.count(lis))
+			{
+				all++; 
+				T[lis]=all;
+				BoxBlurExecutionPlan.parent[all]=std::make_pair(p,BoxBlurPlan[i][j]);
+			}
+			p=T[lis];
+			j++;
+		}
+		BoxBlurExecutionPlan.target[i]=p;
+	}
+	BoxBlurExecutionPlan.nodeCount=all;
+}
+			
 void myBuildGaussianPyramid( const cv::Mat& baseimg, const std::vector<cv::Mat>& pyr_ans, int nOctaves, int nOctaveLayers)
 {
 	printf("entered\n");
+	/*
 	double sigma = 1.6;
 	static double sig[200];
 	sig[0] = sigma;
@@ -172,64 +200,71 @@ void myBuildGaussianPyramid( const cv::Mat& baseimg, const std::vector<cv::Mat>&
 		double sig_total = sig_prev*k;
 		sig[i] = sig_total;
 		//printf("sig[%d] = %.6lf\n",i,sig[i]);
-		if (sig[i]>1.75)
+		assert(sig[i]>1.75);
+		int len;
+		if (sig[i]<2.5 || i==nOctaveLayers+2) len=4; else len=3;
+		if (sig[i]<1.8) len=5;
+		calculateBoxBlurSize(sig[i], len, boxBlurSz[i]);
+		boxBlurSz[i][len]=-1;
+		printf("{");
+		rep(j,0,5) 
 		{
-			int len;
-			if (sig[i]<2.5 || i==nOctaveLayers+2) len=4; else len=3;
-			if (sig[i]<1.8) len=5;
-			len=15;
-			calculateBoxBlurSize(sig[i], len, boxBlurSz[i]);
-			boxBlurSz[i][len]=-1;
+			printf("%d",boxBlurSz[i][j]);
+			if (j<5) printf(",");
 		}
+		printf("},\n");
 	}
+	*/
 	
-	std::vector<Matrix<uint8_t> > pyr;
+	assert(nOctaveLayers==6);
+	
+	generateBoxBlurExecutionPlan();
+	
+	std::vector< cv::Mat > pyr;
 	pyr.resize(nOctaves*(nOctaveLayers + 3));
 	
-	Matrix<uint8_t> &base = pyr[0];
-	base = Matrix<uint8_t>(baseimg.rows, baseimg.cols);
-	int all=0;
+	pyr[0]=cv::Mat(baseimg.rows, baseimg.cols, CV_8U);
+	cv::Mat &base = pyr[0]; 
 	rep(i,0,baseimg.rows-1)
 		rep(j,0,baseimg.cols-1)
-		{
-			base.data[all]=(unsigned char) baseimg.at<float>(i,j);
-                        //printf("matrix info %f\n", baseimg.at<float>(i,j));
-			all++;
-		}
-	
-	compare_matrix(base, pyr_ans[0]);
-	exit(0);
-	
+			base.at<uint8_t>(i,j)=baseimg.at<float>(i,j);
+
 	static double GBlurTime=0;
+	fasttime_t tstart=gettime();
 	for( int o = 0; o < nOctaves; o++ )
 	{
-		for( int i = 0; i < nOctaveLayers + 3; i++ )
+		if (o)
 		{
-			if ((pyr[0].row>>o)<15 || (pyr[0].col>>o)<15) continue;
-			Matrix<uint8_t> &dst = pyr[o*(nOctaveLayers + 3) + i];
-			if( o == 0  &&  i == 0 ) continue;
-			// base of new octave is halved image from end of previous octave
-			if( i == 0 )
-			{
-				const Matrix<uint8_t> &src = pyr[(o-1)*(nOctaveLayers + 3) + nOctaveLayers];
-				src.downsample2x(dst);
-				compare_matrix(dst, pyr_ans[o*(nOctaveLayers + 3) + i]);
-			}
-			else
-			{
-				const Matrix<uint8_t> &src = pyr[o*(nOctaveLayers + 3)];
-				fasttime_t tstart=gettime();
-				myGaussianBlur(src, dst, boxBlurSz[i]);
-				fasttime_t tend=gettime();
-				GBlurTime+=tdiff(tstart,tend);
-				compare_matrix(dst, pyr_ans[o*(nOctaveLayers + 3) + i]);
-			}
+			cv::Mat &dst = pyr[o*(nOctaveLayers + 3)];
+			const cv::Mat& src = pyr[(o-1)*(nOctaveLayers + 3) + nOctaveLayers];
+			cv::resize(src, dst, Size(src.cols/2, src.rows/2), 0, 0, INTER_NEAREST);
 		}
+		
+		const cv::Mat& src = pyr[o*(nOctaveLayers + 3)];
+		
+		std::vector<cv::Mat> tmplist;
+		tmplist.resize(BoxBlurExecutionPlan.nodeCount+1);
+		rep(i,1,BoxBlurExecutionPlan.nodeCount)
+		{
+			int p=BoxBlurExecutionPlan.parent[i].first;
+			int sz=BoxBlurExecutionPlan.parent[i].second;
+			if (p==0)
+				cv::boxFilter(src, tmplist[i], -1, cv::Size(sz, sz));
+			else
+				cv::boxFilter(tmplist[p], tmplist[i], -1, cv::Size(sz, sz));
+		}
+		
+		rep(i,1,nOctaveLayers+2)
+			cv::swap(pyr[o*(nOctaveLayers + 3) + i], tmplist[BoxBlurExecutionPlan.target[i]]);
+
 	}
+	fasttime_t tend=gettime();
+	GBlurTime+=tdiff(tstart,tend);
 	
+	rep(i,0,nOctaves*(nOctaveLayers + 3)-1)
+		compare_matrix(pyr[i], pyr_ans[i]);
+		
 	printf("myGaussianBlur time = %.6lf\n",GBlurTime);
-	rept(it, pyr) it->freeMemory();
-	exit(0);
 }
 
 		

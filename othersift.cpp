@@ -271,7 +271,8 @@ static Mat createInitialImage( const Mat& img, bool doubleImageSize, float sigma
 
 void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, int nOctaves ) const
 {
-    imwrite("original_base.png", base);
+	fasttime_t tstart=gettime();
+    //imwrite("original_base.png", base);
     std::vector<double> sig(nOctaveLayers + 3);
     pyr.resize(nOctaves*(nOctaveLayers + 3));
     Mat newbase = base.clone();
@@ -306,13 +307,12 @@ void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, in
             {
                 const Mat& src = pyr[o*(nOctaveLayers + 3) + i-1];
 		    //printf("Gaussian Blur sigma = %.6lf\n",sig[i]);
-		    fasttime_t tstart=gettime();
                 GaussianBlur(src, dst, Size(), sig[i], sig[i]);
-		    fasttime_t tend=gettime();
-		    GBlurTime+=tdiff(tstart,tend);
             }
         }
     }
+    fasttime_t tend=gettime();
+    GBlurTime+=tdiff(tstart,tend);
     printf("cumulative gaussian blur time: %.6lf\n",GBlurTime);
     
     myBuildGaussianPyramid(base, pyr, nOctaves, nOctaveLayers);
