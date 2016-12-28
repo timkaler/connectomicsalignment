@@ -10,7 +10,7 @@
 #include "common.h"
 #include "align.h"
 #include "fasttime.h"
-#include "ezsift/ezsift.h"
+//#include "ezsift/ezsift.h"
 
 #include <set>
 #include <mutex>
@@ -254,7 +254,6 @@ void read_input(align_data_t *p_align_data) {
     
     TRACE_1("finish\n");
 }
-
 void read_tiles(align_data_t *p_align_data) {
 
     TRACE_1("read_tiles: start\n");
@@ -267,7 +266,8 @@ void read_tiles(align_data_t *p_align_data) {
             
             TRACE_1("  -- read[%d-%d]: %s\n", sec_id, tile_id, p_tile->filepath);
             
-            (*p_tile->p_image).create(4096, 4096, CV_8UC1);
+            //(*p_tile->p_image).create(4096, 4096, CV_8UC1);
+            (*p_tile->p_image).create(3128, 2724, CV_8UC1);
             
             (*p_tile->p_image) = cv::imread(
                 p_tile->filepath, 
@@ -452,6 +452,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 
             cv::vconcat( m_kps_desc, n_sub_images, *(p_tile_data->p_kps_desc));
 
+
+            #ifndef SKIPOUTPUT
             // NOTE(TFK): Begin HDF5 preparation 
             std::vector<float> locations;
             std::vector<float> octaves;
@@ -484,7 +486,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             h5io->dswrite(*(p_tile_data->p_kps_desc), cv::String("descs"), &(offset1[0]), &(offset2[0]));
             h5io->close(); 
             // NOTE(TFK): End HDF5 preparation.
-
+            #endif
             TRACE_1("    -- n_kps      : %lu\n", p_tile_data->p_kps->size());
             TRACE_1("    -- n_kps_desc : %d %d\n", p_tile_data->p_kps_desc->rows, p_tile_data->p_kps_desc->cols);
 

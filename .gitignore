@@ -1,3 +1,5 @@
 temp
 *.o
+*.svg
+*.data
 run_align

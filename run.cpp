@@ -9,6 +9,10 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 #include "align.h"
 
+#ifdef PROFILE
+#include <gperftools/profiler.h>
+#endif
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // DEFINES
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -70,8 +74,12 @@ int main(int argc, char **argv)
     init_align(p_align_data);
     
     parse_args(p_align_data, argc, argv);
-        
+#ifdef PROFILE
+    ProfilerStart("profile.data");
+#endif 
     align_execute(p_align_data);
-    
+#ifdef PROFILE
+    ProfilerStop();
+#endif
     return 0;
 }

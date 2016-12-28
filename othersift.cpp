@@ -222,7 +222,7 @@ static const float SIFT_DESCR_MAG_THR = 0.2f;
 // factor used to convert floating-point descriptor to unsigned char
 static const float SIFT_INT_DESCR_FCTR = 512.f;
 
-#if 0
+#if 1
 // intermediate type used for DoG pyramids
 typedef short sift_wt;
 static const int SIFT_FIXPT_SCALE = 48;
@@ -526,8 +526,11 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
 
     keypoints.clear();
 
-    for( int o = 0; o < nOctaves; o++ )
-        for( int i = 1; i <= nOctaveLayers; i++ )
+
+    int mutex = 0;
+
+    cilk_for( int o = 0; o < nOctaves; o++ )
+        cilk_for( int i = 1; i <= nOctaveLayers; i++ )
         {
             int idx = o*(nOctaveLayers+2)+i;
             const Mat& img = dog_pyr[idx];
@@ -591,7 +594,11 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
                                 kpt.angle = 360.f - (float)((360.f/n) * bin);
                                 if(std::abs(kpt.angle - 360.f) < FLT_EPSILON)
                                     kpt.angle = 0.f;
+                                while (!__sync_bool_compare_and_swap(&mutex, 0, 1)) {
+                                   continue;
+                                }
                                 keypoints.push_back(kpt);
+                                __sync_bool_compare_and_swap(&mutex, 1,0);
                             }
                         }
                     }
@@ -796,8 +803,8 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
                       OutputArray _descriptors,
                       bool useProvidedKeypoints)
 {
-    printf("detect and compute\n");
-    int firstOctave = -1, actualNOctaves = 0, actualNLayers = 0;
+    //printf("detect and compute\n");
+    int firstOctave = 0, actualNOctaves = 0, actualNLayers = 0;
     Mat image = _image.getMat(), mask = _mask.getMat();
 
     if( image.empty() || image.depth() != CV_8U )

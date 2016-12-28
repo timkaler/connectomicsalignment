@@ -30,6 +30,16 @@ CFLAGS += -Wall
 #-Winline
 CFLAGS += -I$(OPENCV_INCLUDE)
 
+
+ifdef PROFILE
+  CFLAGS += -DPROFILE
+  LDFLAGS += -lprofiler
+endif
+
+ifdef SKIPOUTPUT
+  CFLAGS += -DSKIPOUTPUT
+endif
+
 #CFLAGS += --param inline-unit-growth=1000
 #CFLAGS += -mrtm
 
@@ -41,7 +51,7 @@ else
 	#-Ofast
 endif
 
-LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_flann -lopencv_video -lopencv_calib3d -lopencv_hdf -lhdf5_hl -lhdf5
+LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_flann -lopencv_video -lopencv_calib3d -lopencv_hdf -lhdf5_hl -lhdf5 -lgomp
 
 #ifdef DEBUG
 #	LDFLAGS += -pg
