@@ -221,9 +221,9 @@ static const float SIFT_DESCR_MAG_THR = 0.2f;
 // factor used to convert floating-point descriptor to unsigned char
 static const float SIFT_INT_DESCR_FCTR = 512.f;
 
-#if 0
+#if 1
 // intermediate type used for DoG pyramids
-typedef short sift_wt;
+typedef uint8_t sift_wt;
 static const int SIFT_FIXPT_SCALE = 48;
 #else
 // intermediate type used for DoG pyramids
@@ -271,7 +271,12 @@ static Mat createInitialImage( const Mat& img, bool doubleImageSize, float sigma
 
 void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, int nOctaves ) const
 {
-	fasttime_t tstart=gettime();
+#define USE_BOXBLUR_GAUSSIANPYRAMID
+#ifdef USE_BOXBLUR_GAUSSIANPYRAMID
+    BuildGaussianPyramid_BoxBlurApproximation(base, pyr, nOctaves, nOctaveLayers);
+#else
+    static double GBlurTime=0;
+    fasttime_t tstart=gettime();
     //imwrite("original_base.png", base);
     std::vector<double> sig(nOctaveLayers + 3);
     pyr.resize(nOctaves*(nOctaveLayers + 3));
@@ -288,7 +293,7 @@ void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, in
 	  //printf("SIFT sig[%d]=%.6lf sig_total=%.6lf sig_prev=%.6lf\n",i,sig[i],sig_total,sig_prev);
     }
     
-    static double GBlurTime=0;
+    
     for( int o = 0; o < nOctaves; o++ )
     {
         for( int i = 0; i < nOctaveLayers + 3; i++ )
@@ -314,8 +319,7 @@ void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, in
     fasttime_t tend=gettime();
     GBlurTime+=tdiff(tstart,tend);
     printf("cumulative gaussian blur time: %.6lf\n",GBlurTime);
-    
-    myBuildGaussianPyramid(base, pyr, nOctaves, nOctaveLayers);
+#endif
 }
 
 
