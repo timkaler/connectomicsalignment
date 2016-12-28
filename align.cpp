@@ -323,12 +323,14 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 
     static double totalTime = 0;
     
+    int imageProcessed = 0;
+    
     TRACE_1("compute_SIFT_parallel: start\n");
     
-    cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+    for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
         section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
         
-        cilk_for (int tile_id = 0; tile_id < p_sec_data->n_tiles; tile_id++) {
+        for (int tile_id = 0; tile_id < p_sec_data->n_tiles; tile_id++) {
             tile_data_t *p_tile_data = &(p_sec_data->tiles[tile_id]);
             
             int rows = p_tile_data->p_image->rows;
@@ -373,8 +375,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             int max_cols = cols / SIFT_D2_SHIFT;
             int n_sub_images = max_rows * max_cols;
             
-            cilk_for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
-                cilk_for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
+            for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
+                for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
                    
                     // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT 
                     cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
@@ -386,7 +388,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                     int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
                     int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
                     int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
-#define USE_EZSIFT
+//#define USE_EZSIFT
 #ifdef USE_EZSIFT
 			  // Create a ezSIFT image object
 			  ImageObj<unsigned char> image(sub_im.rows, sub_im.cols);
@@ -487,7 +489,13 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             TRACE_1("    -- n_kps_desc : %d %d\n", p_tile_data->p_kps_desc->rows, p_tile_data->p_kps_desc->cols);
 
             LOG_KPS(p_tile_data);
-            exit(0); 
+		
+		imageProcessed++;
+		if (imageProcessed == 10) 
+		{
+			printf("net processing time = %.6lf\n", totalTime);
+			exit(0);
+		}
         }
     }
     

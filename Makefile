@@ -34,7 +34,7 @@ CFLAGS += -I$(OPENCV_INCLUDE)
 #CFLAGS += -mrtm
 
 ifdef DEBUG
-	CFLAGS += -O0 -g3
+	CFLAGS += -O0 -g3 
 else
 	CFLAGS += -DNDEBUG
 	CFLAGS += -O3 -g 
@@ -42,6 +42,10 @@ else
 endif
 
 LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_flann -lopencv_video -lopencv_calib3d -lopencv_hdf -lhdf5_hl -lhdf5
+
+#ifdef DEBUG
+#	LDFLAGS += -pg
+#endif
 
 BINS = run_align
 
@@ -58,7 +62,7 @@ ezsift.o: ezsift/ezsift.cpp
 common.o: common.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-align.o: align.cpp
+align.o: align.cpp othersift.cpp gaussianPyramid.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 run.o: run.cpp

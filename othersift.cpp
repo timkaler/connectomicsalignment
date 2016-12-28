@@ -130,6 +130,8 @@
 #include <stdarg.h>
 #include <opencv2/core/hal/hal.hpp>
 
+#include "gaussianPyramid.cpp"
+
 namespace cv
 {
 namespace xfeatures2d
@@ -264,8 +266,7 @@ static Mat createInitialImage( const Mat& img, bool doubleImageSize, float sigma
         GaussianBlur(gray_fpt, gray_fpt, Size(), sig_diff, sig_diff);
         return gray_fpt;
     }
-}
-
+}	
 
 void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, int nOctaves ) const
 {
@@ -281,8 +282,10 @@ void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, in
         double sig_prev = std::pow(k, (double)(i-1))*sigma;
         double sig_total = sig_prev*k;
         sig[i] = std::sqrt(sig_total*sig_total - sig_prev*sig_prev);
+	  //printf("SIFT sig[%d]=%.6lf sig_total=%.6lf sig_prev=%.6lf\n",i,sig[i],sig_total,sig_prev);
     }
-
+    
+    static double GBlurTime=0;
     for( int o = 0; o < nOctaves; o++ )
     {
         for( int i = 0; i < nOctaveLayers + 3; i++ )
@@ -300,10 +303,17 @@ void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, in
             else
             {
                 const Mat& src = pyr[o*(nOctaveLayers + 3) + i-1];
+		    //printf("Gaussian Blur sigma = %.6lf\n",sig[i]);
+		    fasttime_t tstart=gettime();
                 GaussianBlur(src, dst, Size(), sig[i], sig[i]);
+		    fasttime_t tend=gettime();
+		    GBlurTime+=tdiff(tstart,tend);
             }
         }
     }
+    printf("cumulative gaussian blur time: %.6lf\n",GBlurTime);
+    
+    myBuildGaussianPyramid(base, pyr, nOctaves, nOctaveLayers);
 }
 
 
