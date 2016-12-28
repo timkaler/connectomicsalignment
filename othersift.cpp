@@ -130,7 +130,6 @@
 #include <stdarg.h>
 #include <opencv2/core/hal/hal.hpp>
 
-#include "gaussianPyramid.cpp"
 
 namespace cv
 {
@@ -222,7 +221,7 @@ static const float SIFT_DESCR_MAG_THR = 0.2f;
 // factor used to convert floating-point descriptor to unsigned char
 static const float SIFT_INT_DESCR_FCTR = 512.f;
 
-#if 1
+#if 0
 // intermediate type used for DoG pyramids
 typedef short sift_wt;
 static const int SIFT_FIXPT_SCALE = 48;
@@ -231,6 +230,8 @@ static const int SIFT_FIXPT_SCALE = 48;
 typedef float sift_wt;
 static const int SIFT_FIXPT_SCALE = 1;
 #endif
+
+#include "gaussianPyramid.cpp"
 
 static inline void
 unpackOctave(const KeyPoint& kpt, int& octave, int& layer, float& scale)
@@ -270,9 +271,10 @@ static Mat createInitialImage( const Mat& img, bool doubleImageSize, float sigma
 
 void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, int nOctaves ) const
 {
+    imwrite("original_base.png", base);
     std::vector<double> sig(nOctaveLayers + 3);
     pyr.resize(nOctaves*(nOctaveLayers + 3));
-
+    Mat newbase = base.clone();
     // precompute Gaussian sigmas using the following formula:
     //  \sigma_{total}^2 = \sigma_{i}^2 + \sigma_{i-1}^2
     sig[0] = sigma;
@@ -529,8 +531,8 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
 
     int mutex = 0;
 
-    cilk_for( int o = 0; o < nOctaves; o++ )
-        cilk_for( int i = 1; i <= nOctaveLayers; i++ )
+    for( int o = 0; o < nOctaves; o++ )
+        for( int i = 1; i <= nOctaveLayers; i++ )
         {
             int idx = o*(nOctaveLayers+2)+i;
             const Mat& img = dog_pyr[idx];

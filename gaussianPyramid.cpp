@@ -24,6 +24,7 @@ template <typename T> struct Matrix
 			data = NULL;
 		}
 	}
+
 	void downsample2x(Matrix &dst) const
 	{
 		dst=Matrix(row/2, col/2);
@@ -32,6 +33,18 @@ template <typename T> struct Matrix
 				dst.data[i*dst.col+j]=data[i*2*col+j*2];
 	}
 };
+
+
+
+
+      
+        template<typename T>
+        cv::Mat convertToMat(const Matrix<T>& mat) {
+          cv::Mat tmp(mat.row,mat.col,CV_8U,mat.data);
+          cv::Mat gray_fpt;
+          tmp.convertTo(gray_fpt, DataType<sift_wt>::type, SIFT_FIXPT_SCALE, 0);
+          return gray_fpt;
+        }
 
 void calculateBoxBlurSize(double sigma, int n, int *res)
 {
@@ -107,11 +120,12 @@ void myGaussianBlur(const Matrix<uint8_t> &src, Matrix<uint8_t> &dst, int *plan)
 
 void gen_pic(const Matrix<uint8_t> &A, std::string filename)
 {
-	FILE* out_file = fopen(filename.c_str(), "wb");
-	fprintf(out_file, "P5\n");
-	fprintf(out_file, "%d %d\n255\n", A.col, A.row);
-	fwrite(A.data, sizeof(unsigned char), A.col*A.row, out_file);
-	fclose(out_file);
+	//FILE* out_file = fopen(filename.c_str(), "wb");
+	//fprintf(out_file, "P5\n");
+	//fprintf(out_file, "%d %d\n255\n", A.col, A.row);
+	//fwrite(A.data, sizeof(unsigned char), A.col*A.row, out_file);
+	//fclose(out_file);
+        imwrite(filename.c_str(), convertToMat(A));
 }
 
 void compare_matrix(const Matrix<uint8_t> &A, const cv::Mat &B)
@@ -125,22 +139,22 @@ void compare_matrix(const Matrix<uint8_t> &A, const cv::Mat &B)
 	rep(i,0,A.row-1)
 		rep(j,0,A.col-1)
 		{
-			sumdiff+=abs((int)A.data[i*A.col+j]-(int)B.at<unsigned char>(i,j));
-			sum+=(int)B.at<unsigned char>(i,j);
+			sumdiff+=abs((int)A.data[i*A.col+j]-(int)B.at<float>(i,j));
+			sum+=(int)B.at<float>(i,j);
 		}
 	printf("compare_matrix: Relative Error = %.6lf\n",sumdiff/sum);
 	Matrix<uint8_t> tmp(A.row,A.col);
 	rep(i,0,A.row-1)
 		rep(j,0,A.col-1)
-			tmp.data[i*A.col+j]=B.at<unsigned char>(i,j);
+			tmp.data[i*A.col+j]=B.at<float>(i,j);
 	
 	static int cnt=0;
 	cnt++;
 	char buf[100];
-	sprintf(buf,"%d.pgm",cnt);
+	sprintf(buf,"%d.png",cnt);
 	gen_pic(A,buf);
 	cnt++;
-	sprintf(buf,"%d.pgm",cnt);
+	sprintf(buf,"%d.png",cnt);
 	gen_pic(tmp,buf);
 }
 
@@ -178,7 +192,8 @@ void myBuildGaussianPyramid( const cv::Mat& baseimg, const std::vector<cv::Mat>&
 	rep(i,0,baseimg.rows-1)
 		rep(j,0,baseimg.cols-1)
 		{
-			base.data[all]=baseimg.at<unsigned char>(i,j);
+			base.data[all]=(unsigned char) baseimg.at<float>(i,j);
+                        //printf("matrix info %f\n", baseimg.at<float>(i,j));
 			all++;
 		}
 	
