@@ -1,6 +1,8 @@
 #include "common.h"
 #include "fasttime.h"
 
+#include "boxFilter.cpp"
+
 void calculateBoxBlurSize(double sigma, int n, int *res)
 {
 	double w=sqrt(12.0*sigma*sigma/n+1);
@@ -30,6 +32,24 @@ void compare_matrix(const cv::Mat &A, const cv::Mat &B)
 		}
 	printf("compare_matrix: Relative Error = %.6lf\n",sumdiff/sum);
 }
+
+void compare_matrix_uchar_uchar(const cv::Mat &A, const cv::Mat &B)
+{
+	if (A.rows != B.rows || A.cols != B.cols) 
+	{
+		printf("!!!ERROR!!! compare_matrix: dimensions differ!\n");
+		return;
+	}
+	double sumdiff=0, sum=0;
+	rep(i,0,A.rows-1)
+		rep(j,0,A.cols-1)
+		{
+			sumdiff+=abs((int)A.at<uint8_t>(i,j)-(int)B.at<uint8_t>(i,j));
+			sum+=(int)B.at<uint8_t>(i,j);
+		}
+	printf("compare_matrix: Relative Error = %.6lf\n",sumdiff/sum);
+}
+
 
 static const int BoxBlurPlan[9][6]={
 	{-1,-1,-1,-1,-1,-1},
@@ -160,7 +180,7 @@ void BuildGaussianPyramid_BoxBlurApproximation( const cv::Mat& baseimg, std::vec
 		{
 			cv::Mat &dst = pyr[o*(nOctaveLayers + 3)];
 			const cv::Mat& src = pyr[(o-1)*(nOctaveLayers + 3) + nOctaveLayers];
-			cv::resize(src, dst, Size(src.cols/2, src.rows/2), 0, 0, INTER_NEAREST);
+			cv::resize(src, dst, cv::Size(src.cols/2, src.rows/2), 0, 0, cv::INTER_NEAREST);
 		}
 		
 		const cv::Mat& src = pyr[o*(nOctaveLayers + 3)];
@@ -172,9 +192,9 @@ void BuildGaussianPyramid_BoxBlurApproximation( const cv::Mat& baseimg, std::vec
 			int p=BoxBlurExecutionPlan.parent[i].first;
 			int sz=BoxBlurExecutionPlan.parent[i].second;
 			if (p==0)
-				cv::boxFilter(src, tmplist[i], -1, cv::Size(sz, sz));
+				cv::boxFilterCV8U(src, tmplist[i], -1, cv::Size(sz, sz));
 			else
-				cv::boxFilter(tmplist[p], tmplist[i], -1, cv::Size(sz, sz));
+				cv::boxFilterCV8U(tmplist[p], tmplist[i], -1, cv::Size(sz, sz));
 		}
 		
 		rep(i,1,nOctaveLayers+2)

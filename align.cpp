@@ -321,7 +321,7 @@ bool is_tiles_overlap(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2) {
 
 void SIFT_initialize()
 {
-	cv::xfeatures2d::generateBoxBlurExecutionPlan();
+	generateBoxBlurExecutionPlan();
 }
 
 void compute_SIFT_parallel(align_data_t *p_align_data) {
@@ -497,7 +497,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             TRACE_1("    -- n_kps      : %lu\n", p_tile_data->p_kps->size());
             TRACE_1("    -- n_kps_desc : %d %d\n", p_tile_data->p_kps_desc->rows, p_tile_data->p_kps_desc->cols);
 
-            LOG_KPS(p_tile_data);
+            //LOG_KPS(p_tile_data);
 		/*
 		imageProcessed++;
 		if (imageProcessed == 10) 
@@ -540,4 +540,69 @@ void align_execute(align_data_t *p_align_data)
     
     STOP_TIMER(&t_timer, "t_total-time:");
          
+}
+
+// function for debug purpose only
+void testcv()
+{
+	int BS=1;
+	std::vector<cv::Mat> T1;
+	T1.resize(BS);
+	rep(i,0,BS-1) T1[i]=cv::Mat(1000,1000,CV_8UC(16));
+	rep(i,0,BS-1)
+		rep(j,0,999)
+		{
+			uint8_t *p1 = T1[i].ptr<uint8_t>(j);
+			rep(k,0,16000-1)
+			{
+				p1[k]=rand()%256;
+			}
+		}
+
+	/*
+	std::vector<cv::Mat> T2;
+	T2.resize(BS*16);
+	rep(i,0,BS*16-1) T2[i]=cv::Mat(1000,1000,CV_8U);
+	rep(i,0,BS*16-1)
+		rep(j,0,999)
+			rep(k,0,999)
+			{
+				T2[i].at<uint8_t>(j,k)=rand()%256;
+			}
+	*/
+	fasttime_t tstart = gettime();
+	rep(i,0,BS-1)
+		rep(j,0,100)
+		{
+			cv::Mat tmp;
+			cv::boxFilterCV8U(T1[i], tmp, -1, cv::Size(3,3));
+			cv::boxFilter(T1[i], T1[i], -1, cv::Size(3,3));
+			compare_matrix_uchar_uchar(tmp,T1[i]);
+			cv::boxFilterCV8U(T1[i], tmp, -1, cv::Size(5,5));
+			cv::boxFilter(T1[i], T1[i], -1, cv::Size(5,5));
+			compare_matrix_uchar_uchar(tmp,T1[i]);
+			cv::boxFilterCV8U(T1[i], tmp, -1, cv::Size(7,7));
+			cv::boxFilter(T1[i], T1[i], -1, cv::Size(7,7));
+			compare_matrix_uchar_uchar(tmp,T1[i]);
+		}
+	
+	fasttime_t tend=gettime();
+	double t1=tdiff(tstart,tend);
+	
+	exit(0);
+	/*
+	tstart = gettime();
+	rep(i,0,BS*16-1)
+		rep(j,0,100)
+		{
+			cv::boxFilter(T2[i], T2[i], -1, cv::Size(3,3));
+			cv::boxFilter(T2[i], T2[i], -1, cv::Size(5,5));
+			cv::boxFilter(T2[i], T2[i], -1, cv::Size(7,7));
+		}
+		
+	tend=gettime();
+	double t2=tdiff(tstart,tend);
+	
+	printf("Time 1 = %.6lf\n, Time 2 = %.6lf\n",t1,t2);
+	*/
 }
