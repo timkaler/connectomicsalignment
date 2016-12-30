@@ -77,12 +77,15 @@ static void save_tile_matches(size_t num_matches,
                               const std::vector< cv::Point2f > *match_points_a,
                               const std::vector< cv::Point2f > *match_points_b,
                               const std::vector< cv::Point2f > *match_points_a_fixed) {
-
+#ifndef SKIPJSON
+  static double totalTime = 0;
   FILE *fp;
 
   TRACE_1("save_tile_matches: start\n");
 
   TRACE_1("Writing %s\n", out_filepath.c_str());
+
+  fasttime_t tstart = gettime();
 
   fp = fopen(out_filepath.c_str(), "wb");
   // Output prologue
@@ -177,7 +180,14 @@ static void save_tile_matches(size_t num_matches,
   fprintf(fp, "]");
 
   fclose(fp);
+
+  fasttime_t tend = gettime();
+  totalTime += tdiff(tstart, tend); 
+  TRACE_1("save_tile_matches cumulative time: %.6lf [sec]\n",
+          totalTime);
+
   TRACE_1("save_tile_matches: finish\n");
+#endif
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -187,32 +197,46 @@ static void save_tile_matches(size_t num_matches,
 void compute_tile_matches(align_data_t *p_align_data) {
 
   TRACE_1("compute_tile_matches: start\n");
-  std::string out_filepath_base =
-    std::string(p_align_data->output_dirpath) + "/matched_sifts/W01_Sec";
 
+#ifndef SKIPJSON
+  const std::string out_filepath_base =
+    std::string(p_align_data->output_dirpath) + "/matched_sifts/W01_Sec";
+#endif
   // Iterate over all pairs of tiles
   for (int sec_id = 0; sec_id < p_align_data->n_sections; ++sec_id) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
-    // We extract the section id from the first tile.
-    bool got_section_id = false;
-    std::string real_section_id;
+#ifndef SKIPJSON
+    // Get the section id from the first tile.
+    const std::string tmp_filepath = std::string((p_sec_data->tiles[0]).filepath);
+    const std::string tmp_imagename = tmp_filepath.substr(tmp_filepath.find_last_of("/") + 1);
+    const std::string real_section_id = tmp_imagename.substr(0, tmp_imagename.find("_"));
+    // Create the inter-mfov output directory
+    const std::string out_filepath_start = out_filepath_base + real_section_id + "/";
+    system((std::string("mkdir -p ") + out_filepath_start + "inter/").c_str());
+    // Create a new vector of output file names.
     std::vector< std::string > output_files;
-
+#endif
+    // Record the set of mfov ID's encountered.  Right now, this set
+    // is used to limit the number of system calls performed.
+    std::set<int> mfovs;
     for (int atile_id = 0; atile_id < p_sec_data->n_tiles; ++atile_id) {
       tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
-
+      if (mfovs.insert(a_tile->mfov_id).second) {
+        // Encountering a brand new mfov.
+#ifndef SKIPJSON
+        // Create the output directory.
+        system((std::string("mkdir -p ") + out_filepath_start + "intra/" +
+                std::to_string(a_tile->mfov_id) + "/").c_str());
+#endif
+      }
+#ifndef SKIPJSON
       // Compute starts of output file path and output file name.
       const std::string a_filepath = std::string(a_tile->filepath);
       const std::string a_timagename = a_filepath.substr(a_filepath.find_last_of("/")+1);
-      if (!got_section_id) {
-        real_section_id = a_timagename.substr(0, a_timagename.find("_"));
-        got_section_id = true;
-      }
-      const std::string out_filepath_start = out_filepath_base + real_section_id + "/";
       const std::string out_filename_start = std::string("W01_Sec") +
         real_section_id + std::string("_sift_matches_") +
         a_timagename.substr(0, a_timagename.find_last_of(".")) + "_"; 
-
+#endif
       for (int btile_id = atile_id + 1; btile_id < p_sec_data->n_tiles; ++btile_id) {
         // if (atile_id == btile_id) continue;
         tile_data_t *b_tile = &(p_sec_data->tiles[btile_id]);
@@ -233,25 +257,25 @@ void compute_tile_matches(align_data_t *p_align_data) {
         TRACE_1("    -- %d_%d features_num: %lu\n",
                 b_tile->mfov_id, b_tile->index,
                 b_tile->p_kps->size());
-
+#ifndef SKIPJSON
         // Compute output file path and output file name.
         const std::string b_filepath = std::string(b_tile->filepath);
         const std::string b_timagename = b_filepath.substr(b_filepath.find_last_of("/")+1);
         std::string out_filepath = out_filepath_start;
         if (a_tile->mfov_id == b_tile->mfov_id) {
           // Intra mfov job
-          out_filepath = out_filepath + "intra/" + std::to_string(a_tile->mfov_id) + "/";
+          out_filepath += "intra/" + std::to_string(a_tile->mfov_id) + "/";
         } else {
           // Inter mfov job
-          out_filepath = out_filepath + "inter/";
+          out_filepath += "inter/";
         }
-        system((std::string("mkdir -p ") + out_filepath).c_str());
         const std::string out_filename = out_filename_start +
           b_timagename.substr(0, b_timagename.find_last_of(".")) +
           std::string(".json");
-        out_filepath = out_filepath + out_filename;
-
+        out_filepath += out_filename;
+        // Record the output file name.
         output_files.push_back("file://" + out_filepath);
+#endif
 
         // Check that both tiles have enough features to match.
         if (a_tile->p_kps->size() < MIN_FEATURES_NUM) {
@@ -414,7 +438,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
           continue;
         }
 
-        // Write the json output
+        // Write the JSON output
         {
           // Extract the match points
           std::vector<cv::Point2f> match_points_a, match_points_b;
@@ -423,6 +447,8 @@ void compute_tile_matches(align_data_t *p_align_data) {
             match_points_b.push_back(btile_kps_in_overlap[filtered_matches[i].trainIdx].pt);
           }
 
+          // Estimate the rigid transform from the matched points in
+          // tile A to those in tile B.
           cv::Mat model = cv::estimateRigidTransform(match_points_a, match_points_b, false);
           TRACE_1("    -- [%d_%d, %d_%d] estimated a %d by %d affine transform matrix.\n",
                   a_tile->mfov_id, a_tile->index,
@@ -436,11 +462,15 @@ void compute_tile_matches(align_data_t *p_align_data) {
             continue;
           }
 
+          // Transform the matched points in tile A.  These
+          // transformed points are used to estimate the distances
+          // between matched points after alignment.
           std::vector< cv::Point2f > match_points_a_fixed;
           // std::vector< cv::Point2f > match_points_b_fixed;
           cv::transform(match_points_a, match_points_a_fixed, model);
           // cv::transform(match_points_b, match_points_b_fixed, model);
 
+          // Output the tile matches.
           save_tile_matches(filtered_matches.size(), out_filepath,
                             a_tile, b_tile,
                             &match_points_a, &match_points_b,
@@ -449,7 +479,9 @@ void compute_tile_matches(align_data_t *p_align_data) {
       }  // for (btile_id)
     }  // for (atile_id)
 
-    if (got_section_id) {
+#ifndef SKIPJSON
+    // Output list of matched sift files.
+    {
       const std::string matched_sifts_files =
         std::string(p_align_data->output_dirpath) +
         "/W01_Sec" + real_section_id + "_matched_sifts_files.txt";
@@ -461,6 +493,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
         fprintf(fp, "%s\n", output_files[i].c_str());
       fclose(fp);
     }
+#endif
   }  // for (sec_id)
 
   TRACE_1("compute_tile_matches: finish\n");

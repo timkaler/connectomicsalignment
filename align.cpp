@@ -433,7 +433,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             cv::vconcat( m_kps_desc, n_sub_images, *(p_tile_data->p_kps_desc));
 
 
-            #ifndef SKIPOUTPUT
+            #ifndef SKIPHDF5
             // NOTE(TFK): Begin HDF5 preparation 
             std::vector<float> locations;
             std::vector<float> octaves;

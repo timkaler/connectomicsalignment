@@ -40,6 +40,14 @@ ifdef SKIPOUTPUT
   CFLAGS += -DSKIPOUTPUT
 endif
 
+ifdef SKIPHDF5
+  CFLAGS += -DSKIPHDF5
+endif
+
+ifdef SKIPJSON
+  CFLAGS += -DSKIPJSON
+endif
+
 #CFLAGS += --param inline-unit-growth=1000
 #CFLAGS += -mrtm
 
