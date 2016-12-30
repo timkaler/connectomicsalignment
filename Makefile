@@ -72,13 +72,16 @@ ezsift.o: ezsift/ezsift.cpp
 common.o: common.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
+match.o: match.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
 align.o: align.cpp othersift.cpp gaussianPyramid.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 run.o: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: common.o align.o run.o ezsift.o img_io.o
+run_align: common.o align.o run.o ezsift.o img_io.o match.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:

@@ -9,6 +9,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 #include "common.h"
 #include "align.h"
+#include "match.h"
 #include "fasttime.h"
 //#include "ezsift/ezsift.h"
 
@@ -254,6 +255,7 @@ void read_input(align_data_t *p_align_data) {
     
     TRACE_1("finish\n");
 }
+
 void read_tiles(align_data_t *p_align_data) {
 
     TRACE_1("read_tiles: start\n");
@@ -287,35 +289,6 @@ void read_tiles(align_data_t *p_align_data) {
     }
     
     TRACE_1("read_tiles: finish\n");
-    
-}
-
-bool is_tiles_overlap(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2) {
-
-    TRACE_3("is_tiles_overlap: start\n");
-    TRACE_3("  -- tile_1: %d\n", p_tile_data_1->index);
-    TRACE_3("  -- tile_2: %d\n", p_tile_data_2->index);
-    
-    int x1_start = p_tile_data_1->x_start;
-    int x1_finish = p_tile_data_1->x_finish;
-    int y1_start = p_tile_data_1->y_start;
-    int y1_finish = p_tile_data_1->y_finish;
-    
-    int x2_start = p_tile_data_2->x_start;
-    int x2_finish = p_tile_data_2->x_finish;
-    int y2_start = p_tile_data_2->y_start;
-    int y2_finish = p_tile_data_2->y_finish;
-    
-    bool res = false;
-    
-    if ((x1_start < x2_finish) && (x1_finish > x2_start) &&
-        (y1_start < y2_finish) && (y1_finish > y2_start)) {
-        res = true;
-    }
-    
-    TRACE_3("is_tiles_overlap: finish\n");
-    
-    return res;
     
 }
 
@@ -514,8 +487,6 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     TRACE_1("compute_SIFT_parallel: finish\n");
 }
 
- 
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -538,6 +509,12 @@ void align_execute(align_data_t *p_align_data)
         STOP_TIMER(&timer, "compute_SIFT time:");
     } 
     
+    START_TIMER(&timer);
+    compute_tile_matches(p_align_data);
+    // compute_affine_inter_section_transforms(p_align_data);
+    // compute_affine_inter_section_transform_2(p_align_data);
+    // compute_affine_inter_section_transforms_3(p_align_data);
+    STOP_TIMER(&timer, "compute_tile_matches time:");
+
     STOP_TIMER(&t_timer, "t_total-time:");
-         
 }
