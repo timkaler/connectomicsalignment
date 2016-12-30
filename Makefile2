@@ -2,9 +2,8 @@
 #CC := /home/amatveev/Pipeline/cilkplus-install/bin/g++
 #LD := /home/amatveev/Pipeline/cilkplus-install/bin/g++
 
-#CC := ./setup.sh $(SETUP) g++
-CC := ./setup.sh g++
-LD := ./setup.sh g++
+CC := $(SETUP) g++
+LD := $(SETUP) g++
 #CC := /home/armafire/tools/cilkplus-install/bin/g++
 #LD := /home/armafire/tools/cilkplus-install/bin/g++
 
@@ -42,26 +41,14 @@ ifdef SKIPOUTPUT
   CFLAGS += -DSKIPOUTPUT
 endif
 
-ifdef SKIPHDF5
-  CFLAGS += -DSKIPHDF5
-endif
-
-ifdef SKIPJSON
-  CFLAGS += -DSKIPJSON
-endif
-
 #CFLAGS += --param inline-unit-growth=1000
 #CFLAGS += -mrtm
-
-ifdef ASSEMBLY
-	CFLAGS += -S
-endif
 
 ifdef DEBUG
 	CFLAGS += -O0 -g3 
 else
 	CFLAGS += -DNDEBUG
-	CFLAGS += -O3 -g -mavx2 -m64 -march=native
+	CFLAGS += -O3 -g 
 	#-Ofast
 endif
 
@@ -71,11 +58,7 @@ LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_i
 #	LDFLAGS += -pg
 #endif
 
-ifdef ASSEMBLY
-	BINS = img_io.S ezsift.S common.S align.S run.S
-else
-	BINS = run_align
-endif
+BINS = run_align
 
 .PHONY:	all clean
 
@@ -84,37 +67,19 @@ all: $(BINS)
 img_io.o: ezsift/img_io.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-img_io.S: ezsift/img_io.cpp
-	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
-
 ezsift.o: ezsift/ezsift.cpp
-	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
-
-ezsift.S: ezsift/ezsift.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 common.o: common.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-common.S: common.cpp
-	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
-
-match.o: match.cpp
-	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
-
-align.o: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.cpp rowsum.cpp columnsum.cpp
-	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
-
-align.S: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.cpp rowsum.cpp columnsum.cpp
+align.o: align.cpp othersift.cpp gaussianPyramid.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 run.o: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run.S: run.cpp
-	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
-
-run_align: common.o align.o run.o ezsift.o img_io.o match.o
+run_align: common.o align.o run.o ezsift.o img_io.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:

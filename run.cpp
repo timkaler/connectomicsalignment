@@ -9,6 +9,8 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 #include "align.h"
 
+#include "fasttime.h"
+
 #ifdef PROFILE
 #include <gperftools/profiler.h>
 #endif
@@ -67,6 +69,13 @@ void parse_args(
 /////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv)
 {
+    
+    cv::setNumThreads(0);
+    
+   // testcv();
+    
+   // exit(0);
+    
     align_data_t *p_align_data;
     
     p_align_data = (align_data_t *)malloc(sizeof(align_data_t));

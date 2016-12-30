@@ -3,4 +3,7 @@ temp
 *.svg
 *.data
 run_align
+*.S
+*.old
+*.objd
 *~
