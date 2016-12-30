@@ -6,7 +6,7 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/efs/home/lemon510/cv/lib
 WORKINGDIR=$PWD 
 OUTPUTDIR=$PWD/temp
 
-gdb run_align
+gdb --args ./run_align 1 9 1 data/txtspecs.txt $OUTPUTDIR $OUTPUTDIR
 
 #    ./run_align 1 \
 #    11 2 \
