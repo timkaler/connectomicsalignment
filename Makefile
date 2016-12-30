@@ -53,8 +53,7 @@ ifdef DEBUG
 	CFLAGS += -O0 -g3 
 else
 	CFLAGS += -DNDEBUG
-	CFLAGS += -O3 -g -mavx2 -m64 -march=native
-	#-Ofast
+	CFLAGS += -O3 -g -m64 -march=native -mavx2
 endif
 
 LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_flann -lopencv_video -lopencv_calib3d -lopencv_hdf -lhdf5_hl -lhdf5 -lgomp
