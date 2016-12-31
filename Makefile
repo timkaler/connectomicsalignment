@@ -2,8 +2,8 @@
 #CC := /home/amatveev/Pipeline/cilkplus-install/bin/g++
 #LD := /home/amatveev/Pipeline/cilkplus-install/bin/g++
 
-CC := g++
-LD := g++
+CC := clang++
+LD := clang++
 #CC := /home/armafire/tools/cilkplus-install/bin/g++
 #LD := /home/armafire/tools/cilkplus-install/bin/g++
 
@@ -16,11 +16,13 @@ LD := g++
 #OPENCV_INCLUDE := /home/amatveev/Pipeline/tools/OpenCV/opencv-2.4-install/include/
 #OPENCV_LIB := /home/amatveev/Pipeline/tools/OpenCV/opencv-2.4-install/lib/
 
-OPENCV_INCLUDE=/home/armafire/tools/opencv-3-install-test/include
-OPENCV_LIB=/home/armafire/tools/opencv-3-install-test/lib
+OPENCV_LIB=/efs/tools/OpenCV3/lib/
+OPENCV_INCLUDE=/efs/tools/OpenCV3/include/
+#OPENCV_INCLUDE=/home/armafire/tools/opencv-3-install-test/include/
+#OPENCV_LIB=/home/armafire/tools/opencv-3-install-test/lib/
 
 #CFLAGS += -fcilkplus -m64 -ffast-math -mfma 
-CFLAGS += -std=c++11 -fcilkplus -m64 -march=native 
+CFLAGS += -std=c++11 -ftapir -m64 -march=native -fno-exceptions
 #CFLAGS += -std=c++11 -fdetach
 #CFLAGS += -fdetach
 #CFLAGS += -fcilkplus -m64 -march=native 
@@ -40,6 +42,10 @@ ifdef SKIPOUTPUT
   CFLAGS += -DSKIPOUTPUT
 endif
 
+ifdef LOGIMAGES
+  CFLAGS += -DLOGIMAGES
+endif
+
 #CFLAGS += --param inline-unit-growth=1000
 #CFLAGS += -mrtm
 
@@ -51,7 +57,7 @@ else
 	#-Ofast
 endif
 
-LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_flann -lopencv_video -lopencv_calib3d -lopencv_hdf -lhdf5_hl -lhdf5 -lgomp
+LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_video -lopencv_calib3d -lopencv_hdf -lhdf5_hl -lhdf5 -lgomp
 
 #ifdef DEBUG
 #	LDFLAGS += -pg

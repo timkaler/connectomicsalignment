@@ -334,7 +334,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     
     SIFT_initialize();
     
-    cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+    for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
         section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
         
         cilk_for (int tile_id = 0; tile_id < p_sec_data->n_tiles; tile_id++) {
@@ -343,11 +343,11 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             int rows = p_tile_data->p_image->rows;
             int cols = p_tile_data->p_image->cols;
             
-            TRACE_1("  -- tile[%d-%d]: detectAndCompute (%d, %d)\n", 
+            /*TRACE_1("  -- tile[%d-%d]: detectAndCompute (%d, %d)\n", 
                 sec_id, 
                 tile_id,
                 rows, 
-                cols);
+                cols);*/
 
             // Define the SIFT features that we're going to compute.
             cv::Ptr<cv::Feature2D> p_sift;
@@ -364,12 +364,12 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 
              // FASTER Settings.
              p_sift = new cv::xfeatures2d::SIFT_Impl( 
-
 //cv::xfeatures2d::SIFT::create(
                 0,
                 6,
-                0.08,
-                5,
+                0.04,//0.08,
+                //5,
+                10,
                 1.6);
             
             std::vector<cv::KeyPoint> v_kps[SIFT_MAX_SUB_IMAGES];
@@ -382,8 +382,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             int max_cols = cols / SIFT_D2_SHIFT;
             int n_sub_images = max_rows * max_cols;
             
-            for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
-                for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
+            cilk_for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
+                cilk_for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
                    
                     // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT 
                     cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
@@ -395,44 +395,6 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                     int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
                     int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
                     int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
-//#define USE_EZSIFT
-#ifdef USE_EZSIFT
-			  // Create a ezSIFT image object
-			  ImageObj<unsigned char> image(sub_im.rows, sub_im.cols);
-			  for (int i=0; i<sub_im.rows; i++)
-				for (int j=0; j<sub_im.cols; j++)
-					image.data[i*sub_im.cols+j]=sub_im.at<unsigned char>(i,j);
-			
-                    // ezSIFT setup code below, not really sure what it does..
-			  bool bExtractDescriptor = true;
-			  std::list<SiftKeypoint> kpt_list;
-
-			  // Double the original image as the first octive.
-			  double_original_image(true);
-			  // ezSIFT setup end
-			  
-			  // Perform SIFT computation on CPU.
-			  fasttime_t tstart=gettime();
-			  sift_cpu(image, kpt_list, bExtractDescriptor);
-			  fasttime_t tend=gettime();
-			  
-			  // convert ezSIFT style to openCV style
-			  m_kps_desc[sub_im_id]=cv::Mat(kpt_list.size(), 128, CV_8UC1);
-			  int currow=0;
-			  rept(it, kpt_list)
-			  {
-				  v_kps[sub_im_id].push_back(cv::KeyPoint(cv::Point2f(it->r, it->c),	//point
-											it->scale,	//size
-											it->ori,	//orientation
-											0,		//response, not sure what it is
-											it->octave	//octave
-									   ));
-				  rep(i,0,127)
-					m_kps_desc[sub_im_id].at<unsigned char>(currow, i)=it->descriptors[i];
-			  
-				  currow++;
-			  }
-#else
                     // Detect the SIFT features within the subimage. 
 			  fasttime_t tstart=gettime();
                     p_sift->detectAndCompute(
@@ -441,8 +403,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                         v_kps[sub_im_id],
                         m_kps_desc[sub_im_id]);
                     fasttime_t tend=gettime();
-#endif
-			  totalTime += tdiff(tstart,tend); 
+	            totalTime += tdiff(tstart,tend); 
 			  
                     for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
                         v_kps[sub_im_id][i].pt.x += cur_d2;
@@ -497,15 +458,18 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             TRACE_1("    -- n_kps      : %lu\n", p_tile_data->p_kps->size());
             TRACE_1("    -- n_kps_desc : %d %d\n", p_tile_data->p_kps_desc->rows, p_tile_data->p_kps_desc->cols);
 
+            #ifdef LOGIMAGES
             LOG_KPS(p_tile_data);
-		/*
-		imageProcessed++;
-		if (imageProcessed == 10) 
-		{
-			printf("first 10 images processed, net processing time = %.6lf\n", totalTime);
-			exit(0);
-		}
-		*/
+            #endif
+
+	/*
+	imageProcessed++;
+	if (imageProcessed == 10) 
+	{
+		printf("first 10 images processed, net processing time = %.6lf\n", totalTime);
+		exit(0);
+	}
+	*/
         }
     }
     

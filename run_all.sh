@@ -1,10 +1,9 @@
 #!/bin/bash
 
-echo export CILK_NWORKERS=1
 export CILK_NWORKERS=16
-
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/efs/tools/OpenCV3/lib/
 WORKINGDIR=$PWD 
-OUTPUTDIR=$PWD/temp
+OUTPUTDIR=/efs/home/tfk/rh_aligner/test_Bblur_dense/
 
     ./run_align 1 \
     9 2 \
