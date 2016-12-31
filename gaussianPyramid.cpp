@@ -192,9 +192,9 @@ void BuildGaussianPyramid_BoxBlurApproximation( const cv::Mat& baseimg, std::vec
 			int p=BoxBlurExecutionPlan.parent[i].first;
 			int sz=BoxBlurExecutionPlan.parent[i].second;
 			if (p==0)
-				cv::boxFilterCV8U(src, tmplist[i], -1, cv::Size(sz, sz));
+				cv::boxFilter(src, tmplist[i], -1, cv::Size(sz, sz));
 			else
-				cv::boxFilterCV8U(tmplist[p], tmplist[i], -1, cv::Size(sz, sz));
+				cv::boxFilter(tmplist[p], tmplist[i], -1, cv::Size(sz, sz));
 		}
 		
 		rep(i,1,nOctaveLayers+2)

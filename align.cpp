@@ -12,6 +12,8 @@
 #include "fasttime.h"
 //#include "ezsift/ezsift.h"
 
+#define SIFT_BATCH_SIZE 16
+
 #include <set>
 #include <mutex>
 #include <cilk/cilk.h>
@@ -334,6 +336,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     
     SIFT_initialize();
     
+    FILE *fout = fopen("kpsinfo.log","w");
+    
     cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
         section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
         
@@ -372,8 +376,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                 5,
                 1.6);
             
-            std::vector<cv::KeyPoint> v_kps[SIFT_MAX_SUB_IMAGES];
-            cv::Mat m_kps_desc[SIFT_MAX_SUB_IMAGES];
+            std::vector<cv::KeyPoint> v_kps;
+            cv::Mat m_kps_desc;
             
             ASSERT((rows % SIFT_D1_SHIFT) == 0);
             ASSERT((cols % SIFT_D2_SHIFT) == 0);
@@ -381,85 +385,62 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             int max_rows = rows / SIFT_D1_SHIFT;
             int max_cols = cols / SIFT_D2_SHIFT;
             int n_sub_images = max_rows * max_cols;
-            
+		
+            // Mask for subimage 
+		cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT, SIFT_D2_SHIFT, CV_8UC1); 
+		
+		std::vector< cv::Mat > imgList;
+		imgList.resize(SIFT_BATCH_SIZE);
+
+		static int d1_map[SIFT_MAX_SUB_IMAGES], d2_map[SIFT_MAX_SUB_IMAGES];
+		
             for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
                 for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
                    
-                    // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT 
-                    cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
-                        cur_d2, cur_d1, SIFT_D2_SHIFT, SIFT_D1_SHIFT));
-                    // Mask for subimage 
-                    cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT, SIFT_D2_SHIFT, CV_8UC1); 
-                    // Compute a subimage ID, refering to a tile within larger
+			  // Compute a subimage ID, refering to a tile within larger
                     //   2d image. 
                     int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
                     int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
                     int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
-//#define USE_EZSIFT
-#ifdef USE_EZSIFT
-			  // Create a ezSIFT image object
-			  ImageObj<unsigned char> image(sub_im.rows, sub_im.cols);
-			  for (int i=0; i<sub_im.rows; i++)
-				for (int j=0; j<sub_im.cols; j++)
-					image.data[i*sub_im.cols+j]=sub_im.at<unsigned char>(i,j);
-			
-                    // ezSIFT setup code below, not really sure what it does..
-			  bool bExtractDescriptor = true;
-			  std::list<SiftKeypoint> kpt_list;
-
-			  // Double the original image as the first octive.
-			  double_original_image(true);
-			  // ezSIFT setup end
 			  
-			  // Perform SIFT computation on CPU.
-			  fasttime_t tstart=gettime();
-			  sift_cpu(image, kpt_list, bExtractDescriptor);
-			  fasttime_t tend=gettime();
+			  d1_map[sub_im_id] = cur_d1;
+			  d2_map[sub_im_id] = cur_d2;
 			  
-			  // convert ezSIFT style to openCV style
-			  m_kps_desc[sub_im_id]=cv::Mat(kpt_list.size(), 128, CV_8UC1);
-			  int currow=0;
-			  rept(it, kpt_list)
-			  {
-				  v_kps[sub_im_id].push_back(cv::KeyPoint(cv::Point2f(it->r, it->c),	//point
-											it->scale,	//size
-											it->ori,	//orientation
-											0,		//response, not sure what it is
-											it->octave	//octave
-									   ));
-				  rep(i,0,127)
-					m_kps_desc[sub_im_id].at<unsigned char>(currow, i)=it->descriptors[i];
-			  
-				  currow++;
-			  }
-#else
-                    // Detect the SIFT features within the subimage. 
-			  fasttime_t tstart=gettime();
-                    p_sift->detectAndCompute(
-                        sub_im,
-                        sum_im_mask,
-                        v_kps[sub_im_id],
-                        m_kps_desc[sub_im_id]);
-                    fasttime_t tend=gettime();
-#endif
-			  totalTime += tdiff(tstart,tend); 
-			  
-                    for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
-                        v_kps[sub_im_id][i].pt.x += cur_d2;
-                        v_kps[sub_im_id][i].pt.y += cur_d1;
-                    }
-                }
-            }
-            
-            for (int i = 0; i < n_sub_images; i++) {
-                for (size_t j = 0; j < v_kps[i].size(); j++) {
-                    (*p_tile_data->p_kps).push_back(v_kps[i][j]);
-                }
-            }
+                    // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT 
+			  cv::Mat &sub_im = imgList[sub_im_id];
+                    sub_im = (*p_tile_data->p_image)(cv::Rect(
+                        cur_d2, cur_d1, SIFT_D2_SHIFT, SIFT_D1_SHIFT));
+		    }
+		}
+		
+		cv::Mat sub_im;
+		merge(imgList, sub_im);
+		
+            // Detect the SIFT features within the subimage. 
+		fasttime_t tstart=gettime();
+            p_sift->detectAndCompute(
+                 sub_im,
+                 sum_im_mask,
+                 v_kps,
+                 m_kps_desc);
+            fasttime_t tend=gettime();
+		
+		totalTime += tdiff(tstart,tend); 
+		
+		std::vector<cv::KeyPoint>::iterator metadata = v_kps.begin() + (v_kps.size() - SIFT_BATCH_SIZE - 1);
+		
+		for (int batch = 0; batch < SIFT_BATCH_SIZE; batch++)
+		{
+			fprintf(fout, "%d %d %d %d %d %d\n",sec_id, tile_id, rows, cols, batch, metadata[batch+1].octave - metadata[batch].octave);
+			for (size_t i = metadata[batch].octave; i < metadata[batch+1].octave; i++) {
+                      v_kps[i].pt.x += d2_map[batch];
+                      v_kps[i].pt.y += d1_map[batch];
+			    (*p_tile_data->p_kps).push_back(v_kps[i]);
+                  }
+		}
 
-            cv::vconcat( m_kps_desc, n_sub_images, *(p_tile_data->p_kps_desc));
-
-
+		*(p_tile_data->p_kps_desc) = m_kps_desc;
+		
             #ifndef SKIPOUTPUT
             // NOTE(TFK): Begin HDF5 preparation 
             std::vector<float> locations;
@@ -511,6 +492,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     
     printf("net processing time = %.6lf\n", totalTime);
     
+    fclose(fout);
+    
     TRACE_1("compute_SIFT_parallel: finish\n");
 }
 
@@ -543,66 +526,10 @@ void align_execute(align_data_t *p_align_data)
 }
 
 // function for debug purpose only
+
+#include "tests.cpp"
+
 void testcv()
 {
-	int BS=1;
-	std::vector<cv::Mat> T1;
-	T1.resize(BS);
-	rep(i,0,BS-1) T1[i]=cv::Mat(1000,1000,CV_8UC(16));
-	rep(i,0,BS-1)
-		rep(j,0,999)
-		{
-			uint8_t *p1 = T1[i].ptr<uint8_t>(j);
-			rep(k,0,16000-1)
-			{
-				p1[k]=rand()%256;
-			}
-		}
-
-	/*
-	std::vector<cv::Mat> T2;
-	T2.resize(BS*16);
-	rep(i,0,BS*16-1) T2[i]=cv::Mat(1000,1000,CV_8U);
-	rep(i,0,BS*16-1)
-		rep(j,0,999)
-			rep(k,0,999)
-			{
-				T2[i].at<uint8_t>(j,k)=rand()%256;
-			}
-	*/
-	fasttime_t tstart = gettime();
-	rep(i,0,BS-1)
-		rep(j,0,100)
-		{
-			cv::Mat tmp;
-			cv::boxFilterCV8U(T1[i], tmp, -1, cv::Size(3,3));
-			cv::boxFilter(T1[i], T1[i], -1, cv::Size(3,3));
-			compare_matrix_uchar_uchar(tmp,T1[i]);
-			cv::boxFilterCV8U(T1[i], tmp, -1, cv::Size(5,5));
-			cv::boxFilter(T1[i], T1[i], -1, cv::Size(5,5));
-			compare_matrix_uchar_uchar(tmp,T1[i]);
-			cv::boxFilterCV8U(T1[i], tmp, -1, cv::Size(7,7));
-			cv::boxFilter(T1[i], T1[i], -1, cv::Size(7,7));
-			compare_matrix_uchar_uchar(tmp,T1[i]);
-		}
-	
-	fasttime_t tend=gettime();
-	double t1=tdiff(tstart,tend);
-	
-	exit(0);
-	/*
-	tstart = gettime();
-	rep(i,0,BS*16-1)
-		rep(j,0,100)
-		{
-			cv::boxFilter(T2[i], T2[i], -1, cv::Size(3,3));
-			cv::boxFilter(T2[i], T2[i], -1, cv::Size(5,5));
-			cv::boxFilter(T2[i], T2[i], -1, cv::Size(7,7));
-		}
-		
-	tend=gettime();
-	double t2=tdiff(tstart,tend);
-	
-	printf("Time 1 = %.6lf\n, Time 2 = %.6lf\n",t1,t2);
-	*/
+	test_minfilter();
 }

@@ -132,6 +132,22 @@
 
 #include "gaussianPyramid.cpp"
 
+#if 1
+// intermediate type used for DoG pyramids
+typedef short sift_wt_elem;
+struct sift_wt
+{
+	sift_wt_elem chan[SIFT_BATCH_SIZE];
+};
+static const int SIFT_FIXPT_SCALE = 48;
+#else
+// intermediate type used for DoG pyramids
+typedef float sift_wt;
+static const int SIFT_FIXPT_SCALE = 1;
+#endif
+
+#include "minmaxfilter.cpp"
+
 namespace cv
 {
 namespace xfeatures2d
@@ -168,7 +184,7 @@ public:
     void buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, int nOctaves ) const;
     void buildDoGPyramid( const std::vector<Mat>& pyr, std::vector<Mat>& dogpyr ) const;
     void findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const std::vector<Mat>& dog_pyr,
-                               std::vector<KeyPoint>& keypoints ) const;
+                               std::vector< std::vector<KeyPoint> >& keypoints ) const;
 
 protected:
     CV_PROP_RW int nfeatures;
@@ -222,16 +238,6 @@ static const float SIFT_DESCR_MAG_THR = 0.2f;
 // factor used to convert floating-point descriptor to unsigned char
 static const float SIFT_INT_DESCR_FCTR = 512.f;
 
-#if 1
-// intermediate type used for DoG pyramids
-typedef uint8_t sift_wt;
-static const int SIFT_FIXPT_SCALE = 48;
-#else
-// intermediate type used for DoG pyramids
-typedef float sift_wt;
-static const int SIFT_FIXPT_SCALE = 1;
-#endif
-
 static inline void
 unpackOctave(const KeyPoint& kpt, int& octave, int& layer, float& scale)
 {
@@ -244,11 +250,8 @@ unpackOctave(const KeyPoint& kpt, int& octave, int& layer, float& scale)
 static Mat createInitialImage( const Mat& img, bool doubleImageSize, float sigma )
 {
     Mat gray, gray_fpt;
-    if( img.channels() == 3 || img.channels() == 4 )
-        cvtColor(img, gray, COLOR_BGR2GRAY);
-    else
-        img.copyTo(gray);
-    gray.convertTo(gray_fpt, DataType<sift_wt>::type, SIFT_FIXPT_SCALE, 0);
+    img.copyTo(gray);
+    gray.convertTo(gray_fpt, DataType<sift_wt_elem>::type, SIFT_FIXPT_SCALE, 0);
 
     float sig_diff;
 
@@ -338,14 +341,14 @@ void SIFT_Impl::buildDoGPyramid( const std::vector<Mat>& gpyr, std::vector<Mat>&
             const Mat& src1 = gpyr[o*(nOctaveLayers + 3) + i];
             const Mat& src2 = gpyr[o*(nOctaveLayers + 3) + i + 1];
             Mat& dst = dogpyr[o*(nOctaveLayers + 2) + i];
-            subtract(src2, src1, dst, noArray(), DataType<sift_wt>::type);
+            subtract(src2, src1, dst, noArray());
         }
     }
 }
 
 
 // Computes a gradient orientation histogram at a specified pixel
-static float calcOrientationHist( const Mat& img, Point pt, int radius,
+static float calcOrientationHist( const Mat& img, Point pt, int batch, int radius,
                                   float sigma, float* hist, int n )
 {
     int i, j, k, len = (radius*2+1)*(radius*2+1);
@@ -369,8 +372,8 @@ static float calcOrientationHist( const Mat& img, Point pt, int radius,
             if( x <= 0 || x >= img.cols - 1 )
                 continue;
 
-            float dx = (float)(img.at<sift_wt>(y, x+1) - img.at<sift_wt>(y, x-1));
-            float dy = (float)(img.at<sift_wt>(y-1, x) - img.at<sift_wt>(y+1, x));
+            float dx = (float)(img.at<sift_wt>(y, x+1).chan[batch] - img.at<sift_wt>(y, x-1).chan[batch]);
+            float dy = (float)(img.at<sift_wt>(y-1, x).chan[batch] - img.at<sift_wt>(y+1, x).chan[batch]);
 
             X[k] = dx; Y[k] = dy; W[k] = (i*i + j*j)*expf_scale;
             k++;
@@ -418,7 +421,7 @@ static float calcOrientationHist( const Mat& img, Point pt, int radius,
 // Interpolates a scale-space extremum's location and scale to subpixel
 // accuracy to form an image feature. Rejects features with low contrast.
 // Based on Section 4 of Lowe's paper.
-static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyr, KeyPoint& kpt, int octv,
+static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyr, KeyPoint& kpt, int batch, int octv,
                                 int& layer, int& r, int& c, int nOctaveLayers,
                                 float contrastThreshold, float edgeThreshold, float sigma )
 {
@@ -437,20 +440,20 @@ static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyr, KeyPoint& kpt, 
         const Mat& prev = dog_pyr[idx-1];
         const Mat& next = dog_pyr[idx+1];
 
-        Vec3f dD((img.at<sift_wt>(r, c+1) - img.at<sift_wt>(r, c-1))*deriv_scale,
-                 (img.at<sift_wt>(r+1, c) - img.at<sift_wt>(r-1, c))*deriv_scale,
-                 (next.at<sift_wt>(r, c) - prev.at<sift_wt>(r, c))*deriv_scale);
+        Vec3f dD((img.at<sift_wt>(r, c+1).chan[batch] - img.at<sift_wt>(r, c-1).chan[batch])*deriv_scale,
+                 (img.at<sift_wt>(r+1, c).chan[batch] - img.at<sift_wt>(r-1, c).chan[batch])*deriv_scale,
+                 (next.at<sift_wt>(r, c).chan[batch] - prev.at<sift_wt>(r, c).chan[batch])*deriv_scale);
 
-        float v2 = (float)img.at<sift_wt>(r, c)*2;
-        float dxx = (img.at<sift_wt>(r, c+1) + img.at<sift_wt>(r, c-1) - v2)*second_deriv_scale;
-        float dyy = (img.at<sift_wt>(r+1, c) + img.at<sift_wt>(r-1, c) - v2)*second_deriv_scale;
-        float dss = (next.at<sift_wt>(r, c) + prev.at<sift_wt>(r, c) - v2)*second_deriv_scale;
-        float dxy = (img.at<sift_wt>(r+1, c+1) - img.at<sift_wt>(r+1, c-1) -
-                     img.at<sift_wt>(r-1, c+1) + img.at<sift_wt>(r-1, c-1))*cross_deriv_scale;
-        float dxs = (next.at<sift_wt>(r, c+1) - next.at<sift_wt>(r, c-1) -
-                     prev.at<sift_wt>(r, c+1) + prev.at<sift_wt>(r, c-1))*cross_deriv_scale;
-        float dys = (next.at<sift_wt>(r+1, c) - next.at<sift_wt>(r-1, c) -
-                     prev.at<sift_wt>(r+1, c) + prev.at<sift_wt>(r-1, c))*cross_deriv_scale;
+        float v2 = (float)img.at<sift_wt>(r, c).chan[batch]*2;
+        float dxx = (img.at<sift_wt>(r, c+1).chan[batch] + img.at<sift_wt>(r, c-1).chan[batch] - v2)*second_deriv_scale;
+        float dyy = (img.at<sift_wt>(r+1, c).chan[batch] + img.at<sift_wt>(r-1, c).chan[batch] - v2)*second_deriv_scale;
+        float dss = (next.at<sift_wt>(r, c).chan[batch] + prev.at<sift_wt>(r, c).chan[batch] - v2)*second_deriv_scale;
+        float dxy = (img.at<sift_wt>(r+1, c+1).chan[batch] - img.at<sift_wt>(r+1, c-1).chan[batch] -
+                     img.at<sift_wt>(r-1, c+1).chan[batch] + img.at<sift_wt>(r-1, c-1).chan[batch])*cross_deriv_scale;
+        float dxs = (next.at<sift_wt>(r, c+1).chan[batch] - next.at<sift_wt>(r, c-1).chan[batch] -
+                     prev.at<sift_wt>(r, c+1).chan[batch] + prev.at<sift_wt>(r, c-1).chan[batch])*cross_deriv_scale;
+        float dys = (next.at<sift_wt>(r+1, c).chan[batch] - next.at<sift_wt>(r-1, c).chan[batch] -
+                     prev.at<sift_wt>(r+1, c).chan[batch] + prev.at<sift_wt>(r-1, c).chan[batch])*cross_deriv_scale;
 
         Matx33f H(dxx, dxy, dxs,
                   dxy, dyy, dys,
@@ -489,21 +492,21 @@ static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyr, KeyPoint& kpt, 
         const Mat& img = dog_pyr[idx];
         const Mat& prev = dog_pyr[idx-1];
         const Mat& next = dog_pyr[idx+1];
-        Matx31f dD((img.at<sift_wt>(r, c+1) - img.at<sift_wt>(r, c-1))*deriv_scale,
-                   (img.at<sift_wt>(r+1, c) - img.at<sift_wt>(r-1, c))*deriv_scale,
-                   (next.at<sift_wt>(r, c) - prev.at<sift_wt>(r, c))*deriv_scale);
+        Matx31f dD((img.at<sift_wt>(r, c+1).chan[batch] - img.at<sift_wt>(r, c-1).chan[batch])*deriv_scale,
+                   (img.at<sift_wt>(r+1, c).chan[batch] - img.at<sift_wt>(r-1, c).chan[batch])*deriv_scale,
+                   (next.at<sift_wt>(r, c).chan[batch] - prev.at<sift_wt>(r, c).chan[batch])*deriv_scale);
         float t = dD.dot(Matx31f(xc, xr, xi));
 
-        contr = img.at<sift_wt>(r, c)*img_scale + t * 0.5f;
+        contr = img.at<sift_wt>(r, c).chan[batch]*img_scale + t * 0.5f;
         if( std::abs( contr ) * nOctaveLayers < contrastThreshold )
             return false;
 
         // principal curvatures are computed using the trace and det of Hessian
-        float v2 = img.at<sift_wt>(r, c)*2.f;
-        float dxx = (img.at<sift_wt>(r, c+1) + img.at<sift_wt>(r, c-1) - v2)*second_deriv_scale;
-        float dyy = (img.at<sift_wt>(r+1, c) + img.at<sift_wt>(r-1, c) - v2)*second_deriv_scale;
-        float dxy = (img.at<sift_wt>(r+1, c+1) - img.at<sift_wt>(r+1, c-1) -
-                     img.at<sift_wt>(r-1, c+1) + img.at<sift_wt>(r-1, c-1)) * cross_deriv_scale;
+        float v2 = img.at<sift_wt>(r, c).chan[batch]*2.f;
+        float dxx = (img.at<sift_wt>(r, c+1).chan[batch] + img.at<sift_wt>(r, c-1).chan[batch] - v2)*second_deriv_scale;
+        float dyy = (img.at<sift_wt>(r+1, c).chan[batch] + img.at<sift_wt>(r-1, c).chan[batch] - v2)*second_deriv_scale;
+        float dxy = (img.at<sift_wt>(r+1, c+1).chan[batch] - img.at<sift_wt>(r+1, c-1).chan[batch] -
+                     img.at<sift_wt>(r-1, c+1).chan[batch] + img.at<sift_wt>(r-1, c-1).chan[batch]) * cross_deriv_scale;
         float tr = dxx + dyy;
         float det = dxx * dyy - dxy * dxy;
 
@@ -525,7 +528,7 @@ static bool adjustLocalExtrema( const std::vector<Mat>& dog_pyr, KeyPoint& kpt, 
 // Detects features at extrema in DoG scale space.  Bad features are discarded
 // based on contrast and ratio of principal curvatures.
 void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const std::vector<Mat>& dog_pyr,
-                                  std::vector<KeyPoint>& keypoints ) const
+                                  std::vector< std::vector<KeyPoint> >& keypoints ) const
 {
     int nOctaves = (int)gauss_pyr.size()/(nOctaveLayers + 3);
     int threshold = cvFloor(0.5 * contrastThreshold / nOctaveLayers * 255 * SIFT_FIXPT_SCALE);
@@ -534,10 +537,12 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
     KeyPoint kpt;
 
     keypoints.clear();
-
+    keypoints.resize(SIFT_BATCH_SIZE);
 
     int mutex = 0;
 
+    static long long cnt1=0, cnt2=0;
+    
     for( int o = 0; o < nOctaves; o++ )
         for( int i = 1; i <= nOctaveLayers; i++ )
         {
@@ -545,7 +550,7 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
             const Mat& img = dog_pyr[idx];
             const Mat& prev = dog_pyr[idx-1];
             const Mat& next = dog_pyr[idx+1];
-            int step = (int)img.step1();
+            int step = (int)img.step1() / SIFT_BATCH_SIZE;
             int rows = img.rows, cols = img.cols;
 
             for( int r = SIFT_IMG_BORDER; r < rows-SIFT_IMG_BORDER; r++)
@@ -556,68 +561,75 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
 
                 for( int c = SIFT_IMG_BORDER; c < cols-SIFT_IMG_BORDER; c++)
                 {
-                    sift_wt val = currptr[c];
-
-                    // find local extrema with pixel accuracy
-                    if( std::abs(val) > threshold &&
-                       ((val > 0 && val >= currptr[c-1] && val >= currptr[c+1] &&
-                         val >= currptr[c-step-1] && val >= currptr[c-step] && val >= currptr[c-step+1] &&
-                         val >= currptr[c+step-1] && val >= currptr[c+step] && val >= currptr[c+step+1] &&
-                         val >= nextptr[c] && val >= nextptr[c-1] && val >= nextptr[c+1] &&
-                         val >= nextptr[c-step-1] && val >= nextptr[c-step] && val >= nextptr[c-step+1] &&
-                         val >= nextptr[c+step-1] && val >= nextptr[c+step] && val >= nextptr[c+step+1] &&
-                         val >= prevptr[c] && val >= prevptr[c-1] && val >= prevptr[c+1] &&
-                         val >= prevptr[c-step-1] && val >= prevptr[c-step] && val >= prevptr[c-step+1] &&
-                         val >= prevptr[c+step-1] && val >= prevptr[c+step] && val >= prevptr[c+step+1]) ||
-                        (val < 0 && val <= currptr[c-1] && val <= currptr[c+1] &&
-                         val <= currptr[c-step-1] && val <= currptr[c-step] && val <= currptr[c-step+1] &&
-                         val <= currptr[c+step-1] && val <= currptr[c+step] && val <= currptr[c+step+1] &&
-                         val <= nextptr[c] && val <= nextptr[c-1] && val <= nextptr[c+1] &&
-                         val <= nextptr[c-step-1] && val <= nextptr[c-step] && val <= nextptr[c-step+1] &&
-                         val <= nextptr[c+step-1] && val <= nextptr[c+step] && val <= nextptr[c+step+1] &&
-                         val <= prevptr[c] && val <= prevptr[c-1] && val <= prevptr[c+1] &&
-                         val <= prevptr[c-step-1] && val <= prevptr[c-step] && val <= prevptr[c-step+1] &&
-                         val <= prevptr[c+step-1] && val <= prevptr[c+step] && val <= prevptr[c+step+1])))
+                    for (int batch=0; batch<SIFT_BATCH_SIZE; batch++)
                     {
-                        int r1 = r, c1 = c, layer = i;
-                        if( !adjustLocalExtrema(dog_pyr, kpt, o, layer, r1, c1,
-                                                nOctaveLayers, (float)contrastThreshold,
-                                                (float)edgeThreshold, (float)sigma) )
-                            continue;
-                        float scl_octv = kpt.size*0.5f/(1 << o);
-                        float omax = calcOrientationHist(gauss_pyr[o*(nOctaveLayers+3) + layer],
-                                                         Point(c1, r1),
-                                                         cvRound(SIFT_ORI_RADIUS * scl_octv),
-                                                         SIFT_ORI_SIG_FCTR * scl_octv,
-                                                         hist, n);
-                        float mag_thr = (float)(omax * SIFT_ORI_PEAK_RATIO);
-                        for( int j = 0; j < n; j++ )
-                        {
-                            int l = j > 0 ? j - 1 : n - 1;
-                            int r2 = j < n-1 ? j + 1 : 0;
-
-                            if( hist[j] > hist[l]  &&  hist[j] > hist[r2]  &&  hist[j] >= mag_thr )
-                            {
-                                float bin = j + 0.5f * (hist[l]-hist[r2]) / (hist[l] - 2*hist[j] + hist[r2]);
-                                bin = bin < 0 ? n + bin : bin >= n ? bin - n : bin;
-                                kpt.angle = 360.f - (float)((360.f/n) * bin);
-                                if(std::abs(kpt.angle - 360.f) < FLT_EPSILON)
-                                    kpt.angle = 0.f;
-                                while (!__sync_bool_compare_and_swap(&mutex, 0, 1)) {
-                                   continue;
-                                }
-                                keypoints.push_back(kpt);
-                                __sync_bool_compare_and_swap(&mutex, 1,0);
-                            }
-                        }
-                    }
-                }
+                         sift_wt_elem val = currptr[c].chan[batch];
+     
+                         cnt1++;
+			  
+                         // find local extrema with pixel accuracy
+                         if( std::abs(val) > threshold &&
+                            ((val > 0 && val >= currptr[c-1].chan[batch] && val >= currptr[c+1].chan[batch] &&
+                              val >= currptr[c-step-1].chan[batch] && val >= currptr[c-step].chan[batch] && val >= currptr[c-step+1].chan[batch] &&
+                              val >= currptr[c+step-1].chan[batch] && val >= currptr[c+step].chan[batch] && val >= currptr[c+step+1].chan[batch] &&
+                              val >= nextptr[c].chan[batch] && val >= nextptr[c-1].chan[batch] && val >= nextptr[c+1].chan[batch] &&
+                              val >= nextptr[c-step-1].chan[batch] && val >= nextptr[c-step].chan[batch] && val >= nextptr[c-step+1].chan[batch] &&
+                              val >= nextptr[c+step-1].chan[batch] && val >= nextptr[c+step].chan[batch] && val >= nextptr[c+step+1].chan[batch] &&
+                              val >= prevptr[c].chan[batch] && val >= prevptr[c-1].chan[batch] && val >= prevptr[c+1].chan[batch] &&
+                              val >= prevptr[c-step-1].chan[batch] && val >= prevptr[c-step].chan[batch] && val >= prevptr[c-step+1].chan[batch] &&
+                              val >= prevptr[c+step-1].chan[batch] && val >= prevptr[c+step].chan[batch] && val >= prevptr[c+step+1].chan[batch]) ||
+                             (val < 0 && val <= currptr[c-1].chan[batch] && val <= currptr[c+1].chan[batch] &&
+                              val <= currptr[c-step-1].chan[batch] && val <= currptr[c-step].chan[batch] && val <= currptr[c-step+1].chan[batch] &&
+                              val <= currptr[c+step-1].chan[batch] && val <= currptr[c+step].chan[batch] && val <= currptr[c+step+1].chan[batch] &&
+                              val <= nextptr[c].chan[batch] && val <= nextptr[c-1].chan[batch] && val <= nextptr[c+1].chan[batch] &&
+                              val <= nextptr[c-step-1].chan[batch] && val <= nextptr[c-step].chan[batch] && val <= nextptr[c-step+1].chan[batch] &&
+                              val <= nextptr[c+step-1].chan[batch] && val <= nextptr[c+step].chan[batch] && val <= nextptr[c+step+1].chan[batch] &&
+                              val <= prevptr[c].chan[batch] && val <= prevptr[c-1].chan[batch] && val <= prevptr[c+1].chan[batch] &&
+                              val <= prevptr[c-step-1].chan[batch] && val <= prevptr[c-step].chan[batch] && val <= prevptr[c-step+1].chan[batch] &&
+                              val <= prevptr[c+step-1].chan[batch] && val <= prevptr[c+step].chan[batch] && val <= prevptr[c+step+1].chan[batch])))
+                         {
+                             cnt2++;
+                             int r1 = r, c1 = c, layer = i;
+                             if( !adjustLocalExtrema(dog_pyr, kpt, batch, o, layer, r1, c1,
+                                                     nOctaveLayers, (float)contrastThreshold,
+                                                     (float)edgeThreshold, (float)sigma) )
+                                 continue;
+                             float scl_octv = kpt.size*0.5f/(1 << o);
+                             float omax = calcOrientationHist(gauss_pyr[o*(nOctaveLayers+3) + layer],
+                                                              Point(c1, r1), batch,
+                                                              cvRound(SIFT_ORI_RADIUS * scl_octv),
+                                                              SIFT_ORI_SIG_FCTR * scl_octv,
+                                                              hist, n);
+                             float mag_thr = (float)(omax * SIFT_ORI_PEAK_RATIO);
+                             for( int j = 0; j < n; j++ )
+                             {
+                                 int l = j > 0 ? j - 1 : n - 1;
+                                 int r2 = j < n-1 ? j + 1 : 0;
+     
+                                 if( hist[j] > hist[l]  &&  hist[j] > hist[r2]  &&  hist[j] >= mag_thr )
+                                 {
+                                     float bin = j + 0.5f * (hist[l]-hist[r2]) / (hist[l] - 2*hist[j] + hist[r2]);
+                                     bin = bin < 0 ? n + bin : bin >= n ? bin - n : bin;
+                                     kpt.angle = 360.f - (float)((360.f/n) * bin);
+                                     if(std::abs(kpt.angle - 360.f) < FLT_EPSILON)
+                                         kpt.angle = 0.f;
+                                     while (!__sync_bool_compare_and_swap(&mutex, 0, 1)) {
+                                        continue;
+                                     }
+                                     keypoints[batch].push_back(kpt);
+                                     __sync_bool_compare_and_swap(&mutex, 1,0);
+                                 }
+                             }
+                         }
+                     }
+                 }
             }
         }
+        printf("cnt1 = %lld, cnt2 = %lld\n",cnt1, cnt2);
 }
 
 
-static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float scl,
+static void calcSIFTDescriptor( const Mat& img, Point2f ptf, int batch, float ori, float scl,
                                int d, int n, float* dst )
 {
     Point pt(cvRound(ptf.x), cvRound(ptf.y));
@@ -661,8 +673,8 @@ static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float sc
             if( rbin > -1 && rbin < d && cbin > -1 && cbin < d &&
                 r > 0 && r < rows - 1 && c > 0 && c < cols - 1 )
             {
-                float dx = (float)(img.at<sift_wt>(r, c+1) - img.at<sift_wt>(r, c-1));
-                float dy = (float)(img.at<sift_wt>(r-1, c) - img.at<sift_wt>(r+1, c));
+                float dx = (float)(img.at<sift_wt>(r, c+1).chan[batch] - img.at<sift_wt>(r, c-1).chan[batch]);
+                float dy = (float)(img.at<sift_wt>(r-1, c).chan[batch] - img.at<sift_wt>(r+1, c).chan[batch]);
                 X[k] = dx; Y[k] = dy; RBin[k] = rbin; CBin[k] = cbin;
                 W[k] = (c_rot * c_rot + r_rot * r_rot)*exp_scale;
                 k++;
@@ -759,27 +771,32 @@ static void calcSIFTDescriptor( const Mat& img, Point2f ptf, float ori, float sc
 #endif
 }
 
-static void calcDescriptors(const std::vector<Mat>& gpyr, const std::vector<KeyPoint>& keypoints,
+static void calcDescriptors(const std::vector<Mat>& gpyr, const std::vector< std::vector<KeyPoint> >& keypoints,
                             Mat& descriptors, int nOctaveLayers, int firstOctave )
 {
     int d = SIFT_DESCR_WIDTH, n = SIFT_DESCR_HIST_BINS;
 
-    for( size_t i = 0; i < keypoints.size(); i++ )
-    {
-        KeyPoint kpt = keypoints[i];
-        int octave, layer;
-        float scale;
-        unpackOctave(kpt, octave, layer, scale);
-        CV_Assert(octave >= firstOctave && layer <= nOctaveLayers+2);
-        float size=kpt.size*scale;
-        Point2f ptf(kpt.pt.x*scale, kpt.pt.y*scale);
-        const Mat& img = gpyr[(octave - firstOctave)*(nOctaveLayers + 3) + layer];
+    CV_Assert(keypoints.size() == SIFT_BATCH_SIZE);
+    
+    int all = 0;
+    for (int batch = 0; batch < SIFT_BATCH_SIZE; batch++)
+        for( size_t i = 0; i < keypoints[batch].size(); i++ )
+        {
+            KeyPoint kpt = keypoints[batch][i];
+            int octave, layer;
+            float scale;
+            unpackOctave(kpt, octave, layer, scale);
+            CV_Assert(octave >= firstOctave && layer <= nOctaveLayers+2);
+            float size=kpt.size*scale;
+            Point2f ptf(kpt.pt.x*scale, kpt.pt.y*scale);
+            const Mat& img = gpyr[(octave - firstOctave)*(nOctaveLayers + 3) + layer];
 
-        float angle = 360.f - kpt.angle;
-        if(std::abs(angle - 360.f) < FLT_EPSILON)
-            angle = 0.f;
-        calcSIFTDescriptor(img, ptf, angle, size*0.5f, d, n, descriptors.ptr<float>((int)i));
-    }
+            float angle = 360.f - kpt.angle;
+            if(std::abs(angle - 360.f) < FLT_EPSILON)
+                angle = 0.f;
+            calcSIFTDescriptor(img, ptf, batch, angle, size*0.5f, d, n, descriptors.ptr<float>((int)all));
+		all++;
+        }
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -816,30 +833,14 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
     int firstOctave = 0, actualNOctaves = 0, actualNLayers = 0;
     Mat image = _image.getMat(), mask = _mask.getMat();
 
-    if( image.empty() || image.depth() != CV_8U )
-        CV_Error( Error::StsBadArg, "image is empty or has incorrect depth (!=CV_8U)" );
+    if( image.empty() || image.depth() != CV_8U || image.channels() != SIFT_BATCH_SIZE)
+        CV_Error( Error::StsBadArg, "image is empty or has incorrect depth (!=CV_8U) or has incorrect channel number" );
 
     if( !mask.empty() && mask.type() != CV_8UC1 )
         CV_Error( Error::StsBadArg, "mask has incorrect type (!=CV_8UC1)" );
 
     if( useProvidedKeypoints )
-    {
-        firstOctave = 0;
-        int maxOctave = INT_MIN;
-        for( size_t i = 0; i < keypoints.size(); i++ )
-        {
-            int octave, layer;
-            float scale;
-            unpackOctave(keypoints[i], octave, layer, scale);
-            firstOctave = std::min(firstOctave, octave);
-            maxOctave = std::max(maxOctave, octave);
-            actualNLayers = std::max(actualNLayers, layer-2);
-        }
-
-        firstOctave = std::min(firstOctave, 0);
-        CV_Assert( firstOctave >= -1 && actualNLayers <= nOctaveLayers );
-        actualNOctaves = maxOctave - firstOctave + 1;
-    }
+        CV_Error( Error::StsBadArg, "This functionality no longer supported :(" );
 
     Mat base = createInitialImage(image, firstOctave < 0, (float)sigma);
     std::vector<Mat> gpyr, dogpyr;
@@ -853,46 +854,61 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
     //t = (double)getTickCount() - t;
     //printf("pyramid construction time: %g\n", t*1000./tf);
 
-    if( !useProvidedKeypoints )
+    std::vector< std::vector<KeyPoint> > kpts;
+    
+    //t = (double)getTickCount();
+    findScaleSpaceExtrema(gpyr, dogpyr, kpts);
+    for (int batch = 0; batch < SIFT_BATCH_SIZE; batch++)
+        KeyPointsFilter::removeDuplicated( kpts[batch] );
+
+    if( nfeatures > 0 )
     {
-        //t = (double)getTickCount();
-        findScaleSpaceExtrema(gpyr, dogpyr, keypoints);
-        KeyPointsFilter::removeDuplicated( keypoints );
+	  CV_Error( Error::StsBadArg, "nfeatures not supported :(" );
+        KeyPointsFilter::retainBest(keypoints, nfeatures);
+    }
+    
+    //t = (double)getTickCount() - t;
+    //printf("keypoint detection time: %g\n", t*1000./tf);
 
-        if( nfeatures > 0 )
-            KeyPointsFilter::retainBest(keypoints, nfeatures);
-        //t = (double)getTickCount() - t;
-        //printf("keypoint detection time: %g\n", t*1000./tf);
-
-        if( firstOctave < 0 )
-            for( size_t i = 0; i < keypoints.size(); i++ )
+    if( firstOctave < 0 )
+        for (int batch=0; batch<SIFT_BATCH_SIZE; batch++)
+            for( size_t i = 0; i < kpts[batch].size(); i++ )
             {
-                KeyPoint& kpt = keypoints[i];
+                KeyPoint& kpt = kpts[batch][i];
                 float scale = 1.f/(float)(1 << -firstOctave);
                 kpt.octave = (kpt.octave & ~255) | ((kpt.octave + firstOctave) & 255);
                 kpt.pt *= scale;
                 kpt.size *= scale;
             }
 
-        if( !mask.empty() )
-            KeyPointsFilter::runByPixelsMask( keypoints, mask );
-    }
-    else
-    {
-        // filter keypoints by mask
-        //KeyPointsFilter::runByPixelsMask( keypoints, mask );
-    }
+    if( !mask.empty() )
+        for (int batch=0; batch<SIFT_BATCH_SIZE; batch++)
+            KeyPointsFilter::runByPixelsMask( kpts[batch], mask );
 
     if( _descriptors.needed() )
     {
         //t = (double)getTickCount();
         int dsize = descriptorSize();
-        _descriptors.create((int)keypoints.size(), dsize, CV_32F);
+	  int featureNumber = 0;
+	  for (int batch=0; batch<SIFT_BATCH_SIZE; batch++) featureNumber += kpts[batch].size();
+        _descriptors.create(featureNumber, dsize, CV_32F);
         Mat descriptors = _descriptors.getMat();
 
-        calcDescriptors(gpyr, keypoints, descriptors, nOctaveLayers, firstOctave);
+        calcDescriptors(gpyr, kpts, descriptors, nOctaveLayers, firstOctave);
         //t = (double)getTickCount() - t;
         //printf("descriptor extraction time: %g\n", t*1000./tf);
+	  
+	  keypoints.reserve(featureNumber + SIFT_BATCH_SIZE + 1);
+	  for (int batch=0; batch<SIFT_BATCH_SIZE; batch++)
+		  keypoints.insert(keypoints.end(), kpts[batch].begin(), kpts[batch].end());
+	  
+	  KeyPoint kpt; kpt.octave = 0;
+	  keypoints.push_back(kpt);
+	  for (int batch=0; batch<SIFT_BATCH_SIZE; batch++) 
+	  {
+		  kpt.octave += kpts[batch].size();
+		  keypoints.push_back(kpt);
+	  }
     }
 }
 

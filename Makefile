@@ -90,10 +90,10 @@ common.o: common.cpp
 common.S: common.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-align.o: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.cpp rowsum.cpp columnsum.cpp
+align.o: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.cpp rowsum.cpp columnsum.cpp minmaxfilter.cpp tests.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-align.S: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.cpp rowsum.cpp columnsum.cpp
+align.S: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.cpp rowsum.cpp columnsum.cpp minmaxfilter.cpp tests.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 run.o: run.cpp

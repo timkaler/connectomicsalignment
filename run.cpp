@@ -72,7 +72,7 @@ int main(int argc, char **argv)
     
     cv::setNumThreads(0);
     
-   // testcv();
+   testcv();
     
    // exit(0);
     
