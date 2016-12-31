@@ -11,6 +11,7 @@
 #include "common.h"
 #include "align.h"
 #include "fasttime.h"
+#include "simple_mutex.h"
 
 #include <set>
 #include <mutex>
@@ -213,14 +214,24 @@ void compute_tile_matches(align_data_t *p_align_data) {
     // Create the inter-mfov output directory
     const std::string out_filepath_start = out_filepath_base + real_section_id + "/";
     system((std::string("mkdir -p ") + out_filepath_start + "inter/").c_str());
+
     // Create a new vector of output file names.
     std::vector< std::string > output_files;
+    simple_mutex_t output_files_lock;
+    simple_mutex_init(&output_files_lock);
+
 #endif
     // Record the set of mfov ID's encountered.  Right now, this set
     // is used to limit the number of system calls performed.
     std::set<int> mfovs;
-    for (int atile_id = 0; atile_id < p_sec_data->n_tiles; ++atile_id) {
+    simple_mutex_t mfovs_lock;
+    simple_mutex_init(&mfovs_lock);
+
+
+
+    cilk_for (int atile_id = 0; atile_id < p_sec_data->n_tiles; ++atile_id) {
       tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
+      simple_acquire(&mfovs_lock);
       if (mfovs.insert(a_tile->mfov_id).second) {
         // Encountering a brand new mfov.
 #ifndef SKIPJSON
@@ -229,6 +240,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
                 std::to_string(a_tile->mfov_id) + "/").c_str());
 #endif
       }
+      simple_release(&mfovs_lock);
 #ifndef SKIPJSON
       // Compute starts of output file path and output file name.
       const std::string a_filepath = std::string(a_tile->filepath);
@@ -237,7 +249,21 @@ void compute_tile_matches(align_data_t *p_align_data) {
         real_section_id + std::string("_sift_matches_") +
         a_timagename.substr(0, a_timagename.find_last_of(".")) + "_"; 
 #endif
-      for (int btile_id = atile_id + 1; btile_id < p_sec_data->n_tiles; ++btile_id) {
+      int indices_to_check[50];
+      int indices_to_check_len = 0;
+
+      // get all close tiles.
+      for (int i = atile_id+1; i < p_sec_data->n_tiles; i++) {
+        tile_data_t *b_tile = &(p_sec_data->tiles[i]);
+        // Skip tiles that don't overlap
+        if (!is_tiles_overlap(a_tile, b_tile)) continue;
+        indices_to_check[indices_to_check_len++] = i;
+      }
+
+
+      //for (int btile_id = atile_id + 1; btile_id < p_sec_data->n_tiles; ++btile_id) {
+      cilk_for (int i = 0; i < indices_to_check_len; i++) {
+        int btile_id = indices_to_check[i];
         // if (atile_id == btile_id) continue;
         tile_data_t *b_tile = &(p_sec_data->tiles[btile_id]);
 
@@ -274,7 +300,9 @@ void compute_tile_matches(align_data_t *p_align_data) {
           std::string(".json");
         out_filepath += out_filename;
         // Record the output file name.
+        simple_acquire(&output_files_lock);
         output_files.push_back("file://" + out_filepath);
+        simple_release(&output_files_lock);
 #endif
 
         // Check that both tiles have enough features to match.
@@ -301,7 +329,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
         // overlapping tile will be matches.
         std::vector< cv::KeyPoint > atile_kps_in_overlap, btile_kps_in_overlap;
         cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
-        {
+        //{
           // Compute bounding box of overlap
           int overlap_x_start = a_tile->x_start > b_tile->x_start ? a_tile->x_start : b_tile->x_start;
           int overlap_x_finish = a_tile->x_finish < b_tile->x_finish ? a_tile->x_finish : b_tile->x_finish;
@@ -314,6 +342,13 @@ void compute_tile_matches(align_data_t *p_align_data) {
           overlap_y_start -= OFFSET;
           overlap_y_finish += OFFSET;
 
+
+
+
+
+          std::vector<cv::Mat> atile_kps_desc_in_overlap_list;
+          std::vector<cv::Mat> btile_kps_desc_in_overlap_list;
+           
           // Filter the points in a_tile.
           for (size_t pt_idx = 0; pt_idx < a_tile->p_kps->size(); ++pt_idx) {
             // std::vector<cv::Point2f> transformed_pt;
@@ -326,9 +361,12 @@ void compute_tile_matches(align_data_t *p_align_data) {
                               overlap_y_start, overlap_y_finish)) {
               atile_kps_in_overlap.push_back((*a_tile->p_kps)[pt_idx]);
               // TB: Not sure if the following works.
-              atile_kps_desc_in_overlap.push_back(a_tile->p_kps_desc->row(pt_idx));
+              //atile_kps_desc_in_overlap.push_back(a_tile->p_kps_desc->row(pt_idx).clone());
+              // NOTE(TFK): Fixed - I don't think it was correct (segfaults in clang & gcc4.8 in parallel).
+              atile_kps_desc_in_overlap_list.push_back(a_tile->p_kps_desc->row(pt_idx).clone());
             }
           }
+          cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
 
           // Filter the points in b_tile.
           for (size_t pt_idx = 0; pt_idx < b_tile->p_kps->size(); ++pt_idx) {
@@ -342,10 +380,13 @@ void compute_tile_matches(align_data_t *p_align_data) {
                               overlap_y_start, overlap_y_finish)) {
               btile_kps_in_overlap.push_back((*b_tile->p_kps)[pt_idx]);
               // TB: Not sure if the following works.
-              btile_kps_desc_in_overlap.push_back(b_tile->p_kps_desc->row(pt_idx));
+              //btile_kps_desc_in_overlap.push_back(b_tile->p_kps_desc->row(pt_idx).clone());
+              // NOTE(TFK): Fixed - I don't think it was correct (segfaults in clang & gcc4.8 in parallel).
+              btile_kps_desc_in_overlap_list.push_back(b_tile->p_kps_desc->row(pt_idx).clone());
             }
           }
-        }
+          cv::vconcat(btile_kps_desc_in_overlap_list, (btile_kps_desc_in_overlap));
+        //}
 
         TRACE_1("    -- %d_%d overlap_features_num: %lu\n",
                 a_tile->mfov_id, a_tile->index,
@@ -397,12 +438,12 @@ void compute_tile_matches(align_data_t *p_align_data) {
 
         // Filter the matches with RANSAC
         std::vector< cv::DMatch > filtered_matches;
-        {
+        //{
           // Extract the match points
-          std::vector<cv::Point2f> match_points_a, match_points_b;
+          std::vector<cv::Point2f> match_points_a2, match_points_b2;
           for (size_t i = 0; i < matches.size(); ++i) {
-            match_points_a.push_back(atile_kps_in_overlap[matches[i].queryIdx].pt);
-            match_points_b.push_back(btile_kps_in_overlap[matches[i].trainIdx].pt);
+            match_points_a2.push_back(atile_kps_in_overlap[matches[i].queryIdx].pt);
+            match_points_b2.push_back(btile_kps_in_overlap[matches[i].trainIdx].pt);
           }
 
           // Use cv::findHomography to run RANSAC on the match points.
@@ -414,7 +455,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
           // TODO: Read the appropriate RANSAC settings from the
           // configuration file.
           cv::Mat mask(matches.size(), 1, CV_8UC1);
-          cv::Mat H = cv::findHomography(match_points_a, match_points_b, cv::RANSAC,
+          cv::Mat H = cv::findHomography(match_points_a2, match_points_b2, cv::RANSAC,
                                          MAX_EPSILON, mask);
 
           // Use the output mask from findHomography to filter the matches
@@ -422,7 +463,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
             if (mask.at<bool>(0, i))
               filtered_matches.push_back(matches[i]);
           }
-        }
+        //}
 
         TRACE_1("    -- [%d_%d, %d_%d] filtered_matches: %lu\n",
                 a_tile->mfov_id, a_tile->index,
@@ -439,17 +480,17 @@ void compute_tile_matches(align_data_t *p_align_data) {
         }
 
         // Write the JSON output
-        {
+        //{
           // Extract the match points
-          std::vector<cv::Point2f> match_points_a, match_points_b;
+          std::vector<cv::Point2f> match_points_a3, match_points_b3;
           for (size_t i = 0; i < filtered_matches.size(); ++i) {
-            match_points_a.push_back(atile_kps_in_overlap[filtered_matches[i].queryIdx].pt);
-            match_points_b.push_back(btile_kps_in_overlap[filtered_matches[i].trainIdx].pt);
+            match_points_a3.push_back(atile_kps_in_overlap[filtered_matches[i].queryIdx].pt);
+            match_points_b3.push_back(btile_kps_in_overlap[filtered_matches[i].trainIdx].pt);
           }
 
           // Estimate the rigid transform from the matched points in
           // tile A to those in tile B.
-          cv::Mat model = cv::estimateRigidTransform(match_points_a, match_points_b, false);
+          cv::Mat model = cv::estimateRigidTransform(match_points_a3, match_points_b3, false);
           TRACE_1("    -- [%d_%d, %d_%d] estimated a %d by %d affine transform matrix.\n",
                   a_tile->mfov_id, a_tile->index,
                   b_tile->mfov_id, b_tile->index,
@@ -467,15 +508,15 @@ void compute_tile_matches(align_data_t *p_align_data) {
           // between matched points after alignment.
           std::vector< cv::Point2f > match_points_a_fixed;
           // std::vector< cv::Point2f > match_points_b_fixed;
-          cv::transform(match_points_a, match_points_a_fixed, model);
+          cv::transform(match_points_a3, match_points_a_fixed, model);
           // cv::transform(match_points_b, match_points_b_fixed, model);
 
           // Output the tile matches.
           save_tile_matches(filtered_matches.size(), out_filepath,
                             a_tile, b_tile,
-                            &match_points_a, &match_points_b,
+                            &match_points_a3, &match_points_b3,
                             &match_points_a_fixed);
-        }
+        //}
       }  // for (btile_id)
     }  // for (atile_id)
 

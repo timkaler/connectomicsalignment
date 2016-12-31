@@ -222,7 +222,7 @@ static const float SIFT_DESCR_MAG_THR = 0.2f;
 // factor used to convert floating-point descriptor to unsigned char
 static const float SIFT_INT_DESCR_FCTR = 512.f;
 
-#if 1
+#if 0
 // intermediate type used for DoG pyramids
 typedef uint8_t sift_wt;
 static const int SIFT_FIXPT_SCALE = 48;
@@ -272,7 +272,7 @@ static std::mutex GaussianPyramidTimer_mutex;
 
 void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, int nOctaves ) const
 {
-#define USE_BOXBLUR_GAUSSIANPYRAMID
+//#define USE_BOXBLUR_GAUSSIANPYRAMID
 #ifdef USE_BOXBLUR_GAUSSIANPYRAMID
     BuildGaussianPyramid_BoxBlurApproximation(base, pyr, nOctaves, nOctaveLayers);
 #else

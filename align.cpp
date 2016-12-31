@@ -11,6 +11,7 @@
 #include "align.h"
 #include "match.h"
 #include "fasttime.h"
+#include "simple_mutex.h"
 //#include "ezsift/ezsift.h"
 
 #include <set>
@@ -157,7 +158,7 @@ void read_input(align_data_t *p_align_data) {
     ASSERT(0 == strcmp(str_input, magic_str_total_tiles));
     
     int cur_section_idx = 0;
-    
+ 
     for (int i = 0; i < n_tiles; i++) {
         
         n_objs_read = fscanf(fp, "%s [%d]\n", str_input, &in_tile_id);
@@ -306,7 +307,12 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     TRACE_1("compute_SIFT_parallel: start\n");
     
     SIFT_initialize();
-    
+   
+
+    std::set<std::string> created_paths;
+    simple_mutex_t created_paths_lock; 
+    simple_mutex_init(&created_paths_lock);
+ 
     for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
         section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
         
@@ -412,7 +418,14 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             std::string timagename = filepath.substr(filepath.find_last_of("/")+1);
             std::string real_section_id = timagename.substr(0,timagename.find("_"));
             std::string image_path = std::string(p_align_data->output_dirpath) + "/sifts/W01_Sec"+real_section_id+"/" + padTo(std::to_string(p_tile_data->mfov_id),6);
-            system((std::string("mkdir -p ") + image_path).c_str());
+
+            simple_acquire(&created_paths_lock);
+            if (created_paths.find(image_path) == created_paths.end()) {
+              system((std::string("mkdir -p ") + image_path).c_str());
+              created_paths.insert(image_path);
+            }
+            simple_release(&created_paths_lock);
+
             printf("timagename is %s, real_section_id %s\n", timagename.c_str(), real_section_id.c_str());
             image_path = image_path + std::string("/W01_Sec")+real_section_id + std::string("_sifts_")+timagename.substr(0,timagename.find_last_of(".")) + std::string(".hdf5");
           
