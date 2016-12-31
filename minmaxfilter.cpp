@@ -102,6 +102,7 @@ namespace maxFilter3x3
 					_mm256_storeu_si256((__m256i*)buffer, m2);
 					buffer++; a++; b++;
 				}
+				j++;
 			}
 		}
 	}
@@ -152,6 +153,7 @@ namespace maxFilter3x3
 					_mm256_storeu_si256((__m256i*)buffer, m2);
 					buffer++; a++; b++;
 				}
+				i++;
 			}
 		}
 	}
@@ -259,6 +261,7 @@ namespace minFilter3x3
 					_mm256_storeu_si256((__m256i*)buffer, m2);
 					buffer++; a++; b++;
 				}
+				j++;
 			}
 		}
 	}
@@ -309,6 +312,7 @@ namespace minFilter3x3
 					_mm256_storeu_si256((__m256i*)buffer, m2);
 					buffer++; a++; b++;
 				}
+				i++;
 			}
 		}
 	}

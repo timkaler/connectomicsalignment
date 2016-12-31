@@ -541,91 +541,88 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
 
     int mutex = 0;
 
-    static long long cnt1=0, cnt2=0;
-    
+    static int cnt2=0;
+    static double zTime=0;
+    static std::mutex findSSExtTimer_mutex;
+    fasttime_t tstart=gettime();
     for( int o = 0; o < nOctaves; o++ )
-        for( int i = 1; i <= nOctaveLayers; i++ )
-        {
-            int idx = o*(nOctaveLayers+2)+i;
-            const Mat& img = dog_pyr[idx];
-            const Mat& prev = dog_pyr[idx-1];
-            const Mat& next = dog_pyr[idx+1];
-            int step = (int)img.step1() / SIFT_BATCH_SIZE;
-            int rows = img.rows, cols = img.cols;
-
-            for( int r = SIFT_IMG_BORDER; r < rows-SIFT_IMG_BORDER; r++)
-            {
-                const sift_wt* currptr = img.ptr<sift_wt>(r);
-                const sift_wt* prevptr = prev.ptr<sift_wt>(r);
-                const sift_wt* nextptr = next.ptr<sift_wt>(r);
-
-                for( int c = SIFT_IMG_BORDER; c < cols-SIFT_IMG_BORDER; c++)
-                {
-                    for (int batch=0; batch<SIFT_BATCH_SIZE; batch++)
-                    {
-                         sift_wt_elem val = currptr[c].chan[batch];
+    {
+        std::vector< cv::Mat > minG, maxG;
+        minG.resize(nOctaveLayers+2);
+        maxG.resize(nOctaveLayers+2);
+        for( int i = 0; i <= nOctaveLayers+1; i++ )
+	  {
+		  int idx = o*(nOctaveLayers+2)+i;
+		  dog_pyr[idx].copyTo(minG[i]);
+		  dog_pyr[idx].copyTo(maxG[i]);
+	  }
+	  
+	  minFilter3x3::applyMinFilter(minG);
+	  maxFilter3x3::applyMaxFilter(maxG);
+	  
+	  int rows=dog_pyr[o*(nOctaveLayers+2)].rows, cols=dog_pyr[o*(nOctaveLayers+2)].cols;
+	   
+	  for( int i = 1; i <= nOctaveLayers; i++ )
+	  {
+		 int idx = o*(nOctaveLayers+2)+i;
+		  for (int r = SIFT_IMG_BORDER; r < rows - SIFT_IMG_BORDER; r++)
+		  {
+			  const sift_wt *t = dog_pyr[idx].ptr<sift_wt>(r);
+			  const sift_wt_elem *end = (sift_wt_elem*)(t + cols - SIFT_IMG_BORDER);
+			  const sift_wt_elem *a = (sift_wt_elem*)(t + SIFT_IMG_BORDER);
+			  sift_wt_elem *b = (sift_wt_elem*)(minG[i].ptr<sift_wt>(r) + SIFT_IMG_BORDER);
+			  sift_wt_elem *c = (sift_wt_elem*)(maxG[i].ptr<sift_wt>(r) + SIFT_IMG_BORDER);
+			  int id=0;
+			  while (a<end)
+			  {
+				sift_wt_elem val = *a;
+				int flag1=0, flag2=0;
+				if ((val > threshold && val == *c) || (val < -threshold && val == *b)) flag1=1;
+				if (flag1)
+				{
+						cnt2++;
+						int r1 = r, c1 = id / SIFT_BATCH_SIZE + SIFT_IMG_BORDER, layer = i, batch = id % SIFT_BATCH_SIZE;
+						if( !adjustLocalExtrema(dog_pyr, kpt, batch, o, layer, r1, c1,
+										nOctaveLayers, (float)contrastThreshold,
+										(float)edgeThreshold, (float)sigma) )
+							continue;
+						float scl_octv = kpt.size*0.5f/(1 << o);
+						float omax = calcOrientationHist(gauss_pyr[o*(nOctaveLayers+3) + layer],
+												Point(c1, r1), batch,
+												cvRound(SIFT_ORI_RADIUS * scl_octv),
+												SIFT_ORI_SIG_FCTR * scl_octv,
+												hist, n);
+						float mag_thr = (float)(omax * SIFT_ORI_PEAK_RATIO);
+						for( int j = 0; j < n; j++ )
+						{
+							int l = j > 0 ? j - 1 : n - 1;
+							int r2 = j < n-1 ? j + 1 : 0;
      
-                         cnt1++;
-			  
-                         // find local extrema with pixel accuracy
-                         if( std::abs(val) > threshold &&
-                            ((val > 0 && val >= currptr[c-1].chan[batch] && val >= currptr[c+1].chan[batch] &&
-                              val >= currptr[c-step-1].chan[batch] && val >= currptr[c-step].chan[batch] && val >= currptr[c-step+1].chan[batch] &&
-                              val >= currptr[c+step-1].chan[batch] && val >= currptr[c+step].chan[batch] && val >= currptr[c+step+1].chan[batch] &&
-                              val >= nextptr[c].chan[batch] && val >= nextptr[c-1].chan[batch] && val >= nextptr[c+1].chan[batch] &&
-                              val >= nextptr[c-step-1].chan[batch] && val >= nextptr[c-step].chan[batch] && val >= nextptr[c-step+1].chan[batch] &&
-                              val >= nextptr[c+step-1].chan[batch] && val >= nextptr[c+step].chan[batch] && val >= nextptr[c+step+1].chan[batch] &&
-                              val >= prevptr[c].chan[batch] && val >= prevptr[c-1].chan[batch] && val >= prevptr[c+1].chan[batch] &&
-                              val >= prevptr[c-step-1].chan[batch] && val >= prevptr[c-step].chan[batch] && val >= prevptr[c-step+1].chan[batch] &&
-                              val >= prevptr[c+step-1].chan[batch] && val >= prevptr[c+step].chan[batch] && val >= prevptr[c+step+1].chan[batch]) ||
-                             (val < 0 && val <= currptr[c-1].chan[batch] && val <= currptr[c+1].chan[batch] &&
-                              val <= currptr[c-step-1].chan[batch] && val <= currptr[c-step].chan[batch] && val <= currptr[c-step+1].chan[batch] &&
-                              val <= currptr[c+step-1].chan[batch] && val <= currptr[c+step].chan[batch] && val <= currptr[c+step+1].chan[batch] &&
-                              val <= nextptr[c].chan[batch] && val <= nextptr[c-1].chan[batch] && val <= nextptr[c+1].chan[batch] &&
-                              val <= nextptr[c-step-1].chan[batch] && val <= nextptr[c-step].chan[batch] && val <= nextptr[c-step+1].chan[batch] &&
-                              val <= nextptr[c+step-1].chan[batch] && val <= nextptr[c+step].chan[batch] && val <= nextptr[c+step+1].chan[batch] &&
-                              val <= prevptr[c].chan[batch] && val <= prevptr[c-1].chan[batch] && val <= prevptr[c+1].chan[batch] &&
-                              val <= prevptr[c-step-1].chan[batch] && val <= prevptr[c-step].chan[batch] && val <= prevptr[c-step+1].chan[batch] &&
-                              val <= prevptr[c+step-1].chan[batch] && val <= prevptr[c+step].chan[batch] && val <= prevptr[c+step+1].chan[batch])))
-                         {
-                             cnt2++;
-                             int r1 = r, c1 = c, layer = i;
-                             if( !adjustLocalExtrema(dog_pyr, kpt, batch, o, layer, r1, c1,
-                                                     nOctaveLayers, (float)contrastThreshold,
-                                                     (float)edgeThreshold, (float)sigma) )
-                                 continue;
-                             float scl_octv = kpt.size*0.5f/(1 << o);
-                             float omax = calcOrientationHist(gauss_pyr[o*(nOctaveLayers+3) + layer],
-                                                              Point(c1, r1), batch,
-                                                              cvRound(SIFT_ORI_RADIUS * scl_octv),
-                                                              SIFT_ORI_SIG_FCTR * scl_octv,
-                                                              hist, n);
-                             float mag_thr = (float)(omax * SIFT_ORI_PEAK_RATIO);
-                             for( int j = 0; j < n; j++ )
-                             {
-                                 int l = j > 0 ? j - 1 : n - 1;
-                                 int r2 = j < n-1 ? j + 1 : 0;
-     
-                                 if( hist[j] > hist[l]  &&  hist[j] > hist[r2]  &&  hist[j] >= mag_thr )
-                                 {
-                                     float bin = j + 0.5f * (hist[l]-hist[r2]) / (hist[l] - 2*hist[j] + hist[r2]);
-                                     bin = bin < 0 ? n + bin : bin >= n ? bin - n : bin;
-                                     kpt.angle = 360.f - (float)((360.f/n) * bin);
-                                     if(std::abs(kpt.angle - 360.f) < FLT_EPSILON)
-                                         kpt.angle = 0.f;
-                                     while (!__sync_bool_compare_and_swap(&mutex, 0, 1)) {
-                                        continue;
-                                     }
-                                     keypoints[batch].push_back(kpt);
-                                     __sync_bool_compare_and_swap(&mutex, 1,0);
-                                 }
-                             }
-                         }
-                     }
-                 }
-            }
+							if( hist[j] > hist[l]  &&  hist[j] > hist[r2]  &&  hist[j] >= mag_thr )
+							{
+								float bin = j + 0.5f * (hist[l]-hist[r2]) / (hist[l] - 2*hist[j] + hist[r2]);
+								bin = bin < 0 ? n + bin : bin >= n ? bin - n : bin;
+								kpt.angle = 360.f - (float)((360.f/n) * bin);
+								if(std::abs(kpt.angle - 360.f) < FLT_EPSILON)
+								kpt.angle = 0.f;
+								while (!__sync_bool_compare_and_swap(&mutex, 0, 1)) {
+								continue;
+								}
+								keypoints[batch].push_back(kpt);
+								__sync_bool_compare_and_swap(&mutex, 1,0);
+							}
+						}
+					}
+				a++; b++; c++; id++;
+			}
+		  }
         }
-        printf("cnt1 = %lld, cnt2 = %lld\n",cnt1, cnt2);
+    }
+    fasttime_t tend=gettime();
+    findSSExtTimer_mutex.lock();
+    zTime+=tdiff(tstart,tend);
+    findSSExtTimer_mutex.unlock();
+    printf("cumulative findScaleSpaceExtrema time: %.6lf cnt=%d\n",zTime, cnt2);
 }
 
 
