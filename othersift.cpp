@@ -130,6 +130,7 @@
 #include <stdarg.h>
 #include <opencv2/core/hal/hal.hpp>
 
+#include "gaussianPyramid.cpp"
 
 namespace cv
 {
@@ -223,15 +224,13 @@ static const float SIFT_INT_DESCR_FCTR = 512.f;
 
 #if 1
 // intermediate type used for DoG pyramids
-typedef short sift_wt;
+typedef uint8_t sift_wt;
 static const int SIFT_FIXPT_SCALE = 48;
 #else
 // intermediate type used for DoG pyramids
 typedef float sift_wt;
 static const int SIFT_FIXPT_SCALE = 1;
 #endif
-
-#include "gaussianPyramid.cpp"
 
 static inline void
 unpackOctave(const KeyPoint& kpt, int& octave, int& layer, float& scale)

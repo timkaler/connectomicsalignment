@@ -61,6 +61,8 @@
 
 #define OVERLAP_2D (300)
 #define LOWE_RATIO (0.65)
+// TB: I don't know why the Python calls this ratio "rod".
+#define ROD (0.92)
 #define MAX_KPS_DIST (3000)
 
 #define SIFT_MAX_SUB_IMAGES (1024)
@@ -262,7 +264,9 @@ void log_pts_matches(
     tile_data_t *p_tile_data_dst,
     std::vector<cv::Point2f> *p_src_pts,
     std::vector<cv::Point2f> *p_dst_pts);
-     
+
+bool is_tiles_overlap(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2);
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL MACROS
 /////////////////////////////////////////////////////////////////////////////////////////

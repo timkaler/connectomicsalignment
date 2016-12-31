@@ -1,33 +1,20 @@
 
-#CC := /home/amatveev/Pipeline/cilkplus-install/bin/g++
-#LD := /home/amatveev/Pipeline/cilkplus-install/bin/g++
-
-CC := clang++
-LD := clang++
-#CC := /home/armafire/tools/cilkplus-install/bin/g++
-#LD := /home/armafire/tools/cilkplus-install/bin/g++
-
-#CC := /home/ubuntu/Parallel-IR/build/bin/clang++
-#LD := /home/ubuntu/Parallel-IR/build/bin/clang++
-#CC := clang
-#LD := clang
-#LD := clang++
-
-#OPENCV_INCLUDE := /home/amatveev/Pipeline/tools/OpenCV/opencv-2.4-install/include/
-#OPENCV_LIB := /home/amatveev/Pipeline/tools/OpenCV/opencv-2.4-install/lib/
+CC := ./setup.sh $(CXX) #g++
+LD := ./setup.sh $(CXX) #g++
 
 OPENCV_LIB=/efs/tools/OpenCV3/lib/
 OPENCV_INCLUDE=/efs/tools/OpenCV3/include/
 #OPENCV_INCLUDE=/home/armafire/tools/opencv-3-install-test/include/
 #OPENCV_LIB=/home/armafire/tools/opencv-3-install-test/lib/
 
+#=======
+#OPENCV_ROOT=/efs/home/lemon510/cv
+#OPENCV_INCLUDE=$(OPENCV_ROOT)/include
+#OPENCV_LIB=$(OPENCV_ROOT)/lib
+#>>>>>>> 84dd39cb1a6e33998c46f5e549f732adc98b358f
+
 #CFLAGS += -fcilkplus -m64 -ffast-math -mfma 
 CFLAGS += -std=c++11 -ftapir -m64 -march=native -fno-exceptions
-#CFLAGS += -std=c++11 -fdetach
-#CFLAGS += -fdetach
-#CFLAGS += -fcilkplus -m64 -march=native 
-#-ffast-math -mfma -funroll-loops -flto
-#CFLAGS += -D_REENTRANT
 CFLAGS += -Wall 
 #-Winline
 CFLAGS += -I$(OPENCV_INCLUDE)
@@ -46,24 +33,34 @@ ifdef LOGIMAGES
   CFLAGS += -DLOGIMAGES
 endif
 
-#CFLAGS += --param inline-unit-growth=1000
-#CFLAGS += -mrtm
+ifdef SKIPHDF5
+  CFLAGS += -DSKIPHDF5
+endif
+
+ifdef SKIPJSON
+  CFLAGS += -DSKIPJSON
+endif
+
+ifdef ASSEMBLY
+	CFLAGS += -S
+endif
 
 ifdef DEBUG
 	CFLAGS += -O0 -g3 
 else
 	CFLAGS += -DNDEBUG
-	CFLAGS += -O3 -g 
+	CFLAGS += -O3 -g -mavx2 -m64 -march=native
 	#-Ofast
 endif
 
 LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_video -lopencv_calib3d -lopencv_hdf -lhdf5_hl -lhdf5 -lgomp
 
-#ifdef DEBUG
-#	LDFLAGS += -pg
-#endif
 
-BINS = run_align
+ifdef ASSEMBLY
+	BINS = img_io.S ezsift.S common.S align.S run.S
+else
+	BINS = run_align
+endif
 
 .PHONY:	all clean
 
@@ -72,19 +69,37 @@ all: $(BINS)
 img_io.o: ezsift/img_io.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
+img_io.S: ezsift/img_io.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
 ezsift.o: ezsift/ezsift.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+ezsift.S: ezsift/ezsift.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 common.o: common.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-align.o: align.cpp othersift.cpp gaussianPyramid.cpp
+common.S: common.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+match.o: match.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+align.o: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.cpp rowsum.cpp columnsum.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+align.S: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.cpp rowsum.cpp columnsum.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 run.o: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: common.o align.o run.o ezsift.o img_io.o
+run.S: run.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
+
+run_align: common.o align.o run.o ezsift.o img_io.o match.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:

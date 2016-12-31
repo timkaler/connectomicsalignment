@@ -9,6 +9,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 #include "common.h"
 #include "align.h"
+#include "match.h"
 #include "fasttime.h"
 //#include "ezsift/ezsift.h"
 
@@ -254,6 +255,7 @@ void read_input(align_data_t *p_align_data) {
     
     TRACE_1("finish\n");
 }
+
 void read_tiles(align_data_t *p_align_data) {
 
     TRACE_1("read_tiles: start\n");
@@ -290,38 +292,9 @@ void read_tiles(align_data_t *p_align_data) {
     
 }
 
-bool is_tiles_overlap(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2) {
-
-    TRACE_3("is_tiles_overlap: start\n");
-    TRACE_3("  -- tile_1: %d\n", p_tile_data_1->index);
-    TRACE_3("  -- tile_2: %d\n", p_tile_data_2->index);
-    
-    int x1_start = p_tile_data_1->x_start;
-    int x1_finish = p_tile_data_1->x_finish;
-    int y1_start = p_tile_data_1->y_start;
-    int y1_finish = p_tile_data_1->y_finish;
-    
-    int x2_start = p_tile_data_2->x_start;
-    int x2_finish = p_tile_data_2->x_finish;
-    int y2_start = p_tile_data_2->y_start;
-    int y2_finish = p_tile_data_2->y_finish;
-    
-    bool res = false;
-    
-    if ((x1_start < x2_finish) && (x1_finish > x2_start) &&
-        (y1_start < y2_finish) && (y1_finish > y2_start)) {
-        res = true;
-    }
-    
-    TRACE_3("is_tiles_overlap: finish\n");
-    
-    return res;
-    
-}
-
 void SIFT_initialize()
 {
-	cv::xfeatures2d::generateBoxBlurExecutionPlan();
+	generateBoxBlurExecutionPlan();
 }
 
 void compute_SIFT_parallel(align_data_t *p_align_data) {
@@ -421,7 +394,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             cv::vconcat( m_kps_desc, n_sub_images, *(p_tile_data->p_kps_desc));
 
 
-            #ifndef SKIPOUTPUT
+            #ifndef SKIPHDF5
             // NOTE(TFK): Begin HDF5 preparation 
             std::vector<float> locations;
             std::vector<float> octaves;
@@ -461,15 +434,6 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             #ifdef LOGIMAGES
             LOG_KPS(p_tile_data);
             #endif
-
-	/*
-	imageProcessed++;
-	if (imageProcessed == 10) 
-	{
-		printf("first 10 images processed, net processing time = %.6lf\n", totalTime);
-		exit(0);
-	}
-	*/
         }
     }
     
@@ -477,8 +441,6 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     
     TRACE_1("compute_SIFT_parallel: finish\n");
 }
-
- 
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL FUNCTIONS
@@ -502,6 +464,77 @@ void align_execute(align_data_t *p_align_data)
         STOP_TIMER(&timer, "compute_SIFT time:");
     } 
     
+    START_TIMER(&timer);
+    compute_tile_matches(p_align_data);
+    // compute_affine_inter_section_transforms(p_align_data);
+    // compute_affine_inter_section_transform_2(p_align_data);
+    // compute_affine_inter_section_transforms_3(p_align_data);
+    STOP_TIMER(&timer, "compute_tile_matches time:");
+
     STOP_TIMER(&t_timer, "t_total-time:");
-         
+}
+
+// function for debug purpose only
+void testcv()
+{
+	int BS=1;
+	std::vector<cv::Mat> T1;
+	T1.resize(BS);
+	rep(i,0,BS-1) T1[i]=cv::Mat(1000,1000,CV_8UC(16));
+	rep(i,0,BS-1)
+		rep(j,0,999)
+		{
+			uint8_t *p1 = T1[i].ptr<uint8_t>(j);
+			rep(k,0,16000-1)
+			{
+				p1[k]=rand()%256;
+			}
+		}
+
+	/*
+	std::vector<cv::Mat> T2;
+	T2.resize(BS*16);
+	rep(i,0,BS*16-1) T2[i]=cv::Mat(1000,1000,CV_8U);
+	rep(i,0,BS*16-1)
+		rep(j,0,999)
+			rep(k,0,999)
+			{
+				T2[i].at<uint8_t>(j,k)=rand()%256;
+			}
+	*/
+	fasttime_t tstart = gettime();
+	rep(i,0,BS-1)
+		rep(j,0,100)
+		{
+			cv::Mat tmp;
+			cv::boxFilterCV8U(T1[i], tmp, -1, cv::Size(3,3));
+			cv::boxFilter(T1[i], T1[i], -1, cv::Size(3,3));
+			compare_matrix_uchar_uchar(tmp,T1[i]);
+			cv::boxFilterCV8U(T1[i], tmp, -1, cv::Size(5,5));
+			cv::boxFilter(T1[i], T1[i], -1, cv::Size(5,5));
+			compare_matrix_uchar_uchar(tmp,T1[i]);
+			cv::boxFilterCV8U(T1[i], tmp, -1, cv::Size(7,7));
+			cv::boxFilter(T1[i], T1[i], -1, cv::Size(7,7));
+			compare_matrix_uchar_uchar(tmp,T1[i]);
+		}
+	
+	fasttime_t tend=gettime();
+	double t1=tdiff(tstart,tend);
+	
+	exit(0);
+	/*
+	tstart = gettime();
+	rep(i,0,BS*16-1)
+		rep(j,0,100)
+		{
+			cv::boxFilter(T2[i], T2[i], -1, cv::Size(3,3));
+			cv::boxFilter(T2[i], T2[i], -1, cv::Size(5,5));
+			cv::boxFilter(T2[i], T2[i], -1, cv::Size(7,7));
+		}
+		
+	tend=gettime();
+	double t2=tdiff(tstart,tend);
+	
+	printf("Time 1 = %.6lf\n, Time 2 = %.6lf\n",t1,t2);
+	*/
 }
