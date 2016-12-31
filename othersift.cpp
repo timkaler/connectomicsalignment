@@ -275,7 +275,7 @@ static std::mutex GaussianPyramidTimer_mutex;
 
 void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, int nOctaves ) const
 {
-#define USE_BOXBLUR_GAUSSIANPYRAMID
+//#define USE_BOXBLUR_GAUSSIANPYRAMID
 #ifdef USE_BOXBLUR_GAUSSIANPYRAMID
     BuildGaussianPyramid_BoxBlurApproximation(base, pyr, nOctaves, nOctaveLayers);
 #else
@@ -556,10 +556,10 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
 		  dog_pyr[idx].copyTo(minG[i]);
 		  dog_pyr[idx].copyTo(maxG[i]);
 	  }
-	  
+	  /*
 	  minFilter3x3::applyMinFilter(minG);
 	  maxFilter3x3::applyMaxFilter(maxG);
-	  
+	  */
 	  int rows=dog_pyr[o*(nOctaveLayers+2)].rows, cols=dog_pyr[o*(nOctaveLayers+2)].cols;
 	   
 	  for( int i = 1; i <= nOctaveLayers; i++ )
@@ -567,18 +567,55 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
 		 int idx = o*(nOctaveLayers+2)+i;
 		  for (int r = SIFT_IMG_BORDER; r < rows - SIFT_IMG_BORDER; r++)
 		  {
+			  const sift_wt* currptr = dog_pyr[idx].ptr<sift_wt>(r);
+			const sift_wt* prevptr =dog_pyr[idx-1].ptr<sift_wt>(r);
+			const sift_wt* nextptr = dog_pyr[idx+1].ptr<sift_wt>(r);
+			int step = dog_pyr[idx].step1()/SIFT_BATCH_SIZE;
+			
 			  const sift_wt *t = dog_pyr[idx].ptr<sift_wt>(r);
 			  const sift_wt_elem *end = (sift_wt_elem*)(t + cols - SIFT_IMG_BORDER);
 			  const sift_wt_elem *a = (sift_wt_elem*)(t + SIFT_IMG_BORDER);
 			  sift_wt_elem *b = (sift_wt_elem*)(minG[i].ptr<sift_wt>(r) + SIFT_IMG_BORDER);
-			  sift_wt_elem *c = (sift_wt_elem*)(maxG[i].ptr<sift_wt>(r) + SIFT_IMG_BORDER);
+			  sift_wt_elem *cc = (sift_wt_elem*)(maxG[i].ptr<sift_wt>(r) + SIFT_IMG_BORDER);
 			  int id=0;
 			  while (a<end)
 			  {
 				sift_wt_elem val = *a;
 				int flag1=0, flag2=0;
-				if ((val > threshold && val == *c) || (val < -threshold && val == *b)) flag1=1;
-				if (flag1)
+				if ((val > threshold && val == *cc) || (val < -threshold && val == *b)) flag1=1;
+				int c = id/ SIFT_BATCH_SIZE + SIFT_IMG_BORDER, batch = id% SIFT_BATCH_SIZE;
+				
+				val = currptr[c].chan[batch];
+     
+                         // find local extrema with pixel accuracy
+                         if( std::abs(val) > threshold &&
+                            ((val > 0 && val >= currptr[c-1].chan[batch] && val >= currptr[c+1].chan[batch] &&
+                              val >= currptr[c-step-1].chan[batch] && val >= currptr[c-step].chan[batch] && val >= currptr[c-step+1].chan[batch] &&
+                              val >= currptr[c+step-1].chan[batch] && val >= currptr[c+step].chan[batch] && val >= currptr[c+step+1].chan[batch] &&
+                              val >= nextptr[c].chan[batch] && val >= nextptr[c-1].chan[batch] && val >= nextptr[c+1].chan[batch] &&
+                              val >= nextptr[c-step-1].chan[batch] && val >= nextptr[c-step].chan[batch] && val >= nextptr[c-step+1].chan[batch] &&
+                              val >= nextptr[c+step-1].chan[batch] && val >= nextptr[c+step].chan[batch] && val >= nextptr[c+step+1].chan[batch] &&
+                              val >= prevptr[c].chan[batch] && val >= prevptr[c-1].chan[batch] && val >= prevptr[c+1].chan[batch] &&
+                              val >= prevptr[c-step-1].chan[batch] && val >= prevptr[c-step].chan[batch] && val >= prevptr[c-step+1].chan[batch] &&
+                              val >= prevptr[c+step-1].chan[batch] && val >= prevptr[c+step].chan[batch] && val >= prevptr[c+step+1].chan[batch]) ||
+                             (val < 0 && val <= currptr[c-1].chan[batch] && val <= currptr[c+1].chan[batch] &&
+                              val <= currptr[c-step-1].chan[batch] && val <= currptr[c-step].chan[batch] && val <= currptr[c-step+1].chan[batch] &&
+                              val <= currptr[c+step-1].chan[batch] && val <= currptr[c+step].chan[batch] && val <= currptr[c+step+1].chan[batch] &&
+                              val <= nextptr[c].chan[batch] && val <= nextptr[c-1].chan[batch] && val <= nextptr[c+1].chan[batch] &&
+                              val <= nextptr[c-step-1].chan[batch] && val <= nextptr[c-step].chan[batch] && val <= nextptr[c-step+1].chan[batch] &&
+                              val <= nextptr[c+step-1].chan[batch] && val <= nextptr[c+step].chan[batch] && val <= nextptr[c+step+1].chan[batch] &&
+                              val <= prevptr[c].chan[batch] && val <= prevptr[c-1].chan[batch] && val <= prevptr[c+1].chan[batch] &&
+                              val <= prevptr[c-step-1].chan[batch] && val <= prevptr[c-step].chan[batch] && val <= prevptr[c-step+1].chan[batch] &&
+                              val <= prevptr[c+step-1].chan[batch] && val <= prevptr[c+step].chan[batch] && val <= prevptr[c+step+1].chan[batch])))
+						flag2=1;
+					/*
+				if (flag1!=flag2) 
+				{
+					printf("error!\n");
+					exit(0);
+				}
+				*/
+				if (flag2)
 				{
 						cnt2++;
 						int r1 = r, c1 = id / SIFT_BATCH_SIZE + SIFT_IMG_BORDER, layer = i, batch = id % SIFT_BATCH_SIZE;
@@ -613,7 +650,7 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
 							}
 						}
 					}
-				a++; b++; c++; id++;
+				a++; b++; cc++; id++;
 			}
 		  }
         }
