@@ -6,6 +6,9 @@
 #define MFILTER_DATA_WIDTH 16
 #define V256_MAX MACRO_CONCAT(_mm256_max_epi,MFILTER_DATA_WIDTH)
 #define V256_MIN MACRO_CONCAT(_mm256_min_epi,MFILTER_DATA_WIDTH)
+#define V256_SIGN MACRO_CONCAT(_mm256_sign_epi,MFILTER_DATA_WIDTH)
+#define V256_SUB MACRO_CONCAT(_mm256_sub_epi,MFILTER_DATA_WIDTH)
+#define V256_CMPEQ MACRO_CONCAT(_mm256_cmpeq_epi,MFILTER_DATA_WIDTH)
 
 namespace maxFilter3x3
 {
@@ -20,37 +23,37 @@ namespace maxFilter3x3
 				sift_wt* a = data[i].ptr<sift_wt>(j);
 				const sift_wt* end = a+cols;
 				
-				__m256i m1=_mm256_loadu_si256((const __m256i*)a);
+				__m256i m1=_mm256_load_si256((const __m256i*)a);
 				a++;
-				__m256i m2=_mm256_loadu_si256((const __m256i*)a);
+				__m256i m2=_mm256_load_si256((const __m256i*)a);
 				
 				while (a+2 < end)
 				{
 					//invarient: a points to m2, *a not done yet
 					// 1 2(a) 3 4 
-					__m256i m3=_mm256_loadu_si256((const __m256i*)(a+1));
-					__m256i m4=_mm256_loadu_si256((const __m256i*)(a+2));
+					__m256i m3=_mm256_load_si256((const __m256i*)(a+1));
+					__m256i m4=_mm256_load_si256((const __m256i*)(a+2));
 					__m256i m23=V256_MAX(m2, m3);
-					_mm256_storeu_si256((__m256i*)a,V256_MAX(m23, m1));
-					_mm256_storeu_si256((__m256i*)(a+1),V256_MAX(m23, m4));
+					_mm256_store_si256((__m256i*)a,V256_MAX(m23, m1));
+					_mm256_store_si256((__m256i*)(a+1),V256_MAX(m23, m4));
 					a+=2;
 					
 					m1=m3; m2=m4;
 					/*
 					// 3 4(a) 1 2
-					m1=_mm256_loadu_si256((const __m256i*)(a+1));
-					m2=_mm256_loadu_si256((const __m256i*)(a+2));
+					m1=_mm256_load_si256((const __m256i*)(a+1));
+					m2=_mm256_load_si256((const __m256i*)(a+2));
 					_mm256i m41=V256_MAX(m4, m1);
-					_mm256_storeu_si256((__m256i*)a,V256_MAX(m3, m41));
-					_mm256_storeu_si256((__m256i*)(a+1),V256_MAX(m41, m2));
+					_mm256_store_si256((__m256i*)a,V256_MAX(m3, m41));
+					_mm256_store_si256((__m256i*)(a+1),V256_MAX(m41, m2));
 					a+=2;
 					*/
 				}
 				
 				while (a+1 < end)
 				{
-					__m256i m3=_mm256_loadu_si256((const __m256i*)(a+1));
-					_mm256_storeu_si256((__m256i*)a,V256_MAX(V256_MAX(m1, m2), m3));
+					__m256i m3=_mm256_load_si256((const __m256i*)(a+1));
+					_mm256_store_si256((__m256i*)a,V256_MAX(V256_MAX(m1, m2), m3));
 					a++; m1=m2; m2=m3;
 				}
 			}
@@ -74,14 +77,14 @@ namespace maxFilter3x3
 				const sift_wt* end = a + cols;
 				while (a<end)
 				{
-					__m256i m1=_mm256_loadu_si256((const __m256i*)buffer);
-					__m256i m2=_mm256_loadu_si256((const __m256i*)a);
-					__m256i m3=_mm256_loadu_si256((const __m256i*)b);
-					__m256i m4=_mm256_loadu_si256((const __m256i*)c);
+					__m256i m1=_mm256_load_si256((const __m256i*)buffer);
+					__m256i m2=_mm256_load_si256((const __m256i*)a);
+					__m256i m3=_mm256_load_si256((const __m256i*)b);
+					__m256i m4=_mm256_load_si256((const __m256i*)c);
 					__m256i m23=V256_MAX(m2,m3);
-					_mm256_storeu_si256((__m256i*)a, V256_MAX(m23, m1));
-					_mm256_storeu_si256((__m256i*)b, V256_MAX(m23, m4));
-					_mm256_storeu_si256((__m256i*)buffer, m3);
+					_mm256_store_si256((__m256i*)a, V256_MAX(m23, m1));
+					_mm256_store_si256((__m256i*)b, V256_MAX(m23, m4));
+					_mm256_store_si256((__m256i*)buffer, m3);
 					buffer++; a++; b++; c++;
 				}
 				j+=2;
@@ -95,11 +98,11 @@ namespace maxFilter3x3
 				const sift_wt* end = a + cols;
 				while (a<end)
 				{
-					__m256i m1=_mm256_loadu_si256((const __m256i*)buffer);
-					__m256i m2=_mm256_loadu_si256((const __m256i*)a);
-					__m256i m3=_mm256_loadu_si256((const __m256i*)b);
-					_mm256_storeu_si256((__m256i*)a, V256_MAX(V256_MAX(m1, m2), m3));
-					_mm256_storeu_si256((__m256i*)buffer, m2);
+					__m256i m1=_mm256_load_si256((const __m256i*)buffer);
+					__m256i m2=_mm256_load_si256((const __m256i*)a);
+					__m256i m3=_mm256_load_si256((const __m256i*)b);
+					_mm256_store_si256((__m256i*)a, V256_MAX(V256_MAX(m1, m2), m3));
+					_mm256_store_si256((__m256i*)buffer, m2);
 					buffer++; a++; b++;
 				}
 				j++;
@@ -125,14 +128,14 @@ namespace maxFilter3x3
 				const sift_wt* end = a + cols;
 				while (a<end)
 				{
-					__m256i m1=_mm256_loadu_si256((const __m256i*)buffer);
-					__m256i m2=_mm256_loadu_si256((const __m256i*)a);
-					__m256i m3=_mm256_loadu_si256((const __m256i*)b);
-					__m256i m4=_mm256_loadu_si256((const __m256i*)c);
+					__m256i m1=_mm256_load_si256((const __m256i*)buffer);
+					__m256i m2=_mm256_load_si256((const __m256i*)a);
+					__m256i m3=_mm256_load_si256((const __m256i*)b);
+					__m256i m4=_mm256_load_si256((const __m256i*)c);
 					__m256i m23=V256_MAX(m2,m3);
-					_mm256_storeu_si256((__m256i*)a, V256_MAX(m23, m1));
-					_mm256_storeu_si256((__m256i*)b, V256_MAX(m23, m4));
-					_mm256_storeu_si256((__m256i*)buffer, m3);
+					_mm256_store_si256((__m256i*)a, V256_MAX(m23, m1));
+					_mm256_store_si256((__m256i*)b, V256_MAX(m23, m4));
+					_mm256_store_si256((__m256i*)buffer, m3);
 					buffer++; a++; b++; c++;
 				}
 				i+=2;
@@ -146,11 +149,11 @@ namespace maxFilter3x3
 				const sift_wt* end = a + cols;
 				while (a<end)
 				{
-					__m256i m1=_mm256_loadu_si256((const __m256i*)buffer);
-					__m256i m2=_mm256_loadu_si256((const __m256i*)a);
-					__m256i m3=_mm256_loadu_si256((const __m256i*)b);
-					_mm256_storeu_si256((__m256i*)a, V256_MAX(V256_MAX(m1, m2), m3));
-					_mm256_storeu_si256((__m256i*)buffer, m2);
+					__m256i m1=_mm256_load_si256((const __m256i*)buffer);
+					__m256i m2=_mm256_load_si256((const __m256i*)a);
+					__m256i m3=_mm256_load_si256((const __m256i*)b);
+					_mm256_store_si256((__m256i*)a, V256_MAX(V256_MAX(m1, m2), m3));
+					_mm256_store_si256((__m256i*)buffer, m2);
 					buffer++; a++; b++;
 				}
 				i++;
@@ -179,37 +182,37 @@ namespace minFilter3x3
 				sift_wt* a = data[i].ptr<sift_wt>(j);
 				const sift_wt* end = a+cols;
 				
-				__m256i m1=_mm256_loadu_si256((const __m256i*)a);
+				__m256i m1=_mm256_load_si256((const __m256i*)a);
 				a++;
-				__m256i m2=_mm256_loadu_si256((const __m256i*)a);
+				__m256i m2=_mm256_load_si256((const __m256i*)a);
 				
 				while (a+2 < end)
 				{
 					//invarient: a points to m2, *a not done yet
 					// 1 2(a) 3 4 
-					__m256i m3=_mm256_loadu_si256((const __m256i*)(a+1));
-					__m256i m4=_mm256_loadu_si256((const __m256i*)(a+2));
+					__m256i m3=_mm256_load_si256((const __m256i*)(a+1));
+					__m256i m4=_mm256_load_si256((const __m256i*)(a+2));
 					__m256i m23=V256_MIN(m2, m3);
-					_mm256_storeu_si256((__m256i*)a,V256_MIN(m23, m1));
-					_mm256_storeu_si256((__m256i*)(a+1),V256_MIN(m23, m4));
+					_mm256_store_si256((__m256i*)a,V256_MIN(m23, m1));
+					_mm256_store_si256((__m256i*)(a+1),V256_MIN(m23, m4));
 					a+=2;
 					
 					m1=m3; m2=m4;
 					/*
 					// 3 4(a) 1 2
-					m1=_mm256_loadu_si256((const __m256i*)(a+1));
-					m2=_mm256_loadu_si256((const __m256i*)(a+2));
+					m1=_mm256_load_si256((const __m256i*)(a+1));
+					m2=_mm256_load_si256((const __m256i*)(a+2));
 					_mm256i m41=V256_MIN(m4, m1);
-					_mm256_storeu_si256((__m256i*)a,V256_MIN(m3, m41));
-					_mm256_storeu_si256((__m256i*)(a+1),V256_MIN(m41, m2));
+					_mm256_store_si256((__m256i*)a,V256_MIN(m3, m41));
+					_mm256_store_si256((__m256i*)(a+1),V256_MIN(m41, m2));
 					a+=2;
 					*/
 				}
 				
 				while (a+1 < end)
 				{
-					__m256i m3=_mm256_loadu_si256((const __m256i*)(a+1));
-					_mm256_storeu_si256((__m256i*)a,V256_MIN(V256_MIN(m1, m2), m3));
+					__m256i m3=_mm256_load_si256((const __m256i*)(a+1));
+					_mm256_store_si256((__m256i*)a,V256_MIN(V256_MIN(m1, m2), m3));
 					a++; m1=m2; m2=m3;
 				}
 			}
@@ -233,14 +236,14 @@ namespace minFilter3x3
 				const sift_wt* end = a + cols;
 				while (a<end)
 				{
-					__m256i m1=_mm256_loadu_si256((const __m256i*)buffer);
-					__m256i m2=_mm256_loadu_si256((const __m256i*)a);
-					__m256i m3=_mm256_loadu_si256((const __m256i*)b);
-					__m256i m4=_mm256_loadu_si256((const __m256i*)c);
+					__m256i m1=_mm256_load_si256((const __m256i*)buffer);
+					__m256i m2=_mm256_load_si256((const __m256i*)a);
+					__m256i m3=_mm256_load_si256((const __m256i*)b);
+					__m256i m4=_mm256_load_si256((const __m256i*)c);
 					__m256i m23=V256_MIN(m2,m3);
-					_mm256_storeu_si256((__m256i*)a, V256_MIN(m23, m1));
-					_mm256_storeu_si256((__m256i*)b, V256_MIN(m23, m4));
-					_mm256_storeu_si256((__m256i*)buffer, m3);
+					_mm256_store_si256((__m256i*)a, V256_MIN(m23, m1));
+					_mm256_store_si256((__m256i*)b, V256_MIN(m23, m4));
+					_mm256_store_si256((__m256i*)buffer, m3);
 					buffer++; a++; b++; c++;
 				}
 				j+=2;
@@ -254,11 +257,11 @@ namespace minFilter3x3
 				const sift_wt* end = a + cols;
 				while (a<end)
 				{
-					__m256i m1=_mm256_loadu_si256((const __m256i*)buffer);
-					__m256i m2=_mm256_loadu_si256((const __m256i*)a);
-					__m256i m3=_mm256_loadu_si256((const __m256i*)b);
-					_mm256_storeu_si256((__m256i*)a, V256_MIN(V256_MIN(m1, m2), m3));
-					_mm256_storeu_si256((__m256i*)buffer, m2);
+					__m256i m1=_mm256_load_si256((const __m256i*)buffer);
+					__m256i m2=_mm256_load_si256((const __m256i*)a);
+					__m256i m3=_mm256_load_si256((const __m256i*)b);
+					_mm256_store_si256((__m256i*)a, V256_MIN(V256_MIN(m1, m2), m3));
+					_mm256_store_si256((__m256i*)buffer, m2);
 					buffer++; a++; b++;
 				}
 				j++;
@@ -284,14 +287,14 @@ namespace minFilter3x3
 				const sift_wt* end = a + cols;
 				while (a<end)
 				{
-					__m256i m1=_mm256_loadu_si256((const __m256i*)buffer);
-					__m256i m2=_mm256_loadu_si256((const __m256i*)a);
-					__m256i m3=_mm256_loadu_si256((const __m256i*)b);
-					__m256i m4=_mm256_loadu_si256((const __m256i*)c);
+					__m256i m1=_mm256_load_si256((const __m256i*)buffer);
+					__m256i m2=_mm256_load_si256((const __m256i*)a);
+					__m256i m3=_mm256_load_si256((const __m256i*)b);
+					__m256i m4=_mm256_load_si256((const __m256i*)c);
 					__m256i m23=V256_MIN(m2,m3);
-					_mm256_storeu_si256((__m256i*)a, V256_MIN(m23, m1));
-					_mm256_storeu_si256((__m256i*)b, V256_MIN(m23, m4));
-					_mm256_storeu_si256((__m256i*)buffer, m3);
+					_mm256_store_si256((__m256i*)a, V256_MIN(m23, m1));
+					_mm256_store_si256((__m256i*)b, V256_MIN(m23, m4));
+					_mm256_store_si256((__m256i*)buffer, m3);
 					buffer++; a++; b++; c++;
 				}
 				i+=2;
@@ -305,11 +308,11 @@ namespace minFilter3x3
 				const sift_wt* end = a + cols;
 				while (a<end)
 				{
-					__m256i m1=_mm256_loadu_si256((const __m256i*)buffer);
-					__m256i m2=_mm256_loadu_si256((const __m256i*)a);
-					__m256i m3=_mm256_loadu_si256((const __m256i*)b);
-					_mm256_storeu_si256((__m256i*)a, V256_MIN(V256_MIN(m1, m2), m3));
-					_mm256_storeu_si256((__m256i*)buffer, m2);
+					__m256i m1=_mm256_load_si256((const __m256i*)buffer);
+					__m256i m2=_mm256_load_si256((const __m256i*)a);
+					__m256i m3=_mm256_load_si256((const __m256i*)b);
+					_mm256_store_si256((__m256i*)a, V256_MIN(V256_MIN(m1, m2), m3));
+					_mm256_store_si256((__m256i*)buffer, m2);
 					buffer++; a++; b++;
 				}
 				i++;
@@ -324,3 +327,91 @@ namespace minFilter3x3
 		levelMinFilter(data);
 	}
 }
+
+namespace constantValueFilter
+{
+	void applyConstantMaxFilter(std::vector< cv::Mat > &data, sift_wt_elem value)
+	{
+		sift_wt_elem tmp_mask[SIFT_BATCH_SIZE];
+		for (int i=0; i<SIFT_BATCH_SIZE; i++) tmp_mask[i]=value;
+		__m256i mask=_mm256_loadu_si256((const __m256i*)tmp_mask);
+		
+		int n=data.size(), rows=data[0].rows, cols=data[0].cols;
+		assert(n>=3 && rows>=3 && cols>=3);
+		rep(i,1,n-2)
+			rep(j,1,rows-2)
+			{
+				sift_wt* a = data[i].ptr<sift_wt>(j);
+				const sift_wt* end = a+cols;
+				while (a<end)
+				{
+					__m256i mv=_mm256_load_si256((const __m256i*)a);
+					_mm256_store_si256((__m256i*)a, V256_MAX(mask, mv));
+					a++;
+				}
+			}
+	}
+	
+	void applyConstantMinFilter(std::vector< cv::Mat > &data, sift_wt_elem value)
+	{
+		sift_wt_elem tmp_mask[SIFT_BATCH_SIZE];
+		for (int i=0; i<SIFT_BATCH_SIZE; i++) tmp_mask[i]=value;
+		__m256i mask=_mm256_loadu_si256((const __m256i*)tmp_mask);
+		
+		int n=data.size(), rows=data[0].rows, cols=data[0].cols;
+		assert(n>=3 && rows>=3 && cols>=3);
+		rep(i,1,n-2)
+			rep(j,1,rows-2)
+			{
+				sift_wt* a = data[i].ptr<sift_wt>(j);
+				const sift_wt* end = a+cols;
+				while (a<end)
+				{
+					__m256i mv=_mm256_load_si256((const __m256i*)a);
+					_mm256_store_si256((__m256i*)a, V256_MIN(mask, mv));
+					a++;
+				}
+			}
+	}
+}
+
+namespace matrixSubtractor
+{
+	void subtractSaveToB(const cv::Mat &A, cv::Mat &B)
+	{
+		int rows=A.rows, cols=A.cols;
+		rep(i,0,rows-1)
+		{
+			const sift_wt* a = A.ptr<sift_wt>(i);
+			const sift_wt* end = a+cols;
+			sift_wt* b = B.ptr<sift_wt>(i);
+			while (a<end)
+			{
+				__m256i m1=_mm256_load_si256((const __m256i*)a);
+				__m256i m2=_mm256_load_si256((const __m256i*)b);
+				_mm256_store_si256((__m256i*)b, V256_SUB(m1,m2));
+				a++; b++;
+			}
+		}
+	}
+	
+	void subtractSaveToA(cv::Mat &A, const cv::Mat &B)
+	{
+		int rows=A.rows, cols=A.cols;
+		rep(i,0,rows-1)
+		{
+			sift_wt* a = A.ptr<sift_wt>(i);
+			const sift_wt* end = a+cols;
+			const sift_wt* b = B.ptr<sift_wt>(i);
+			while (a<end)
+			{
+				__m256i m1=_mm256_load_si256((const __m256i*)a);
+				__m256i m2=_mm256_load_si256((const __m256i*)b);
+				_mm256_store_si256((__m256i*)a, V256_SUB(m1,m2));
+				a++; b++;
+			}
+		}
+	}
+}
+
+			

@@ -309,9 +309,9 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     TRACE_1("compute_SIFT_parallel: start\n");
     
     SIFT_initialize();
-
-    FILE *fout = fopen("kpsinfo.log","w");
     
+    FILE *fout = fopen("kpsinfo.log","w");
+
     std::set<std::string> created_paths;
     simple_mutex_t created_paths_lock; 
     simple_mutex_init(&created_paths_lock);
@@ -349,9 +349,9 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 //cv::xfeatures2d::SIFT::create(
                 0,
                 6,
-                0.04,//0.08,
-                //5,
-                10,
+                0.08,//0.04,
+                5,
+                //10,
                 1.6);
             
             std::vector<cv::KeyPoint> v_kps;
@@ -363,8 +363,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             int max_rows = rows / SIFT_D1_SHIFT;
             int max_cols = cols / SIFT_D2_SHIFT;
             int n_sub_images = max_rows * max_cols;
-<<<<<<< HEAD
-		
+
             // Mask for subimage 
 		cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT, SIFT_D2_SHIFT, CV_8UC1); 
 		
@@ -375,18 +374,12 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 		
             for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
                 for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
-=======
-            
-            cilk_for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
-                cilk_for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
->>>>>>> ff96d0f15762ab4e39f41589f8cde6e9c658316e
                    
 			  // Compute a subimage ID, refering to a tile within larger
                     //   2d image. 
                     int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
                     int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
                     int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
-<<<<<<< HEAD
 			  
 			  d1_map[sub_im_id] = cur_d1;
 			  d2_map[sub_im_id] = cur_d2;
@@ -426,36 +419,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 
 		*(p_tile_data->p_kps_desc) = m_kps_desc;
 		
-            #ifndef SKIPOUTPUT
-=======
-                    // Detect the SIFT features within the subimage. 
-			  fasttime_t tstart=gettime();
-                    p_sift->detectAndCompute(
-                        sub_im,
-                        sum_im_mask,
-                        v_kps[sub_im_id],
-                        m_kps_desc[sub_im_id]);
-                    fasttime_t tend=gettime();
-	            totalTime += tdiff(tstart,tend); 
-			  
-                    for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
-                        v_kps[sub_im_id][i].pt.x += cur_d2;
-                        v_kps[sub_im_id][i].pt.y += cur_d1;
-                    }
-                }
-            }
-            
-            for (int i = 0; i < n_sub_images; i++) {
-                for (size_t j = 0; j < v_kps[i].size(); j++) {
-                    (*p_tile_data->p_kps).push_back(v_kps[i][j]);
-                }
-            }
-
-            cv::vconcat( m_kps_desc, n_sub_images, *(p_tile_data->p_kps_desc));
-
-
             #ifndef SKIPHDF5
->>>>>>> ff96d0f15762ab4e39f41589f8cde6e9c658316e
             // NOTE(TFK): Begin HDF5 preparation 
             std::vector<float> locations;
             std::vector<float> octaves;
