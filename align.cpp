@@ -9,7 +9,9 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 #include "common.h"
 #include "align.h"
+#include "match.h"
 #include "fasttime.h"
+#include "simple_mutex.h"
 //#include "ezsift/ezsift.h"
 
 #define SIFT_BATCH_SIZE 16
@@ -158,7 +160,7 @@ void read_input(align_data_t *p_align_data) {
     ASSERT(0 == strcmp(str_input, magic_str_total_tiles));
     
     int cur_section_idx = 0;
-    
+ 
     for (int i = 0; i < n_tiles; i++) {
         
         n_objs_read = fscanf(fp, "%s [%d]\n", str_input, &in_tile_id);
@@ -256,6 +258,7 @@ void read_input(align_data_t *p_align_data) {
     
     TRACE_1("finish\n");
 }
+
 void read_tiles(align_data_t *p_align_data) {
 
     TRACE_1("read_tiles: start\n");
@@ -292,35 +295,6 @@ void read_tiles(align_data_t *p_align_data) {
     
 }
 
-bool is_tiles_overlap(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2) {
-
-    TRACE_3("is_tiles_overlap: start\n");
-    TRACE_3("  -- tile_1: %d\n", p_tile_data_1->index);
-    TRACE_3("  -- tile_2: %d\n", p_tile_data_2->index);
-    
-    int x1_start = p_tile_data_1->x_start;
-    int x1_finish = p_tile_data_1->x_finish;
-    int y1_start = p_tile_data_1->y_start;
-    int y1_finish = p_tile_data_1->y_finish;
-    
-    int x2_start = p_tile_data_2->x_start;
-    int x2_finish = p_tile_data_2->x_finish;
-    int y2_start = p_tile_data_2->y_start;
-    int y2_finish = p_tile_data_2->y_finish;
-    
-    bool res = false;
-    
-    if ((x1_start < x2_finish) && (x1_finish > x2_start) &&
-        (y1_start < y2_finish) && (y1_finish > y2_start)) {
-        res = true;
-    }
-    
-    TRACE_3("is_tiles_overlap: finish\n");
-    
-    return res;
-    
-}
-
 void SIFT_initialize()
 {
 	generateBoxBlurExecutionPlan();
@@ -335,9 +309,13 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     TRACE_1("compute_SIFT_parallel: start\n");
     
     SIFT_initialize();
-    
+
     FILE *fout = fopen("kpsinfo.log","w");
     
+    std::set<std::string> created_paths;
+    simple_mutex_t created_paths_lock; 
+    simple_mutex_init(&created_paths_lock);
+ 
     cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
         section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
         
@@ -347,11 +325,11 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             int rows = p_tile_data->p_image->rows;
             int cols = p_tile_data->p_image->cols;
             
-            TRACE_1("  -- tile[%d-%d]: detectAndCompute (%d, %d)\n", 
+            /*TRACE_1("  -- tile[%d-%d]: detectAndCompute (%d, %d)\n", 
                 sec_id, 
                 tile_id,
                 rows, 
-                cols);
+                cols);*/
 
             // Define the SIFT features that we're going to compute.
             cv::Ptr<cv::Feature2D> p_sift;
@@ -368,12 +346,12 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 
              // FASTER Settings.
              p_sift = new cv::xfeatures2d::SIFT_Impl( 
-
 //cv::xfeatures2d::SIFT::create(
                 0,
                 6,
-                0.08,
-                5,
+                0.04,//0.08,
+                //5,
+                10,
                 1.6);
             
             std::vector<cv::KeyPoint> v_kps;
@@ -385,6 +363,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             int max_rows = rows / SIFT_D1_SHIFT;
             int max_cols = cols / SIFT_D2_SHIFT;
             int n_sub_images = max_rows * max_cols;
+<<<<<<< HEAD
 		
             // Mask for subimage 
 		cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT, SIFT_D2_SHIFT, CV_8UC1); 
@@ -396,12 +375,18 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 		
             for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
                 for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
+=======
+            
+            cilk_for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
+                cilk_for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
+>>>>>>> ff96d0f15762ab4e39f41589f8cde6e9c658316e
                    
 			  // Compute a subimage ID, refering to a tile within larger
                     //   2d image. 
                     int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
                     int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
                     int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
+<<<<<<< HEAD
 			  
 			  d1_map[sub_im_id] = cur_d1;
 			  d2_map[sub_im_id] = cur_d2;
@@ -442,6 +427,35 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 		*(p_tile_data->p_kps_desc) = m_kps_desc;
 		
             #ifndef SKIPOUTPUT
+=======
+                    // Detect the SIFT features within the subimage. 
+			  fasttime_t tstart=gettime();
+                    p_sift->detectAndCompute(
+                        sub_im,
+                        sum_im_mask,
+                        v_kps[sub_im_id],
+                        m_kps_desc[sub_im_id]);
+                    fasttime_t tend=gettime();
+	            totalTime += tdiff(tstart,tend); 
+			  
+                    for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
+                        v_kps[sub_im_id][i].pt.x += cur_d2;
+                        v_kps[sub_im_id][i].pt.y += cur_d1;
+                    }
+                }
+            }
+            
+            for (int i = 0; i < n_sub_images; i++) {
+                for (size_t j = 0; j < v_kps[i].size(); j++) {
+                    (*p_tile_data->p_kps).push_back(v_kps[i][j]);
+                }
+            }
+
+            cv::vconcat( m_kps_desc, n_sub_images, *(p_tile_data->p_kps_desc));
+
+
+            #ifndef SKIPHDF5
+>>>>>>> ff96d0f15762ab4e39f41589f8cde6e9c658316e
             // NOTE(TFK): Begin HDF5 preparation 
             std::vector<float> locations;
             std::vector<float> octaves;
@@ -459,7 +473,14 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             std::string timagename = filepath.substr(filepath.find_last_of("/")+1);
             std::string real_section_id = timagename.substr(0,timagename.find("_"));
             std::string image_path = std::string(p_align_data->output_dirpath) + "/sifts/W01_Sec"+real_section_id+"/" + padTo(std::to_string(p_tile_data->mfov_id),6);
-            system((std::string("mkdir -p ") + image_path).c_str());
+
+            simple_acquire(&created_paths_lock);
+            if (created_paths.find(image_path) == created_paths.end()) {
+              system((std::string("mkdir -p ") + image_path).c_str());
+              created_paths.insert(image_path);
+            }
+            simple_release(&created_paths_lock);
+
             printf("timagename is %s, real_section_id %s\n", timagename.c_str(), real_section_id.c_str());
             image_path = image_path + std::string("/W01_Sec")+real_section_id + std::string("_sifts_")+timagename.substr(0,timagename.find_last_of(".")) + std::string(".hdf5");
           
@@ -478,15 +499,9 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             TRACE_1("    -- n_kps      : %lu\n", p_tile_data->p_kps->size());
             TRACE_1("    -- n_kps_desc : %d %d\n", p_tile_data->p_kps_desc->rows, p_tile_data->p_kps_desc->cols);
 
-            //LOG_KPS(p_tile_data);
-		/*
-		imageProcessed++;
-		if (imageProcessed == 10) 
-		{
-			printf("first 10 images processed, net processing time = %.6lf\n", totalTime);
-			exit(0);
-		}
-		*/
+            #ifdef LOGIMAGES
+            LOG_KPS(p_tile_data);
+            #endif
         }
     }
     
@@ -496,8 +511,6 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     
     TRACE_1("compute_SIFT_parallel: finish\n");
 }
-
- 
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL FUNCTIONS
@@ -521,8 +534,14 @@ void align_execute(align_data_t *p_align_data)
         STOP_TIMER(&timer, "compute_SIFT time:");
     } 
     
+    START_TIMER(&timer);
+    compute_tile_matches(p_align_data);
+    // compute_affine_inter_section_transforms(p_align_data);
+    // compute_affine_inter_section_transform_2(p_align_data);
+    // compute_affine_inter_section_transforms_3(p_align_data);
+    STOP_TIMER(&timer, "compute_tile_matches time:");
+
     STOP_TIMER(&t_timer, "t_total-time:");
-         
 }
 
 // function for debug purpose only
