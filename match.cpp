@@ -270,9 +270,9 @@ void compute_tile_matches(align_data_t *p_align_data) {
 
 
       //for (int btile_id = atile_id + 1; btile_id < p_sec_data->n_tiles; ++btile_id) {
-      cilk_for (int i = 0; i < indices_to_check_len; i++) {
+      cilk_for (int tmpindex = 0; tmpindex < indices_to_check_len; tmpindex++) {
         do {
-        int btile_id = indices_to_check[i];
+        int btile_id = indices_to_check[tmpindex];
         // if (atile_id == btile_id) continue;
         tile_data_t *b_tile = &(p_sec_data->tiles[btile_id]);
 
@@ -450,9 +450,9 @@ void compute_tile_matches(align_data_t *p_align_data) {
         //{
           // Extract the match points
           std::vector<cv::Point2f> match_points_a2, match_points_b2;
-          for (size_t i = 0; i < matches.size(); ++i) {
-            match_points_a2.push_back(atile_kps_in_overlap[matches[i].queryIdx].pt);
-            match_points_b2.push_back(btile_kps_in_overlap[matches[i].trainIdx].pt);
+          for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
+            match_points_a2.push_back(atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
+            match_points_b2.push_back(btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
           }
 
           // Use cv::findHomography to run RANSAC on the match points.
@@ -473,20 +473,37 @@ void compute_tile_matches(align_data_t *p_align_data) {
           continue;
         }
 
-            cv::Mat mask(matches.size(), 1, CV_8UC1);
+            cv::Mat mask(matches.size(), 0, CV_8UC1);
             //cv::Mat mask;
-            cv::Mat H = cv::findHomography(match_points_a2, match_points_b2, cv::RANSAC,
-                                           MAX_EPSILON, mask);
-            //cv::videostab::TranslationBasedLocalOutlierRejector outReject;
+            //cv::Mat H = cv::findHomography(match_points_a2, match_points_b2, cv::RANSAC,
+            //                               MAX_EPSILON, mask);
+            cv::videostab::TranslationBasedLocalOutlierRejector outReject;
             //cv::RansacParams rParams = cv::RansacParams(int size, float thresh, float eps, float prob);
-            //cv::videostab::RansacParams rParams = cv::videostab::RansacParams(1, 500.0, 0.3, 0.99);
-            
-            //outReject.setRansacParams(rParams);
-            //outReject.process(cv::Size(1,1), match_points_a2, match_points_b2, mask);
+            cv::videostab::RansacParams rParams = cv::videostab::RansacParams(MIN_FEATURES_NUM, 10.0, 0.3, 0.99);
+            outReject.setRansacParams(rParams);
+            outReject.process(cv::Size(1, 1), match_points_a2, match_points_b2, mask);
+          //cv::Mat H = cv::estimateRigidTransform(match_points_a2, match_points_b2, false);
+          //std::vector<cv::Point2f> transformed_points;
 
+          //if (0 == H.rows) {
+          //  TRACE_1("Could not estimate affine transform, saving empty match file\n");
+          //  SAVE_TILE_MATCHES(0, out_filepath,
+          //                    a_tile, b_tile,
+          //                    nullptr, nullptr, nullptr);
+          //  continue;
+          //}
+          //std::vector<cv::Point2f> transformed_points;
+          //for (int i = 0; i < match_points_a2.size(); i++) {
+          //  transformed_points.push_back(match_points_a2[i]);
+          //}
+          //cv::transform(match_points_a2, transformed_points, H);
+          //for (size_t i = 0; i < matches.size(); ++i) {
+          //    if (pow(transformed_points[i].x - match_points_b2[i].x,2)+pow(transformed_points[i].y-match_points_b2[i].y,2) < 10) {
+          //      filtered_matches.push_back(matches[i]);
+          //    }
+          //}
 
-
-
+/*
             if (H.empty()) {
               printf("****ERROR! Matrix is empty!\n");
               //exit(1);
@@ -499,13 +516,13 @@ void compute_tile_matches(align_data_t *p_align_data) {
           continue;
         }
 
-            }
+            }*/
 
             printf("mask.rows %d, mask.cols %d\n", mask.rows, mask.cols);
           // Use the output mask from findHomography to filter the matches
           for (size_t i = 0; i < matches.size(); ++i) {
             //if (mask.at<bool>(i))
-            if (mask.at<bool>(i,0))
+            if (mask.at<bool>(0,i))
               filtered_matches.push_back(matches[i]);
           }
           //}
