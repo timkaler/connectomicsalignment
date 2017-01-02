@@ -19,7 +19,7 @@
 #export OMP_NUM_THREADS=1
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/efs/home/lemon510/cv/lib
 
-export CILK_NWORKERS=16
+export CILK_NWORKERS=1
 WORKINGDIR=$PWD 
 OUTPUTDIR=$PWD/temp
 

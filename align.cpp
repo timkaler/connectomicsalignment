@@ -344,15 +344,23 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             //    1.6);
 
              // FASTER Settings.
-             p_sift = new cv::xfeatures2d::SIFT_Impl( 
-//cv::xfeatures2d::SIFT::create(
+             //cv::xfeatures2d::SIFT::create(
+             /*p_sift = new cv::xfeatures2d::SIFT_Impl( 
                 0,
                 6,
                 //0.04,
                 0.04,
                 10,
                 //10,
+                1.6);*/
+             p_sift = new cv::xfeatures2d::SIFT_Impl( 
+                0,
+                3,
+                //0.04,
+                0.08,
+                5,
                 1.6);
+
             
             std::vector<cv::KeyPoint> v_kps[SIFT_MAX_SUB_IMAGES];
             cv::Mat m_kps_desc[SIFT_MAX_SUB_IMAGES];

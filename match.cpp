@@ -49,15 +49,15 @@ static void match_features(std::vector< cv::DMatch > &matches,
                            cv::Mat &descs1, cv::Mat &descs2,
                            float rod) {
   std::vector< std::vector < cv::DMatch > > raw_matches;
-  // cv::BFMatcher matcher(cv::NORM_L2, false);
-  cv::Ptr<cv::BFMatcher> matcher = cv::BFMatcher::create();
+  cv::BFMatcher matcher(cv::NORM_L2, false);
+  //cv::Ptr<cv::BFMatcher> matcher = cv::BFMatcher::create(cv::NORM_L2, false);
   // cv::FlannBasedMatcher matcher(new cv::flann::AutotunedIndexParams(
   //                 0.9,
   //                 0.01,
   //                 0,
   //                 0.1));
   // cv::FlannBasedMatcher matcher;
-  matcher->knnMatch(descs1, descs2,
+  matcher.knnMatch(descs1, descs2,
                    raw_matches,
                    2);
 
@@ -237,7 +237,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
 
 
 
-    cilk_for (int atile_id = 0; atile_id < p_sec_data->n_tiles; ++atile_id) {
+    for (int atile_id = 0; atile_id < p_sec_data->n_tiles; ++atile_id) {
       tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
       simple_acquire(&mfovs_lock);
       if (mfovs.insert(a_tile->mfov_id).second) {
@@ -270,7 +270,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
 
 
       //for (int btile_id = atile_id + 1; btile_id < p_sec_data->n_tiles; ++btile_id) {
-      cilk_for (int i = 0; i < indices_to_check_len; i++) {
+      for (int i = 0; i < indices_to_check_len; i++) {
         do {
         int btile_id = indices_to_check[i];
         // if (atile_id == btile_id) continue;
