@@ -10,7 +10,8 @@ static void simple_mutex_init(simple_mutex_t* m) {
 }
 
 static void simple_acquire(simple_mutex_t* m) {
-  while (!__sync_bool_compare_and_swap(m, 0, 1)) {
+  while (!__sync_bool_compare_and_swap(m, 0, 1)) { 
+    sched_yield();
     continue;
   }
 }

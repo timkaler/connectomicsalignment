@@ -17,6 +17,14 @@
 #include <mutex>
 #include <cilk/cilk.h>
 
+
+
+#ifndef SKIPJSON
+#define SAVE_TILE_MATCHES(...) save_tile_matches(__VA_ARGS__)
+#else
+#define SAVE_TILE_MATCHES(...)
+#endif
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // INTERNAL FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -42,14 +50,14 @@ static void match_features(std::vector< cv::DMatch > &matches,
                            float rod) {
   std::vector< std::vector < cv::DMatch > > raw_matches;
   // cv::BFMatcher matcher(cv::NORM_L2, false);
-  cv::BFMatcher matcher;
+  cv::Ptr<cv::BFMatcher> matcher = cv::BFMatcher::create();
   // cv::FlannBasedMatcher matcher(new cv::flann::AutotunedIndexParams(
   //                 0.9,
   //                 0.01,
   //                 0,
   //                 0.1));
   // cv::FlannBasedMatcher matcher;
-  matcher.knnMatch(descs1, descs2,
+  matcher->knnMatch(descs1, descs2,
                    raw_matches,
                    2);
 
@@ -88,7 +96,7 @@ static void save_tile_matches(size_t num_matches,
 
   fasttime_t tstart = gettime();
 
-  fp = fopen(out_filepath.c_str(), "wb");
+  fp = fopen(out_filepath.c_str(), "wb+");
   // Output prologue
   fprintf(fp, "[\n");
   fprintf(fp, "%*s%s\n", INDENT_SPACES, "", "{");
@@ -263,6 +271,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
 
       //for (int btile_id = atile_id + 1; btile_id < p_sec_data->n_tiles; ++btile_id) {
       cilk_for (int i = 0; i < indices_to_check_len; i++) {
+        do {
         int btile_id = indices_to_check[i];
         // if (atile_id == btile_id) continue;
         tile_data_t *b_tile = &(p_sec_data->tiles[btile_id]);
@@ -310,7 +319,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
           TRACE_1("Less than %d features in tile %d_%d, saving empty match file\n",
                   MIN_FEATURES_NUM,
                   a_tile->mfov_id, a_tile->index);
-          save_tile_matches(0, out_filepath,
+          SAVE_TILE_MATCHES(0, out_filepath,
                             a_tile, b_tile,
                             nullptr, nullptr, nullptr);
           continue;
@@ -319,7 +328,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
           TRACE_1("Less than %d features in tile %d_%d, saving empty match file\n",
                   MIN_FEATURES_NUM,
                   b_tile->mfov_id, b_tile->index);
-          save_tile_matches(0, out_filepath,
+          SAVE_TILE_MATCHES(0, out_filepath,
                             a_tile, b_tile,
                             nullptr, nullptr, nullptr);
           continue;
@@ -408,7 +417,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
           TRACE_1("Less than %d features in the overlap in tile %d_%d, saving empty match file\n",
                   MIN_FEATURES_NUM,
                   a_tile->mfov_id, a_tile->index);
-          save_tile_matches(0, out_filepath,
+          SAVE_TILE_MATCHES(0, out_filepath,
                             a_tile, b_tile,
                             nullptr, nullptr, nullptr);
           continue;
@@ -417,7 +426,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
           TRACE_1("Less than %d features in the overlap in tile %d_%d, saving empty match file\n",
                   MIN_FEATURES_NUM,
                   b_tile->mfov_id, b_tile->index);
-          save_tile_matches(0, out_filepath,
+          SAVE_TILE_MATCHES(0, out_filepath,
                             a_tile, b_tile,
                             nullptr, nullptr, nullptr);
           continue;
@@ -454,15 +463,26 @@ void compute_tile_matches(align_data_t *p_align_data) {
           //
           // TODO: Read the appropriate RANSAC settings from the
           // configuration file.
-          cv::Mat mask(matches.size(), 1, CV_8UC1);
-          cv::Mat H = cv::findHomography(match_points_a2, match_points_b2, cv::RANSAC,
-                                         MAX_EPSILON, mask);
+          //if (matches.size() > 0) {
+        if (matches.size() < MIN_FEATURES_NUM) {
+          TRACE_1("Less than %d matched features, saving empty match file\n",
+                  MIN_FEATURES_NUM);
+          SAVE_TILE_MATCHES(0, out_filepath,
+                            a_tile, b_tile,
+                            nullptr, nullptr, nullptr);
+          continue;
+        }
+
+            cv::Mat mask(matches.size(), 1, CV_8UC1);
+            cv::Mat H = cv::findHomography(match_points_a2, match_points_b2, cv::RANSAC,
+                                           MAX_EPSILON, mask);
 
           // Use the output mask from findHomography to filter the matches
           for (size_t i = 0; i < matches.size(); ++i) {
             if (mask.at<bool>(0, i))
               filtered_matches.push_back(matches[i]);
           }
+          //}
         //}
 
         TRACE_1("    -- [%d_%d, %d_%d] filtered_matches: %lu\n",
@@ -473,7 +493,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
         if (filtered_matches.size() < MIN_FEATURES_NUM) {
           TRACE_1("Less than %d matched features, saving empty match file\n",
                   MIN_FEATURES_NUM);
-          save_tile_matches(0, out_filepath,
+          SAVE_TILE_MATCHES(0, out_filepath,
                             a_tile, b_tile,
                             nullptr, nullptr, nullptr);
           continue;
@@ -497,7 +517,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
                   model.rows, model.cols);
           if (0 == model.rows) {
             TRACE_1("Could not estimate affine transform, saving empty match file\n");
-            save_tile_matches(0, out_filepath,
+            SAVE_TILE_MATCHES(0, out_filepath,
                               a_tile, b_tile,
                               nullptr, nullptr, nullptr);
             continue;
@@ -512,10 +532,12 @@ void compute_tile_matches(align_data_t *p_align_data) {
           // cv::transform(match_points_b, match_points_b_fixed, model);
 
           // Output the tile matches.
-          save_tile_matches(filtered_matches.size(), out_filepath,
+          SAVE_TILE_MATCHES(filtered_matches.size(), out_filepath,
                             a_tile, b_tile,
                             &match_points_a3, &match_points_b3,
                             &match_points_a_fixed);
+      } while (false);
+ 
         //}
       }  // for (btile_id)
     }  // for (atile_id)
@@ -529,7 +551,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
       TRACE_1("Recording matched sifts files in %s\n",
               matched_sifts_files.c_str());
 
-      FILE *fp = fopen(matched_sifts_files.c_str(), "wb");
+      FILE *fp = fopen(matched_sifts_files.c_str(), "wb+");
       for (size_t i = 0; i < output_files.size(); ++i)
         fprintf(fp, "%s\n", output_files[i].c_str());
       fclose(fp);

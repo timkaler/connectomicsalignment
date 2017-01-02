@@ -59,7 +59,12 @@
 #define MAX_TILES (1024)
 #define MAX_SECTIONS (256)
 
-#define OVERLAP_2D (300)
+#define OVERLAP_2D (200)
+
+#define MFOV_BOUNDARY_THRESH 37 // any section with id > 37 is on boundary.
+
+
+
 #define LOWE_RATIO (0.65)
 // TB: I don't know why the Python calls this ratio "rod".
 #define ROD (0.92)
@@ -182,6 +187,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 typedef struct _tile_data {
     int section_id;
+    int tile_id;
     int mfov_id;
     int index;
     char filepath[MAX_FILEPATH];

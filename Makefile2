@@ -18,7 +18,7 @@ CFLAGS += -std=c++11 $(EXTRA_CFLAGS) -m64 -march=native
 CFLAGS += -Wall 
 #-Winline
 CFLAGS += -I$(OPENCV_INCLUDE)
-
+LDFLAGS = $(EXTRA_LDFLAGS)
 
 ifdef PROFILE
   CFLAGS += -DPROFILE

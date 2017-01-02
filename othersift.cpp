@@ -222,9 +222,9 @@ static const float SIFT_DESCR_MAG_THR = 0.2f;
 // factor used to convert floating-point descriptor to unsigned char
 static const float SIFT_INT_DESCR_FCTR = 512.f;
 
-#if 0
+#if 0 
 // intermediate type used for DoG pyramids
-typedef uint8_t sift_wt;
+typedef short sift_wt;
 static const int SIFT_FIXPT_SCALE = 48;
 #else
 // intermediate type used for DoG pyramids
