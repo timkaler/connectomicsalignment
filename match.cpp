@@ -477,13 +477,16 @@ void compute_tile_matches(align_data_t *p_align_data) {
             //cv::Mat mask;
             //cv::Mat H = cv::findHomography(match_points_a2, match_points_b2, cv::RANSAC,
             //                               MAX_EPSILON, mask);
+
             cv::videostab::TranslationBasedLocalOutlierRejector outReject;
-            //cv::RansacParams rParams = cv::RansacParams(int size, float thresh, float eps, float prob);
-            cv::videostab::RansacParams rParams = cv::videostab::RansacParams(MIN_FEATURES_NUM, 10.0, 0.3, 0.99);
+
+            // NOTE(TFK): eps and prob don't appear to be used in outReject.
+            //cv::RansacParams rParams =
+            //               cv::RansacParams(int size, float thresh, float eps, float prob);
+            cv::videostab::RansacParams rParams =
+                cv::videostab::RansacParams(MIN_FEATURES_NUM, 10.0, 0.3, 0.99);
             outReject.setRansacParams(rParams);
             outReject.process(cv::Size(1, 1), match_points_a2, match_points_b2, mask);
-          //cv::Mat H = cv::estimateRigidTransform(match_points_a2, match_points_b2, false);
-          //std::vector<cv::Point2f> transformed_points;
 
           //if (0 == H.rows) {
           //  TRACE_1("Could not estimate affine transform, saving empty match file\n");
@@ -516,9 +519,10 @@ void compute_tile_matches(align_data_t *p_align_data) {
           continue;
         }
 
-            }*/
+            }
 
             printf("mask.rows %d, mask.cols %d\n", mask.rows, mask.cols);
+*/
           // Use the output mask from findHomography to filter the matches
           for (size_t i = 0; i < matches.size(); ++i) {
             //if (mask.at<bool>(i))
