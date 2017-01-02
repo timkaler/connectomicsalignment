@@ -12,7 +12,7 @@
 #include "align.h"
 #include "fasttime.h"
 #include "simple_mutex.h"
-
+#include <opencv2/videostab/outlier_rejection.hpp>
 #include <set>
 #include <mutex>
 #include <cilk/cilk.h>
@@ -237,7 +237,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
 
 
 
-    for (int atile_id = 0; atile_id < p_sec_data->n_tiles; ++atile_id) {
+    cilk_for (int atile_id = 0; atile_id < p_sec_data->n_tiles; ++atile_id) {
       tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
       simple_acquire(&mfovs_lock);
       if (mfovs.insert(a_tile->mfov_id).second) {
@@ -270,7 +270,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
 
 
       //for (int btile_id = atile_id + 1; btile_id < p_sec_data->n_tiles; ++btile_id) {
-      for (int i = 0; i < indices_to_check_len; i++) {
+      cilk_for (int i = 0; i < indices_to_check_len; i++) {
         do {
         int btile_id = indices_to_check[i];
         // if (atile_id == btile_id) continue;
@@ -474,12 +474,38 @@ void compute_tile_matches(align_data_t *p_align_data) {
         }
 
             cv::Mat mask(matches.size(), 1, CV_8UC1);
+            //cv::Mat mask;
             cv::Mat H = cv::findHomography(match_points_a2, match_points_b2, cv::RANSAC,
                                            MAX_EPSILON, mask);
+            //cv::videostab::TranslationBasedLocalOutlierRejector outReject;
+            //cv::RansacParams rParams = cv::RansacParams(int size, float thresh, float eps, float prob);
+            //cv::videostab::RansacParams rParams = cv::videostab::RansacParams(1, 500.0, 0.3, 0.99);
+            
+            //outReject.setRansacParams(rParams);
+            //outReject.process(cv::Size(1,1), match_points_a2, match_points_b2, mask);
 
+
+
+
+            if (H.empty()) {
+              printf("****ERROR! Matrix is empty!\n");
+              //exit(1);
+        if (filtered_matches.size() < MIN_FEATURES_NUM) {
+          TRACE_1("Less than %d matched features, saving empty match file\n",
+                  MIN_FEATURES_NUM);
+          SAVE_TILE_MATCHES(0, out_filepath,
+                            a_tile, b_tile,
+                            nullptr, nullptr, nullptr);
+          continue;
+        }
+
+            }
+
+            printf("mask.rows %d, mask.cols %d\n", mask.rows, mask.cols);
           // Use the output mask from findHomography to filter the matches
           for (size_t i = 0; i < matches.size(); ++i) {
-            if (mask.at<bool>(0, i))
+            //if (mask.at<bool>(i))
+            if (mask.at<bool>(i,0))
               filtered_matches.push_back(matches[i]);
           }
           //}

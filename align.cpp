@@ -355,10 +355,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                 1.6);*/
              p_sift = new cv::xfeatures2d::SIFT_Impl( 
                 0,
-                3,
+                6,
                 //0.04,
-                0.08,
-                5,
+                0.04,
+                10,
                 1.6);
 
             
