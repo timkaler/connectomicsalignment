@@ -1,0 +1,61 @@
+#if SIFT_USE_BATCHING == 1
+compiler error
+            std::vector<cv::KeyPoint> v_kps;
+            cv::Mat m_kps_desc;
+		
+            // Mask for subimage 
+		cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT, SIFT_D2_SHIFT, CV_8UC1); 
+		
+		std::vector< cv::Mat > imgList;
+		imgList.resize(SIFT_BATCH_SIZE);
+
+		static int d1_map[SIFT_MAX_SUB_IMAGES], d2_map[SIFT_MAX_SUB_IMAGES];
+		
+            for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
+                for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
+                   
+			  // Compute a subimage ID, refering to a tile within larger
+                    //   2d image. 
+                    int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
+                    int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
+                    int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
+			  
+			  d1_map[sub_im_id] = cur_d1;
+			  d2_map[sub_im_id] = cur_d2;
+			  
+                    // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT 
+			  cv::Mat &sub_im = imgList[sub_im_id];
+                    sub_im = (*p_tile_data->p_image)(cv::Rect(
+                        cur_d2, cur_d1, SIFT_D2_SHIFT, SIFT_D1_SHIFT));
+		    }
+		}
+		
+		cv::Mat sub_im;
+		merge(imgList, sub_im);
+		
+            // Detect the SIFT features within the subimage. 
+		fasttime_t tstart=gettime();
+            p_sift->detectAndCompute(
+                 sub_im,
+                 sum_im_mask,
+                 v_kps,
+                 m_kps_desc);
+            fasttime_t tend=gettime();
+		
+		totalTime += tdiff(tstart,tend); 
+		
+		std::vector<cv::KeyPoint>::iterator metadata = v_kps.begin() + (v_kps.size() - SIFT_BATCH_SIZE - 1);
+		
+		for (int batch = 0; batch < SIFT_BATCH_SIZE; batch++)
+		{
+			//fprintf(fout, "%d %d %d %d %d %d\n",sec_id, tile_id, rows, cols, batch, metadata[batch+1].octave - metadata[batch].octave);
+			for (size_t i = metadata[batch].octave; i < metadata[batch+1].octave; i++) {
+                      v_kps[i].pt.x += d2_map[batch];
+                      v_kps[i].pt.y += d1_map[batch];
+			    (*p_tile_data->p_kps).push_back(v_kps[i]);
+                  }
+		}
+
+		*(p_tile_data->p_kps_desc) = m_kps_desc;
+#else
+
