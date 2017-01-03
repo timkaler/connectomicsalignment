@@ -17,7 +17,7 @@
 #include "./fasttime.h"
 #include "./simple_mutex.h"
 #include "./sift.config.h"
-#include "./othersift.cpp"
+#include "./othersift2.cpp"
 
 // Helper functions
 #include "align_helpers.cpp"
@@ -47,12 +47,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       ASSERT((rows % SIFT_D1_SHIFT) == 0);
       ASSERT((cols % SIFT_D2_SHIFT) == 0);
       cv::Ptr<cv::Feature2D> p_sift;
-      p_sift = new cv::xfeatures2d::SIFT_Impl(
-                0,  // num_features --- unsupported.
-                6,  // number of octaves
-                0.08,  // contrast threshold.
-                5,  // edge threshold.
-                1.6);  // sigma.
+
 
 
       std::vector<cv::KeyPoint> v_kps[SIFT_MAX_SUB_IMAGES];
@@ -60,6 +55,14 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 
       int n_sub_images;
       if ((p_tile_data->tile_id > MFOV_BOUNDARY_THRESH)) {
+
+      p_sift = new cv::xfeatures2d::SIFT_Impl(
+                0,  // num_features --- unsupported.
+                6,  // number of octaves
+                0.08,  // contrast threshold.
+                5,  // edge threshold.
+                1.6);  // sigma.
+
         // THEN: This tile is on the boundary, we need to compute SIFT features
         // on the entire section.
         int max_rows = rows / SIFT_D1_SHIFT;
@@ -105,6 +108,14 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
         }
 
       } else {
+
+      p_sift = new cv::xfeatures2d::SIFT_Impl(
+                0,  // num_features --- unsupported.
+                6,  // number of octaves
+                0.08,  // contrast threshold.
+                5,  // edge threshold.
+                1.6);  // sigma.
+
         // ELSE THEN: This tile is in the interior of the MFOV. Only need to
         //     compute features along the boundary.
         n_sub_images = 4;
