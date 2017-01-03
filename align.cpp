@@ -14,7 +14,7 @@
 #include "simple_mutex.h"
 //#include "ezsift/ezsift.h"
 
-#define SIFT_BATCH_SIZE 16
+#include "sift.config.h"
 
 #include <set>
 #include <mutex>
@@ -349,13 +349,11 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 //cv::xfeatures2d::SIFT::create(
                 0,
                 6,
-                0.08,//0.04,
+                0.08,//0.08,
+                //5,
                 5,
-                //10,
                 1.6);
             
-            std::vector<cv::KeyPoint> v_kps;
-            cv::Mat m_kps_desc;
             
             ASSERT((rows % SIFT_D1_SHIFT) == 0);
             ASSERT((cols % SIFT_D2_SHIFT) == 0);
@@ -363,7 +361,11 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             int max_rows = rows / SIFT_D1_SHIFT;
             int max_cols = cols / SIFT_D2_SHIFT;
             int n_sub_images = max_rows * max_cols;
-
+		
+#if SIFT_USE_BATCHING == 1
+		std::vector<cv::KeyPoint> v_kps;
+            cv::Mat m_kps_desc;
+		
             // Mask for subimage 
 		cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT, SIFT_D2_SHIFT, CV_8UC1); 
 		
@@ -418,6 +420,48 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 		}
 
 		*(p_tile_data->p_kps_desc) = m_kps_desc;
+#else
+		std::vector<cv::KeyPoint> v_kps[SIFT_MAX_SUB_IMAGES];
+		cv::Mat m_kps_desc[SIFT_MAX_SUB_IMAGES];
+		
+		cilk_for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
+			cilk_for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
+				// Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT 
+				cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
+					cur_d2, cur_d1, SIFT_D2_SHIFT, SIFT_D1_SHIFT));
+				// Mask for subimage 
+				cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT, SIFT_D2_SHIFT, CV_8UC1); 
+				// Compute a subimage ID, refering to a tile within larger
+				//   2d image. 
+				int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
+				int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
+				int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
+				// Detect the SIFT features within the subimage. 
+				fasttime_t tstart=gettime();
+					p_sift->detectAndCompute(
+					sub_im,
+					sum_im_mask,
+					v_kps[sub_im_id],
+					m_kps_desc[sub_im_id]);
+				fasttime_t tend=gettime();
+				totalTime += tdiff(tstart,tend); 
+			  
+				for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
+					v_kps[sub_im_id][i].pt.x += cur_d2;
+					v_kps[sub_im_id][i].pt.y += cur_d1;
+				}
+			}
+		}
+            
+		for (int i = 0; i < n_sub_images; i++) {
+			fprintf(fout, "%d %d %d %d %d %d\n",sec_id, tile_id, rows, cols, i, v_kps[i].size() - 2);
+			for (size_t j = 0; j < v_kps[i].size() - 2; j++) {
+				(*p_tile_data->p_kps).push_back(v_kps[i][j]);
+			}
+		}
+
+            cv::vconcat( m_kps_desc, n_sub_images, *(p_tile_data->p_kps_desc));
+#endif
 		
             #ifndef SKIPHDF5
             // NOTE(TFK): Begin HDF5 preparation 
@@ -499,7 +543,7 @@ void align_execute(align_data_t *p_align_data)
     } 
     
     START_TIMER(&timer);
-    compute_tile_matches(p_align_data);
+    //compute_tile_matches(p_align_data);
     // compute_affine_inter_section_transforms(p_align_data);
     // compute_affine_inter_section_transform_2(p_align_data);
     // compute_affine_inter_section_transforms_3(p_align_data);
@@ -510,9 +554,9 @@ void align_execute(align_data_t *p_align_data)
 
 // function for debug purpose only
 
-#include "tests.cpp"
+//#include "tests.cpp"
 
 void testcv()
 {
-	test_minfilter();
+	//test_minfilter();
 }

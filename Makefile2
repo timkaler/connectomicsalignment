@@ -46,7 +46,7 @@ ifdef ASSEMBLY
 endif
 
 ifdef DEBUG
-	CFLAGS += -O1 -g3 
+	CFLAGS += -O0 -g3 
 else
 	CFLAGS += -DNDEBUG
 	CFLAGS += -O3 -g -mavx2 -m64 -march=native
@@ -87,10 +87,10 @@ common.S: common.cpp
 match.o: match.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-align.o: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.cpp rowsum.cpp columnsum.cpp
+align.o: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.cpp rowsum.cpp columnsum.cpp minmaxfilter.cpp sift.config.h
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-align.S: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.cpp rowsum.cpp columnsum.cpp
+align.S: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.cpp rowsum.cpp columnsum.cpp minmaxfilter.cpp sift.config.h
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 run.o: run.cpp

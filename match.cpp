@@ -364,7 +364,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
         // output_files_reducer->push_back(("file://" + out_filepath).c_str());
         char *output_file_buf = new char[strlen(out_filepath) + 7];
         sprintf(output_file_buf, "file://%s", out_filepath);
-        output_files_reducer->push_back(output_file_buf);
+        output_files_reducer.push_back(output_file_buf);
 #endif
 
         // Check that both tiles have enough features to match.

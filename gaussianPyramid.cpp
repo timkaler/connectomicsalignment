@@ -115,7 +115,7 @@ static std::mutex GaussianPyramidBoxBlurTimer_mutex;
  */
 void BuildGaussianPyramid_BoxBlurApproximation( const cv::Mat& baseimg, std::vector< cv::Mat > &pyr, int nOctaves, int nOctaveLayers)
 {
-	printf("entered\n");
+	//printf("entered\n");
 	/*
 	double sigma = 1.6;
 	static double sig[200];
@@ -169,7 +169,7 @@ void BuildGaussianPyramid_BoxBlurApproximation( const cv::Mat& baseimg, std::vec
 		rep(j,0,nCols-1) p2[j] = (uint8_t)p1[j];
 	}
 	*/
-	// !!!WARNING!!! THIS ASSUMES DATA TYPE IS uint8_t !!!
+	// !NOTE! is shallow copy really fine?  
 	base = baseimg;
 	
 	static double GBlurTime=0;
