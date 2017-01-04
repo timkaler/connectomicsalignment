@@ -29,7 +29,7 @@ void SIFT_initialize() {
 void compute_SIFT_parallel(align_data_t *p_align_data) {
   static double totalTime = 0;
 
-  TRACE_1("compute_SIFT_parallel: start\n");
+  //TRACE_1("compute_SIFT_parallel: start\n");
 
   SIFT_initialize();
 
@@ -277,9 +277,9 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
         h5io->close();
         // NOTE(TFK): End HDF5 preparation.
         #endif
-        TRACE_1("    -- n_kps      : %lu\n", p_tile_data->p_kps->size());
-        TRACE_1("    -- n_kps_desc : %d %d\n", p_tile_data->p_kps_desc->rows,
-            p_tile_data->p_kps_desc->cols);
+        //TRACE_1("    -- n_kps      : %lu\n", p_tile_data->p_kps->size());
+        //TRACE_1("    -- n_kps_desc : %d %d\n", p_tile_data->p_kps_desc->rows,
+        //    p_tile_data->p_kps_desc->cols);
 
         #ifdef LOGIMAGES
         LOG_KPS(p_tile_data);
@@ -289,7 +289,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
         }
       }
     }
-  TRACE_1("compute_SIFT_parallel: finish\n");
+  //TRACE_1("compute_SIFT_parallel: finish\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////

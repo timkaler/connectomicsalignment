@@ -3,9 +3,9 @@
 #ifndef MULTIBAG_H_
 #define MULTIBAG_H_
 
+//#include <cilk/reducer.h>
+//#include <cilk/reducer_list.h>
 #include <cilk/cilk.h>
-#include <cilk/reducer.h>
-#include <cilk/reducer_list.h>
 #include <cilk/cilk_api.h>
 #include <stdlib.h>
 #include <assert.h>

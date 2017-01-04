@@ -277,8 +277,8 @@ void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, in
 #ifdef USE_BOXBLUR_GAUSSIANPYRAMID
     BuildGaussianPyramid_BoxBlurApproximation(base, pyr, nOctaves, nOctaveLayers);
 #else
-    static double GBlurTime=0;
-    fasttime_t tstart=gettime();
+    //static double GBlurTime=0;
+    //fasttime_t tstart=gettime();
     //imwrite("original_base.png", base);
     std::vector<double> sig(nOctaveLayers + 3);
     pyr.resize(nOctaves*(nOctaveLayers + 3));
@@ -318,11 +318,11 @@ void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, in
             }
         }
     }
-    fasttime_t tend=gettime();
-    GaussianPyramidTimer_mutex.lock();
-    GBlurTime+=tdiff(tstart,tend);
-    GaussianPyramidTimer_mutex.unlock();
-    printf("cumulative gaussian blur time: %.6lf\n",GBlurTime);
+    //fasttime_t tend=gettime();
+    //GaussianPyramidTimer_mutex.lock();
+    //GBlurTime+=tdiff(tstart,tend);
+    //GaussianPyramidTimer_mutex.unlock();
+    //printf("cumulative gaussian blur time: %.6lf\n",GBlurTime);
 #endif
 }
 

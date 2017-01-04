@@ -69,19 +69,19 @@ void parse_args(
 /////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv)
 {
-    
+
     cv::setNumThreads(0);
-    
+
  //  testcv();
-    
+
    // exit(0);
-    
+
     align_data_t *p_align_data;
-    
+
     p_align_data = (align_data_t *)malloc(sizeof(align_data_t));
-    
+
     init_align(p_align_data);
-    
+
     parse_args(p_align_data, argc, argv);
 #ifdef PROFILE
     ProfilerStart("profile.data");

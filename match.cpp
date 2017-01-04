@@ -22,9 +22,13 @@
 #include "./fasttime.h"
 #include "./simple_mutex.h"
 #include "./Graph.cpp"
+
+
 void updateVertex2DAlign(int vid, void* scheduler_void);
+
 #include "cilk_tools/scheduler.cpp"
 #include "cilk_tools/engine.cpp"
+
 #ifndef SKIPJSON
 #define SAVE_TILE_MATCHES(...) save_tile_matches(__VA_ARGS__)
 #else
@@ -82,24 +86,25 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
   int failures = 0;
   int count = 0;
 
-
-
-  while (count < 4&&failures<40000) {
-    count = 0;
-    cv::Mat mask;
-    //cv::videostab::TranslationBasedLocalOutlierRejector* outReject =
-    //  new cv::videostab::TranslationBasedLocalOutlierRejector();
+ 
+  cv::Size cv_size(1,1);
     cv::videostab::TranslationBasedLocalOutlierRejector outReject;
     // NOTE(TFK): eps and prob don't appear to be used in outReject.
     // cv::RansacParams rParams =
     //     cv::RansacParams(int size, float thresh, float eps, float prob)
+  while (count < 4&&failures<4000) {
+    count = 0;
+    cv::Mat mask(1,source_points.size(), CV_8U);
+    //cv::videostab::TranslationBasedLocalOutlierRejector* outReject =
+    //  new cv::videostab::TranslationBasedLocalOutlierRejector();
+    failures++;
     cv::videostab::RansacParams rParams =
         cv::videostab::RansacParams(4,
         1.0 + failures*0.5, 0.3, 0.99);
-    failures++;
+
     outReject.setRansacParams(rParams);
 
-    outReject.process(cv::Size(1, 1), source_points, dest_points, mask);
+    outReject.process(cv_size, source_points, dest_points, mask);
 
     float average_dx = 0;
     float average_dy = 0;
@@ -672,7 +677,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
           // cv::RansacParams rParams =
           //     cv::RansacParams(int size, float thresh, float eps, float prob)
           cv::videostab::RansacParams rParams =
-              cv::videostab::RansacParams(MIN_FEATURES_NUM, 100.0, 0.3, 0.99);
+              cv::videostab::RansacParams(MIN_FEATURES_NUM, 50.0, 0.3, 0.99);
           outReject.setRansacParams(rParams);
           outReject.process(cv::Size(1, 1),  // One cell.
                             match_points_a, match_points_b, mask);
@@ -800,7 +805,13 @@ void compute_tile_matches(align_data_t *p_align_data) {
   e->run();
   printf("ending run\n");
 
-  FILE* wafer_file = fopen("test_file", "w+");
+  //void compute_tile_matches(align_data_t *p_align_data) {
+  std::string section_id_string =
+      std::to_string(p_align_data->sec_data[sec_id].section_id +
+      p_align_data->base_section+1);
+
+  FILE* wafer_file = fopen((std::string("W01_Sec0") +
+      section_id_string+std::string("_montaged.json")).c_str(), "w+");
   fprintf(wafer_file, "[\n");
   for (int i = 0; i < graph->num_vertices(); i++) {
     vdata* vd = graph->getVertexData(i);
@@ -841,7 +852,9 @@ void compute_tile_matches(align_data_t *p_align_data) {
     }
   }
   fclose(wafer_file);
-
+  delete graph;
+  delete scheduler;
+  delete e;
 
   }  // for (sec_id)
 

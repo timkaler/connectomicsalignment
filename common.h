@@ -38,14 +38,13 @@
 
 #define prefetch_read(addr) __builtin_prefetch(addr, 0)
 
-#define ENABLE_TRACE_TIMER
-#define ENABLE_TRACE_TIMER_2
-
-#define ENABLE_TRACE_1
-#define ENABLE_TRACE_2
+//#define ENABLE_TRACE_TIMER
+//#define ENABLE_TRACE_TIMER_2
+//
+//#define ENABLE_TRACE_1
+//#define ENABLE_TRACE_2
 //#define ENABLE_TRACE_3
-
-#define ENABLE_LOG_KPS
+//#define ENABLE_LOG_KPS
 
 #define MODE_COMPUTE_KPS_AND_MATCH (1)
 #define MODE_COMPUTE_TRANSFORMS (2)
@@ -57,9 +56,9 @@
 #define MAX_INPUT_BUF (2000)
 
 //#define MAX_TILES (1024)
-#define MAX_TILES (128)
+#define MAX_TILES (1024)
 //#define MAX_SECTIONS (256)
-#define MAX_SECTIONS (128)
+#define MAX_SECTIONS (1024)
 
 #define OVERLAP_2D (200)
 

@@ -18,7 +18,7 @@ CFLAGS += -std=c++11 $(EXTRA_CFLAGS) -m64 -march=native
 CFLAGS += -Wall
 #-Winline
 CFLAGS += -I$(OPENCV_INCLUDE)
-LDFLAGS = $(EXTRA_LDFLAGS)
+LDFLAGS = $(EXTRA_LDFLAGS) -rdynamic
 
 ifdef PROFILE
   CFLAGS += -DPROFILE
@@ -46,14 +46,14 @@ ifdef ASSEMBLY
 endif
 
 ifdef DEBUG
-	CFLAGS += -O0 -g3
+	CFLAGS += -O0 -g
 else
 	CFLAGS += -DNDEBUG
 	CFLAGS += -O3 -g -mavx2 -m64 -march=native
 	#-Ofast
 endif
 
-LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_video -lopencv_videostab -lopencv_calib3d -lopencv_hdf -lhdf5_hl -lhdf5 -lgomp
+LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_video -lopencv_videostab -lopencv_calib3d -lopencv_hdf -lhdf5_hl -lhdf5 -lgomp -ldl
 #LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_video -lopencv_videostab -lopencv_calib3d -lhdf5 -lgomp
 
 

@@ -115,7 +115,7 @@ void read_input(align_data_t *p_align_data) {
     char magic_str_tile_filepath[] = "tile-filepath:";
     char magic_str_tile_bbox[] = "tile-bbox:";
     
-    TRACE_1("start\n");
+    ////TRACE_1("start\n");
     
     ASSERT(p_align_data->input_filepath != NULL);
     
@@ -175,12 +175,12 @@ void read_input(align_data_t *p_align_data) {
         
         cur_section_idx = in_section_id - p_align_data->base_section;
         
-        TRACE_2("\nread tile\n");
-        TRACE_2("   section_id : %d\n", in_section_id);
-        TRACE_2("   mfov_id    : %d\n", in_mfov_id);
-        TRACE_2("   index      : %d\n", in_index);
-        TRACE_2("   bbox       : [%d-%d, %d-%d]\n", in_x_start, in_x_finish, in_y_start, in_y_finish);
-        TRACE_2("   filepath   : %s\n", in_filepath);
+        //TRACE_2("\nread tile\n");
+        //TRACE_2("   section_id : %d\n", in_section_id);
+        //TRACE_2("   mfov_id    : %d\n", in_mfov_id);
+        //TRACE_2("   index      : %d\n", in_index);
+        //TRACE_2("   bbox       : [%d-%d, %d-%d]\n", in_x_start, in_x_finish, in_y_start, in_y_finish);
+        //TRACE_2("   filepath   : %s\n", in_filepath);
         
         p_sec_data = &(p_align_data->sec_data[cur_section_idx]);
         p_cur_tile = &(p_sec_data->tiles[p_sec_data->n_tiles]);
@@ -219,16 +219,16 @@ void read_input(align_data_t *p_align_data) {
     
     ASSERT(n_sections == p_align_data->n_sections);
     
-    TRACE_2("-------------------------\n");
-    TRACE_2("n_sections: %d\n", p_align_data->n_sections);
-    TRACE_2("-------------------------\n");
+    //TRACE_2("-------------------------\n");
+    //TRACE_2("n_sections: %d\n", p_align_data->n_sections);
+    //TRACE_2("-------------------------\n");
     
-    TRACE_1("finish\n");
+    //TRACE_1("finish\n");
 }
 
 void read_tiles(align_data_t *p_align_data) {
 
-    TRACE_1("read_tiles: start\n");
+    //TRACE_1("read_tiles: start\n");
     
     cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
         section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
@@ -237,7 +237,7 @@ void read_tiles(align_data_t *p_align_data) {
             tile_data_t *p_tile = &(p_sec_data->tiles[tile_id]);
             p_tile->tile_id = tile_id+1;
             
-            TRACE_1("  -- read[%d-%d]: %s\n", sec_id, tile_id, p_tile->filepath);
+            //TRACE_1("  -- read[%d-%d]: %s\n", sec_id, tile_id, p_tile->filepath);
             
             //(*p_tile->p_image).create(4096, 4096, CV_8UC1);
             (*p_tile->p_image).create(3128, 2724, CV_8UC1);
@@ -259,7 +259,7 @@ void read_tiles(align_data_t *p_align_data) {
         
     }
     
-    TRACE_1("read_tiles: finish\n");
+    //TRACE_1("read_tiles: finish\n");
     
 }
 

@@ -37,7 +37,7 @@ void engine<VertexType, EdgeType>::parallel_process(
   for (int _i = 0; _i < subbags.size(); _i++) {
     size += subbags[_i]->size();
   }
-  printf("Total size is %d\n", size);
+  //printf("Total size is %d\n", size);
   cilk_for (int _i = 0; _i < subbags.size(); _i++) {
     cilk_for (int _j = 0; _j < subbags[_i]->size(); _j++) {
       process_update_task((*(subbags[_i]))[_j]);
