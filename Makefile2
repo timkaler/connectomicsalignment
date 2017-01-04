@@ -49,7 +49,7 @@ ifdef DEBUG
 	CFLAGS += -O0 -g3
 else
 	CFLAGS += -DNDEBUG
-	CFLAGS += -O3 -g -mavx2 -m64 -march=native -pthread
+	CFLAGS += -O3 -g -mavx2 -m64 -march=native
 	#-Ofast
 endif
 
@@ -97,10 +97,13 @@ align.S: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.
 run.o: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
+#
+#Graph.o: Graph.cpp Graph.h
+#	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 run.S: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: common.o align.o run.o match.o
+run_align: common.o align.o run.o match.o 
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:

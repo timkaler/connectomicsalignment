@@ -21,14 +21,173 @@
 #include "./align.h"
 #include "./fasttime.h"
 #include "./simple_mutex.h"
-
-
-
+#include "./Graph.cpp"
+void updateVertex2DAlign(int vid, void* scheduler_void);
+#include "cilk_tools/scheduler.cpp"
+#include "cilk_tools/engine.cpp"
 #ifndef SKIPJSON
 #define SAVE_TILE_MATCHES(...) save_tile_matches(__VA_ARGS__)
 #else
 #define SAVE_TILE_MATCHES(...)
 #endif
+
+static Graph<vdata, edata>* graph;
+static Scheduler* scheduler;
+static engine<vdata, edata>* e;
+int global_lock = 0;
+void updateVertex2DAlign(int vid, void* scheduler_void) {
+
+  //Scheduler* scheduler2 = reinterpret_cast<Scheduler*>(scheduler_void);
+
+  //printf("starting vertex %d\n", vid);
+  vdata* vertex_data = graph->getVertexData(vid);
+  std::vector<edata> edges = graph->edgeData[vid];
+
+
+  float original_offset_x = vertex_data->offset_x;
+  float original_offset_y = vertex_data->offset_y;
+
+  std::vector<cv::Point2f> filtered_match_points_a;
+  std::vector<cv::Point2f> filtered_match_points_b;
+  //printf("current dx %f, current dy %f\n", current_dx, current_dy);
+  // for each neighboring tile.
+  //printf("edges size %d\n", edges.size());
+  for (int i = 0; i < edges.size(); i++) {
+    std::vector<cv::Point2f> source_points(0), dest_points(0);
+    std::vector<cv::Point2f>* v_points = edges[i].v_points;
+    std::vector<cv::Point2f>* n_points = edges[i].n_points;
+
+  float current_dx = vertex_data->offset_x + vertex_data->start_x;
+  float current_dy = vertex_data->offset_y + vertex_data->start_y;
+    vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
+
+    float neighbor_dx = neighbor_vertex->offset_x + neighbor_vertex->start_x;
+    float neighbor_dy = neighbor_vertex->offset_y + neighbor_vertex->start_y;
+
+    //printf("points size %d\n", v_points->size());
+    for (int j = 0; j < v_points->size(); j++) {
+      cv::Point2f ptx1((*v_points)[j].x + current_dx,
+          (*v_points)[j].y + current_dy);
+      cv::Point2f ptx2((*n_points)[j].x + neighbor_dx,
+          (*n_points)[j].y + neighbor_dy);
+      source_points.push_back(ptx1);
+      dest_points.push_back(ptx2);
+    }
+
+  if (source_points.size() == 0) {
+    //printf("edges size is 0.\n");
+    continue;
+  }
+
+  int failures = 0;
+  int count = 0;
+
+
+
+  while (count < 4&&failures<40000) {
+    count = 0;
+    cv::Mat mask;
+    //cv::videostab::TranslationBasedLocalOutlierRejector* outReject =
+    //  new cv::videostab::TranslationBasedLocalOutlierRejector();
+    cv::videostab::TranslationBasedLocalOutlierRejector outReject;
+    // NOTE(TFK): eps and prob don't appear to be used in outReject.
+    // cv::RansacParams rParams =
+    //     cv::RansacParams(int size, float thresh, float eps, float prob)
+    cv::videostab::RansacParams rParams =
+        cv::videostab::RansacParams(4,
+        1.0 + failures*0.5, 0.3, 0.99);
+    failures++;
+    outReject.setRansacParams(rParams);
+
+    outReject.process(cv::Size(1, 1), source_points, dest_points, mask);
+
+    float average_dx = 0;
+    float average_dy = 0;
+    // Use the output mask to filter the matches
+    for (int k = 0; k < source_points.size(); ++k) {
+      if (mask.at<bool>(0,k)) {
+        average_dx += dest_points[k].x - source_points[k].x;
+        average_dy += dest_points[k].y - source_points[k].y;
+        count++;
+      }
+    }
+
+    if (count >= 4) {
+
+      for (int k = 0; k < source_points.size(); ++k) {
+        if (mask.at<bool>(0,k)) {
+          filtered_match_points_a.push_back(source_points[k]);
+          filtered_match_points_b.push_back(dest_points[k]);
+        }
+      }
+
+      //average_dx = average_dx / count;
+      //average_dy = average_dy / count;
+      //vertex_data->offset_x += average_dx*0.1;
+      //vertex_data->offset_y += average_dy*0.1;
+      //printf("inliers for vertex %d count is %d\n", vid, count);
+    } else {
+      //printf("No more inliers for vertex %d\n", vid);
+    }
+  }
+}
+
+    if (filtered_match_points_a.size() == 0) {
+      return;
+    }
+          cv::Mat model = cv::estimateRigidTransform(filtered_match_points_a,
+              filtered_match_points_b, false);
+
+          if (!model.empty()) {
+          std::vector<cv::Point2f> match_points_a_fixed;
+          match_points_a_fixed.reserve(filtered_match_points_a.size());
+          cv::transform(filtered_match_points_a, match_points_a_fixed, model);
+
+          double delta_x = 0.0;
+          double delta_y = 0.0;
+          int tempcount = 0.0;
+          for (int i = 0; i < filtered_match_points_a.size(); i++) {
+            delta_x += match_points_a_fixed[i].x - filtered_match_points_a[i].x;
+            delta_y += match_points_a_fixed[i].y - filtered_match_points_a[i].y;
+            tempcount++;
+          }
+          if (tempcount > 0) {
+            delta_x = delta_x/tempcount;
+            delta_y = delta_y/tempcount;
+            vertex_data->offset_x += delta_x;
+            vertex_data->offset_y += delta_y;
+          }
+          }
+
+
+  if (std::abs(original_offset_x - vertex_data->offset_x) > 1.0 ||
+      std::abs(original_offset_y - vertex_data->offset_y) > 1.0){
+    //printf("current error at vertex %d is %f, %f\n", (int)vid,
+    //    (float)std::abs(original_offset_x - vertex_data->offset_x),
+    //    (float)std::abs(original_offset_y - vertex_data->offset_y));
+  }
+  //if (vid==17){
+  //if (vid==17){
+    //simple_acquire(&global_lock);
+    ////printf("current error at vertex %d is %f, %f\n", (int)vid,
+    ////    (float)std::abs(original_offset_x - vertex_data->offset_x),
+    ////    (float)std::abs(original_offset_y - vertex_data->offset_y));
+    //simple_release(&global_lock);
+  //}
+
+  if (
+      std::abs(original_offset_x - vertex_data->offset_x) > 1e-2 ||
+      std::abs(original_offset_y - vertex_data->offset_y) > 1e-2) {
+    scheduler->add_task(vid, updateVertex2DAlign);
+    for (int i = 0; i < edges.size(); i++) {
+      scheduler->add_task(edges[i].neighbor_id, updateVertex2DAlign);
+    }
+    vertex_data->iteration_count++;
+  }
+
+  //printf("updating vertex %d, %d\n", vid, vertex_data->iteration_count);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // INTERNAL FUNCTIONS
@@ -219,8 +378,8 @@ void compute_tile_matches(align_data_t *p_align_data) {
   // Iterate over all pairs of tiles
   for (int sec_id = 0; sec_id < p_align_data->n_sections; ++sec_id) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
-    char out_filepath_start[MAX_FILEPATH] = "\0";
 #ifndef SKIPJSON
+    char out_filepath_start[MAX_FILEPATH] = "\0";
     // Get the section id from the first tile.
     const char *tmp_filepath = (p_sec_data->tiles[0]).filepath;
     const char *section_id_start = strrchr(tmp_filepath, '/') + 1;
@@ -246,6 +405,10 @@ void compute_tile_matches(align_data_t *p_align_data) {
     std::set<int> mfovs;
     simple_mutex_t mfovs_lock;
     simple_mutex_init(&mfovs_lock);
+
+
+    graph = new Graph<vdata, edata>();
+    graph->resize(p_sec_data->n_tiles);
 
     cilk_for (int atile_id = 0; atile_id < p_sec_data->n_tiles; ++atile_id) {
       tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
@@ -284,6 +447,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
         // Skip tiles that don't overlap
         if (!is_tiles_overlap(a_tile, b_tile)) continue;
         indices_to_check[indices_to_check_len++] = i;
+        assert(indices_to_check_len <= 49);
       }
 
       cilk_for (int tmpindex = 0; tmpindex < indices_to_check_len; tmpindex++) {
@@ -297,16 +461,16 @@ void compute_tile_matches(align_data_t *p_align_data) {
         // Index pair is:
         // a_tile->mfov_id, a_tile->index
         // b_tile->mfov_id, b_tile->index
-        TRACE_1("    -- index_pair [%d_%d, %d_%d]\n",
-                a_tile->mfov_id, a_tile->index,
-                b_tile->mfov_id, b_tile->index);
+        //TRACE_1("    -- index_pair [%d_%d, %d_%d]\n",
+        //        a_tile->mfov_id, a_tile->index,
+        //        b_tile->mfov_id, b_tile->index);
 
-        TRACE_1("    -- %d_%d features_num: %lu\n",
-                a_tile->mfov_id, a_tile->index,
-                a_tile->p_kps->size());
-        TRACE_1("    -- %d_%d features_num: %lu\n",
-                b_tile->mfov_id, b_tile->index,
-                b_tile->p_kps->size());
+        //TRACE_1("    -- %d_%d features_num: %lu\n",
+        //        a_tile->mfov_id, a_tile->index,
+        //        a_tile->p_kps->size());
+        //TRACE_1("    -- %d_%d features_num: %lu\n",
+        //        b_tile->mfov_id, b_tile->index,
+        //        b_tile->p_kps->size());
 #ifndef SKIPJSON
         const char *b_filepath = b_tile->filepath;
         const char *b_imagename_start = strrchr(b_filepath, '/') + 1;
@@ -335,21 +499,25 @@ void compute_tile_matches(align_data_t *p_align_data) {
 
         // Check that both tiles have enough features to match.
         if (a_tile->p_kps->size() < MIN_FEATURES_NUM) {
-          TRACE_1("Less than %d features in tile %d_%d, saving empty match file\n",
-                  MIN_FEATURES_NUM,
-                  a_tile->mfov_id, a_tile->index);
+          //TRACE_1("Less than %d features in tile %d_%d, saving empty match file\n",
+          //        MIN_FEATURES_NUM,
+          //        a_tile->mfov_id, a_tile->index);
+          #ifndef SKIPJSON
           SAVE_TILE_MATCHES(0, out_filepath,
                             a_tile, b_tile,
                             nullptr, nullptr, nullptr);
+          #endif
           continue;
         }
         if (b_tile->p_kps->size() < MIN_FEATURES_NUM) {
-          TRACE_1("Less than %d features in tile %d_%d, saving empty match file\n",
-                  MIN_FEATURES_NUM,
-                  b_tile->mfov_id, b_tile->index);
+          //TRACE_1("Less than %d features in tile %d_%d, saving empty match file\n",
+          //        MIN_FEATURES_NUM,
+          //        b_tile->mfov_id, b_tile->index);
+          #ifndef SKIPJSON
           SAVE_TILE_MATCHES(0, out_filepath,
                             a_tile, b_tile,
                             nullptr, nullptr, nullptr);
+          #endif
           continue;
         }
 
@@ -412,12 +580,12 @@ void compute_tile_matches(align_data_t *p_align_data) {
               (btile_kps_desc_in_overlap));
         }
 
-        TRACE_1("    -- %d_%d overlap_features_num: %lu\n",
-                a_tile->mfov_id, a_tile->index,
-                atile_kps_in_overlap.size());
-        TRACE_1("    -- %d_%d overlap_features_num: %lu\n",
-                b_tile->mfov_id, b_tile->index,
-                btile_kps_in_overlap.size());
+        //TRACE_1("    -- %d_%d overlap_features_num: %lu\n",
+        //        a_tile->mfov_id, a_tile->index,
+        //        atile_kps_in_overlap.size());
+        //TRACE_1("    -- %d_%d overlap_features_num: %lu\n",
+        //        b_tile->mfov_id, b_tile->index,
+        //        btile_kps_in_overlap.size());
 
         // TODO(TB): Deal with optionally filtering the maximal number of
         // features from one tile.
@@ -429,21 +597,25 @@ void compute_tile_matches(align_data_t *p_align_data) {
         // Check that both tiles have enough features in the overlap
         // to match.
         if (atile_kps_in_overlap.size() < MIN_FEATURES_NUM) {
-          TRACE_1("Less than %d features in the overlap in tile %d_%d, saving empty match file\n",
-                  MIN_FEATURES_NUM,
-                  a_tile->mfov_id, a_tile->index);
+          //TRACE_1("Less than %d features in the overlap in tile %d_%d, saving empty match file\n",
+          //        MIN_FEATURES_NUM,
+          //        a_tile->mfov_id, a_tile->index);
+          #ifndef SKIPJSON
           SAVE_TILE_MATCHES(0, out_filepath,
                             a_tile, b_tile,
                             nullptr, nullptr, nullptr);
+          #endif
           continue;
         }
         if (btile_kps_in_overlap.size() < MIN_FEATURES_NUM) {
-          TRACE_1("Less than %d features in the overlap in tile %d_%d, saving empty match file\n",
-                  MIN_FEATURES_NUM,
-                  b_tile->mfov_id, b_tile->index);
+          //TRACE_1("Less than %d features in the overlap in tile %d_%d, saving empty match file\n",
+          //        MIN_FEATURES_NUM,
+          //        b_tile->mfov_id, b_tile->index);
+          #ifndef SKIPJSON
           SAVE_TILE_MATCHES(0, out_filepath,
                             a_tile, b_tile,
                             nullptr, nullptr, nullptr);
+          #endif
           continue;
         }
 
@@ -454,10 +626,10 @@ void compute_tile_matches(align_data_t *p_align_data) {
                        btile_kps_desc_in_overlap,
                        ROD);
 
-        TRACE_1("    -- [%d_%d, %d_%d] matches: %lu\n",
-                a_tile->mfov_id, a_tile->index,
-                b_tile->mfov_id, b_tile->index,
-                matches.size());
+        //TRACE_1("    -- [%d_%d, %d_%d] matches: %lu\n",
+        //        a_tile->mfov_id, a_tile->index,
+        //        b_tile->mfov_id, b_tile->index,
+        //        matches.size());
 
 
         // Filter the matches with RANSAC
@@ -478,15 +650,18 @@ void compute_tile_matches(align_data_t *p_align_data) {
         // TODO(TB): Read the appropriate RANSAC settings from the
         // configuration file.
         if (matches.size() < MIN_FEATURES_NUM) {
-          TRACE_1("Less than %d matched features, saving empty match file\n",
-                  MIN_FEATURES_NUM);
+          //TRACE_1("Less than %d matched features, saving empty match file\n",
+          //        MIN_FEATURES_NUM);
+          #ifndef SKIPJSON
           SAVE_TILE_MATCHES(0, out_filepath,
                             a_tile, b_tile,
                             nullptr, nullptr, nullptr);
+          #endif
           continue;
         }
 
-          cv::Mat mask(matches.size(), 0, CV_8UC1);
+          cv::Mat mask(matches.size(), 1, CV_8U);
+          //cv::Mat mask(source_points.size(),1, CV_8U);
           // cv::Mat mask;
           // cv::Mat H = cv::findHomography(match_points_a2, match_points_b2, cv::RANSAC,
           //                               MAX_EPSILON, mask);
@@ -497,7 +672,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
           // cv::RansacParams rParams =
           //     cv::RansacParams(int size, float thresh, float eps, float prob)
           cv::videostab::RansacParams rParams =
-              cv::videostab::RansacParams(MIN_FEATURES_NUM, 10.0, 0.3, 0.99);
+              cv::videostab::RansacParams(MIN_FEATURES_NUM, 100.0, 0.3, 0.99);
           outReject.setRansacParams(rParams);
           outReject.process(cv::Size(1, 1),  // One cell.
                             match_points_a, match_points_b, mask);
@@ -509,7 +684,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
 
         // Use the output mask to filter the matches
         for (size_t i = 0; i < matches.size(); ++i) {
-          if (mask.at<bool>(0, i)) {
+          if (mask.at<bool>(0,i)) {
             filtered_match_points_a.push_back(
                 atile_kps_in_overlap[matches[i].queryIdx].pt);
             filtered_match_points_b.push_back(
@@ -517,14 +692,17 @@ void compute_tile_matches(align_data_t *p_align_data) {
           }
         }
 
-        TRACE_1("    -- [%d_%d, %d_%d] filtered_matches: %lu\n",
-                a_tile->mfov_id, a_tile->index,
-                b_tile->mfov_id, b_tile->index,
-                filtered_match_points_a.size());
+        graph->insert_matches(atile_id, btile_id,
+            filtered_match_points_a, filtered_match_points_b);
+
+        //TRACE_1("    -- [%d_%d, %d_%d] filtered_matches: %lu\n",
+        //        a_tile->mfov_id, a_tile->index,
+        //        b_tile->mfov_id, b_tile->index,
+        //        filtered_match_points_a.size());
 
         if (filtered_match_points_a.size() < MIN_FEATURES_NUM) {
-          TRACE_1("Less than %d matched features, saving empty match file\n",
-                  MIN_FEATURES_NUM);
+          //TRACE_1("Less than %d matched features, saving empty match file\n",
+          //        MIN_FEATURES_NUM);
           SAVE_TILE_MATCHES(0, out_filepath,
                             a_tile, b_tile,
                             nullptr, nullptr, nullptr);
@@ -535,19 +713,22 @@ void compute_tile_matches(align_data_t *p_align_data) {
         {
           // Estimate the rigid transform from the matched points in
           // tile A to those in tile B.
+
           cv::Mat model = cv::estimateRigidTransform(filtered_match_points_a,
               filtered_match_points_b, false);
 
-          TRACE_1("    -- [%d_%d, %d_%d] estimated a %d by %d affine transform matrix.\n",
-                  a_tile->mfov_id, a_tile->index,
-                  b_tile->mfov_id, b_tile->index,
-                  model.rows, model.cols);
+          //TRACE_1("    -- [%d_%d, %d_%d] estimated a %d by %d affine transform matrix.\n",
+          //        a_tile->mfov_id, a_tile->index,
+          //        b_tile->mfov_id, b_tile->index,
+          //        model.rows, model.cols);
 
           if (0 == model.rows) {
-            TRACE_1("Could not estimate affine transform, saving empty match file\n");
+            //TRACE_1("Could not estimate affine transform, saving empty match file\n");
+            #ifndef SKIPJSON
             SAVE_TILE_MATCHES(0, out_filepath,
                               a_tile, b_tile,
                               nullptr, nullptr, nullptr);
+            #endif
             continue;
           }
 
@@ -560,10 +741,12 @@ void compute_tile_matches(align_data_t *p_align_data) {
           cv::transform(filtered_match_points_a, match_points_a_fixed, model);
 
           // Output the tile matches.
+          #ifndef SKIPJSON
           SAVE_TILE_MATCHES(filtered_match_points_a.size(), out_filepath,
                             a_tile, b_tile,
                             &filtered_match_points_a, &filtered_match_points_b,
                             &match_points_a_fixed);
+          #endif
         }
       }  // for (btile_id)
     }  // for (atile_id)
@@ -574,8 +757,8 @@ void compute_tile_matches(align_data_t *p_align_data) {
       const std::string matched_sifts_files =
         std::string(p_align_data->output_dirpath) +
         "/W01_Sec" + section_id + "_matched_sifts_files.txt";
-      TRACE_1("Recording matched sifts files in %s\n",
-              matched_sifts_files.c_str());
+      //TRACE_1("Recording matched sifts files in %s\n",
+      //        matched_sifts_files.c_str());
 
       FILE *fp = fopen(matched_sifts_files.c_str(), "wb+");
       const std::list< const char* > &output_files =
@@ -585,7 +768,82 @@ void compute_tile_matches(align_data_t *p_align_data) {
       fclose(fp);
     }
 #endif
+
+  printf("Size of the graph is %d\n", graph->num_vertices());
+  int ncolors = graph->compute_trivial_coloring();
+  //for (int i = 0; i < graph->num_vertices(); i++) {
+  //  printf("Vertex %d has edges %d\n", i, graph->edgeData[i].size());
+  //}
+  for (int i = 0; i < graph->num_vertices(); i++) {
+    //printf("init vertex data for vertex %d\n", i);
+    vdata* d = graph->getVertexData(i);
+    _tile_data tdata = p_sec_data->tiles[i];
+    d->vertex_id = i;
+    d->mfov_id = tdata.mfov_id;
+    d->tile_index = tdata.index;
+    d->start_x = tdata.x_start;
+    d->end_x = tdata.x_finish;
+    d->start_y = tdata.y_start;
+    d->end_y = tdata.y_finish;
+    d->offset_x = 0.0;
+    d->offset_y = 0.0;
+    d->iteration_count = 0;
+  }
+
+  scheduler =
+      new Scheduler(graph->vertexColors, ncolors+1, graph->num_vertices());
+  e = new engine<vdata, edata>(graph, scheduler);
+  for (int i = 0; i < graph->num_vertices(); i++) {
+    scheduler->add_task(i, updateVertex2DAlign);
+  }
+  printf("starting run\n");
+  e->run();
+  printf("ending run\n");
+
+  FILE* wafer_file = fopen("test_file", "w+");
+  fprintf(wafer_file, "[\n");
+  for (int i = 0; i < graph->num_vertices(); i++) {
+    vdata* vd = graph->getVertexData(i);
+    fprintf(wafer_file, "\t{\n");
+    fprintf(wafer_file, "\t\t\"bbox\": [\n");
+    fprintf(wafer_file,
+        "\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f\n],",
+        vd->start_x+vd->offset_x, vd->end_x+vd->offset_x,
+        vd->start_y+vd->offset_y, vd->end_y+vd->offset_y);
+    fprintf(wafer_file, "\t\t\"height\": %d,\n",2724);
+    fprintf(wafer_file, "\t\t\"layer\": %d,\n",10);
+    fprintf(wafer_file, "\t\t\"maxIntensity\": %f,\n",255.0);
+    fprintf(wafer_file, "\t\t\"mfov\": %d,\n",
+        graph->getVertexData(i)->mfov_id);
+    fprintf(wafer_file, "\t\t\"minIntensity\": %f,\n",
+        0.0);
+    fprintf(wafer_file, "\t\t\"tile_index\": %d,\n",
+        graph->getVertexData(i)->tile_index);
+    fprintf(wafer_file, "\t\t\"transforms\": [\n");
+    fprintf(wafer_file, "\t\t\t{\n");
+    fprintf(wafer_file,
+        "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.RigidModel2D\",\n");
+    fprintf(wafer_file,
+        "\t\t\t\t\"dataString\": \"%f %f %f\"\n", 0.0,
+        vd->start_x+vd->offset_x, vd->start_y + vd->offset_y);
+    fprintf(wafer_file,
+        "\t\t\t}\n");
+    fprintf(wafer_file,
+        "\t\t],\n");
+    fprintf(wafer_file,
+        "\t\t\"width\":%d\n",3128);
+    if (i != graph->num_vertices()-1) {
+      fprintf(wafer_file,
+          "\t},\n");
+    } else {
+      fprintf(wafer_file,
+          "\t}\n]");
+    }
+  }
+  fclose(wafer_file);
+
+
   }  // for (sec_id)
 
-  TRACE_1("compute_tile_matches: finish\n");
+  //TRACE_1("compute_tile_matches: finish\n");
 }

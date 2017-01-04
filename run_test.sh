@@ -24,6 +24,7 @@ export CILK_NWORKERS=16
 WORKINGDIR=$PWD 
 OUTPUTDIR=$PWD/temp
 
+#./setup.sh gdb --args ./run_align 1 \
 ./setup.sh ./run_align 1 \
     9 1 \
     $PWD/data/txtspecs.txt \

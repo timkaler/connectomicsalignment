@@ -199,7 +199,7 @@ static const float SIFT_INIT_SIGMA = 0.5f;
 static const int SIFT_IMG_BORDER = 5;
 
 // maximum steps of keypoint interpolation before failure
-static const int SIFT_MAX_INTERP_STEPS = 2;
+static const int SIFT_MAX_INTERP_STEPS = 5;
 
 // default number of bins in histogram for orientation assignment
 static const int SIFT_ORI_HIST_BINS = 36;
@@ -211,8 +211,8 @@ static const float SIFT_ORI_SIG_FCTR = 1.5f;
 static const float SIFT_ORI_RADIUS = 3 * SIFT_ORI_SIG_FCTR;
 
 // orientation magnitude relative to max that results in new feature
-//static const float SIFT_ORI_PEAK_RATIO = 0.8f;
-static const float SIFT_ORI_PEAK_RATIO = 0.95f;
+static const float SIFT_ORI_PEAK_RATIO = 0.8f;
+//static const float SIFT_ORI_PEAK_RATIO = 0.95f;
 
 // determines the size of a single descriptor orientation histogram
 static const float SIFT_DESCR_SCL_FCTR = 3.f;
