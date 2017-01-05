@@ -18,23 +18,26 @@ OUTPUTDIR=$PWD/temp
     9 1 \
     $PWD/data/txtspecs.txt \
     $OUTPUTDIR \
-    $OUTPUTDIR && ./setup.sh ./run_align 1 \
-    10 1 \
-    $PWD/data/txtspecs.txt \
-    $OUTPUTDIR \
-    $OUTPUTDIR && ./setup.sh ./run_align 1 \
-    11 1 \
-    $PWD/data/txtspecs.txt \
-    $OUTPUTDIR \
-    $OUTPUTDIR && ./setup.sh ./run_align 1 \
-    12 1 \
-    $PWD/data/txtspecs.txt \
-    $OUTPUTDIR \
-    $OUTPUTDIR && ./setup.sh ./run_align 1 \
-    13 1 \
-    $PWD/data/txtspecs.txt \
-    $OUTPUTDIR \
     $OUTPUTDIR
+
+
+# && ./setup.sh ./run_align 1 \
+#    10 1 \
+#    $PWD/data/txtspecs.txt \
+#    $OUTPUTDIR \
+#    $OUTPUTDIR && ./setup.sh ./run_align 1 \
+#    11 1 \
+#    $PWD/data/txtspecs.txt \
+#    $OUTPUTDIR \
+#    $OUTPUTDIR && ./setup.sh ./run_align 1 \
+#    12 1 \
+#    $PWD/data/txtspecs.txt \
+#    $OUTPUTDIR \
+#    $OUTPUTDIR && ./setup.sh ./run_align 1 \
+#    13 1 \
+#    $PWD/data/txtspecs.txt \
+#    $OUTPUTDIR \
+#    $OUTPUTDIR
 
 
 

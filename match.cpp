@@ -804,6 +804,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
     d->vertex_id = i;
     d->mfov_id = tdata.mfov_id;
     d->tile_index = tdata.index;
+    d->tile_id = i;
     d->start_x = tdata.x_start;
     d->end_x = tdata.x_finish;
     d->start_y = tdata.y_start;
@@ -846,6 +847,11 @@ void compute_tile_matches(align_data_t *p_align_data) {
         graph->getVertexData(i)->mfov_id);
     fprintf(wafer_file, "\t\t\"minIntensity\": %f,\n",
         0.0);
+    fprintf(wafer_file, "\t\t\"mipmapLevels\": {\n");
+    fprintf(wafer_file, "\t\t\"0\": {\n");
+    fprintf(wafer_file, "\t\t\t\"imageUrl\": \"%s\"\n", p_align_data->sec_data[sec_id].tiles[graph->getVertexData(i)->tile_id].filepath);
+    fprintf(wafer_file, "\t\t\t}\n");
+    fprintf(wafer_file, "\t\t},\n");
     fprintf(wafer_file, "\t\t\"tile_index\": %d,\n",
         graph->getVertexData(i)->tile_index);
     fprintf(wafer_file, "\t\t\"transforms\": [\n");

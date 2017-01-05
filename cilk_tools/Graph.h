@@ -33,6 +33,7 @@ typedef struct {
   int vertex_id;
   int mfov_id; // mfov identifier.
   int tile_index; // index within mfov
+  int tile_id; // index in code.
 
   // Data for ORIGINAL bounding box.
   double start_x;
