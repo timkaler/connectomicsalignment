@@ -308,6 +308,7 @@ void align_execute(align_data_t *p_align_data) {
         compute_SIFT_parallel(p_align_data);
         STOP_TIMER(&timer, "compute_SIFT time:");
     }
+        free_tiles(p_align_data);
     START_TIMER(&timer);
     compute_tile_matches(p_align_data);
     STOP_TIMER(&timer, "compute_tile_matches time:");

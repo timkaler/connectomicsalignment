@@ -17,10 +17,15 @@ void engine<VertexType, EdgeType>::run() {
       scheduler->get_task_bag();
   while (subbags.size() > 0) {
     iterationCount++;
+    if (iterationCount%100==0){
+    printf("iteration count is %d\n", iterationCount);
+    }
     parallel_process(subbags);
     subbags = scheduler->get_task_bag();
+    //if (iterationCount % 100 == 0) {
+    //}
   }
-  //printf("iteration count is %d\n", iterationCount);
+  printf("iteration count is %d\n", iterationCount);
 }
 
 template<typename VertexType, typename EdgeType>

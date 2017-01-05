@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 
@@ -9,16 +8,30 @@ OUTPUTDIR=$PWD/temp
 
 #./setup.sh gdb --args ./run_align 1 \
 #./setup.sh ./run_align 1 \
-#    9 1 \
+#    9 5 \
 #    $PWD/data/txtspecs.txt \
 #    $OUTPUTDIR \
 #    $OUTPUTDIR
 
 ./setup.sh ./run_align 1 \
-    9 1 \
-    $PWD/data/txtspecs.txt \
+    24 1 \
+    $PWD/data/txtspecs_iarpa.txt \
     $OUTPUTDIR \
     $OUTPUTDIR
+
+
+#./setup.sh ./run_align 1 \
+#    24 1 \
+#    $PWD/data/txtspecs_iarpa.txt \
+#    $OUTPUTDIR \
+#    $OUTPUTDIR
+
+
+#./setup.sh ./run_align 1 \
+#    25 1 \
+#    $PWD/data/txtspecs_iarpa.txt \
+#    $OUTPUTDIR \
+#    $OUTPUTDIR
 
 
 # && ./setup.sh ./run_align 1 \

@@ -73,8 +73,8 @@ void Multibag<T>::collect() {
   int* count_array = reinterpret_cast<int*>(calloc(ncolors, sizeof(int)));
   {
   // Count the vectors for each color.
-  cilk_for (int i = 0; i < __cilkrts_get_nworkers(); i++) {
-    cilk_for (int j = 0; j < wl_vectors[i].log_array.size(); j++) {
+  /*save*/for (int i = 0; i < __cilkrts_get_nworkers(); i++) {
+    /*save*/for (int j = 0; j < wl_vectors[i].log_array.size(); j++) {
       int c = wl_vectors[i].log_colors_array[j];
       __sync_fetch_and_add(&(count_array[c]), 1);
     }
@@ -82,15 +82,15 @@ void Multibag<T>::collect() {
   }
   {
   // Count array now tells us how many of each color there is.
-  cilk_for (int i = 0; i < ncolors; i++) {
+  /*save*/for (int i = 0; i < ncolors; i++) {
     if (count_array[i] > 0) {
       collected_vectors[i].resize(count_array[i]);
     }
   }
   }
   {
-  cilk_for (int i = 0; i < __cilkrts_get_nworkers(); i++) {
-    cilk_for (int j = 0; j < wl_vectors[i].log_array.size(); j++) {
+  /*save*/for (int i = 0; i < __cilkrts_get_nworkers(); i++) {
+    /*save*/for (int j = 0; j < wl_vectors[i].log_array.size(); j++) {
       int c = wl_vectors[i].log_colors_array[j];
       int index = __sync_sub_and_fetch(&(count_array[c]), 1);
       std::vector<T>* local_v = wl_vectors[i].log_array[j];
@@ -129,9 +129,9 @@ inline bool Multibag<T>::isEmpty(int color) {
 
 template <typename T>
 inline void Multibag<T>::clear() {
-  cilk_for (int c = 0; c < ncolors; c++) {
+  /*save*/for (int c = 0; c < ncolors; c++) {
     std::vector<std::vector<T>*> list =  get_vector_list(c);
-    cilk_for (int i = 0; i < list.size(); i++) {
+    /*save*/for (int i = 0; i < list.size(); i++) {
       delete list[i];
     }
     collected_vectors[c].clear();

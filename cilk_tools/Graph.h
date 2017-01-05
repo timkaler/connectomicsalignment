@@ -42,8 +42,8 @@ typedef struct {
   double end_y;
 
   // dynamic data we'll update.
-  float offset_x;
-  float offset_y;
+  double offset_x;
+  double offset_y;
   int iteration_count;
 } vdata;
 
