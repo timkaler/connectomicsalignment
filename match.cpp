@@ -21,13 +21,13 @@
 #include "./align.h"
 #include "./fasttime.h"
 #include "./simple_mutex.h"
-#include "./Graph.cpp"
+#include "cilk_tools/engine.h"
 
 
 void updateVertex2DAlign(int vid, void* scheduler_void);
 
-#include "cilk_tools/scheduler.cpp"
-#include "cilk_tools/engine.cpp"
+//#include "cilk_tools/scheduler.cpp"
+//#include "cilk_tools/engine.cpp"
 
 #ifndef SKIPJSON
 #define SAVE_TILE_MATCHES(...) save_tile_matches(__VA_ARGS__)
@@ -51,15 +51,16 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
   float original_offset_x = vertex_data->offset_x;
   float original_offset_y = vertex_data->offset_y;
 
-  std::vector<cv::Point2f> filtered_match_points_a;
-  std::vector<cv::Point2f> filtered_match_points_b;
+  std::vector<cv::Point2f> filtered_match_points_a(0);
+  std::vector<cv::Point2f> filtered_match_points_b(0);
   //printf("current dx %f, current dy %f\n", current_dx, current_dy);
   // for each neighboring tile.
   //printf("edges size %d\n", edges.size());
   for (int i = 0; i < edges.size(); i++) {
-    std::vector<cv::Point2f> source_points(0), dest_points(0);
     std::vector<cv::Point2f>* v_points = edges[i].v_points;
     std::vector<cv::Point2f>* n_points = edges[i].n_points;
+    //std::vector<cv::Point2f> source_points(v_points->size()), dest_points(n_points->size());
+    std::vector<cv::Point2f> source_points, dest_points;
 
   float current_dx = vertex_data->offset_x + vertex_data->start_x;
   float current_dy = vertex_data->offset_y + vertex_data->start_y;
@@ -87,30 +88,41 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
   int count = 0;
 
  
-  cv::Size cv_size(1,1);
-    cv::videostab::TranslationBasedLocalOutlierRejector outReject;
+  thread_local cv::Size cv_size(1,1);
+  thread_local cv::videostab::TranslationBasedLocalOutlierRejector outReject;
+  thread_local cv::videostab::RansacParams rParams;
+  cv::Mat new_mask;
     // NOTE(TFK): eps and prob don't appear to be used in outReject.
     // cv::RansacParams rParams =
     //     cv::RansacParams(int size, float thresh, float eps, float prob)
-  while (count < 4&&failures<4000) {
+
+
+  while (count < 4 && failures<40000) {
     count = 0;
-    cv::Mat mask(1,source_points.size(), CV_8U);
     //cv::videostab::TranslationBasedLocalOutlierRejector* outReject =
     //  new cv::videostab::TranslationBasedLocalOutlierRejector();
     failures++;
-    cv::videostab::RansacParams rParams =
+
+
+    //double offset = 0.5*failures+ 0.5*(1.0*failures)*(1.0*failures)/100.0;
+
+    rParams =
         cv::videostab::RansacParams(4,
-        1.0 + failures*0.5, 0.3, 0.99);
-
+        1.0 + failures, 0.3, 0.99);
     outReject.setRansacParams(rParams);
+    outReject.process(cv_size, source_points, dest_points, new_mask);
 
-    outReject.process(cv_size, source_points, dest_points, mask);
+
+    if (new_mask.empty()) {
+      printf("WTF!!!\n");
+    }
 
     float average_dx = 0;
     float average_dy = 0;
     // Use the output mask to filter the matches
     for (int k = 0; k < source_points.size(); ++k) {
-      if (mask.at<bool>(0,k)) {
+      if (new_mask.ptr<unsigned char>()[k]) {
+      //if (new_mask[k]){
         average_dx += dest_points[k].x - source_points[k].x;
         average_dy += dest_points[k].y - source_points[k].y;
         count++;
@@ -118,21 +130,19 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
     }
 
     if (count >= 4) {
-
       for (int k = 0; k < source_points.size(); ++k) {
-        if (mask.at<bool>(0,k)) {
+        //if (new_mask.at<unsigned char>(0,k)) {
+        if (new_mask.ptr<unsigned char>()[k]) {
+        //if (new_mask[k]){
           filtered_match_points_a.push_back(source_points[k]);
           filtered_match_points_b.push_back(dest_points[k]);
         }
       }
-
       //average_dx = average_dx / count;
       //average_dy = average_dy / count;
       //vertex_data->offset_x += average_dx*0.1;
       //vertex_data->offset_y += average_dy*0.1;
       //printf("inliers for vertex %d count is %d\n", vid, count);
-    } else {
-      //printf("No more inliers for vertex %d\n", vid);
     }
   }
 }
@@ -146,7 +156,15 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
           if (!model.empty()) {
           std::vector<cv::Point2f> match_points_a_fixed;
           match_points_a_fixed.reserve(filtered_match_points_a.size());
-          cv::transform(filtered_match_points_a, match_points_a_fixed, model);
+
+          for (int i = 0; i < filtered_match_points_a.size(); i++) {
+            match_points_a_fixed.push_back(filtered_match_points_a[i]);
+          }
+          //std::vector<cv::Point2f> match_points_a_fixed(1);
+          //match_points_a_fixed.push_back(
+          //    cv::Point2f(vertex_data->start_x, vertex_data->start_y));
+
+          cv::transform(match_points_a_fixed, match_points_a_fixed, model);
 
           double delta_x = 0.0;
           double delta_y = 0.0;
@@ -181,8 +199,8 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
   //}
 
   if (
-      std::abs(original_offset_x - vertex_data->offset_x) > 1e-2 ||
-      std::abs(original_offset_y - vertex_data->offset_y) > 1e-2) {
+      std::abs(original_offset_x - vertex_data->offset_x) > 0.5*1e-2 ||
+      std::abs(original_offset_y - vertex_data->offset_y) > 0.5*1e-2) {
     scheduler->add_task(vid, updateVertex2DAlign);
     for (int i = 0; i < edges.size(); i++) {
       scheduler->add_task(edges[i].neighbor_id, updateVertex2DAlign);
@@ -677,7 +695,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
           // cv::RansacParams rParams =
           //     cv::RansacParams(int size, float thresh, float eps, float prob)
           cv::videostab::RansacParams rParams =
-              cv::videostab::RansacParams(MIN_FEATURES_NUM, 50.0, 0.3, 0.99);
+              cv::videostab::RansacParams(MIN_FEATURES_NUM, 10.0, 0.3, 0.99);
           outReject.setRansacParams(rParams);
           outReject.process(cv::Size(1, 1),  // One cell.
                             match_points_a, match_points_b, mask);

@@ -1,13 +1,13 @@
 // Copyright Tim Kaler 2013
-
-#ifndef SCHEDULER_H_
-#define SCHEDULER_H_
 #include <stdio.h>
 #include <cstdlib>
 #include <vector>
 #include <list>
 #include <map>
 #include "./multibag.h"
+
+#ifndef SCHEDULER_H_
+#define SCHEDULER_H_
 
 class Scheduler {
  public:
@@ -29,4 +29,5 @@ class Scheduler {
     void collect_tasks();
     int roundNum;
 };
+#include "./scheduler.cpp"
 #endif  // SCHEDULER_H_

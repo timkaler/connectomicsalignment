@@ -15,7 +15,7 @@ OPENCV_LIB=$(OPENCV_ROOT)/lib
 
 #CFLAGS += -fcilkplus -m64 -ffast-math -mfma
 CFLAGS += -std=c++11 $(EXTRA_CFLAGS) -m64 -march=native
-CFLAGS += -Wall
+#CFLAGS += -Wall
 #-Winline
 CFLAGS += -I$(OPENCV_INCLUDE)
 LDFLAGS = $(EXTRA_LDFLAGS) -rdynamic
@@ -53,7 +53,7 @@ else
 	#-Ofast
 endif
 
-LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_video -lopencv_videostab -lopencv_calib3d -lopencv_hdf -lhdf5_hl -lhdf5 -lgomp -ldl
+LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_video -lopencv_videostab -lopencv_calib3d -lopencv_hdf -lhdf5_hl -lhdf5 -lgomp -ldl -lc++abi
 #LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_video -lopencv_videostab -lopencv_calib3d -lhdf5 -lgomp
 
 
@@ -95,7 +95,16 @@ align.S: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 run.o: run.cpp
-	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+#engine.o: cilk_tools/engine.cpp cilk_tools/scheduler.cpp cilk_tools/Graph.cpp
+#	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+
+#engine.o: cilk_tools/Graph.cpp cilk_tools/engine.cpp cilk_tools/scheduler.cpp
+#	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+
 
 #
 #Graph.o: Graph.cpp Graph.h
@@ -103,7 +112,7 @@ run.o: run.cpp
 run.S: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: common.o align.o run.o match.o 
+run_align: common.o align.o run.o match.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:

@@ -1,8 +1,5 @@
 // Copyright (c) 2013, Tim Kaler - MIT License
 
-#ifndef MULTIBAG_H_
-#define MULTIBAG_H_
-
 //#include <cilk/reducer.h>
 //#include <cilk/reducer_list.h>
 #include <cilk/cilk.h>
@@ -12,6 +9,10 @@
 #include <vector>
 #include <list>
 #include "./spa_table.h"
+
+#ifndef MULTIBAG_H_
+#define MULTIBAG_H_
+
 
 template <typename T>
 class Multibag {

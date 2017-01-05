@@ -1,9 +1,8 @@
 // Copyright (c) 2013, Tim Kaler - MIT License
-
+#include <vector>
 
 #ifndef SPA_TABLE_H_
 #define SPA_TABLE_H_
-#include <vector>
 
 template <typename T>
 struct SPA_table {

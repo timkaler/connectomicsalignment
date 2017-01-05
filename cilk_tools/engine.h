@@ -1,7 +1,4 @@
 // Copyright (c) 2013, Tim Kaler - MIT License
-
-#ifndef ENGINE_H_
-#define ENGINE_H_
 #include <cilk/cilk.h>
 #include <cilk/reducer_list.h>
 #include <cilk/reducer_min.h>
@@ -16,9 +13,11 @@
 #include <set>
 #include <cmath>
 #include <algorithm>
+#include "./Graph.h"
 #include "./scheduler.h"
-#include "../Graph.h"
 
+#ifndef ENGINE_H_
+#define ENGINE_H_
 template<typename VertexType, typename EdgeType>
 class engine {
  private:
@@ -32,4 +31,5 @@ class engine {
       std::vector<std::vector<Scheduler::update_task>*> subbags);
 };
 
+#include "./engine.cpp"
 #endif  // ENGINE_H_

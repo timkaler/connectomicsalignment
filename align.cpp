@@ -264,7 +264,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             timagename.substr(0, timagename.find_last_of(".")) +
             std::string(".hdf5");
 
-        printf("creating hdf5 with size %d\n", sizes.size());
+        //printf("creating hdf5 with size %d\n", sizes.size());
         printf("creating hdf5 with path %s\n", image_path.c_str());
         create_sift_hdf5(image_path.c_str(), p_tile_data->p_kps->size(), sizes,
             responses, octaves, locations, p_tile_data->filepath);
