@@ -59,8 +59,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       p_sift = new cv::xfeatures2d::SIFT_Impl(
                 0,  // num_features --- unsupported.
                 6,  // number of octaves
-                0.08,  // contrast threshold.
-                5,  // edge threshold.
+                0.04,  // contrast threshold.
+                10,  // edge threshold.
                 1.6);  // sigma.
 
         // THEN: This tile is on the boundary, we need to compute SIFT features
