@@ -23,6 +23,63 @@
 #include "./simple_mutex.h"
 #include "cilk_tools/engine.h"
 
+static int number_of_no_matches = 0;
+
+
+void tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
+    std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
+
+  double best_dx = 0.0;
+  double best_dy = 0.0;
+  int maxInliers = 0;
+  double thresh = 1.0;
+
+  for (; thresh <= _thresh || maxInliers < 4; thresh += 1.0) {
+    for (int i = 0; i < match_points_a.size(); i++) {
+      double dx = match_points_b[i].x - match_points_a[i].x;
+      double dy = match_points_b[i].y - match_points_a[i].y;
+      int inliers = 0;
+      for (int j = 0; j < match_points_b.size(); j++) {
+        double ndx = match_points_b[j].x - match_points_a[j].x - dx;
+        double ndy = match_points_b[j].y - match_points_a[j].y - dy;
+        double dist = ndx*ndx+ndy*ndy;
+        if (dist <= thresh*thresh) {
+          inliers++;
+        }
+      }
+      if (inliers > maxInliers) {
+        maxInliers = inliers;
+        best_dx = dx;
+        best_dy = dy;
+      }
+    }
+
+    if (maxInliers > 500) {
+      // mark inliers
+      for (int j = 0; j < match_points_b.size(); j++) {
+        double ndx = match_points_b[j].x - match_points_a[j].x - best_dx;
+        double ndy = match_points_b[j].y - match_points_a[j].y - best_dy;
+        double dist = ndx*ndx+ndy*ndy;
+        if (dist <= thresh*thresh) {
+          mask[j]=true;
+        }
+      }
+      return;
+    }
+  }
+
+      // mark inliers
+      for (int j = 0; j < match_points_b.size(); j++) {
+        double ndx = match_points_b[j].x - match_points_a[j].x - best_dx;
+        double ndy = match_points_b[j].y - match_points_a[j].y - best_dy;
+        double dist = ndx*ndx+ndy*ndy;
+        if (dist <= thresh*thresh) {
+          mask[j]=true;
+        }
+      }
+
+}
+
 
 void updateVertex2DAlign(int vid, void* scheduler_void);
 
@@ -56,12 +113,21 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
   //printf("current dx %f, current dy %f\n", current_dx, current_dy);
   // for each neighboring tile.
   //printf("edges size %d\n", edges.size());
+
+  std::vector<cv::Point2d> source_points(0), dest_points(0);
+  std::vector<std::vector<cv::Point2f> > neighbor_vector_source;
+  std::vector<std::vector<cv::Point2f> > neighbor_vector_dest;
+
+  if (edges.size() == 0) return;
+
+
   for (int i = 0; i < edges.size(); i++) {
     //printf("in the edges loop doing %d of %d\n", i,edges.size());
     std::vector<cv::Point2f>* v_points = edges[i].v_points;
     std::vector<cv::Point2f>* n_points = edges[i].n_points;
+    neighbor_vector_source.push_back(std::vector<cv::Point2f>());
+    neighbor_vector_dest.push_back(std::vector<cv::Point2f>());
     //std::vector<cv::Point2f> source_points(v_points->size()), dest_points(n_points->size());
-    std::vector<cv::Point2d> source_points(0), dest_points(0);
 
   double current_dx = vertex_data->offset_x + vertex_data->start_x;
   double current_dy = vertex_data->offset_y + vertex_data->start_y;
@@ -78,164 +144,125 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
           (*n_points)[j].y + neighbor_dy);
       source_points.push_back(ptx1);
       dest_points.push_back(ptx2);
+
+      neighbor_vector_source[i].push_back(ptx1);
+      neighbor_vector_dest[i].push_back(ptx2);
     }
-
-
-  int required_limit = 4;
-
-  if (source_points.size() < 3) {
-    //printf("edges size is 0.\n");
-    continue;
-  }
-
-  if (source_points.size() < 4) {
-    required_limit = source_points.size()-1;
-  }
-
-  int failures = 0;
-  int count = 0;
-
-  while (count < required_limit && failures<20) {
-    count = 0;
-    //cv::videostab::TranslationBasedLocalOutlierRejector* outReject =
-    //  new cv::videostab::TranslationBasedLocalOutlierRejector();
-
-    //double offset = 0.5*failures+ 0.5*(1.0*failures)*(1.0*failures)/100.0;
-
-
-    // just do ransac myself...
-    //printf("source points size is %d\n", source_points.size());
-
-    int maxinliers = 0;
-    double best_dx = 0.0;
-    double best_dy = 0.0;
-    for (int trycount = 0; trycount < source_points.size(); trycount++) {
-      // pick a pseudorandom point.
-      //int index = (3*seed + 5) % source_points.size();
-      //seed = index;
-      int index = trycount;
-      cv::Point2d spoint = source_points[index];
-      cv::Point2d dpoint = dest_points[index];
-      double dx = dpoint.x-spoint.x;
-      double dy = dpoint.y-spoint.y;
-      int numinliers = 0;
-      for (int a = 0; a < source_points.size(); a++) {
-       
-        double newdx = source_points[a].x+dx - dest_points[a].x;
-        double newdy = source_points[a].y+dy - dest_points[a].y;
-        if (newdx*newdx + newdy*newdy < (1.0 + failures)*(1.0+failures)) {
-          numinliers++;
-        }
-      }
-      if (numinliers > maxinliers) {
-        maxinliers = numinliers;
-        best_dx = dx;
-        best_dy = dy;
-      }
-    }
-
-    if (maxinliers >= required_limit) {
-      count = 0;
-      for (int anotherindex = 0; anotherindex < source_points.size(); anotherindex++) {
-        double newdx = source_points[anotherindex].x+best_dx - dest_points[anotherindex].x;
-        double newdy = source_points[anotherindex].y+best_dy - dest_points[anotherindex].y;
-        if (newdx*newdx + newdy*newdy < (1.0 + failures)*(1.0+failures)) {
-          filtered_match_points_a.push_back(source_points[anotherindex]);
-          filtered_match_points_b.push_back(dest_points[anotherindex]);
-          count++;
-          if (count >= required_limit) break;
-        }
-      }
-    } else {
-      failures++;
-    }
-
-  }
 }
 
 
+    double best_dx = 0.0;
+    double best_dy = 0.0;
+    double failures = 9.0;//vertex_data->last_radius_value;
+    double maxMinInliers = 0.0;
 
+    simple_mutex_t maxMinInliers_lock;
+    simple_mutex_init(&maxMinInliers_lock);
 
+    uint64_t rng_a = 16807;
+    uint64_t rng_m = 2147483647;
+    uint64_t rng_seed = vid + 17103*vertex_data->iteration_count;
+
+    while (maxMinInliers < 4.0 && failures < 1000) {
+      failures += 1.0;
+      for (int trycount = 0; trycount < source_points.size(); trycount++) {
+        //if (trycount > 100) break;
+        //rng_seed = (rng_a*rng_seed)%rng_m;
+        //int index = (rng_seed%source_points.size());
+        int index = trycount;
+        cv::Point2d spoint = source_points[index];
+        cv::Point2d dpoint = dest_points[index];
+        double dx = dpoint.x-spoint.x;
+        double dy = dpoint.y-spoint.y;
+
+        double minInliers = 1000000;
+        for (int neigh = 0; neigh < neighbor_vector_source.size(); neigh++) {
+          int numinliers = 0;
+          if (neighbor_vector_source[neigh].size() < 4) continue;
+          for (int z = 0; z < neighbor_vector_source[neigh].size(); z++) {
+            double newdx = neighbor_vector_source[neigh][z].x+dx - neighbor_vector_dest[neigh][z].x;
+            double newdy = neighbor_vector_source[neigh][z].y+dy - neighbor_vector_dest[neigh][z].y;
+            if (newdx*newdx + newdy*newdy < (1.0 + failures+90000)*(1.0+failures+90000)) {
+              numinliers++;
+              /*cv::Point2f v_tmp = (*(edges[neigh].v_points))[z];
+              cv::Point2f n_tmp = (*(edges[neigh].n_points))[z];
+              for (int hole = z-1; hole >=0; --hole) {
+                (*(edges[neigh].v_points))[hole+1] = (*(edges[neigh].v_points))[hole];
+                (*(edges[neigh].n_points))[hole+1] = (*(edges[neigh].n_points))[hole];
+              }
+              (*(edges[neigh].v_points))[0] = v_tmp;
+              (*(edges[neigh].n_points))[0] = n_tmp;*/
+            }
+          }
+          if (numinliers < minInliers) {
+            minInliers = numinliers;
+          }
+        }
+
+        if (minInliers > maxMinInliers) {
+          simple_acquire(&maxMinInliers_lock);
+          if (minInliers > maxMinInliers) {
+            maxMinInliers = minInliers;
+            best_dx = dx;
+            best_dy = dy;
+          }
+          simple_release(&maxMinInliers_lock);
+        }
+      }
+    }
+    if (maxMinInliers > 0) {
+      vertex_data->last_radius_value = failures - 2.0;
+        if (vertex_data->last_radius_value < 0.0) {
+          vertex_data->last_radius_value = 0.0;
+        }
+      for (int neigh = 0; neigh < neighbor_vector_source.size(); neigh++) {
+        int numinliers = 0;
+        for (int z = 0; z < neighbor_vector_source[neigh].size(); z++) {
+          double newdx = neighbor_vector_source[neigh][z].x+best_dx - neighbor_vector_dest[neigh][z].x;
+          double newdy = neighbor_vector_source[neigh][z].y+best_dy - neighbor_vector_dest[neigh][z].y;
+          if (newdx*newdx + newdy*newdy < (1.0 + failures+90000)*(1.0+failures+90000)) {
+            filtered_match_points_a.push_back(neighbor_vector_source[neigh][z]);
+            filtered_match_points_b.push_back(neighbor_vector_dest[neigh][z]);
+          }
+        }
+      }
+
+    } else {
+      vertex_data->last_radius_value = failures;
+    }
 
     std::vector<cv::Point2d> match_points_a_fixed(0);
     if (filtered_match_points_a.size() > 0) {
-
-
           double grad_error_x = 0.0;
           double grad_error_y = 0.0;
           for (int iter = 0; iter < filtered_match_points_a.size(); iter++) {
              grad_error_x += 2*(filtered_match_points_b[iter].x - filtered_match_points_a[iter].x);
              grad_error_y += 2*(filtered_match_points_b[iter].y - filtered_match_points_a[iter].y);
           }
-          vertex_data->offset_x += grad_error_x*0.45/(filtered_match_points_a.size());
-          vertex_data->offset_y += grad_error_y*0.45/(filtered_match_points_a.size());
-
-          //cv::Mat model = cv::estimateRigidTransform(filtered_match_points_a,
-          //    filtered_match_points_b, false);
-          ////cv::Mat model = cv::estimateAffinePartial2D(filtered_match_points_a,
-          ////    filtered_match_points_b);
-
-          //if (!model.empty() && model.rows != 0 && model.cols != 0) {
-          //match_points_a_fixed.reserve(filtered_match_points_a.size());
-
-          //for (int i = 0; i < filtered_match_points_a.size(); i++) {
-          //  match_points_a_fixed.push_back(filtered_match_points_a[i]);
+          //double max_ratio = grad_error_x > grad_error_y ? 5.0/grad_error_x : 5.0/grad_error_y;
+          //if (max_ratio < 1.0) {
+          //  vertex_data->offset_x += max_ratio* grad_error_x*0.5/(filtered_match_points_a.size());
+          //  vertex_data->offset_y += max_ratio* grad_error_y*0.5/(filtered_match_points_a.size());
+          //} else {
+            vertex_data->offset_x += grad_error_x*0.5/(filtered_match_points_a.size());
+            vertex_data->offset_y += grad_error_y*0.5/(filtered_match_points_a.size());
           //}
-          ////std::vector<cv::Point2f> match_points_a_fixed;
-          ////match_points_a_fixed.push_back(
-          ////    cv::Point2f(vertex_data->start_x, vertex_data->start_y));
-
-
-          //cv::transform(filtered_match_points_a, match_points_a_fixed, model);
-
-          //double delta_x = 0.0;
-          //double delta_y = 0.0;
-          //int tempcount = 0;
-          ///*if (match_points_a_fixed[0].x != match_points_a_fixed[0].x ||
-          //    match_points_a_fixed[0].y != match_points_a_fixed[0].y) {
-          //    printf("Got a NaN value!!!!\n");
-          //}*/
-          ////delta_x = match_points_a_fixed[0].x - filtered_match_points_a[0].x;
-          ////delta_y = match_points_a_fixed[0].y - filtered_match_points_a[0].y;
+          
 
 
 
-          //double min_delta = 100000.0;
-          //for (int ya_index = 0; ya_index < match_points_a_fixed.size(); ya_index++) {
-          //  delta_x += match_points_a_fixed[ya_index].x - filtered_match_points_a[ya_index].x;
-          //  delta_y += match_points_a_fixed[ya_index].y - filtered_match_points_a[ya_index].y;
-          //  tempcount++;
-          //}
-          //if (tempcount > 0) {
-          //  delta_x = delta_x/tempcount;
-          //  delta_y = delta_y/tempcount;
-          //  vertex_data->offset_x += delta_x;
-          //  vertex_data->offset_y += delta_y;
-          //  //if (vertex_data->iteration_count > 10000) {
-          //  //  printf("deltas %f, %f; offsets %f,%f\n", delta_x, delta_y, vertex_data->offset_x, vertex_data->offset_y);
-          //  //}
-          //}
-          //}
-  //if (vid==17){
-  //if (vid==17){
-    //simple_acquire(&global_lock);
-    ////printf("current error at vertex %d is %f, %f\n", (int)vid,
-    ////    (float)std::abs(original_offset_x - vertex_data->offset_x),
-    ////    (float)std::abs(original_offset_y - vertex_data->offset_y));
-    //simple_release(&global_lock);
-  //}
 
   if ( vertex_data->iteration_count < 20000000 &&
       std::abs(original_offset_x - vertex_data->offset_x) +
-      std::abs(original_offset_y - vertex_data->offset_y) > 1e-6) {
+      std::abs(original_offset_y - vertex_data->offset_y) > 1e-2) {
 
     scheduler->add_task(vid, updateVertex2DAlign);
     if (std::abs(original_offset_x - vertex_data->offset_x) +
-      std::abs(original_offset_y - vertex_data->offset_y) > 1e-6) {
-    for (int i = 0; i < edges.size(); i++) {
-      scheduler->add_task(edges[i].neighbor_id, updateVertex2DAlign);
+      std::abs(original_offset_y - vertex_data->offset_y) > 1e-2) {
+      for (int i = 0; i < edges.size(); i++) {
+        scheduler->add_task(edges[i].neighbor_id, updateVertex2DAlign);
+      }
     }
-}
   }
 
   }
@@ -431,7 +458,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
           p_align_data->output_dirpath);
 #endif
   // Iterate over all pairs of tiles
-  for (int sec_id = 0; sec_id < p_align_data->n_sections; ++sec_id) {
+  for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
 #ifndef SKIPJSON
     char out_filepath_start[MAX_FILEPATH] = "\0";
@@ -464,8 +491,13 @@ void compute_tile_matches(align_data_t *p_align_data) {
 
     graph = new Graph<vdata, edata>();
     graph->resize(p_sec_data->n_tiles);
+    printf("REsizing the graph to be size %d\n", p_sec_data->n_tiles);
 
-    cilk_for (int atile_id = 0; atile_id < p_sec_data->n_tiles; ++atile_id) {
+    cilk_for (int atile_id = 0; atile_id < p_sec_data->n_tiles; atile_id++) {
+      printf("The tile id is %d\n", atile_id);
+      if (atile_id >= p_sec_data->n_tiles) {
+        printf("Big error!\n");    
+      }
       tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
       simple_acquire(&mfovs_lock);
       if (mfovs.insert(a_tile->mfov_id).second) {
@@ -502,11 +534,14 @@ void compute_tile_matches(align_data_t *p_align_data) {
         // Skip tiles that don't overlap
         if (!is_tiles_overlap(a_tile, b_tile)) continue;
         indices_to_check[indices_to_check_len++] = i;
+        if (indices_to_check_len > 49) {
+           printf("Major error!!! wtf\n");
+        }
         assert(indices_to_check_len <= 49);
       }
 
-      cilk_for (int tmpindex = 0; tmpindex < indices_to_check_len; tmpindex++) {
-        // do {
+      for (int tmpindex = 0; tmpindex < indices_to_check_len; tmpindex++) {
+         do {
         int btile_id = indices_to_check[tmpindex];
         tile_data_t *b_tile = &(p_sec_data->tiles[btile_id]);
 
@@ -715,40 +750,47 @@ void compute_tile_matches(align_data_t *p_align_data) {
           continue;
         }
 
-          cv::Mat mask(matches.size(), 1, CV_8U);
           //cv::Mat mask(source_points.size(),1, CV_8U);
           // cv::Mat mask;
           // cv::Mat H = cv::findHomography(match_points_a2, match_points_b2, cv::RANSAC,
           //                               MAX_EPSILON, mask);
 
-          cv::videostab::TranslationBasedLocalOutlierRejector outReject;
+          //cv::Mat mask;
+          //cv::videostab::TranslationBasedLocalOutlierRejector outReject;
 
           // NOTE(TFK): eps and prob don't appear to be used in outReject.
           // cv::RansacParams rParams =
           //     cv::RansacParams(int size, float thresh, float eps, float prob)
-          cv::videostab::RansacParams rParams =
-              cv::videostab::RansacParams(MIN_FEATURES_NUM, 10.0, 0.3, 0.99);
-          outReject.setRansacParams(rParams);
-          outReject.process(cv::Size(1, 1),  // One cell.
-                            match_points_a, match_points_b, mask);
+          //cv::videostab::RansacParams rParams =
+          //    cv::videostab::RansacParams(MIN_FEATURES_NUM, 10.0, 0.3, 0.99);
 
-        std::vector< cv::Point2f > filtered_match_points_a;
-        std::vector< cv::Point2f > filtered_match_points_b;
-        filtered_match_points_a.reserve(matches.size());
-        filtered_match_points_b.reserve(matches.size());
+        bool* mask = (bool*) calloc(match_points_a.size(), 1);
+        double thresh = 10.0;
+        tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
 
+
+        std::vector< cv::Point2f > filtered_match_points_a(0);
+        std::vector< cv::Point2f > filtered_match_points_b(0);
+        //filtered_match_points_a.reserve(matches.size());
+        //filtered_match_points_b.reserve(matches.size());
+
+        int num_matches_filtered = 0;
         // Use the output mask to filter the matches
         for (size_t i = 0; i < matches.size(); ++i) {
-          if (mask.at<bool>(0,i)) {
+          //if (mask.ptr<unsigned char>()[i]) {
+          if (mask[i]) {
+            num_matches_filtered++;
             filtered_match_points_a.push_back(
                 atile_kps_in_overlap[matches[i].queryIdx].pt);
             filtered_match_points_b.push_back(
                 btile_kps_in_overlap[matches[i].trainIdx].pt);
           }
         }
-
-        graph->insert_matches(atile_id, btile_id,
-            filtered_match_points_a, filtered_match_points_b);
+        free(mask);
+        if (num_matches_filtered > 0) {
+          graph->insert_matches(atile_id, btile_id,
+              filtered_match_points_a, filtered_match_points_b);
+        }
 
         //TRACE_1("    -- [%d_%d, %d_%d] filtered_matches: %lu\n",
         //        a_tile->mfov_id, a_tile->index,
@@ -805,6 +847,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
                             &match_points_a_fixed);
           #endif
         }
+      } while (false); // end the do while wrapper.
       }  // for (btile_id)
     }  // for (atile_id)
 
@@ -846,6 +889,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
     d->offset_x = 0.0;
     d->offset_y = 0.0;
     d->iteration_count = 0;
+    d->last_radius_value = 9.0;
   }
 
   scheduler =

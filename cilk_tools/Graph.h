@@ -45,6 +45,7 @@ typedef struct {
   double offset_x;
   double offset_y;
   int iteration_count;
+  double last_radius_value;
 } vdata;
 
 typedef struct {

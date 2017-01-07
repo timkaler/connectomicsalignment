@@ -2,7 +2,7 @@
 
 #ifndef SIMPLE_MUTEX_T_H
 #define SIMPLE_MUTEX_T_H
-typedef int simple_mutex_t;
+typedef int64_t simple_mutex_t;
 
 
 static void simple_mutex_init(simple_mutex_t* m) {

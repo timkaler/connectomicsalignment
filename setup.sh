@@ -6,11 +6,11 @@
 #export PATH=/efs/tfk/tapir/bin:$PATH
 #export LD_LIBRARY_PATH=/efs/tfk/tapir/lib:$LD_LIBRARY_PATH
 #export CXX=clang++
-#export OPENCV_ROOT=/home/armafire/tools/opencv-3-install-test/
-##export OPENCV_ROOT=/efs/tools/OpenCV3
+##export OPENCV_ROOT=/home/armafire/tools/opencv-3-install-test/
+#export OPENCV_ROOT=/efs/tools/OpenCV3
 ##export OPENCV_ROOT=/efs/home/lemon510/cv
 #export LD_LIBRARY_PATH=$OPENCV_ROOT/lib:$LD_LIBRARY_PATH
-##export LD_LIBRARY_PATH=/efs/home/tfk/archive-linux/lib/:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/efs/home/tfk/archive-linux/lib/:$LD_LIBRARY_PATH
 #export OMP_NUM_THREADS=1
 #export EXTRA_CFLAGS="-ftapir -fno-exceptions -DOPENCV_FLANN_HPP -Werror"
 #export LD_PRELOAD=/efs/tools/jemalloc/lib/libjemalloc.so
