@@ -108,15 +108,15 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
   double original_offset_x = vertex_data->offset_x;
   double original_offset_y = vertex_data->offset_y;
 
-  std::vector<cv::Point2d> filtered_match_points_a(0);
-  std::vector<cv::Point2d> filtered_match_points_b(0);
+  //std::vector<cv::Point2d> filtered_match_points_a(0);
+  //std::vector<cv::Point2d> filtered_match_points_b(0);
   //printf("current dx %f, current dy %f\n", current_dx, current_dy);
   // for each neighboring tile.
   //printf("edges size %d\n", edges.size());
 
   std::vector<cv::Point2d> source_points(0), dest_points(0);
-  std::vector<std::vector<cv::Point2f> > neighbor_vector_source;
-  std::vector<std::vector<cv::Point2f> > neighbor_vector_dest;
+  //std::vector<std::vector<cv::Point2f> > neighbor_vector_source;
+  //std::vector<std::vector<cv::Point2f> > neighbor_vector_dest;
 
   if (edges.size() == 0) return;
 
@@ -125,8 +125,10 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
     //printf("in the edges loop doing %d of %d\n", i,edges.size());
     std::vector<cv::Point2f>* v_points = edges[i].v_points;
     std::vector<cv::Point2f>* n_points = edges[i].n_points;
-    neighbor_vector_source.push_back(std::vector<cv::Point2f>());
-    neighbor_vector_dest.push_back(std::vector<cv::Point2f>());
+    // NOTE(TFK): Below might be needed.
+    //neighbor_vector_source.push_back(std::vector<cv::Point2f>());
+    //neighbor_vector_dest.push_back(std::vector<cv::Point2f>());
+
     //std::vector<cv::Point2f> source_points(v_points->size()), dest_points(n_points->size());
 
   double current_dx = vertex_data->offset_x + vertex_data->start_x;
@@ -145,10 +147,15 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
       source_points.push_back(ptx1);
       dest_points.push_back(ptx2);
 
-      neighbor_vector_source[i].push_back(ptx1);
-      neighbor_vector_dest[i].push_back(ptx2);
+      //neighbor_vector_source[i].push_back(ptx1);
+      //neighbor_vector_dest[i].push_back(ptx2);
     }
 }
+  
+  std::vector<cv::Point2d>& filtered_match_points_a = source_points;
+  std::vector<cv::Point2d>& filtered_match_points_b = dest_points;
+
+    
 
 
     double best_dx = 0.0;
@@ -210,7 +217,8 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
     //    }
     //  }
     //}
-    if (maxMinInliers > 0 || true) {
+
+    /*if (maxMinInliers > 0 || true) {
       vertex_data->last_radius_value = failures - 2.0;
         if (vertex_data->last_radius_value < 0.0) {
           vertex_data->last_radius_value = 0.0;
@@ -230,7 +238,8 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
 
     } else {
       vertex_data->last_radius_value = failures;
-    }
+    }*/
+
 
     std::vector<cv::Point2d> match_points_a_fixed(0);
     if (filtered_match_points_a.size() > 0) {
