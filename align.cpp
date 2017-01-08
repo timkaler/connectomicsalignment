@@ -41,6 +41,16 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
     cilk_for (int tile_id = 0; tile_id < p_sec_data->n_tiles; tile_id++) {
       tile_data_t *p_tile_data = &(p_sec_data->tiles[tile_id]);
+
+
+      (*p_tile_data->p_image).create(3128, 2724, CV_8UC1);
+      (*p_tile_data->p_image) = cv::imread(
+          p_tile_data->filepath, 
+          CV_LOAD_IMAGE_UNCHANGED);
+
+
+
+
       int rows = p_tile_data->p_image->rows;
       int cols = p_tile_data->p_image->cols;
 
@@ -287,6 +297,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
         } else {
            printf("WARNING::: NO KEYPOINTS FOUND!\n");
         }
+        (*p_tile_data->p_image).release();
       }
     }
   //TRACE_1("compute_SIFT_parallel: finish\n");

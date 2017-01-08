@@ -163,54 +163,54 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
     uint64_t rng_m = 2147483647;
     uint64_t rng_seed = vid + 17103*vertex_data->iteration_count;
 
-    while (maxMinInliers < 4.0 && failures < 1000) {
-      failures += 1.0;
-      for (int trycount = 0; trycount < source_points.size(); trycount++) {
-        //if (trycount > 100) break;
-        //rng_seed = (rng_a*rng_seed)%rng_m;
-        //int index = (rng_seed%source_points.size());
-        int index = trycount;
-        cv::Point2d spoint = source_points[index];
-        cv::Point2d dpoint = dest_points[index];
-        double dx = dpoint.x-spoint.x;
-        double dy = dpoint.y-spoint.y;
+    //while (maxMinInliers < 4.0 && failures < 1000) {
+    //  failures += 1.0;
+    //  cilk_for (int trycount = 0; trycount < source_points.size(); trycount++) {
+    //    //if (trycount > 100) break;
+    //    //rng_seed = (rng_a*rng_seed)%rng_m;
+    //    //int index = (rng_seed%source_points.size());
+    //    int index = trycount;
+    //    cv::Point2d spoint = source_points[index];
+    //    cv::Point2d dpoint = dest_points[index];
+    //    double dx = dpoint.x-spoint.x;
+    //    double dy = dpoint.y-spoint.y;
 
-        double minInliers = 1000000;
-        for (int neigh = 0; neigh < neighbor_vector_source.size(); neigh++) {
-          int numinliers = 0;
-          if (neighbor_vector_source[neigh].size() < 4) continue;
-          for (int z = 0; z < neighbor_vector_source[neigh].size(); z++) {
-            double newdx = neighbor_vector_source[neigh][z].x+dx - neighbor_vector_dest[neigh][z].x;
-            double newdy = neighbor_vector_source[neigh][z].y+dy - neighbor_vector_dest[neigh][z].y;
-            if (newdx*newdx + newdy*newdy < (1.0 + failures+90000)*(1.0+failures+90000)) {
-              numinliers++;
-              /*cv::Point2f v_tmp = (*(edges[neigh].v_points))[z];
-              cv::Point2f n_tmp = (*(edges[neigh].n_points))[z];
-              for (int hole = z-1; hole >=0; --hole) {
-                (*(edges[neigh].v_points))[hole+1] = (*(edges[neigh].v_points))[hole];
-                (*(edges[neigh].n_points))[hole+1] = (*(edges[neigh].n_points))[hole];
-              }
-              (*(edges[neigh].v_points))[0] = v_tmp;
-              (*(edges[neigh].n_points))[0] = n_tmp;*/
-            }
-          }
-          if (numinliers < minInliers) {
-            minInliers = numinliers;
-          }
-        }
+    //    double minInliers = 1000000;
+    //    for (int neigh = 0; neigh < neighbor_vector_source.size(); neigh++) {
+    //      int numinliers = 0;
+    //      if (neighbor_vector_source[neigh].size() < 4) continue;
+    //      for (int z = 0; z < neighbor_vector_source[neigh].size(); z++) {
+    //        double newdx = neighbor_vector_source[neigh][z].x+dx - neighbor_vector_dest[neigh][z].x;
+    //        double newdy = neighbor_vector_source[neigh][z].y+dy - neighbor_vector_dest[neigh][z].y;
+    //        if (newdx*newdx + newdy*newdy < (1.0 + failures+90000)*(1.0+failures+90000)) {
+    //          numinliers++;
+    //          /*cv::Point2f v_tmp = (*(edges[neigh].v_points))[z];
+    //          cv::Point2f n_tmp = (*(edges[neigh].n_points))[z];
+    //          for (int hole = z-1; hole >=0; --hole) {
+    //            (*(edges[neigh].v_points))[hole+1] = (*(edges[neigh].v_points))[hole];
+    //            (*(edges[neigh].n_points))[hole+1] = (*(edges[neigh].n_points))[hole];
+    //          }
+    //          (*(edges[neigh].v_points))[0] = v_tmp;
+    //          (*(edges[neigh].n_points))[0] = n_tmp;*/
+    //        }
+    //      }
+    //      if (numinliers < minInliers) {
+    //        minInliers = numinliers;
+    //      }
+    //    }
 
-        if (minInliers > maxMinInliers) {
-          simple_acquire(&maxMinInliers_lock);
-          if (minInliers > maxMinInliers) {
-            maxMinInliers = minInliers;
-            best_dx = dx;
-            best_dy = dy;
-          }
-          simple_release(&maxMinInliers_lock);
-        }
-      }
-    }
-    if (maxMinInliers > 0) {
+    //    if (minInliers > maxMinInliers) {
+    //      simple_acquire(&maxMinInliers_lock);
+    //      if (minInliers > maxMinInliers) {
+    //        maxMinInliers = minInliers;
+    //        best_dx = dx;
+    //        best_dy = dy;
+    //      }
+    //      simple_release(&maxMinInliers_lock);
+    //    }
+    //  }
+    //}
+    if (maxMinInliers > 0 || true) {
       vertex_data->last_radius_value = failures - 2.0;
         if (vertex_data->last_radius_value < 0.0) {
           vertex_data->last_radius_value = 0.0;
@@ -218,9 +218,10 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
       for (int neigh = 0; neigh < neighbor_vector_source.size(); neigh++) {
         int numinliers = 0;
         for (int z = 0; z < neighbor_vector_source[neigh].size(); z++) {
-          double newdx = neighbor_vector_source[neigh][z].x+best_dx - neighbor_vector_dest[neigh][z].x;
-          double newdy = neighbor_vector_source[neigh][z].y+best_dy - neighbor_vector_dest[neigh][z].y;
-          if (newdx*newdx + newdy*newdy < (1.0 + failures+90000)*(1.0+failures+90000)) {
+          //double newdx = neighbor_vector_source[neigh][z].x+best_dx - neighbor_vector_dest[neigh][z].x;
+          //double newdy = neighbor_vector_source[neigh][z].y+best_dy - neighbor_vector_dest[neigh][z].y;
+          //if (true || newdx*newdx + newdy*newdy < (1.0 + failures+90000)*(1.0+failures+90000)) {
+          if (true) {
             filtered_match_points_a.push_back(neighbor_vector_source[neigh][z]);
             filtered_match_points_b.push_back(neighbor_vector_dest[neigh][z]);
           }
@@ -494,7 +495,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
     printf("REsizing the graph to be size %d\n", p_sec_data->n_tiles);
 
     cilk_for (int atile_id = 0; atile_id < p_sec_data->n_tiles; atile_id++) {
-      printf("The tile id is %d\n", atile_id);
+      //printf("The tile id is %d\n", atile_id);
       if (atile_id >= p_sec_data->n_tiles) {
         printf("Big error!\n");    
       }
@@ -747,6 +748,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
                             a_tile, b_tile,
                             nullptr, nullptr, nullptr);
           #endif
+          if (matches.size() == 0) printf("There are zero matches.\n");
           continue;
         }
 
@@ -907,7 +909,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
       std::to_string(p_align_data->sec_data[sec_id].section_id +
       p_align_data->base_section+1);
 
-  FILE* wafer_file = fopen((std::string("W01_Sec0") +
+  FILE* wafer_file = fopen((std::string("/efs/home/tfk/big_experiment/")+std::string("W01_Sec0") +
       section_id_string+std::string("_montaged.json")).c_str(), "w+");
   fprintf(wafer_file, "[\n");
   for (int i = 0; i < graph->num_vertices(); i++) {

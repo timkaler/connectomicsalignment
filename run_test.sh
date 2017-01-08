@@ -21,9 +21,9 @@ OUTPUTDIR=$PWD/temp
 #    $OUTPUTDIR
 
 
-./setup.sh ./run_align 1 \
-    24 1 \
-    $PWD/data/txtspecs_iarpa.txt \
+./setup.sh numactl --cpunodebind=0 ./run_align 1 \
+    0 1 \
+    $PWD/data/txtspecs_iarpa_full.txt \
     $OUTPUTDIR \
     $OUTPUTDIR
 

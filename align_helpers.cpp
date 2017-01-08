@@ -235,7 +235,7 @@ void free_tiles(align_data_t *p_align_data) {
         
         cilk_for (int tile_id = 0; tile_id < p_sec_data->n_tiles; tile_id++) {
             tile_data_t *p_tile = &(p_sec_data->tiles[tile_id]);
-            p_tile->p_image->release();
+            //p_tile->p_image->release();
 /*
             (*p_tile->p_image) = cv::imread(
                 p_tile->filepath, 
@@ -262,20 +262,20 @@ void read_tiles(align_data_t *p_align_data) {
             //TRACE_1("  -- read[%d-%d]: %s\n", sec_id, tile_id, p_tile->filepath);
             
             //(*p_tile->p_image).create(4096, 4096, CV_8UC1);
-            (*p_tile->p_image).create(3128, 2724, CV_8UC1);
+            //(*p_tile->p_image).create(3128, 2724, CV_8UC1);
+            //
+            //(*p_tile->p_image) = cv::imread(
+            //    p_tile->filepath, 
+            //    CV_LOAD_IMAGE_UNCHANGED);
             
-            (*p_tile->p_image) = cv::imread(
-                p_tile->filepath, 
-                CV_LOAD_IMAGE_UNCHANGED);
-            
-            ASSERT_MSG(
-                !(p_tile->p_image->empty()),
-                "cv::imread: failed to load image %s\n", p_tile->filepath);
+            //ASSERT_MSG(
+            //    !(p_tile->p_image->empty()),
+            //    "cv::imread: failed to load image %s\n", p_tile->filepath);
 
-            ASSERT_MSG(
-                p_tile->p_image->channels() == 1,
-                "cv::imread: unexpected number of channels [%d] (expected: %d)\n", 
-                p_tile->p_image->channels(), 1);
+            //ASSERT_MSG(
+            //    p_tile->p_image->channels() == 1,
+            //    "cv::imread: unexpected number of channels [%d] (expected: %d)\n", 
+            //    p_tile->p_image->channels(), 1);
             
         }
         
