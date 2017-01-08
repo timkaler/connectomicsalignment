@@ -36,8 +36,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
   std::set<std::string> created_paths;
   simple_mutex_t created_paths_lock;
   simple_mutex_init(&created_paths_lock);
-
-  for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+  #pragma cilk grainsize=1
+  cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
     cilk_for (int tile_id = 0; tile_id < p_sec_data->n_tiles; tile_id++) {
       tile_data_t *p_tile_data = &(p_sec_data->tiles[tile_id]);
@@ -299,6 +299,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
         }
         (*p_tile_data->p_image).release();
       }
+
+     
+      compute_tile_matches(p_align_data, sec_id);
+
     }
   //TRACE_1("compute_SIFT_parallel: finish\n");
 }
@@ -321,7 +325,7 @@ void align_execute(align_data_t *p_align_data) {
     }
         free_tiles(p_align_data);
     START_TIMER(&timer);
-    compute_tile_matches(p_align_data);
+    //compute_tile_matches(p_align_data);
     STOP_TIMER(&timer, "compute_tile_matches time:");
     STOP_TIMER(&t_timer, "t_total-time:");
 }

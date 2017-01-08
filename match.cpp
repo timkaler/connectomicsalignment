@@ -34,7 +34,9 @@ void tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
   int maxInliers = 0;
   double thresh = 1.0;
 
+  int num_iterations = 0;
   for (; thresh <= _thresh || maxInliers < 4; thresh += 1.0) {
+    num_iterations++;
     for (int i = 0; i < match_points_a.size(); i++) {
       double dx = match_points_b[i].x - match_points_a[i].x;
       double dy = match_points_b[i].y - match_points_a[i].y;
@@ -53,6 +55,10 @@ void tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
         best_dy = dy;
       }
     }
+
+    //if (maxInliers > 5000 && num_iterations < 10) {
+    //  thresh = thresh*0.9 - 1.0;
+    //}
 
     if (maxInliers > 500) {
       // mark inliers
@@ -91,14 +97,11 @@ void updateVertex2DAlign(int vid, void* scheduler_void);
 #else
 //#define SAVE_TILE_MATCHES(...)
 #endif
-
-static Graph<vdata, edata>* graph;
-static Scheduler* scheduler;
-static engine<vdata, edata>* e;
 int global_lock = 0;
 void updateVertex2DAlign(int vid, void* scheduler_void) {
 
-  //Scheduler* scheduler2 = reinterpret_cast<Scheduler*>(scheduler_void);
+  Scheduler* scheduler = reinterpret_cast<Scheduler*>(scheduler_void);
+  Graph<vdata, edata>* graph = reinterpret_cast<Graph<vdata,edata>*>(scheduler->graph_void);
 
   //printf("starting vertex %d\n", vid);
   vdata* vertex_data = graph->getVertexData(vid);
@@ -458,7 +461,7 @@ static void save_tile_matches(size_t num_matches,
 // thread_local std::vector< cv::Point2f > match_points_a, match_points_b;
 // thread_local std::vector< cv::Point2f > match_points_a_fixed;
 
-void compute_tile_matches(align_data_t *p_align_data) {
+void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   TRACE_1("compute_tile_matches: start\n");
 
 #ifndef SKIPJSON
@@ -467,8 +470,14 @@ void compute_tile_matches(align_data_t *p_align_data) {
   sprintf(out_filepath_base, "%s/matched_sifts/W01_Sec",
           p_align_data->output_dirpath);
 #endif
+
+  Graph<vdata, edata>* graph;
+  Scheduler* scheduler;
+  engine<vdata, edata>* e;
+
   // Iterate over all pairs of tiles
-  for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+  //for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+  for (int sec_id = force_section_id; sec_id < force_section_id+1; sec_id++) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
 #ifndef SKIPJSON
     char out_filepath_start[MAX_FILEPATH] = "\0";
@@ -860,7 +869,16 @@ void compute_tile_matches(align_data_t *p_align_data) {
         }
       } while (false); // end the do while wrapper.
       }  // for (btile_id)
+
     }  // for (atile_id)
+
+    // can free the matches.
+    for (int atile_id = 0; atile_id < p_sec_data->n_tiles; atile_id++) {
+      tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
+      a_tile->p_kps->clear();
+      std::vector<cv::KeyPoint>().swap(*(a_tile->p_kps));
+      ((a_tile->p_kps_desc))->release();
+    }
 
 #ifndef SKIPJSON
     // Output list of matched sift files.
@@ -905,6 +923,7 @@ void compute_tile_matches(align_data_t *p_align_data) {
 
   scheduler =
       new Scheduler(graph->vertexColors, ncolors+1, graph->num_vertices());
+  scheduler->graph_void = (void*) graph;
   e = new engine<vdata, edata>(graph, scheduler);
   for (int i = 0; i < graph->num_vertices(); i++) {
     scheduler->add_task(i, updateVertex2DAlign);

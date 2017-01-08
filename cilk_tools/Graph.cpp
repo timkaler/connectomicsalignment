@@ -73,11 +73,11 @@ void Graph< VertexType,  EdgeType>::insert_matches(int atile_id, int btile_id,
     std::vector<cv::Point2f>* nedges = new std::vector<cv::Point2f>();
 
     for (int i = 0; i < filtered_match_points_a.size(); i++) {
-      vedges->push_back(filtered_match_points_a[i]);
+      vedges->push_back(cv::Point2f(filtered_match_points_a[i]));
     }
 
     for (int i = 0; i < filtered_match_points_b.size(); i++) {
-      nedges->push_back(filtered_match_points_b[i]);
+      nedges->push_back(cv::Point2f(filtered_match_points_b[i]));
     }
 
     EdgeType edge1;

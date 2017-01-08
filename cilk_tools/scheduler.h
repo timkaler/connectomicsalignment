@@ -28,6 +28,7 @@ class Scheduler {
     std::vector<std::vector<update_task>*> get_task_bag();
     void collect_tasks();
     int roundNum;
+    void* graph_void;
 };
 #include "./scheduler.cpp"
 #endif  // SCHEDULER_H_
