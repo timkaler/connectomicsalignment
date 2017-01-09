@@ -25,6 +25,13 @@
 
 static int number_of_no_matches = 0;
 
+std::string matchPadTo(std::string str, const size_t num, const char paddingChar = '0')
+{
+    if(num > str.size())
+        str.insert(0, num - str.size(), paddingChar);
+    return str;
+}
+
 
 void tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
     std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
@@ -32,6 +39,7 @@ void tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
   double best_dx = 0.0;
   double best_dy = 0.0;
   int maxInliers = 0;
+  int prevMaxInliers = 0;
   double thresh = 1.0;
 
   int num_iterations = 0;
@@ -56,9 +64,12 @@ void tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
       }
     }
 
-    //if (maxInliers > 5000 && num_iterations < 10) {
-    //  thresh = thresh*0.9 - 1.0;
-    //}
+    if (maxInliers > 5000 && num_iterations < 10) {
+      thresh = thresh*0.9 - 1.0;
+      maxInliers = prevMaxInliers;
+    } else {
+      prevMaxInliers = maxInliers;
+    }
 
     if (maxInliers > 500) {
       // mark inliers
@@ -870,10 +881,13 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       } while (false); // end the do while wrapper.
       }  // for (btile_id)
 
+      //a_tile->p_kps->clear();
+      //std::vector<cv::KeyPoint>().swap(*(a_tile->p_kps));
+      //((a_tile->p_kps_desc))->release();
     }  // for (atile_id)
-
+/
     // can free the matches.
-    for (int atile_id = 0; atile_id < p_sec_data->n_tiles; atile_id++) {
+    cilk_for (int atile_id = 0; atile_id < p_sec_data->n_tiles; atile_id++) {
       tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
       a_tile->p_kps->clear();
       std::vector<cv::KeyPoint>().swap(*(a_tile->p_kps));
@@ -937,8 +951,8 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       std::to_string(p_align_data->sec_data[sec_id].section_id +
       p_align_data->base_section+1);
 
-  FILE* wafer_file = fopen((std::string("/efs/home/tfk/big_experiment/")+std::string("W01_Sec0") +
-      section_id_string+std::string("_montaged.json")).c_str(), "w+");
+  FILE* wafer_file = fopen((std::string("/efs/home/tfk/big_experiment/")+std::string("W01_Sec") +
+      matchPadTo(section_id_string, 3)+std::string("_montaged.json")).c_str(), "w+");
   fprintf(wafer_file, "[\n");
   for (int i = 0; i < graph->num_vertices(); i++) {
     vdata* vd = graph->getVertexData(i);

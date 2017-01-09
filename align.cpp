@@ -16,8 +16,9 @@
 #include "./match.h"
 #include "./fasttime.h"
 #include "./simple_mutex.h"
-//#include "./sift.config.h"
-#include "./othersift2.cpp"
+#include "./sift.config.h"
+#include "./othersift.cpp"
+//#include "./othersift2.cpp"
 
 // Helper functions
 #include "align_helpers.cpp"

@@ -30,7 +30,7 @@ void compare_matrix(const cv::Mat &A, const cv::Mat &B)
 			sumdiff+=abs((int)A.at<uint8_t>(i,j)-(int)B.at<float>(i,j));
 			sum+=(int)B.at<float>(i,j);
 		}
-	printf("compare_matrix: Relative Error = %.6lf\n",sumdiff/sum);
+	//printf("compare_matrix: Relative Error = %.6lf\n",sumdiff/sum);
 }
 
 void compare_matrix_uchar_uchar(const cv::Mat &A, const cv::Mat &B)
@@ -47,7 +47,7 @@ void compare_matrix_uchar_uchar(const cv::Mat &A, const cv::Mat &B)
 			sumdiff+=abs((int)A.at<uint8_t>(i,j)-(int)B.at<uint8_t>(i,j));
 			sum+=(int)B.at<uint8_t>(i,j);
 		}
-	printf("compare_matrix: Relative Error = %.6lf\n",sumdiff/sum);
+	//printf("compare_matrix: Relative Error = %.6lf\n",sumdiff/sum);
 }
 
 
@@ -203,10 +203,10 @@ void BuildGaussianPyramid_BoxBlurApproximation( const cv::Mat& baseimg, std::vec
 	}
 	fasttime_t tend=gettime();
 	
-	GaussianPyramidBoxBlurTimer_mutex.lock();
-	GBlurTime+=tdiff(tstart,tend);
-	GaussianPyramidBoxBlurTimer_mutex.unlock();
+	//GaussianPyramidBoxBlurTimer_mutex.lock();
+	//GBlurTime+=tdiff(tstart,tend);
+	//GaussianPyramidBoxBlurTimer_mutex.unlock();
 	
-	printf("cumulative myGaussianBlur time = %.6lf\n",GBlurTime);
+	//printf("cumulative myGaussianBlur time = %.6lf\n",GBlurTime);
 }
 

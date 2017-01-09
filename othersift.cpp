@@ -324,11 +324,11 @@ void SIFT_Impl::buildGaussianPyramid( const Mat& base, std::vector<Mat>& pyr, in
             }
         }
     }
-    fasttime_t tend=gettime();
-    GaussianPyramidTimer_mutex.lock();
-    GBlurTime+=tdiff(tstart,tend);
-    GaussianPyramidTimer_mutex.unlock();
-    printf("cumulative gaussian blur time: %.6lf\n",GBlurTime);
+    //fasttime_t tend=gettime();
+    //GaussianPyramidTimer_mutex.lock();
+    //GBlurTime+=tdiff(tstart,tend);
+    //GaussianPyramidTimer_mutex.unlock();
+    //printf("cumulative gaussian blur time: %.6lf\n",GBlurTime);
 #endif
 }
 
@@ -711,11 +711,11 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
             }
         }
 #endif
-    fasttime_t tend=gettime();
-    findSSExtTimer_mutex.lock();
-    zTime+=tdiff(tstart,tend);
-    findSSExtTimer_mutex.unlock();
-    printf("cumulative findScaleSpaceExtrema time: %.6lf cnt2=%d\n",zTime, cnt2);
+    //fasttime_t tend=gettime();
+    //findSSExtTimer_mutex.lock();
+    //zTime+=tdiff(tstart,tend);
+    //findSSExtTimer_mutex.unlock();
+    //printf("cumulative findScaleSpaceExtrema time: %.6lf cnt2=%d\n",zTime, cnt2);
 }
 
 
