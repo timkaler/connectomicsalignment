@@ -136,7 +136,7 @@ void log_kps(tile_data_t *p_tile_data) {
         outImage, 
         cv::Scalar::all(-1), 
         cv::DrawMatchesFlags::DEFAULT);
-        
+    printf("logging image to path %s\n", LOG_DIR); 
     sprintf(filepath, "%s/kps_tile_%.4d_%.4d_%.4d.tif", 
         LOG_DIR, 
         p_tile_data->section_id,

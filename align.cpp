@@ -11,14 +11,16 @@
 #include <string>
 #include <vector>
 
+float CONTRAST_THRESH = 0.08;
+
 #include "./common.h"
 #include "./align.h"
 #include "./match.h"
 #include "./fasttime.h"
 #include "./simple_mutex.h"
 #include "./sift.config.h"
-#include "./othersift.cpp"
-//#include "./othersift2.cpp"
+//#include "./othersift.cpp"
+#include "./othersift2.cpp"
 
 // Helper functions
 #include "align_helpers.cpp"
@@ -70,7 +72,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       p_sift = new cv::xfeatures2d::SIFT_Impl(
                 0,  // num_features --- unsupported.
                 6,  // number of octaves
-                0.04,  // contrast threshold.
+                CONTRAST_THRESH,  // contrast threshold.
                 5,  // edge threshold.
                 1.6);  // sigma.
 
@@ -123,7 +125,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       p_sift = new cv::xfeatures2d::SIFT_Impl(
                 0,  // num_features --- unsupported.
                 6,  // number of octaves
-                0.04,  // contrast threshold.
+                CONTRAST_THRESH,  // contrast threshold.
                 5,  // edge threshold.
                 1.6);  // sigma.
 
@@ -239,6 +241,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       cv::vconcat(m_kps_desc, n_sub_images, *(p_tile_data->p_kps_desc));
 
       int NUM_KEYPOINTS = p_tile_data->p_kps->size();
+      printf("The number of keypoints is %d\n", NUM_KEYPOINTS);
       if (NUM_KEYPOINTS > 0) {
         #ifndef SKIPHDF5
         // NOTE(TFK): Begin HDF5 preparation
@@ -302,7 +305,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       }
 
      
-      compute_tile_matches(p_align_data, sec_id);
+      //compute_tile_matches(p_align_data, sec_id);
 
     }
   //TRACE_1("compute_SIFT_parallel: finish\n");

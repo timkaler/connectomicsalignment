@@ -44,7 +44,7 @@
 //#define ENABLE_TRACE_1
 //#define ENABLE_TRACE_2
 //#define ENABLE_TRACE_3
-//#define ENABLE_LOG_KPS
+#define ENABLE_LOG_KPS
 
 #define MODE_COMPUTE_KPS_AND_MATCH (1)
 #define MODE_COMPUTE_TRANSFORMS (2)
