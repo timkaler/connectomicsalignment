@@ -782,22 +782,94 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
 
   if (force_section_id != -1) return;
   printf("Done with all sections now doing graph computation");
+  
+
+  printf("First we need to merge the graphs.\n");
+  int total_size = 0;
   for (int i = 0; i < graph_list.size(); i++) {
-    Graph<vdata, edata>* graph = graph_list[i];
-    int ncolors = graph->compute_trivial_coloring();
-    int sec_id = graph->section_id;
+    total_size += graph_list[i]->num_vertices();
+  }
+  Graph<vdata, edata>* merged_graph = new Graph<vdata, edata>();
+  merged_graph->resize(total_size);
+  int vertex_id_offset = 0;
+  for (int i = 0; i < graph_list.size(); i++) {
+    for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
+      vdata* d = merged_graph->getVertexData(j+vertex_id_offset);
+      *d = *(graph_list[i]->getVertexData(j));
+      d->vertex_id += vertex_id_offset;
+      //_tile_data tdata = p_sec_data->tiles[i];
+      //d->vertex_id = i;
+      //d->mfov_id = tdata.mfov_id;
+      //d->tile_index = tdata.index;
+      //d->tile_id = i;
+      //d->start_x = tdata.x_start;
+      //d->end_x = tdata.x_finish;
+      //d->start_y = tdata.y_start;
+      //d->end_y = tdata.y_finish;
+      //d->offset_x = 0.0;
+      //d->offset_y = 0.0;
+      //d->iteration_count = 0;
+      //d->last_radius_value = 9.0;
+    }
+    vertex_id_offset += graph_list[i]->num_vertices();
+  }
+
+  vertex_id_offset = 0;
+  // now insert the edges.
+  for (int i = 0; i < graph_list.size(); i++) {
+    for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
+      for (int k = 0; k < graph_list[i]->edgeData[j].size(); k++) {
+        edata edge = graph_list[i]->edgeData[j][k];
+        edge.neighbor_id += vertex_id_offset;
+        merged_graph->insertEdge(j+vertex_id_offset, edge);
+      }
+    }
+    vertex_id_offset += graph_list[i]->num_vertices();
+  }
+    int ncolors = merged_graph->compute_trivial_coloring();
     Scheduler* scheduler;
     engine<vdata, edata>* e;
     scheduler =
-        new Scheduler(graph->vertexColors, ncolors+1, graph->num_vertices());
-    scheduler->graph_void = (void*) graph;
-    e = new engine<vdata, edata>(graph, scheduler);
-    for (int i = 0; i < graph->num_vertices(); i++) {
+        new Scheduler(merged_graph->vertexColors, ncolors+1, merged_graph->num_vertices());
+    scheduler->graph_void = (void*) merged_graph;
+    e = new engine<vdata, edata>(merged_graph, scheduler);
+    for (int i = 0; i < merged_graph->num_vertices(); i++) {
       scheduler->add_task(i, updateVertex2DAlign);
     }
     printf("starting run\n");
     e->run();
     printf("ending run\n");
+
+  vertex_id_offset = 0;
+  for (int i = 0; i < graph_list.size(); i++) {
+    for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
+      vdata* d = merged_graph->getVertexData(j+vertex_id_offset);
+      *(graph_list[i]->getVertexData(j)) = *d;
+      (graph_list[i]->getVertexData(j))->vertex_id -= vertex_id_offset;
+      //d->vertex_id += vertex_id_offset;
+    }
+    vertex_id_offset += graph_list[i]->num_vertices();
+  }
+
+
+  
+
+  for (int i = 0; i < graph_list.size(); i++) {
+    Graph<vdata, edata>* graph = graph_list[i];
+    int sec_id = graph->section_id;
+    //int ncolors = graph->compute_trivial_coloring();
+    //Scheduler* scheduler;
+    //engine<vdata, edata>* e;
+    //scheduler =
+    //    new Scheduler(graph->vertexColors, ncolors+1, graph->num_vertices());
+    //scheduler->graph_void = (void*) graph;
+    //e = new engine<vdata, edata>(graph, scheduler);
+    //for (int i = 0; i < graph->num_vertices(); i++) {
+    //  scheduler->add_task(i, updateVertex2DAlign);
+    //}
+    //printf("starting run\n");
+    //e->run();
+    //printf("ending run\n");
 
     //void compute_tile_matches(align_data_t *p_align_data) {
     std::string section_id_string =
