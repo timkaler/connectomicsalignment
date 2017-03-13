@@ -472,45 +472,23 @@ static void save_tile_matches(size_t num_matches,
 // thread_local std::vector< cv::Point2f > match_points_a, match_points_b;
 // thread_local std::vector< cv::Point2f > match_points_a_fixed;
 
+static std::vector<Graph<vdata, edata>* > graph_list;
+
 void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   TRACE_1("compute_tile_matches: start\n");
 
-#ifndef SKIPJSON
-  char out_filepath_base[strlen(p_align_data->output_dirpath) +
-                         strlen("/matched_sifts/W01_Sec") + 1];
-  sprintf(out_filepath_base, "%s/matched_sifts/W01_Sec",
-          p_align_data->output_dirpath);
-#endif
 
-  Graph<vdata, edata>* graph;
-  Scheduler* scheduler;
-  engine<vdata, edata>* e;
+
+
+  //section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
 
   // Iterate over all pairs of tiles
   //for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
-  for (int sec_id = force_section_id; sec_id < force_section_id+1; sec_id++) {
+  for (int sec_id = force_section_id; sec_id < force_section_id+1 && force_section_id != -1; sec_id++) {
+    Graph<vdata, edata>* graph;
+    Scheduler* scheduler;
+    engine<vdata, edata>* e;
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
-#ifndef SKIPJSON
-    char out_filepath_start[MAX_FILEPATH] = "\0";
-    // Get the section id from the first tile.
-    const char *tmp_filepath = (p_sec_data->tiles[0]).filepath;
-    const char *section_id_start = strrchr(tmp_filepath, '/') + 1;
-    const char *section_id_end = strchr(section_id_start, '_');
-    size_t section_id_size = (section_id_end - section_id_start)/sizeof(char);
-    char section_id[MAX_FILEPATH];
-    strncpy(section_id, section_id_start, section_id_size);
-    section_id[section_id_size] = '\0';
-
-    // Create the inter-mfov output directory
-    sprintf(out_filepath_start, "%s%s/", out_filepath_base, section_id);
-    {
-      char mkdir_cmd[MAX_FILEPATH];
-      sprintf(mkdir_cmd, "mkdir -p %sinter/", out_filepath_start);
-      system(mkdir_cmd);
-    }
-    // Create a new vector of output file names.
-    cilk::reducer_list_append< const char* > output_files_reducer;
-#endif
 
     // Record the set of mfov ID's encountered.  Right now, this set
     // is used to limit the number of system calls performed.
@@ -519,9 +497,10 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     simple_mutex_init(&mfovs_lock);
 
 
+    printf("REsizing the graph to be size %d\n", p_sec_data->n_tiles);
     graph = new Graph<vdata, edata>();
     graph->resize(p_sec_data->n_tiles);
-    printf("REsizing the graph to be size %d\n", p_sec_data->n_tiles);
+    graph_list.push_back(graph);
 
     cilk_for (int atile_id = 0; atile_id < p_sec_data->n_tiles; atile_id++) {
       //printf("The tile id is %d\n", atile_id);
@@ -529,32 +508,6 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
         printf("Big error!\n");    
       }
       tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
-      simple_acquire(&mfovs_lock);
-      if (mfovs.insert(a_tile->mfov_id).second) {
-        // Encountering a brand new mfov.
-#ifndef SKIPJSON
-        // Create the output directory.
-        char mkdir_cmd[MAX_FILEPATH];
-        sprintf(mkdir_cmd, "mkdir -p %sintra/%d/",
-                out_filepath_start, a_tile->mfov_id);
-        system(mkdir_cmd);
-#endif
-      }
-      simple_release(&mfovs_lock);
-#ifndef SKIPJSON
-      // Compute starts of output file path and output file name.
-      const char *a_filepath = a_tile->filepath;
-      const char *a_imagename_start = strrchr(a_filepath, '/') + 1;
-      const char *a_imagename_end = strrchr(a_imagename_start, '.');
-      size_t a_imagename_size =
-          (a_imagename_end - a_imagename_start)/sizeof(char);
-      char a_imagename[MAX_FILEPATH];
-      strncpy(a_imagename, a_imagename_start, a_imagename_size);
-      a_imagename[a_imagename_size] = '\0';
-      char out_filename_start[MAX_FILEPATH];
-      sprintf(out_filename_start, "W01_Sec%s_sift_matches_%s_",
-              section_id, a_imagename);
-#endif
       int indices_to_check[50];
       int indices_to_check_len = 0;
 
@@ -591,53 +544,18 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
         //TRACE_1("    -- %d_%d features_num: %lu\n",
         //        b_tile->mfov_id, b_tile->index,
         //        b_tile->p_kps->size());
-#ifndef SKIPJSON
-        const char *b_filepath = b_tile->filepath;
-        const char *b_imagename_start = strrchr(b_filepath, '/') + 1;
-        const char *b_imagename_end = strrchr(b_imagename_start, '.');
-        size_t b_imagename_size =
-            (b_imagename_end - b_imagename_start)/sizeof(char);
-        char b_imagename[MAX_FILEPATH];
-        strncpy(b_imagename, b_imagename_start, b_imagename_size);
-        b_imagename[b_imagename_size] = '\0';
-        char out_filepath[MAX_FILEPATH];
-        if (a_tile->mfov_id == b_tile->mfov_id) {
-          // Intra-mfov job
-          sprintf(out_filepath, "%sintra/%d/%s%s.json",
-                  out_filepath_start, a_tile->mfov_id, out_filename_start,
-                  b_imagename);
-        } else {
-          // Inter-mfov job
-          sprintf(out_filepath, "%sinter/%s%s.json",
-                  out_filepath_start, out_filename_start, b_imagename);
-        }
-
-        char *output_file_buf = new char[strlen(out_filepath) + 7];
-        sprintf(output_file_buf, "file://%s", out_filepath);
-        output_files_reducer.push_back(output_file_buf);
-#endif
 
         // Check that both tiles have enough features to match.
         if (a_tile->p_kps->size() < MIN_FEATURES_NUM) {
           //TRACE_1("Less than %d features in tile %d_%d, saving empty match file\n",
           //        MIN_FEATURES_NUM,
           //        a_tile->mfov_id, a_tile->index);
-          #ifndef SKIPJSON
-          SAVE_TILE_MATCHES(0, out_filepath,
-                            a_tile, b_tile,
-                            nullptr, nullptr, nullptr);
-          #endif
           continue;
         }
         if (b_tile->p_kps->size() < MIN_FEATURES_NUM) {
           //TRACE_1("Less than %d features in tile %d_%d, saving empty match file\n",
           //        MIN_FEATURES_NUM,
           //        b_tile->mfov_id, b_tile->index);
-          #ifndef SKIPJSON
-          SAVE_TILE_MATCHES(0, out_filepath,
-                            a_tile, b_tile,
-                            nullptr, nullptr, nullptr);
-          #endif
           continue;
         }
 
@@ -720,22 +638,12 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
           //TRACE_1("Less than %d features in the overlap in tile %d_%d, saving empty match file\n",
           //        MIN_FEATURES_NUM,
           //        a_tile->mfov_id, a_tile->index);
-          #ifndef SKIPJSON
-          SAVE_TILE_MATCHES(0, out_filepath,
-                            a_tile, b_tile,
-                            nullptr, nullptr, nullptr);
-          #endif
           continue;
         }
         if (btile_kps_in_overlap.size() < MIN_FEATURES_NUM) {
           //TRACE_1("Less than %d features in the overlap in tile %d_%d, saving empty match file\n",
           //        MIN_FEATURES_NUM,
           //        b_tile->mfov_id, b_tile->index);
-          #ifndef SKIPJSON
-          SAVE_TILE_MATCHES(0, out_filepath,
-                            a_tile, b_tile,
-                            nullptr, nullptr, nullptr);
-          #endif
           continue;
         }
 
@@ -772,28 +680,9 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
         if (matches.size() < MIN_FEATURES_NUM) {
           //TRACE_1("Less than %d matched features, saving empty match file\n",
           //        MIN_FEATURES_NUM);
-          #ifndef SKIPJSON
-          SAVE_TILE_MATCHES(0, out_filepath,
-                            a_tile, b_tile,
-                            nullptr, nullptr, nullptr);
-          #endif
           if (matches.size() == 0) printf("There are zero matches.\n");
           continue;
         }
-
-          //cv::Mat mask(source_points.size(),1, CV_8U);
-          // cv::Mat mask;
-          // cv::Mat H = cv::findHomography(match_points_a2, match_points_b2, cv::RANSAC,
-          //                               MAX_EPSILON, mask);
-
-          //cv::Mat mask;
-          //cv::videostab::TranslationBasedLocalOutlierRejector outReject;
-
-          // NOTE(TFK): eps and prob don't appear to be used in outReject.
-          // cv::RansacParams rParams =
-          //     cv::RansacParams(int size, float thresh, float eps, float prob)
-          //cv::videostab::RansacParams rParams =
-          //    cv::videostab::RansacParams(MIN_FEATURES_NUM, 10.0, 0.3, 0.99);
 
         bool* mask = (bool*) calloc(match_points_a.size(), 1);
         double thresh = 10.0;
@@ -808,7 +697,6 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
         int num_matches_filtered = 0;
         // Use the output mask to filter the matches
         for (size_t i = 0; i < matches.size(); ++i) {
-          //if (mask.ptr<unsigned char>()[i]) {
           if (mask[i]) {
             num_matches_filtered++;
             filtered_match_points_a.push_back(
@@ -823,19 +711,9 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
               filtered_match_points_a, filtered_match_points_b);
         }
 
-        //TRACE_1("    -- [%d_%d, %d_%d] filtered_matches: %lu\n",
-        //        a_tile->mfov_id, a_tile->index,
-        //        b_tile->mfov_id, b_tile->index,
-        //        filtered_match_points_a.size());
-
         if (filtered_match_points_a.size() < MIN_FEATURES_NUM) {
           //TRACE_1("Less than %d matched features, saving empty match file\n",
           //        MIN_FEATURES_NUM);
-          #ifndef SKIPJSON
-          SAVE_TILE_MATCHES(0, out_filepath,
-                            a_tile, b_tile,
-                            nullptr, nullptr, nullptr);
-          #endif
           continue;
         }
 
@@ -854,11 +732,6 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
 
           if (0 == model.rows) {
             //TRACE_1("Could not estimate affine transform, saving empty match file\n");
-            #ifndef SKIPJSON
-            SAVE_TILE_MATCHES(0, out_filepath,
-                              a_tile, b_tile,
-                              nullptr, nullptr, nullptr);
-            #endif
             continue;
           }
 
@@ -871,19 +744,9 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
           cv::transform(filtered_match_points_a, match_points_a_fixed, model);
 
           // Output the tile matches.
-          #ifndef SKIPJSON
-          SAVE_TILE_MATCHES(filtered_match_points_a.size(), out_filepath,
-                            a_tile, b_tile,
-                            &filtered_match_points_a, &filtered_match_points_b,
-                            &match_points_a_fixed);
-          #endif
         }
       } while (false); // end the do while wrapper.
       }  // for (btile_id)
-
-      //a_tile->p_kps->clear();
-      //std::vector<cv::KeyPoint>().swap(*(a_tile->p_kps));
-      //((a_tile->p_kps_desc))->release();
     }  // for (atile_id)
 
     // can free the matches.
@@ -894,29 +757,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       ((a_tile->p_kps_desc))->release();
     }
 
-#ifndef SKIPJSON
-    // Output list of matched sift files.
-    {
-      const std::string matched_sifts_files =
-        std::string(p_align_data->output_dirpath) +
-        "/W01_Sec" + section_id + "_matched_sifts_files.txt";
-      //TRACE_1("Recording matched sifts files in %s\n",
-      //        matched_sifts_files.c_str());
-
-      FILE *fp = fopen(matched_sifts_files.c_str(), "wb+");
-      const std::list< const char* > &output_files =
-          output_files_reducer.get_value();
-      for (const char *output_file : output_files)
-        fprintf(fp, "%s\n", output_file);
-      fclose(fp);
-    }
-#endif
-
   printf("Size of the graph is %d\n", graph->num_vertices());
-  int ncolors = graph->compute_trivial_coloring();
-  //for (int i = 0; i < graph->num_vertices(); i++) {
-  //  printf("Vertex %d has edges %d\n", i, graph->edgeData[i].size());
-  //}
   for (int i = 0; i < graph->num_vertices(); i++) {
     //printf("init vertex data for vertex %d\n", i);
     vdata* d = graph->getVertexData(i);
@@ -934,75 +775,86 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     d->iteration_count = 0;
     d->last_radius_value = 9.0;
   }
-
-  scheduler =
-      new Scheduler(graph->vertexColors, ncolors+1, graph->num_vertices());
-  scheduler->graph_void = (void*) graph;
-  e = new engine<vdata, edata>(graph, scheduler);
-  for (int i = 0; i < graph->num_vertices(); i++) {
-    scheduler->add_task(i, updateVertex2DAlign);
-  }
-  printf("starting run\n");
-  e->run();
-  printf("ending run\n");
-
-  //void compute_tile_matches(align_data_t *p_align_data) {
-  std::string section_id_string =
-      std::to_string(p_align_data->sec_data[sec_id].section_id +
-      p_align_data->base_section+1);
-
-  FILE* wafer_file = fopen((std::string("/efs/home/tfk/alignment_newrepo/temp/")+std::string("W01_Sec") +
-      matchPadTo(section_id_string, 3)+std::string("_montaged.json")).c_str(), "w+");
-  fprintf(wafer_file, "[\n");
-  for (int i = 0; i < graph->num_vertices(); i++) {
-    vdata* vd = graph->getVertexData(i);
-    fprintf(wafer_file, "\t{\n");
-    fprintf(wafer_file, "\t\t\"bbox\": [\n");
-    fprintf(wafer_file,
-        "\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f\n],",
-        vd->start_x+vd->offset_x, vd->end_x+vd->offset_x,
-        vd->start_y+vd->offset_y, vd->end_y+vd->offset_y);
-    fprintf(wafer_file, "\t\t\"height\": %d,\n",2724);
-    fprintf(wafer_file, "\t\t\"layer\": %d,\n",10);
-    fprintf(wafer_file, "\t\t\"maxIntensity\": %f,\n",255.0);
-    fprintf(wafer_file, "\t\t\"mfov\": %d,\n",
-        graph->getVertexData(i)->mfov_id);
-    fprintf(wafer_file, "\t\t\"minIntensity\": %f,\n",
-        0.0);
-    fprintf(wafer_file, "\t\t\"mipmapLevels\": {\n");
-    fprintf(wafer_file, "\t\t\"0\": {\n");
-    fprintf(wafer_file, "\t\t\t\"imageUrl\": \"%s\"\n", p_align_data->sec_data[sec_id].tiles[graph->getVertexData(i)->tile_id].filepath);
-    fprintf(wafer_file, "\t\t\t}\n");
-    fprintf(wafer_file, "\t\t},\n");
-    fprintf(wafer_file, "\t\t\"tile_index\": %d,\n",
-        graph->getVertexData(i)->tile_index);
-    fprintf(wafer_file, "\t\t\"transforms\": [\n");
-    fprintf(wafer_file, "\t\t\t{\n");
-    fprintf(wafer_file,
-        "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.RigidModel2D\",\n");
-    fprintf(wafer_file,
-        "\t\t\t\t\"dataString\": \"%f %f %f\"\n", 0.0,
-        vd->start_x+vd->offset_x, vd->start_y + vd->offset_y);
-    fprintf(wafer_file,
-        "\t\t\t}\n");
-    fprintf(wafer_file,
-        "\t\t],\n");
-    fprintf(wafer_file,
-        "\t\t\"width\":%d\n",3128);
-    if (i != graph->num_vertices()-1) {
-      fprintf(wafer_file,
-          "\t},\n");
-    } else {
-      fprintf(wafer_file,
-          "\t}\n]");
-    }
-  }
-  fclose(wafer_file);
-  delete graph;
-  delete scheduler;
-  delete e;
-
+  graph->section_id = sec_id;
   }  // for (sec_id)
+
+
+
+  if (force_section_id != -1) return;
+  printf("Done with all sections now doing graph computation");
+  for (int i = 0; i < graph_list.size(); i++) {
+    Graph<vdata, edata>* graph = graph_list[i];
+    int ncolors = graph->compute_trivial_coloring();
+    int sec_id = graph->section_id;
+    Scheduler* scheduler;
+    engine<vdata, edata>* e;
+    scheduler =
+        new Scheduler(graph->vertexColors, ncolors+1, graph->num_vertices());
+    scheduler->graph_void = (void*) graph;
+    e = new engine<vdata, edata>(graph, scheduler);
+    for (int i = 0; i < graph->num_vertices(); i++) {
+      scheduler->add_task(i, updateVertex2DAlign);
+    }
+    printf("starting run\n");
+    e->run();
+    printf("ending run\n");
+
+    //void compute_tile_matches(align_data_t *p_align_data) {
+    std::string section_id_string =
+        std::to_string(p_align_data->sec_data[sec_id].section_id +
+        p_align_data->base_section+1);
+
+    FILE* wafer_file = fopen((std::string("/efs/home/tfk/alignment_newrepo/temp/")+std::string("W01_Sec") +
+        matchPadTo(section_id_string, 3)+std::string("_montaged.json")).c_str(), "w+");
+    fprintf(wafer_file, "[\n");
+    for (int i = 0; i < graph->num_vertices(); i++) {
+      vdata* vd = graph->getVertexData(i);
+      fprintf(wafer_file, "\t{\n");
+      fprintf(wafer_file, "\t\t\"bbox\": [\n");
+      fprintf(wafer_file,
+          "\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f\n],",
+          vd->start_x+vd->offset_x, vd->end_x+vd->offset_x,
+          vd->start_y+vd->offset_y, vd->end_y+vd->offset_y);
+      fprintf(wafer_file, "\t\t\"height\": %d,\n",2724);
+      fprintf(wafer_file, "\t\t\"layer\": %d,\n",10);
+      fprintf(wafer_file, "\t\t\"maxIntensity\": %f,\n",255.0);
+      fprintf(wafer_file, "\t\t\"mfov\": %d,\n",
+          graph->getVertexData(i)->mfov_id);
+      fprintf(wafer_file, "\t\t\"minIntensity\": %f,\n",
+          0.0);
+      fprintf(wafer_file, "\t\t\"mipmapLevels\": {\n");
+      fprintf(wafer_file, "\t\t\"0\": {\n");
+      fprintf(wafer_file, "\t\t\t\"imageUrl\": \"%s\"\n", p_align_data->sec_data[sec_id].tiles[graph->getVertexData(i)->tile_id].filepath);
+      fprintf(wafer_file, "\t\t\t}\n");
+      fprintf(wafer_file, "\t\t},\n");
+      fprintf(wafer_file, "\t\t\"tile_index\": %d,\n",
+          graph->getVertexData(i)->tile_index);
+      fprintf(wafer_file, "\t\t\"transforms\": [\n");
+      fprintf(wafer_file, "\t\t\t{\n");
+      fprintf(wafer_file,
+          "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.RigidModel2D\",\n");
+      fprintf(wafer_file,
+          "\t\t\t\t\"dataString\": \"%f %f %f\"\n", 0.0,
+          vd->start_x+vd->offset_x, vd->start_y + vd->offset_y);
+      fprintf(wafer_file,
+          "\t\t\t}\n");
+      fprintf(wafer_file,
+          "\t\t],\n");
+      fprintf(wafer_file,
+          "\t\t\"width\":%d\n",3128);
+      if (i != graph->num_vertices()-1) {
+        fprintf(wafer_file,
+            "\t},\n");
+      } else {
+        fprintf(wafer_file,
+            "\t}\n]");
+      }
+    }
+    fclose(wafer_file);
+    delete graph;
+    delete scheduler;
+    delete e;
+  }
 
   //TRACE_1("compute_tile_matches: finish\n");
 }

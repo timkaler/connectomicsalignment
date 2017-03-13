@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-float CONTRAST_THRESH = 0.08;
+float CONTRAST_THRESH = 0.04;
 
 #include "./common.h"
 #include "./align.h"
@@ -305,8 +305,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       }
 
      
-      //compute_tile_matches(p_align_data, sec_id);
-
+      compute_tile_matches(p_align_data, sec_id);
     }
   //TRACE_1("compute_SIFT_parallel: finish\n");
 }
@@ -329,7 +328,7 @@ void align_execute(align_data_t *p_align_data) {
     }
         free_tiles(p_align_data);
     START_TIMER(&timer);
-    //compute_tile_matches(p_align_data);
+    compute_tile_matches(p_align_data, -1);
     STOP_TIMER(&timer, "compute_tile_matches time:");
     STOP_TIMER(&t_timer, "t_total-time:");
 }

@@ -65,6 +65,7 @@ class Graph {
     int* vertexColors;
     simple_mutex_t* vertexLocks;
     int vertexCount;
+    int section_id;
     int num_vertices();
     int compute_trivial_coloring();
     std::vector<std::vector<EdgeType> > edgeData;
