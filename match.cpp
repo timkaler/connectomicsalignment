@@ -50,8 +50,8 @@ void tfk_simple_ransac_strict(std::vector<cv::Point2f>& match_points_a,
   std::uniform_int_distribution<int> distribution(0,match_points_a.size()); 
   for (thresh = _thresh; num_iterations < 1;) {
     num_iterations++;
-    for (int _i = 0; _i < 20000;/*match_points_a.size();*/ _i++) {
-      int i = distribution(g1);
+    for (int _i = 0; _i < match_points_a.size(); _i++) {
+      int i = _i;//distribution(g1);
       double dx = match_points_b[i].x - match_points_a[i].x;
       double dy = match_points_b[i].y - match_points_a[i].y;
       int inliers = 0;
@@ -1082,7 +1082,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
         //void tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
         //    std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
         bool* mask = (bool*)calloc(matches.size()+1, 1);
-        tfk_simple_ransac_strict(match_points_a, match_points_b, 30.0, mask);
+        tfk_simple_ransac_strict(match_points_a, match_points_b, 50.0, mask);
     for (int c = 0; c < matches.size(); c++) {
       if (mask[c]) {
         std::vector< cv::Point2f > filtered_match_points_a(0);
