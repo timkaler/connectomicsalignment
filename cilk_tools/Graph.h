@@ -50,6 +50,7 @@ typedef struct {
 
 typedef struct {
   int neighbor_id;
+  double weight;
   std::vector<cv::Point2f>* v_points;
   std::vector<cv::Point2f>* n_points;
 } edata;
@@ -73,7 +74,7 @@ class Graph {
     VertexType* getVertexData(int vid);
     void insert_matches(int atile_id, int btile_id,
         std::vector<cv::Point2f>& filtered_match_points_a,
-        std::vector<cv::Point2f>& filtered_match_points_b);
+        std::vector<cv::Point2f>& filtered_match_points_b, double weight);
     void insertEdge(int vid, EdgeType edge);
 };
 

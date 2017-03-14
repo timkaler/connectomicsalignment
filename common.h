@@ -274,6 +274,7 @@ void log_pts_matches(
     std::vector<cv::Point2f> *p_dst_pts);
 
 bool is_tiles_overlap(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2);
+bool is_tiles_overlap_slack(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2, double slack);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL MACROS

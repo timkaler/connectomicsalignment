@@ -67,7 +67,7 @@ int Graph< VertexType,  EdgeType>::compute_trivial_coloring(){
 template<typename VertexType, typename EdgeType>
 void Graph< VertexType,  EdgeType>::insert_matches(int atile_id, int btile_id,
     std::vector<cv::Point2f>& filtered_match_points_a,
-    std::vector<cv::Point2f>& filtered_match_points_b){
+    std::vector<cv::Point2f>& filtered_match_points_b, double weight){
 
     std::vector<cv::Point2f>* vedges = new std::vector<cv::Point2f>();
     std::vector<cv::Point2f>* nedges = new std::vector<cv::Point2f>();
@@ -84,12 +84,14 @@ void Graph< VertexType,  EdgeType>::insert_matches(int atile_id, int btile_id,
     edge1.v_points = vedges;
     edge1.n_points = nedges;
     edge1.neighbor_id = btile_id;
+    edge1.weight = weight;
     this->insertEdge(atile_id, edge1);
 
     EdgeType edge2;
     edge2.v_points = nedges;
     edge2.n_points = vedges;
     edge2.neighbor_id = atile_id;
+    edge2.weight = weight;
     this->insertEdge(btile_id, edge2);
 }
 
