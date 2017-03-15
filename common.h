@@ -202,6 +202,9 @@ typedef struct _tile_data {
 
     std::vector<cv::KeyPoint> *p_kps;
     cv::Mat *p_kps_desc;
+
+    std::vector<cv::KeyPoint> *p_kps_3d;
+    cv::Mat *p_kps_desc_3d;
         
 } tile_data_t;
 

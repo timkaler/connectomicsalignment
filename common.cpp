@@ -58,6 +58,8 @@ void init_tile(
     p_tile->p_image = new cv::Mat();
     p_tile->p_kps = new std::vector<cv::KeyPoint>();
     p_tile->p_kps_desc = new cv::Mat();
+    p_tile->p_kps_3d = new std::vector<cv::KeyPoint>();
+    p_tile->p_kps_desc_3d = new cv::Mat();
 }
 
 void init_section(section_data_t *p_sec_data, int sec_id) {

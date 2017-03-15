@@ -40,6 +40,7 @@ typedef struct {
   double end_x;
   double start_y;
   double end_y;
+  double scale;
 
   // dynamic data we'll update.
   double offset_x;
