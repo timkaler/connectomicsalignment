@@ -50,8 +50,8 @@ std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& 
   int num_iterations = 0;
   std::mt19937 g1 (1);  // mt19937 is a standard mersenne_twister_engine
   std::uniform_int_distribution<int> distribution(0,match_points_a.size()); 
-  for (; thresh <= _thresh || maxInliers < 10; thresh += 1.0) {
-  //for (thresh = _thresh; num_iterations < 1;) {
+  //for (; thresh <= _thresh || maxInliers < 10; thresh += 1.0) {
+  for (thresh = _thresh; num_iterations < 1;) {
     num_iterations++;
     int limit = 100000;
     bool random = false;
@@ -99,6 +99,7 @@ std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& 
       }
       return;
     }*/
+    printf("Number of inliers is %d and best_dx %f best_dy %f\n", maxInliers, best_dx, best_dy);
     return std::pair<double,double>(best_dx,best_dy);
   }
 
@@ -1067,6 +1068,11 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     d->offset_y = 0.0;
     d->iteration_count = 0;
     d->last_radius_value = 9.0;
+    d->z = sec_id;
+    d->a00 = 1.0;
+    d->a01 = 0.0;
+    d->a10 = 0.0;
+    d->a11 = 1.0;
   }
   graph->section_id = sec_id;
   }  // for (sec_id)
@@ -1141,7 +1147,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
           _tile_data tdata_b = p_align_data->sec_data[i].tiles[tmpi];
           tile_data_t b_tile = (p_align_data->sec_data[i].tiles[tmpi]);
           // Skip tiles that don't overlap
-          if (!is_tiles_overlap_slack(&a_tile, &b_tile, 10000)) continue;
+          if (!is_tiles_overlap_slack(&a_tile, &b_tile, 1000)) continue;
           indices_to_check[indices_to_check_len++] = tmpi;
           if (indices_to_check_len > 499) {
              printf("Major error!!! wtf\n");
@@ -1211,7 +1217,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
             filtered_match_points_b.push_back(
                 btile_kps_in_overlap[matches[c].trainIdx].pt);
             merged_graph->insert_matches(atile_id, btile_id,
-                filtered_match_points_a, filtered_match_points_b, 0.1);
+                filtered_match_points_a, filtered_match_points_b, 1.0);
           }
         }
         free(mask);
@@ -1220,9 +1226,10 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       vertex_id_offset += graph_list[i-1]->num_vertices();
     }
 
-  } else {  
+  } else /*if (false)*/{  
     //void concat_two_tiles(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list) {
     vertex_id_offset = 0;
+
     // now insert the edges.
     for (int i = 1; i < graph_list.size(); i++) {
       std::vector <cv::KeyPoint > atile_kps_in_overlap;
@@ -1255,7 +1262,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       match_features(matches,
                      atile_kps_desc_in_overlap,
                      btile_kps_desc_in_overlap,
-                     0.90);
+                     0.98);
           printf("Done with the matching. Num matches is %d\n", matches.size());
 
           // Filter the matches with RANSAC
@@ -1264,11 +1271,11 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       //std::vector<int> atile_kps_tile_list;
             int atile_id = atile_kps_tile_list[matches[tmpi].queryIdx];
             int btile_id = btile_kps_tile_list[matches[tmpi].trainIdx];
-            int x_start_a = merged_graph->getVertexData(atile_id)->start_x;
-            int y_start_a = merged_graph->getVertexData(atile_id)->start_y;
+            int x_start_a = merged_graph->getVertexData(atile_id)->start_x + merged_graph->getVertexData(atile_id)->offset_x;
+            int y_start_a = merged_graph->getVertexData(atile_id)->start_y + merged_graph->getVertexData(atile_id)->offset_y;
 
-            int x_start_b = merged_graph->getVertexData(btile_id)->start_x;
-            int y_start_b = merged_graph->getVertexData(btile_id)->start_y;
+            int x_start_b = merged_graph->getVertexData(btile_id)->start_x + merged_graph->getVertexData(btile_id)->offset_x;
+            int y_start_b = merged_graph->getVertexData(btile_id)->start_y + merged_graph->getVertexData(btile_id)->offset_y;
 
             match_points_a.push_back(
                 atile_kps_in_overlap[matches[tmpi].queryIdx].pt + cv::Point2f(x_start_a, y_start_a));
@@ -1339,6 +1346,101 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     printf("starting run\n");
     e->run();
     printf("ending run\n");
+
+    if (true) {
+    vertex_id_offset = 0;
+
+
+
+    for (int section = 1; section < 2; section++) {
+      int section_a = section-1;
+      int section_b = section;
+      std::vector <cv::KeyPoint > atile_kps_in_overlap;
+      std::vector <cv::Mat > atile_kps_desc_in_overlap_list;
+      std::vector<int> atile_kps_tile_list; 
+      std::vector <cv::KeyPoint > btile_kps_in_overlap;
+      std::vector <cv::Mat > btile_kps_desc_in_overlap_list;
+      std::vector<int> btile_kps_tile_list;
+
+      for (int v = 1; v < merged_graph->num_vertices(); v++) {
+        if (merged_graph->getVertexData(v)->z == section_a) {
+          _tile_data tdata_a = p_align_data->sec_data[section_a].tiles[merged_graph->getVertexData(v)->tile_id];
+          concat_two_tiles(&tdata_a, v, atile_kps_in_overlap, atile_kps_desc_in_overlap_list, atile_kps_tile_list);
+        } else {
+          _tile_data tdata_b = p_align_data->sec_data[section_b].tiles[merged_graph->getVertexData(v)->tile_id];
+          concat_two_tiles(&tdata_b, v, btile_kps_in_overlap, btile_kps_desc_in_overlap_list, btile_kps_tile_list);
+        }
+      }
+
+      printf("Total size of a tile kps is %d\n", atile_kps_in_overlap.size());
+      printf("Total size of b tile kps is %d\n", btile_kps_in_overlap.size());
+ 
+      cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
+      cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
+      cv::vconcat(btile_kps_desc_in_overlap_list, (btile_kps_desc_in_overlap));
+
+      std::vector< cv::DMatch > matches;
+      match_features(matches,
+                     atile_kps_desc_in_overlap,
+                     btile_kps_desc_in_overlap,
+                     0.98);
+          printf("Done with the matching. Num matches is %d\n", matches.size());
+          // Filter the matches with RANSAC
+          std::vector<cv::Point2f> match_points_a, match_points_b;
+          for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
+          //std::vector<int> atile_kps_tile_list;
+            int atile_id = atile_kps_tile_list[matches[tmpi].queryIdx];
+            int btile_id = btile_kps_tile_list[matches[tmpi].trainIdx];
+
+            int x_start_a = merged_graph->getVertexData(atile_id)->start_x + merged_graph->getVertexData(atile_id)->offset_x;
+            int y_start_a = merged_graph->getVertexData(atile_id)->start_y + merged_graph->getVertexData(atile_id)->offset_y;
+
+            int x_start_b = merged_graph->getVertexData(btile_id)->start_x + merged_graph->getVertexData(btile_id)->offset_x;
+            int y_start_b = merged_graph->getVertexData(btile_id)->start_y + merged_graph->getVertexData(btile_id)->offset_y;
+
+            //int x_start_a = merged_graph->getVertexData(atile_id)->start_x;
+            //int y_start_a = merged_graph->getVertexData(atile_id)->start_y;
+
+            //int x_start_b = merged_graph->getVertexData(btile_id)->start_x;
+            //int y_start_b = merged_graph->getVertexData(btile_id)->start_y;
+
+            match_points_a.push_back(
+                atile_kps_in_overlap[matches[tmpi].queryIdx].pt + cv::Point2f(x_start_a, y_start_a));
+            match_points_b.push_back(
+                btile_kps_in_overlap[matches[tmpi].trainIdx].pt + cv::Point2f(x_start_b, y_start_b));
+          }
+          bool* mask = (bool*)calloc(matches.size()+1, 1);
+          std::pair<double,double> offset_pair = tfk_simple_ransac_strict_ret(match_points_a, match_points_b, 50.0, mask);
+      for (int c = 0; c < matches.size(); c++) {
+        if (mask[c]) {
+          std::vector< cv::Point2f > filtered_match_points_a(0);
+          std::vector< cv::Point2f > filtered_match_points_b(0);
+          int atile_id = atile_kps_tile_list[matches[c].queryIdx];
+          int btile_id = btile_kps_tile_list[matches[c].trainIdx];
+          filtered_match_points_a.push_back(
+              atile_kps_in_overlap[matches[c].queryIdx].pt);
+          filtered_match_points_b.push_back(
+              btile_kps_in_overlap[matches[c].trainIdx].pt);
+          //merged_graph->insert_matches(atile_id, btile_id,
+          //    filtered_match_points_a, filtered_match_points_b, 1.0);
+        }
+      }
+      free(mask);
+      for (int v = 0; v < merged_graph->num_vertices(); v++) {
+        if (merged_graph->getVertexData(v)->z == section_a) {
+          merged_graph->getVertexData(v)->offset_x += offset_pair.first;
+          merged_graph->getVertexData(v)->offset_y += offset_pair.second;
+        }
+      }
+
+    }
+
+    }
+
+
+
+
+
 
   vertex_id_offset = 0;
   for (int i = 0; i < graph_list.size(); i++) {

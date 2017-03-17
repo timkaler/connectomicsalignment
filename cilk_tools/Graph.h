@@ -40,7 +40,16 @@ typedef struct {
   double end_x;
   double start_y;
   double end_y;
+  int z;
   double scale;
+
+
+  // parameters for affine warp.
+  double a00;
+  double a01;
+  double a10;
+  double a11;
+
 
   // dynamic data we'll update.
   double offset_x;

@@ -74,7 +74,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
       p_sift = new cv::xfeatures2d::SIFT_Impl(
                 0,  // num_features --- unsupported.
                 3,  // number of octaves
-                0.04/*CONTRAST_THRESH_3D*/,  // contrast threshold.
+                CONTRAST_THRESH_3D,  // contrast threshold.
                 10,  // edge threshold.
                 1.6);  // sigma.
 
@@ -126,7 +126,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
 
       p_sift = new cv::xfeatures2d::SIFT_Impl(
                 0,  // num_features --- unsupported.
-                6,  // number of octaves
+                3,  // number of octaves
                 CONTRAST_THRESH_3D,  // contrast threshold.
                 10,  // edge threshold.
                 1.6);  // sigma.
