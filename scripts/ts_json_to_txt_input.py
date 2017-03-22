@@ -59,8 +59,8 @@ def filter_tilespecs(tilespecs_json_dir, tiles_to_process):
             cur_section = ts['layer']
             cur_mfov = ts['mfov']
             cur_index = ts['tile_index']
-            #if ts['bbox'][0] > 30000 or ts['bbox'][1] > 30000 or ts['bbox'][2] > 30000 or ts['bbox'][3]>30000:
-            #  continue
+            if ts['bbox'][0] > 30000 or ts['bbox'][1] > 30000 or ts['bbox'][2] > 30000 or ts['bbox'][3]>30000:
+              continue
             #print ts
             #if ((cur_section in tiles_to_process.keys()) and 
             #    (cur_mfov in tiles_to_process[cur_section].keys()) and 

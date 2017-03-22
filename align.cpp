@@ -13,7 +13,7 @@
 
 float CONTRAST_THRESH = 0.04;
 float CONTRAST_THRESH_3D = 0.04;
-
+float EDGE_THRESH_3D = 3.5;
 #include "./common.h"
 #include "./align.h"
 #include "./match.h"
@@ -75,7 +75,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
                 0,  // num_features --- unsupported.
                 3,  // number of octaves
                 CONTRAST_THRESH_3D,  // contrast threshold.
-                10,  // edge threshold.
+                EDGE_THRESH_3D,  // edge threshold.
                 1.6);  // sigma.
 
         // THEN: This tile is on the boundary, we need to compute SIFT features
@@ -128,7 +128,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
                 0,  // num_features --- unsupported.
                 3,  // number of octaves
                 CONTRAST_THRESH_3D,  // contrast threshold.
-                10,  // edge threshold.
+                EDGE_THRESH_3D,  // edge threshold.
                 1.6);  // sigma.
 
         // ELSE THEN: This tile is in the interior of the MFOV. Only need to

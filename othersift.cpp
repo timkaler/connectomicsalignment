@@ -219,7 +219,7 @@ static const float SIFT_ORI_SIG_FCTR = 1.5f;
 static const float SIFT_ORI_RADIUS = 3 * SIFT_ORI_SIG_FCTR;
 
 // orientation magnitude relative to max that results in new feature
-static const float SIFT_ORI_PEAK_RATIO = 0.8f;
+static const float SIFT_ORI_PEAK_RATIO = 1.0f;//0.8f;
 
 // determines the size of a single descriptor orientation histogram
 static const float SIFT_DESCR_SCL_FCTR = 3.f;
