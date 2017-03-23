@@ -6,7 +6,7 @@ export CILK_NWORKERS=16
 NUMANODE=0
 SECTION=0
 WORKINGDIR=$PWD
-OUTPUTDIR=/efs/home/tfk/temp/
+OUTPUTDIR=$PWD/temp/
 
 #tee output_file_tfk.out &
 #./setup.sh gdb --args ./run_align 1 \

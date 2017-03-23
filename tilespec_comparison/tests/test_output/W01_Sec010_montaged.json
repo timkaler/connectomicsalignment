@@ -1,0 +1,3662 @@
+[
+	{
+		"bbox": [
+			13250.271858,
+			16378.271858,
+			10514.729439,
+			13238.729439
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 1,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 13250.271858 10514.729439"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			16261.978630,
+			19389.978630,
+			10513.559616,
+			13237.559616
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 2,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 16261.978630 10513.559616"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			14745.999954,
+			17873.999954,
+			7894.533455,
+			10618.533455
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 3,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 14745.999954 7894.533455"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			11730.219604,
+			14858.219604,
+			7894.768982,
+			10618.768982
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 4,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 11730.219604 7894.768982"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10237.743103,
+			13365.743103,
+			10513.241478,
+			13237.241478
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 5,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 10237.743103 10513.241478"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			11758.826050,
+			14886.826050,
+			13137.698524,
+			15861.698524
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 6,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 11758.826050 13137.698524"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			14768.876694,
+			17896.876694,
+			13139.131912,
+			15863.131912
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 7,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 14768.876694 13139.131912"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19270.940956,
+			22398.940956,
+			10508.756805,
+			13232.756805
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 8,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 19270.940956 10508.756805"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			17758.478828,
+			20886.478828,
+			7889.403374,
+			10613.403374
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 9,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 17758.478828 7889.403374"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			16244.619995,
+			19372.619995,
+			5275.138176,
+			7999.138176
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 10,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 16244.619995 5275.138176"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			13227.192711,
+			16355.192711,
+			5278.702606,
+			8002.702606
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 11,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 13227.192711 5278.702606"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10207.670090,
+			13335.670090,
+			5278.366966,
+			8002.366966
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 12,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 10207.670090 5278.366966"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			8713.308014,
+			11841.308014,
+			7891.802475,
+			10615.802475
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 13,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 8713.308014 7891.802475"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			7223.842010,
+			10351.842010,
+			10506.647163,
+			13230.647163
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 14,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 7223.842010 10506.647163"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			8749.288193,
+			11877.288193,
+			13132.227409,
+			15856.227409
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 15,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 8749.288193 13132.227409"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10272.454941,
+			13400.454941,
+			15760.762985,
+			18484.762985
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 16,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 10272.454941 15760.762985"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			13277.950005,
+			16405.950005,
+			15765.808662,
+			18489.808662
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 17,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 13277.950005 15765.808662"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			16282.504356,
+			19410.504356,
+			15765.017807,
+			18489.017807
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 18,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 16282.504356 15765.017807"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			17775.932037,
+			20903.932037,
+			13136.501060,
+			15860.501060
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 19,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 17775.932037 13136.501060"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			22276.274033,
+			25404.274033,
+			10499.759117,
+			13223.759117
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 20,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 22276.274033 10499.759117"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			20769.616806,
+			23897.616806,
+			7881.832886,
+			10605.832886
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 21,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 20769.616806 7881.832886"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19259.722145,
+			22387.722145,
+			5267.766712,
+			7991.766712
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 22,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 19259.722145 5267.766712"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			17747.315636,
+			20875.315636,
+			2657.577847,
+			5381.577847
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 23,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 17747.315636 2657.577847"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			14732.262657,
+			17860.262657,
+			2663.379463,
+			5387.379463
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 24,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 14732.262657 2663.379463"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			11705.995415,
+			14833.995415,
+			2666.079254,
+			5390.079254
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 25,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 11705.995415 2666.079254"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			8681.295670,
+			11809.295670,
+			2666.307064,
+			5390.307064
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 26,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 8681.295670 2666.307064"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			7186.349686,
+			10314.349686,
+			5273.885284,
+			7997.885284
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 27,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 7186.349686 5273.885284"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			5695.265030,
+			8823.265030,
+			7884.509758,
+			10608.509758
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 28,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 5695.265030 7884.509758"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			4208.824966,
+			7336.824966,
+			10495.824348,
+			13219.824348
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 29,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 4208.824966 10495.824348"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			5738.530716,
+			8866.530716,
+			13122.419807,
+			15846.419807
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 30,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 5738.530716 13122.419807"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			7266.183624,
+			10394.183624,
+			15752.145355,
+			18476.145355
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 31,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 7266.183624 15752.145355"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			8789.097824,
+			11917.097824,
+			18382.859680,
+			21106.859680
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 32,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 8789.097824 18382.859680"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			11792.228790,
+			14920.228790,
+			18390.815140,
+			21114.815140
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 33,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 11792.228790 18390.815140"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			14793.611443,
+			17921.611443,
+			18393.725891,
+			21117.725891
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 34,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 14793.611443 18393.725891"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			17793.099251,
+			20921.099251,
+			18390.544785,
+			21114.544785
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 35,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 17793.099251 18390.544785"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19284.370369,
+			22412.370369,
+			15760.228210,
+			18484.228210
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 36,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 19284.370369 15760.228210"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			20779.166183,
+			23907.166183,
+			13130.287033,
+			15854.287033
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 37,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 20779.166183 13130.287033"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			25278.865395,
+			28406.865395,
+			10487.786057,
+			13211.786057
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 38,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 25278.865395 10487.786057"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			23776.515045,
+			26904.515045,
+			7869.901871,
+			10593.901871
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 39,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 23776.515045 7869.901871"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			22272.064453,
+			25400.064453,
+			5256.900116,
+			7980.900116
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 40,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 22272.064453 5256.900116"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			20764.032082,
+			23892.032082,
+			2647.713287,
+			5371.713287
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 41,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 20764.032082 2647.713287"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19253.101250,
+			22381.101250,
+			42.286793,
+			2766.286793
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 42,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 19253.101250 42.286793"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			16231.096596,
+			19359.096596,
+			52.776093,
+			2776.776093
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 43,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 16231.096596 52.776093"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			13206.996155,
+			16334.996155,
+			57.423641,
+			2781.423641
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 44,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 13206.996155 57.423641"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10181.628159,
+			13309.628159,
+			60.108837,
+			2784.108837
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 45,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 10181.628159 60.108837"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			7150.858215,
+			10278.858215,
+			58.993515,
+			2782.993515
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 46,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 7150.858215 58.993515"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			5654.844025,
+			8782.844025,
+			2659.403210,
+			5383.403210
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 47,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 5654.844025 2659.403210"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			4168.457413,
+			7296.457413,
+			5264.152992,
+			7988.152992
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 48,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 4168.457413 5264.152992"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			2674.621704,
+			5802.621704,
+			7874.243217,
+			10598.243217
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 49,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 2674.621704 7874.243217"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			1192.550537,
+			4320.550537,
+			10479.305420,
+			13203.305420
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 50,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 1192.550537 10479.305420"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			2726.762299,
+			5854.762299,
+			13107.926697,
+			15831.926697
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 51,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 2726.762299 13107.926697"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			4258.312698,
+			7386.312698,
+			15738.743614,
+			18462.743614
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 52,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 4258.312698 15738.743614"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			5786.032135,
+			8914.032135,
+			18372.226974,
+			21096.226974
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 53,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 5786.032135 18372.226974"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			7311.216934,
+			10439.216934,
+			21005.479233,
+			23729.479233
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 54,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 7311.216934 21005.479233"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10310.885605,
+			13438.885605,
+			21017.287048,
+			23741.287048
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 55,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 10310.885605 21017.287048"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			13307.641586,
+			16435.641586,
+			21022.356644,
+			23746.356644
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 56,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 13307.641586 21022.356644"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			16303.731010,
+			19431.731010,
+			21023.793869,
+			23747.793869
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 57,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 16303.731010 21023.793869"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19302.434921,
+			22430.434921,
+			21020.253525,
+			23744.253525
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 58,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 19302.434921 21020.253525"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			20790.784370,
+			23918.784370,
+			18385.819321,
+			21109.819321
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 59,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 20790.784370 18385.819321"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			22283.817413,
+			25411.817413,
+			15751.757332,
+			18475.757332
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 60,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 22283.817413 15751.757332"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			23780.089714,
+			26908.089714,
+			13120.269554,
+			15844.269554
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 21,
+		"minIntensity": 0.000000,
+		"tile_index": 61,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 23780.089714 13120.269554"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			32694.172241,
+			35822.172241,
+			22748.198730,
+			25472.198730
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 1,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 32694.172241 22748.198730"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			35706.042877,
+			38834.042877,
+			22746.400482,
+			25470.400482
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 2,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 35706.042877 22746.400482"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			34188.887451,
+			37316.887451,
+			20130.498840,
+			22854.498840
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 3,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 34188.887451 20130.498840"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			31173.060791,
+			34301.060791,
+			20130.739624,
+			22854.739624
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 4,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 31173.060791 20130.739624"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			29681.677429,
+			32809.677429,
+			22747.130646,
+			25471.130646
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 5,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 29681.677429 22747.130646"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			31203.751282,
+			34331.751282,
+			25369.022186,
+			28093.022186
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 6,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 31203.751282 25369.022186"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			34213.870758,
+			37341.870758,
+			25369.867096,
+			28093.867096
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 7,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 34213.870758 25369.867096"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			38715.294373,
+			41843.294373,
+			22741.289734,
+			25465.289734
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 8,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 38715.294373 22741.289734"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			37201.666504,
+			40329.666504,
+			20125.273621,
+			22849.273621
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 9,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 37201.666504 20125.273621"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			35686.509918,
+			38814.509918,
+			17513.580017,
+			20237.580017
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 10,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 35686.509918 17513.580017"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			32669.275391,
+			35797.275391,
+			17517.596588,
+			20241.596588
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 11,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 32669.275391 17517.596588"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			29649.274750,
+			32777.274750,
+			17517.203278,
+			20241.203278
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 12,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 29649.274750 17517.203278"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			28156.360382,
+			31284.360382,
+			20128.363983,
+			22852.363983
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 13,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 28156.360382 20128.363983"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			26668.215149,
+			29796.215149,
+			22741.007324,
+			25465.007324
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 14,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 26668.215149 22741.007324"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			28194.460175,
+			31322.460175,
+			25364.039368,
+			28088.039368
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 15,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 28194.460175 25364.039368"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			29718.006958,
+			32846.006958,
+			27989.895660,
+			30713.895660
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 16,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 29718.006958 27989.895660"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			32724.623444,
+			35852.623444,
+			27994.824371,
+			30718.824371
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 17,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 32724.623444 27994.824371"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			35729.099609,
+			38857.099609,
+			27993.409454,
+			30717.409454
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 18,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 35729.099609 27993.409454"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			37220.869751,
+			40348.869751,
+			25366.799377,
+			28090.799377
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 19,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 37220.869751 25366.799377"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			41719.895386,
+			44847.895386,
+			22731.630646,
+			25455.630646
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 20,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 41719.895386 22731.630646"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			40212.840729,
+			43340.840729,
+			20117.446136,
+			22841.446136
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 21,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 40212.840729 20117.446136"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			38701.802002,
+			41829.802002,
+			17506.260101,
+			20230.260101
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 22,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 38701.802002 17506.260101"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			37187.254211,
+			40315.254211,
+			14898.704559,
+			17622.704559
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 23,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 37187.254211 14898.704559"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			34172.305817,
+			37300.305817,
+			14904.894684,
+			17628.894684
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 24,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 34172.305817 14904.894684"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			31147.146790,
+			34275.146790,
+			14907.703918,
+			17631.703918
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 25,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 31147.146790 14907.703918"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			28122.271088,
+			31250.271088,
+			14907.793732,
+			17631.793732
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 26,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 28122.271088 14907.793732"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			26628.171783,
+			29756.171783,
+			17513.105499,
+			20237.105499
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 27,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 26628.171783 17513.105499"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			25138.911804,
+			28266.911804,
+			20121.899658,
+			22845.899658
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 28,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 25138.911804 20121.899658"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			23652.548706,
+			26780.548706,
+			22730.707855,
+			25454.707855
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 29,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 23652.548706 22730.707855"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			25182.982269,
+			28310.982269,
+			25354.348053,
+			28078.348053
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 30,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 25182.982269 25354.348053"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			26711.783813,
+			29839.783813,
+			27981.590240,
+			30705.590240
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 31,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 26711.783813 27981.590240"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			28236.097534,
+			31364.097534,
+			30610.268188,
+			33334.268188
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 32,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 28236.097534 30610.268188"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			31238.885742,
+			34366.885742,
+			30617.378601,
+			33341.378601
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 33,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 31238.885742 30617.378601"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			34240.313568,
+			37368.313568,
+			30619.818817,
+			33343.818817
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 34,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 34240.313568 30619.818817"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			37239.160767,
+			40367.160767,
+			30615.817413,
+			33339.817413
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 35,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 37239.160767 30615.817413"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			38730.572296,
+			41858.572296,
+			27988.185669,
+			30712.185669
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 36,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 38730.572296 27988.185669"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			40224.098511,
+			43352.098511,
+			25359.918427,
+			28083.918427
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 37,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 40224.098511 25359.918427"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			44721.668762,
+			47849.668762,
+			22718.570648,
+			25442.570648
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 38,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 44721.668762 22718.570648"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			43219.379089,
+			46347.379089,
+			20105.092407,
+			22829.092407
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 39,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 43219.379089 20105.092407"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			41713.469177,
+			44841.469177,
+			17494.987488,
+			20218.987488
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 40,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 41713.469177 17494.987488"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			40203.388214,
+			43331.388214,
+			14888.498260,
+			17612.498260
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 41,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 40203.388214 14888.498260"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			38692.104797,
+			41820.104797,
+			12286.217010,
+			15010.217010
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 42,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 38692.104797 12286.217010"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			35670.162903,
+			38798.162903,
+			12297.051025,
+			15021.051025
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 43,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 35670.162903 12297.051025"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			32646.845428,
+			35774.845428,
+			12301.957123,
+			15025.957123
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 44,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 32646.845428 12301.957123"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			29622.360321,
+			32750.360321,
+			12304.983582,
+			15028.983582
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 45,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 29622.360321 12304.983582"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			26591.877930,
+			29719.877930,
+			12303.474854,
+			15027.474854
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 46,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 26591.877930 12303.474854"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			25096.506165,
+			28224.506165,
+			14900.929321,
+			17624.929321
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 47,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 25096.506165 14900.929321"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			23610.446991,
+			26738.446991,
+			17503.720917,
+			20227.720917
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 48,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 23610.446991 17503.720917"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			22118.185974,
+			25246.185974,
+			20112.357666,
+			22836.357666
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 49,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 22118.185974 20112.357666"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			20636.671448,
+			23764.671448,
+			22714.927948,
+			25438.927948
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 50,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 20636.671448 22714.927948"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			22171.084625,
+			25299.084625,
+			25340.201202,
+			28064.201202
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 51,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 22171.084625 25340.201202"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			23703.946777,
+			26831.946777,
+			27968.766998,
+			30692.766998
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 52,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 23703.946777 27968.766998"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			25232.850189,
+			28360.850189,
+			30599.772400,
+			33323.772400
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 53,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 25232.850189 30599.772400"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			26758.739441,
+			29886.739441,
+			33231.489380,
+			35955.489380
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 54,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 26758.739441 33231.489380"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			29758.260071,
+			32886.260071,
+			33242.477051,
+			35966.477051
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 55,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 29758.260071 33242.477051"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			32754.985992,
+			35882.985992,
+			33246.827057,
+			35970.827057
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 56,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 32754.985992 33246.827057"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			35751.411774,
+			38879.411774,
+			33247.392426,
+			35971.392426
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 57,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 35751.411774 33247.392426"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			38749.747253,
+			41877.747253,
+			33243.597382,
+			35967.597382
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 58,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 38749.747253 33243.597382"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			40236.906921,
+			43364.906921,
+			30610.809814,
+			33334.809814
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 59,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 40236.906921 30610.809814"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			41730.003723,
+			44858.003723,
+			27979.344666,
+			30703.344666
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 60,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 41730.003723 27979.344666"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			43224.961456,
+			46352.961456,
+			25348.800598,
+			28072.800598
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 27,
+		"minIntensity": 0.000000,
+		"tile_index": 61,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 43224.961456 25348.800598"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			12044.866153,
+			15172.866153,
+			33251.508545,
+			35975.508545
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 1,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 12044.866153 33251.508545"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			15056.728477,
+			18184.728477,
+			33249.618111,
+			35973.618111
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 2,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 15056.728477 33249.618111"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			13539.268566,
+			16667.268566,
+			30634.017105,
+			33358.017105
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 3,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 13539.268566 30634.017105"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10523.138645,
+			13651.138645,
+			30634.797531,
+			33358.797531
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 4,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 10523.138645 30634.797531"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			9032.017479,
+			12160.017479,
+			33250.551010,
+			35974.551010
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 5,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 9032.017479 33250.551010"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10554.217657,
+			13682.217657,
+			35871.934151,
+			38595.934151
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 6,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 10554.217657 35871.934151"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			13564.678898,
+			16692.678898,
+			35872.883118,
+			38596.883118
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 7,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 13564.678898 35872.883118"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			18066.126143,
+			21194.126143,
+			33244.040314,
+			35968.040314
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 8,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 18066.126143 33244.040314"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			16552.512587,
+			19680.512587,
+			30628.413078,
+			33352.413078
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 9,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 16552.512587 30628.413078"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			15035.997991,
+			18163.997991,
+			28016.546940,
+			30740.546940
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 10,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 15035.997991 28016.546940"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			12018.294295,
+			15146.294295,
+			28021.328590,
+			30745.328590
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 11,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 12018.294295 28021.328590"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			8998.113811,
+			12126.113811,
+			28021.500374,
+			30745.500374
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 12,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 8998.113811 28021.500374"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			7505.910744,
+			10633.910744,
+			30632.136978,
+			33356.136978
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 13,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 7505.910744 30632.136978"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			6017.895324,
+			9145.895324,
+			33244.531837,
+			35968.531837
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 14,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 6017.895324 33244.531837"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			7544.864793,
+			10672.864793,
+			35867.322281,
+			38591.322281
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 15,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 7544.864793 35867.322281"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			9068.588572,
+			12196.588572,
+			38493.180824,
+			41217.180824
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 16,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 9068.588572 38493.180824"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			12074.620915,
+			15202.620915,
+			38497.672653,
+			41221.672653
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 17,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 12074.620915 38497.672653"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			15079.730435,
+			18207.730435,
+			38495.977585,
+			41219.977585
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 18,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 15079.730435 38495.977585"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			16572.338350,
+			19700.338350,
+			35869.717255,
+			38593.717255
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 19,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 16572.338350 35869.717255"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			21071.619690,
+			24199.619690,
+			33234.775208,
+			35958.775208
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 20,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 21071.619690 33234.775208"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19563.023180,
+			22691.023180,
+			30619.901482,
+			33343.901482
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 21,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 19563.023180 30619.901482"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			18051.740101,
+			21179.740101,
+			28009.034294,
+			30733.034294
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 22,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 18051.740101 28009.034294"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			16537.058331,
+			19665.058331,
+			25401.329094,
+			28125.329094
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 23,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 16537.058331 25401.329094"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			13521.393443,
+			16649.393443,
+			25408.201687,
+			28132.201687
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 24,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 13521.393443 25408.201687"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10495.521535,
+			13623.521535,
+			25411.905537,
+			28135.905537
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 25,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 10495.521535 25411.905537"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			7470.354958,
+			10598.354958,
+			25412.799877,
+			28136.799877
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 26,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 7470.354958 25412.799877"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			5977.665389,
+			9105.665389,
+			28018.086990,
+			30742.086990
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 27,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 5977.665389 28018.086990"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			4488.166764,
+			7616.166764,
+			30625.403229,
+			33349.403229
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 28,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 4488.166764 30625.403229"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			3002.685929,
+			6130.685929,
+			33234.161255,
+			35958.161255
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 29,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 3002.685929 33234.161255"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			4533.817813,
+			7661.817813,
+			35858.143219,
+			38582.143219
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 30,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 4533.817813 35858.143219"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			6062.228099,
+			9190.228099,
+			38484.958839,
+			41208.958839
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 31,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 6062.228099 38484.958839"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			7588.208442,
+			10716.208442,
+			41114.151237,
+			43838.151237
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 32,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 7588.208442 41114.151237"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10590.687434,
+			13718.687434,
+			41120.839050,
+			43844.839050
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 33,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 10590.687434 41120.839050"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			13592.240832,
+			16720.240832,
+			41123.294373,
+			43847.294373
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 34,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 13592.240832 41123.294373"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			16591.982513,
+			19719.982513,
+			41119.785950,
+			43843.785950
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 35,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 16591.982513 41119.785950"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			18081.617046,
+			21209.617046,
+			38490.968765,
+			41214.968765
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 36,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 18081.617046 38490.968765"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19575.266796,
+			22703.266796,
+			35862.370255,
+			38586.370255
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 37,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 19575.266796 35862.370255"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			24073.587103,
+			27201.587103,
+			33221.686005,
+			35945.686005
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 38,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 24073.587103 33221.686005"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			22570.385675,
+			25698.385675,
+			30607.722801,
+			33331.722801
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 39,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 22570.385675 30607.722801"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			21064.413338,
+			24192.413338,
+			27997.197262,
+			30721.197262
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 40,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 21064.413338 27997.197262"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19554.042208,
+			22682.042208,
+			25390.058147,
+			28114.058147
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 41,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 19554.042208 25390.058147"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			18042.734661,
+			21170.734661,
+			22788.157787,
+			25512.157787
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 42,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 18042.734661 22788.157787"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			15020.393153,
+			18148.393153,
+			22800.102379,
+			25524.102379
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 43,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 15020.393153 22800.102379"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			11995.690689,
+			15123.690689,
+			22805.876282,
+			25529.876282
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 44,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 11995.690689 22805.876282"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			8969.786505,
+			12097.786505,
+			22809.410275,
+			25533.410275
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 45,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 8969.786505 22809.410275"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			5938.011076,
+			9066.011076,
+			22809.027889,
+			25533.027889
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 46,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 5938.011076 22809.027889"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			4443.696298,
+			7571.696298,
+			25406.173351,
+			28130.173351
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 47,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 4443.696298 25406.173351"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			2959.554639,
+			6087.554639,
+			28008.713741,
+			30732.713741
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 48,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 2959.554639 28008.713741"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			1467.201578,
+			4595.201578,
+			30615.434647,
+			33339.434647
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 49,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 1467.201578 30615.434647"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			-13.847124,
+			3114.152876,
+			33217.669632,
+			35941.669632
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 50,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 -13.847124 33217.669632"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			1521.905949,
+			4649.905949,
+			35843.949394,
+			38567.949394
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 51,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 1521.905949 35843.949394"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			3054.005378,
+			6182.005378,
+			38472.396935,
+			41196.396935
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 52,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 3054.005378 38472.396935"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			4584.765086,
+			7712.765086,
+			41103.815193,
+			43827.815193
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 53,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 4584.765086 41103.815193"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			6111.013900,
+			9239.013900,
+			43735.124985,
+			46459.124985
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 54,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 6111.013900 43735.124985"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			9110.814573,
+			12238.814573,
+			43746.081665,
+			46470.081665
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 55,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 9110.814573 43746.081665"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			12107.492665,
+			15235.492665,
+			43750.295258,
+			46474.295258
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 56,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 12107.492665 43750.295258"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			15103.846517,
+			18231.846517,
+			43751.261429,
+			46475.261429
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 57,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 15103.846517 43751.261429"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			18102.523306,
+			21230.523306,
+			43747.484024,
+			46471.484024
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 58,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 18102.523306 43747.484024"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19589.598923,
+			22717.598923,
+			41114.517036,
+			43838.517036
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 59,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 19589.598923 41114.517036"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			21080.920057,
+			24208.920057,
+			38481.925903,
+			41205.925903
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 60,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 21080.920057 38481.925903"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			22575.933992,
+			25703.933992,
+			35851.371597,
+			38575.371597
+],		"height": 2724,
+		"layer": 10,
+		"maxIntensity": 255.000000,
+		"mfov": 28,
+		"minIntensity": 0.000000,
+		"tile_index": 61,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.RigidModel2D",
+				"dataString": "0.000000 22575.933992 35851.371597"
+			}
+		],
+		"width":3128
+	}
+]

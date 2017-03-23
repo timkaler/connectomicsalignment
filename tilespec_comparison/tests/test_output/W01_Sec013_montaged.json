@@ -1,0 +1,4760 @@
+[
+    {
+        "bbox": [
+            13197.266808712537, 
+            16325.698148433008, 
+            10621.89582274967, 
+            13346.391145910895
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_001_2016-04-04T0135120239060.bmp"
+            }
+        }, 
+        "tile_index": 1, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000158362319826 13197.6981877 10621.8958227"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            16209.203875512956, 
+            19337.244305460157, 
+            10621.329908300177, 
+            13345.376334561282
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_002_2016-04-04T0135120239060.bmp"
+            }
+        }, 
+        "tile_index": 2, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "1.48422372593e-05 16209.2443058 10621.3299083"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            14692.460728424647, 
+            17820.903535839054, 
+            8002.5870420197643, 
+            10727.095534250024
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_003_2016-04-04T0135120239060.bmp"
+            }
+        }, 
+        "tile_index": 3, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000162572959504 14692.9035772 8002.58704202"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            11676.241755071154, 
+            14805.319879455952, 
+            8002.3378142113434, 
+            10727.575904642154
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_004_2016-04-04T0135120239060.bmp"
+            }
+        }, 
+        "tile_index": 4, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000395877211058 11677.3201246 8002.33781421"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            10184.72543059599, 
+            13313.170459983183, 
+            10619.956257472468, 
+            13344.467301334609
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_005_2016-04-04T0135120239060.bmp"
+            }
+        }, 
+        "tile_index": 5, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000163388818435 10185.1705017 10619.9562575"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            11706.487455399019, 
+            14834.562831909407, 
+            13244.384545320056, 
+            15968.471101351503
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_006_2016-04-04T0135120239060.bmp"
+            }
+        }, 
+        "tile_index": 6, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "2.76717331755e-05 11706.5628331 13244.3845453"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            14716.714455974923, 
+            17844.976795921179, 
+            13245.964648022222, 
+            15970.265899974176
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_007_2016-04-04T0135120239060.bmp"
+            }
+        }, 
+        "tile_index": 7, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "9.63122003868e-05 14716.9768104 13245.964648"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            19218.796305965792, 
+            22347.012948356085, 
+            10617.209766501433, 
+            13341.458542152877
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_008_2016-04-04T0133159908153.bmp"
+            }
+        }, 
+        "tile_index": 8, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "7.95346111331e-05 19218.796306 10617.4585508"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            17705.570257174775, 
+            20833.703055228594, 
+            7998.4519286337891, 
+            10722.604423171961
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_009_2016-04-04T0133159908153.bmp"
+            }
+        }, 
+        "tile_index": 9, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "4.87524640924e-05 17705.5702572 7998.60442641"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            16189.22459868463, 
+            19317.999879807023, 
+            5384.3110376524328, 
+            8109.2013368950174
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_010_2016-04-04T0135120239060.bmp"
+            }
+        }, 
+        "tile_index": 10, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000284657802526 16190.0000065 5384.31103765"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            13171.742379015468, 
+            16300.409496046537, 
+            5387.6152728214365, 
+            8112.3813568864207
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_011_2016-04-04T0134320794287.bmp"
+            }
+        }, 
+        "tile_index": 11, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000244937910146 13172.4095899 5387.61527282"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            10152.0308956179, 
+            13280.551975295155, 
+            5387.0018247033804, 
+            8111.600202271773
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_012_2016-04-04T0134320794287.bmp"
+            }
+        }, 
+        "tile_index": 12, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000191313121803 10152.5520325 5387.0018247"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            8659.1432054003035, 
+            11787.231229808778, 
+            7999.8142400580336, 
+            10723.915319934735
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_013_2016-04-04T0134320794287.bmp"
+            }
+        }, 
+        "tile_index": 13, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "3.23150190465e-05 8659.23123144 7999.81424006"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            7170.7124804788327, 
+            10298.922922288923, 
+            10613.124781762985, 
+            13337.366437063178
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_014_2016-04-04T0134320794287.bmp"
+            }
+        }, 
+        "tile_index": 14, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "7.72581437387e-05 7170.92293162 10613.1247818"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            8697.3963059875132, 
+            11825.408598771093, 
+            13238.751253122973, 
+            15962.765369074188
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_015_2016-04-04T0134320794287.bmp"
+            }
+        }, 
+        "tile_index": 15, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "4.51273984855e-06 8697.39630599 13238.7653691"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            10221.172535052003, 
+            13349.203455014111, 
+            15867.004415534, 
+            18591.039921332009
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_016_2016-04-04T0134320794287.bmp"
+            }
+        }, 
+        "tile_index": 16, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "1.13510273941e-05 10221.1725351 15867.0399215"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            13227.043312830096, 
+            16355.16333914769, 
+            15872.521658030273, 
+            18596.659486450466
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_017_2016-04-04T0134320794287.bmp"
+            }
+        }, 
+        "tile_index": 17, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "4.40636331567e-05 13227.1633422 15872.521658"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            16231.410192076155, 
+            19359.733376462256, 
+            15872.249487289724, 
+            18596.620609683836
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_018_2016-04-04T0134320794287.bmp"
+            }
+        }, 
+        "tile_index": 18, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000118651384762 16231.4101921 15872.6206289"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            17723.785512511131, 
+            20852.072447640596, 
+            13243.867426615881, 
+            15968.196922285035
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_019_2016-04-04T0133159908153.bmp"
+            }
+        }, 
+        "tile_index": 19, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000105342313932 17723.7855125 13244.1969374"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            22223.449220239643, 
+            25351.967819745874, 
+            10609.115815274876, 
+            13333.711344683983
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_020_2016-04-04T0133293649302.bmp"
+            }
+        }, 
+        "tile_index": 20, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000190402428146 22223.4492202 10609.7113941"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            20716.439540704567, 
+            23844.489249761875, 
+            7991.9538051556028, 
+            10716.010886772679
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_021_2016-04-04T0133293649302.bmp"
+            }
+        }, 
+        "tile_index": 21, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "1.82487519398e-05 20716.4892503 7991.95380516"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            19204.980045283537, 
+            22333.569437828883, 
+            5377.3082229587853, 
+            8101.9850494041157
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_022_2016-04-04T0133293649302.bmp"
+            }
+        }, 
+        "tile_index": 22, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000216397133111 19205.5695111 5377.30822296"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            17690.977741658891, 
+            20819.147337633953, 
+            2767.4646248448771, 
+            5491.6593755029189
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_023_2016-04-04T0133159908153.bmp"
+            }
+        }, 
+        "tile_index": 23, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "6.22621354267e-05 17691.1473437 2767.46462484"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            14675.313062993764, 
+            17804.605216592157, 
+            2772.572466935695, 
+            5498.0563592240596
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_024_2016-04-04T0133159908153.bmp"
+            }
+        }, 
+        "tile_index": 24, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000474488167383 14676.6055687 2772.57246694"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            11649.360035278229, 
+            14777.925770498057, 
+            2775.642654838271, 
+            5500.2923137104372
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_025_2016-04-04T0133159908153.bmp"
+            }
+        }, 
+        "tile_index": 25, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000207710238885 11649.925838 2775.64265484"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            8624.5120059011151, 
+            11752.795564473019, 
+            2775.2339981409755, 
+            5499.5596163582277
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_026_2016-04-04T0133159908153.bmp"
+            }
+        }, 
+        "tile_index": 26, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000104102624153 8624.79558142 2775.23399814"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            7131.166310223949, 
+            10259.453143263947, 
+            5382.0448432261583, 
+            8106.3742216613991
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_027_2016-04-04T0133159908153.bmp"
+            }
+        }, 
+        "tile_index": 27, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000105304835162 7131.16631022 5382.37423676"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            5641.1080667484739, 
+            8769.4176504560673, 
+            7991.3122044823813, 
+            10715.667708560168
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_028_2016-04-04T0133193217436.bmp"
+            }
+        }, 
+        "tile_index": 28, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.00011365782733 5641.10806675 7991.66772615"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            4155.2704486030816, 
+            7283.7197654649763, 
+            10601.336827120635, 
+            13325.852794562776
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_029_2016-04-04T0133193217436.bmp"
+            }
+        }, 
+        "tile_index": 29, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.00016496308494 4155.71980803 10601.3368271"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            5686.3887251019996, 
+            8814.5465935152843, 
+            13228.155430938792, 
+            15952.336714480422
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_030_2016-04-04T0133193217436.bmp"
+            }
+        }, 
+        "tile_index": 30, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "5.79565641722e-05 5686.3887251 13228.3367191"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            7214.6745356600659, 
+            10342.83954521436, 
+            15857.6916120637, 
+            18581.881095993154
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_031_2016-04-04T0133193217436.bmp"
+            }
+        }, 
+        "tile_index": 31, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "6.05782842459e-05 7214.67453566 15857.881101"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            8739.0009360612949, 
+            11867.110253815381, 
+            18488.643176170666, 
+            21212.768707682662
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_032_2016-04-04T0133193217436.bmp"
+            }
+        }, 
+        "tile_index": 32, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "4.01322658927e-05 8739.11025633 18488.6431762"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            11741.932150823235, 
+            14870.117491127201, 
+            18496.98929429286, 
+            21221.202124668656
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_033_2016-04-04T0133193217436.bmp"
+            }
+        }, 
+        "tile_index": 33, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "6.80424043693e-05 11741.9321508 18497.202131"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            14743.056246069375, 
+            17871.210066012372, 
+            18500.389216975509, 
+            21224.565851539133
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_034_2016-04-04T0133193217436.bmp"
+            }
+        }, 
+        "tile_index": 34, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "5.64702540961e-05 14743.0562461 18500.5658559"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            17741.98897246856, 
+            20870.529487903339, 
+            18498.105308160426, 
+            21222.726005236033
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_035_2016-04-04T0133193217436.bmp"
+            }
+        }, 
+        "tile_index": 35, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000198449718239 17741.9889725 18498.7260589"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            19233.044923618942, 
+            22361.566450096605, 
+            15868.493328049113, 
+            18593.092218710721
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_036_2016-04-04T0133293649302.bmp"
+            }
+        }, 
+        "tile_index": 36, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000191477175046 19233.0449236 15869.0922686"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            20726.720162263329, 
+            23855.055355534085, 
+            13238.460448189449, 
+            15962.845360984085
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_037_2016-04-04T0133293649302.bmp"
+            }
+        }, 
+        "tile_index": 37, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000123060557528 20726.7201623 13238.8453816"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            25224.675686417741, 
+            28353.502938771253, 
+            10597.205266951603, 
+            13322.155250219836
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_038_2016-04-04T0133324968438.bmp"
+            }
+        }, 
+        "tile_index": 38, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000303743265376 25224.6756864 10598.1553759"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            23722.9482473764, 
+            26851.129061676133, 
+            7980.9014905318472, 
+            10705.109123548877
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_039_2016-04-04T0133324968438.bmp"
+            }
+        }, 
+        "tile_index": 39, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "6.63807512166e-05 23722.9482474 7981.10912955"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            22216.751578733387, 
+            25345.708213063583, 
+            5367.1932233671369, 
+            8092.2917909279258
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_040_2016-04-04T0133324968438.bmp"
+            }
+        }, 
+        "tile_index": 40, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.00035125819574 22216.7515787 5368.29195897"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            20707.646062169068, 
+            23836.003743892452, 
+            2758.7842177087578, 
+            5483.1949551592934
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_041_2016-04-04T0133324968438.bmp"
+            }
+        }, 
+        "tile_index": 41, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000131317434038 20708.0037709 2758.78421771"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            19196.446002585129, 
+            22324.480352194569, 
+            153.41115761173592, 
+            2877.450601725649
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_042_2016-04-04T0133293649302.bmp"
+            }
+        }, 
+        "tile_index": 42, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "1.26102127604e-05 19196.4803524 153.411157612"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            16174.063735475125, 
+            19302.76384346333, 
+            162.55672084928577, 
+            2887.3606914424831
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_043_2016-04-04T0133293649302.bmp"
+            }
+        }, 
+        "tile_index": 43, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000257052618688 16174.7639468 162.556720849"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            13149.838875068181, 
+            16278.638441789213, 
+            167.62620478298007, 
+            2892.5443936909669
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_044_2016-04-04T0133293649302.bmp"
+            }
+        }, 
+        "tile_index": 44, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000293576184619 13150.6385766 167.626204783"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            10124.417122677651, 
+            13252.923342374048, 
+            169.92717855860644, 
+            2894.5084913498786
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_045_2016-04-04T0134112001301.bmp"
+            }
+        }, 
+        "tile_index": 45, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000185856730074 10124.9233964 169.927178559"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            7093.1713288956107, 
+            10221.758808139473, 
+            167.49520251485416, 
+            2892.1698317627188
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_046_2016-04-04T0134112001301.bmp"
+            }
+        }, 
+        "tile_index": 46, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000215694569662 7093.7588809 167.495202515"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            5598.4224261603422, 
+            8726.8145043005952, 
+            2767.3321013755012, 
+            5491.7823381290427
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_047_2016-04-04T0134112001301.bmp"
+            }
+        }, 
+        "tile_index": 47, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000143946601701 5598.42242616 2767.78236635"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            4112.6447597148263, 
+            7241.3557596101155, 
+            5370.5929013892955, 
+            8095.4093801818253
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_048_2016-04-04T0134112001301.bmp"
+            }
+        }, 
+        "tile_index": 48, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000261052306905 4113.35586619 5370.59290139"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            2620.1638706359272, 
+            5748.1671701987498, 
+            7980.0274268535895, 
+            10704.031215779523
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_049_2016-04-04T0134112001301.bmp"
+            }
+        }, 
+        "tile_index": 49, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "1.21149281407e-06 2620.16387064 7980.03121578"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            1138.7506354014236, 
+            4267.1889840003505, 
+            10584.095134919324, 
+            13308.598506811513
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_050_2016-04-04T0134112001301.bmp"
+            }
+        }, 
+        "tile_index": 50, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000160935795144 1139.18902451 10584.0951349"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            2674.0434507320642, 
+            5802.5795021456279, 
+            13212.469942378246, 
+            15937.08551308666
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_051_2016-04-04T0134112001301.bmp"
+            }
+        }, 
+        "tile_index": 51, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000196810571731 2674.57956273 13212.4699424"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            4207.1006115389646, 
+            7335.3213104719398, 
+            15843.771728445625, 
+            18568.025162374666
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_052_2016-04-04T0134112001301.bmp"
+            }
+        }, 
+        "tile_index": 52, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "8.10239359708e-05 4207.10061154 15844.0251713"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            5735.5811456626689, 
+            8863.8301981351469, 
+            18477.192047455923, 
+            21201.478040854035
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_053_2016-04-04T0133597954198.bmp"
+            }
+        }, 
+        "tile_index": 53, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "9.143375218e-05 5735.58114566 18477.4780522"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            7261.1441172353507, 
+            10389.294697906484, 
+            21110.651557536778, 
+            23834.824472350214
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_054_2016-04-04T0133597954198.bmp"
+            }
+        }, 
+        "tile_index": 54, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "5.52810085504e-05 7261.29470269 21110.6515575"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            10260.498299923727, 
+            13388.960238635045, 
+            21122.899322446996, 
+            23847.429784374399
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_055_2016-04-04T0133597954198.bmp"
+            }
+        }, 
+        "tile_index": 55, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000169597544565 10260.4982999 21123.4298236"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            13257.504143032709, 
+            16385.868437845766, 
+            21128.741173067654, 
+            23853.159504683124
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_056_2016-04-04T0133597954198.bmp"
+            }
+        }, 
+        "tile_index": 56, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000133745510815 13257.504143 21129.159529"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            16253.326277280703, 
+            19381.87911253866, 
+            21131.011311808223, 
+            23855.646156664123
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_057_2016-04-04T0133597954198.bmp"
+            }
+        }, 
+        "tile_index": 57, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000202973455508 16253.3262773 21131.6462128"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            19252.064382418805, 
+            22380.067887898807, 
+            21128.707906041993, 
+            23852.711931425034
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_058_2016-04-04T0133597954198.bmp"
+            }
+        }, 
+        "tile_index": 58, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "1.28694627244e-06 19252.0678879 21128.707906"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            20739.860511988376, 
+            23867.975824082569, 
+            18494.440113895977, 
+            21218.572528855246
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_059_2016-04-04T0133597954198.bmp"
+            }
+        }, 
+        "tile_index": 59, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "4.23329007874e-05 20739.860512 18494.5725313"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            22232.735421549209, 
+            25360.746756719425, 
+            15860.973740139849, 
+            18584.98675645149
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_060_2016-04-04T0133597954198.bmp"
+            }
+        }, 
+        "tile_index": 60, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "4.16116093617e-06 22232.7354215 15860.9867565"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            23727.533154951219, 
+            26855.741017585795, 
+            13228.769420193816, 
+            15953.008113734501
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 16, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000016/013_000016_061_2016-04-04T0133324968438.bmp"
+            }
+        }, 
+        "tile_index": 61, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "7.63112150446e-05 23727.7410267 13228.7694202"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            32619.050020952887, 
+            35747.333306723762, 
+            22846.405778280088, 
+            25570.731083227784
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_001_2016-04-04T0135235835263.bmp"
+            }
+        }, 
+        "tile_index": 1, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000104002446171 32619.050021 22846.731098"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            35630.367293411095, 
+            38758.944795345495, 
+            22844.971427689499, 
+            25569.634599200072
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_002_2016-04-04T0135235835263.bmp"
+            }
+        }, 
+        "tile_index": 2, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000212030938457 35630.9448657 22844.9714277"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            34113.294506614118, 
+            37241.496125309575, 
+            20227.793804048972, 
+            22952.025327454208
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_003_2016-04-04T0135235835263.bmp"
+            }
+        }, 
+        "tile_index": 3, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "7.40188270652e-05 34113.4961339 20227.793804"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            31097.83612028095, 
+            34226.00744757404, 
+            20227.867140126491, 
+            22952.063878911118
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_004_2016-04-04T0135235835263.bmp"
+            }
+        }, 
+        "tile_index": 4, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "6.28977166837e-05 31098.0074538 20227.8671401"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            29606.595233014345, 
+            32734.60407904469, 
+            22844.97915861549, 
+            25568.989316616735
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_005_2016-04-04T0135235835263.bmp"
+            }
+        }, 
+        "tile_index": 5, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "3.24753023083e-06 29606.595233 22844.9893166"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            31127.805926719957, 
+            34256.248580455533, 
+            25467.766132178796, 
+            28192.274447929965
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_006_2016-04-04T0135235835263.bmp"
+            }
+        }, 
+        "tile_index": 6, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000162516548382 31127.8059267 25468.2744839"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            34138.053389131004, 
+            37266.068036518518, 
+            25469.487857073949, 
+            28193.504676847195
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_007_2016-04-04T0135235835263.bmp"
+            }
+        }, 
+        "tile_index": 7, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "5.37708974643e-06 34138.0533891 25469.5046769"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            38639.75731854108, 
+            41767.797978359449, 
+            22840.175467675403, 
+            25564.222157901258
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_008_2016-04-04T0133275660356.bmp"
+            }
+        }, 
+        "tile_index": 8, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "1.49265088621e-05 38639.7573185 22840.2221582"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            37125.949579737062, 
+            40254.69437398744, 
+            20222.268509150021, 
+            22947.123797261193
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_009_2016-04-04T0133275660356.bmp"
+            }
+        }, 
+        "tile_index": 9, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000273462270871 37126.6944909 20222.2685092"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            35609.928382835315, 
+            38738.555399903395, 
+            17609.004009948883, 
+            20333.724043736718
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_010_2016-04-04T0135235835263.bmp"
+            }
+        }, 
+        "tile_index": 10, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000230212906804 35610.5554828 17609.0040099"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            32592.72915355724, 
+            35721.47002710581, 
+            17612.697748620689, 
+            20337.548534204827
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_011_2016-04-04T0134436390490.bmp"
+            }
+        }, 
+        "tile_index": 11, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000272022508524 32593.4701428 17612.6977486"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            29572.868963335975, 
+            32701.713720475902, 
+            17612.861099861206, 
+            20337.831185786214
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_012_2016-04-04T0134436390490.bmp"
+            }
+        }, 
+        "tile_index": 12, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000310171668973 29573.7138709 17612.8610999"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            28080.845888929143, 
+            31209.142784533851, 
+            20224.695206288772, 
+            22949.036140024436
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_013_2016-04-04T0134436390490.bmp"
+            }
+        }, 
+        "tile_index": 13, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.00010899935615 28081.1428031 20224.6952063"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            26592.48464777023, 
+            29720.667148119679, 
+            22838.18961605151, 
+            25562.399185214326
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_014_2016-04-04T0134436390490.bmp"
+            }
+        }, 
+        "tile_index": 14, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "6.69997800765e-05 26592.6671551 22838.1896161"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            28118.730221722792, 
+            31246.938853964602, 
+            25462.28608112931, 
+            28186.525658437429
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_015_2016-04-04T0134436390490.bmp"
+            }
+        }, 
+        "tile_index": 15, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "7.65937572534e-05 28118.7302217 25462.5256664"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            29641.895871739718, 
+            32770.178948727997, 
+            28090.030763855415, 
+            30814.355829048782
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_016_2016-04-04T0134436390490.bmp"
+            }
+        }, 
+        "tile_index": 16, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000103925804737 29641.8958717 28090.3558438"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            32647.657401101998, 
+            35776.433737325104, 
+            28094.853347018816, 
+            30819.744857941274
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_017_2016-04-04T0134436390490.bmp"
+            }
+        }, 
+        "tile_index": 17, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000285045268863 32647.6574011 28095.7449686"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            35652.338647726057, 
+            38780.518064776006, 
+            28094.597663147815, 
+            30818.803691657689
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_018_2016-04-04T0134436390490.bmp"
+            }
+        }, 
+        "tile_index": 18, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "6.58678133772e-05 35652.3386477 28094.8036976"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            37145.20645876637, 
+            40273.288481490308, 
+            25466.820516252545, 
+            28190.914704267343
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_019_2016-04-04T0133275660356.bmp"
+            }
+        }, 
+        "tile_index": 19, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "3.01116705778e-05 37145.2064588 25466.9147055"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            41644.507885850857, 
+            44772.808733936683, 
+            22830.861951975618, 
+            25555.207424528227
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_020_2016-04-04T0133409401505.bmp"
+            }
+        }, 
+        "tile_index": 20, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000110450489746 41644.808753 22830.861952"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            40136.667480151147, 
+            43265.153091066757, 
+            20214.456687164307, 
+            22939.014333463772
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_021_2016-04-04T0133409401505.bmp"
+            }
+        }, 
+        "tile_index": 21, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000178289503333 40137.1531408 20214.4566872"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            38624.715097117434, 
+            41753.379828811063, 
+            17601.748609001032, 
+            20326.511953770183
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_022_2016-04-04T0133409401505.bmp"
+            }
+        }, 
+        "tile_index": 22, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000244061991218 38625.379922 17601.748609"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            37110.505774539968, 
+            40239.524218080231, 
+            14992.337498894301, 
+            17717.50704981391
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_023_2016-04-04T0133275660356.bmp"
+            }
+        }, 
+        "tile_index": 23, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000373958255618 37111.5244368 14992.3374989"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            34096.231807701821, 
+            37224.767695669951, 
+            14999.289427239422, 
+            17723.904810251344
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_024_2016-04-04T0133275660356.bmp"
+            }
+        }, 
+        "tile_index": 24, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000196750550011 34096.7677562 14999.2894272"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            31069.919350494791, 
+            34198.719563937222, 
+            15001.826812481902, 
+            17726.745744087923
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_025_2016-04-04T0133275660356.bmp"
+            }
+        }, 
+        "tile_index": 25, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000293813684589 31070.719699 15001.8268125"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            28045.26147881346, 
+            31174.255755731552, 
+            15002.858517880626, 
+            17728.000315148252
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_026_2016-04-04T0133275660356.bmp"
+            }
+        }, 
+        "tile_index": 26, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000365082744306 28046.2559642 15002.8585179"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            26552.116253260134, 
+            29680.780326840177, 
+            17608.887805702565, 
+            20333.650394701286
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_027_2016-04-04T0133275660356.bmp"
+            }
+        }, 
+        "tile_index": 27, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000243820321558 26552.7804198 17608.8878057"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            25062.569621930474, 
+            28191.481894644356, 
+            20217.621728432543, 
+            22942.669350196109
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_028_2016-04-04T0133308969639.bmp"
+            }
+        }, 
+        "tile_index": 28, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000334966304045 25063.4820701 20217.6217284"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            23577.226546795024, 
+            26705.430034456625, 
+            22827.248114813177, 
+            25551.481784417661
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_029_2016-04-04T0133308969639.bmp"
+            }
+        }, 
+        "tile_index": 29, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "7.47049947472e-05 23577.4300432 22827.2481148"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            25108.08774630163, 
+            28236.174105135815, 
+            25452.393083963729, 
+            28176.492251225649
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_030_2016-04-04T0133308969639.bmp"
+            }
+        }, 
+        "tile_index": 30, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "3.17035117905e-05 25108.0877463 25452.4922526"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            26635.54743965104, 
+            29764.307359860661, 
+            28080.193591269403, 
+            30805.06625002233
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_031_2016-04-04T0133308969639.bmp"
+            }
+        }, 
+        "tile_index": 31, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000279016878732 26635.5474397 28081.0663561"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            28159.228860144474, 
+            31288.124687496074, 
+            30710.331396197751, 
+            33435.360131825866
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_032_2016-04-04T0133308969639.bmp"
+            }
+        }, 
+        "tile_index": 32, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000328926788718 28159.2288601 30711.3602792"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            31162.134188006774, 
+            34291.024840834521, 
+            30718.749557086769, 
+            33443.772350209692
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_033_2016-04-04T0133308969639.bmp"
+            }
+        }, 
+        "tile_index": 33, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000327026464248 31162.134188 30719.7724959"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            34163.43162116364, 
+            37291.913331183037, 
+            30722.161642836778, 
+            33446.714809472272
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_034_2016-04-04T0133308969639.bmp"
+            }
+        }, 
+        "tile_index": 34, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000176857168091 34163.4316212 30722.7148521"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            37163.303531618316, 
+            40291.506288424047, 
+            30720.143505482076, 
+            33444.376335819128
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_035_2016-04-04T0133308969639.bmp"
+            }
+        }, 
+        "tile_index": 35, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "7.44366429276e-05 37163.3035316 30720.3763434"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            38653.514689801945, 
+            41782.133142989682, 
+            28089.843365104887, 
+            30814.553564268066
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_036_2016-04-04T0133409401505.bmp"
+            }
+        }, 
+        "tile_index": 36, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000227068228748 38653.5146898 28090.5536345"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            40147.677074625462, 
+            43276.176219341542, 
+            25460.003486735899, 
+            28184.576674831151
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_037_2016-04-04T0133409401505.bmp"
+            }
+        }, 
+        "tile_index": 37, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000183258888028 40147.6770746 25460.5767206"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            44645.779116333848, 
+            47774.156261867945, 
+            22818.217908588267, 
+            25542.650997389374
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_038_2016-04-04T0133440720641.bmp"
+            }
+        }, 
+        "tile_index": 38, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000138463846248 44646.1562919 22818.2179086"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            43143.32796134946, 
+            46271.763317628582, 
+            20202.79425309108, 
+            22927.294188715667
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_039_2016-04-04T0133440720641.bmp"
+            }
+        }, 
+        "tile_index": 39, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000159837109666 43143.7633576 20202.7942531"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            41635.915573512459, 
+            44765.781974143676, 
+            17589.614762203466, 
+            20315.758175036881
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_040_2016-04-04T0133440720641.bmp"
+            }
+        }, 
+        "tile_index": 40, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000685438909267 41635.9155735 17591.7588149"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            40127.4699308165, 
+            43255.806375147557, 
+            14983.097439686919, 
+            17707.483789137401
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_041_2016-04-04T0133440720641.bmp"
+            }
+        }, 
+        "tile_index": 41, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000123519903905 40127.806399 14983.0974397"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            38615.53162216374, 
+            41744.852175501801, 
+            12378.543606883972, 
+            15104.060115257593
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_042_2016-04-04T0133409401505.bmp"
+            }
+        }, 
+        "tile_index": 42, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000484919661134 38616.8525433 12378.5436069"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            35593.451931881376, 
+            38722.473409566388, 
+            12389.336397102805, 
+            15114.509432527344
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_043_2016-04-04T0133409401505.bmp"
+            }
+        }, 
+        "tile_index": 43, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000375072588187 35594.4736296 12389.3363971"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            32569.746326612705, 
+            35699.063684747904, 
+            12394.04635946662, 
+            15119.559198259316
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_044_2016-04-04T0133409401505.bmp"
+            }
+        }, 
+        "tile_index": 44, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000483746027021 32571.0640507 12394.0463595"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            29544.30820736432, 
+            32673.650574567226, 
+            12397.60704475015, 
+            15123.148605631515
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_045_2016-04-04T0134227753504.bmp"
+            }
+        }, 
+        "tile_index": 45, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000492932188257 29545.6509546 12397.6070448"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            26512.8026772169, 
+            29643.132809278013, 
+            12397.604542519728, 
+            15124.280577362244
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_046_2016-04-04T0134227753504.bmp"
+            }
+        }, 
+        "tile_index": 46, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000855828887643 26515.1339548 12397.6045425"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            25019.137457583962, 
+            28148.174910066133, 
+            14996.609343491324, 
+            17721.800724880904
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_047_2016-04-04T0134227753504.bmp"
+            }
+        }, 
+        "tile_index": 47, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000380939598612 25020.175137 14996.6093435"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            23533.921633523347, 
+            26662.531282820608, 
+            17599.633916116945, 
+            20324.334005040571
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_048_2016-04-04T0134227753504.bmp"
+            }
+        }, 
+        "tile_index": 48, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000223835410447 23534.5313612 17599.6339161"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            22041.654517566665, 
+            25170.593165508493, 
+            20207.649258010289, 
+            22932.72716960308
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_049_2016-04-04T0134227753504.bmp"
+            }
+        }, 
+        "tile_index": 49, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000344652620608 22042.5933513 20207.649258"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            20560.876083030151, 
+            23689.106283516525, 
+            22810.247165483874, 
+            25534.511510404711
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_050_2016-04-04T0134227753504.bmp"
+            }
+        }, 
+        "tile_index": 50, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "8.45123439636e-05 20560.876083 22810.5115201"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            22095.971109284787, 
+            25224.331638694399, 
+            25437.2165901507, 
+            28161.630597751173
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_051_2016-04-04T0134227753504.bmp"
+            }
+        }, 
+        "tile_index": 51, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000132362992295 22095.9711093 25437.6306216"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            23627.820297468861, 
+            26756.371877454425, 
+            28066.727664851715, 
+            30791.361068183032
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_052_2016-04-04T0134227753504.bmp"
+            }
+        }, 
+        "tile_index": 52, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000202512533022 23627.8202975 28067.361124"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            25155.208852312098, 
+            28284.453158911652, 
+            30697.737525496603, 
+            33423.166467431809
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_053_2016-04-04T0134113706401.bmp"
+            }
+        }, 
+        "tile_index": 53, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000456913787491 25155.2088523 30699.1667518"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            26680.286346080149, 
+            29809.930101008769, 
+            33330.461755392345, 
+            36056.349455890973
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_054_2016-04-04T0134113706401.bmp"
+            }
+        }, 
+        "tile_index": 54, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000603643512688 26680.2863461 33332.3499522"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            29680.278715961507, 
+            32808.805026710979, 
+            33344.023953286494, 
+            36068.628338074792
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_055_2016-04-04T0134113706401.bmp"
+            }
+        }, 
+        "tile_index": 55, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000193233893864 29680.278716 33344.6283889"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            32677.496515191509, 
+            35806.164231626281, 
+            33350.339325552093, 
+            36075.106097965938
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_056_2016-04-04T0134113706401.bmp"
+            }
+        }, 
+        "tile_index": 56, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000245158015674 32677.4965152 33351.1061798"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            35673.601251588247, 
+            38801.749901546667, 
+            33351.459704294131, 
+            36075.630402014533
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_057_2016-04-04T0134113706401.bmp"
+            }
+        }, 
+        "tile_index": 57, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "5.45721802769e-05 35673.7499062 33351.4597043"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            38672.061546638361, 
+            41801.84857010423, 
+            33347.251446104281, 
+            36073.303692261426
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_058_2016-04-04T0134113706401.bmp"
+            }
+        }, 
+        "tile_index": 58, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000656276509006 38672.0615466 33349.3042789"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            40160.79446411298, 
+            43288.841647689136, 
+            30715.219716074844, 
+            33439.273897639061
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_059_2016-04-04T0134113706401.bmp"
+            }
+        }, 
+        "tile_index": 59, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "1.7321668941e-05 40160.8416482 30715.2197161"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            41653.038409694484, 
+            44781.161203906457, 
+            28081.790220103674, 
+            30805.93122696759
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_060_2016-04-04T0134113706401.bmp"
+            }
+        }, 
+        "tile_index": 60, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "4.50797956273e-05 41653.1612071 28081.7902201"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            43148.527263240074, 
+            46276.736631920066, 
+            25449.678353320582, 
+            28173.918776306997
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 22, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000022/013_000022_061_2016-04-04T0133440720641.bmp"
+            }
+        }, 
+        "tile_index": 61, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "7.68641414274e-05 43148.5272632 25449.9187844"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            11995.620163013524, 
+            15124.182968791833, 
+            33180.956661586548, 
+            35905.60295635448
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_001_2016-04-04T0135251747291.bmp"
+            }
+        }, 
+        "tile_index": 1, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000206634567053 11995.620163 33181.6030145"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            15007.568223382474, 
+            18136.863541198738, 
+            33179.468462170524, 
+            35904.955988445261
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_002_2016-04-04T0135251747291.bmp"
+            }
+        }, 
+        "tile_index": 2, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000475650405376 15007.5682234 33180.9562966"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            13490.696190755538, 
+            16618.941228851159, 
+            30564.086006922626, 
+            33288.367390450388
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_003_2016-04-04T0135251747291.bmp"
+            }
+        }, 
+        "tile_index": 3, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "8.99598886252e-05 13490.6961908 30564.3674015"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            10474.624517836824, 
+            13603.344805254081, 
+            30563.495227176478, 
+            33288.322371713279
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_004_2016-04-04T0135251747291.bmp"
+            }
+        }, 
+        "tile_index": 4, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000264462849625 10474.6245178 30564.322467"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            8982.9911307721868, 
+            12111.570452999473, 
+            33179.378998362539, 
+            35904.044260259208
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_005_2016-04-04T0135251747291.bmp"
+            }
+        }, 
+        "tile_index": 5, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.00021269933135 8982.99113077 33180.0443219"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            10504.659814463346, 
+            13633.563079732841, 
+            35801.169904770766, 
+            38526.207182227146
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_006_2016-04-04T0135251747291.bmp"
+            }
+        }, 
+        "tile_index": 6, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000331658342411 10504.6598145 35802.207332"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            13514.277531916403, 
+            16643.215284109694, 
+            35803.324330432537, 
+            38528.401213328798
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_007_2016-04-04T0135251747291.bmp"
+            }
+        }, 
+        "tile_index": 7, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000344323650673 13514.2775319 35804.4013748"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            18016.56943866771, 
+            21145.523619324096, 
+            33175.632418437526, 
+            35900.728168142567
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_008_2016-04-04T0133291572384.bmp"
+            }
+        }, 
+        "tile_index": 8, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000350357070594 18016.5694387 33176.7283353"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            16503.501228249006, 
+            19632.419393491287, 
+            30558.863364609297, 
+            33283.917753461013
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_009_2016-04-04T0133291572384.bmp"
+            }
+        }, 
+        "tile_index": 9, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000337130324461 16503.5012282 30559.9179083"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            14988.09214774101, 
+            18116.37405915359, 
+            27947.083718087244, 
+            30671.407444798344
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_010_2016-04-04T0135251747291.bmp"
+            }
+        }, 
+        "tile_index": 10, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000103497868494 14988.3740759 27947.0837181"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            11970.365117579428, 
+            15098.912355432414, 
+            27950.543305674113, 
+            30675.171722606356
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_011_2016-04-04T0134452302518.bmp"
+            }
+        }, 
+        "tile_index": 11, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000200918128994 11970.3651176 27951.1717776"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            8950.593366994568, 
+            12078.727965492359, 
+            27949.796864418804, 
+            30673.951426455304
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_012_2016-04-04T0134452302518.bmp"
+            }
+        }, 
+        "tile_index": 12, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "4.94134683058e-05 8950.59336699 27949.9514298"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            7457.8410989237982, 
+            10586.298376536266, 
+            30560.420894663814, 
+            33284.946003948047
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_013_2016-04-04T0134452302518.bmp"
+            }
+        }, 
+        "tile_index": 13, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000167886085153 7457.84109892 30560.9460423"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            5969.0799267201246, 
+            9097.6771503001473, 
+            33172.406868312428, 
+            35897.092687767079
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_014_2016-04-04T0134452302518.bmp"
+            }
+        }, 
+        "tile_index": 14, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000219272679534 5969.07992672 33173.0927533"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            7495.3750417139236, 
+            10623.964575265398, 
+            35796.018353355779, 
+            38520.695341729763
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_015_2016-04-04T0134452302518.bmp"
+            }
+        }, 
+        "tile_index": 15, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000216448910477 7495.37504171 35796.6954055"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            9018.1493807115821, 
+            12146.858506135019, 
+            38422.451423663566, 
+            41147.26574982312
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_016_2016-04-04T0134452302518.bmp"
+            }
+        }, 
+        "tile_index": 16, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000260363968816 9018.14938071 38423.2658422"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            12024.194887366295, 
+            15152.84018023677, 
+            38427.796676756152, 
+            41152.537698214961
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_017_2016-04-04T0134452302518.bmp"
+            }
+        }, 
+        "tile_index": 17, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000236923889117 12024.1948874 38428.5377747"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            15029.102657380874, 
+            18158.460230245691, 
+            38427.541606003964, 
+            41153.100630121895
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_018_2016-04-04T0134452302518.bmp"
+            }
+        }, 
+        "tile_index": 18, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000498517476336 15029.1026574 38429.1009686"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            16521.530972891291, 
+            19650.186216366972, 
+            35800.923831513668, 
+            38525.676280122105
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_019_2016-04-04T0133291572384.bmp"
+            }
+        }, 
+        "tile_index": 19, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000240577828079 16521.5309729 35801.676359"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            21021.581319912118, 
+            24150.55061913492, 
+            33166.683015716328, 
+            35891.796127943875
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_020_2016-04-04T0133425313533.bmp"
+            }
+        }, 
+        "tile_index": 20, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.00035590945343 21021.5813199 33167.7963005"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            19514.394565319941, 
+            22642.957352339643, 
+            30552.241460815745, 
+            33276.887734041717
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_021_2016-04-04T0133425313533.bmp"
+            }
+        }, 
+        "tile_index": 21, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000206627680516 19514.3945653 30552.8877922"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            18003.279492815593, 
+            21131.541163044938, 
+            27939.926971264144, 
+            30664.227454152075
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_022_2016-04-04T0133425313533.bmp"
+            }
+        }, 
+        "tile_index": 22, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "9.60663335702e-05 18003.2794928 27940.2274667"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            16489.195403266152, 
+            19617.757893076305, 
+            25331.373286412694, 
+            28056.019218330017
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_023_2016-04-04T0133291572384.bmp"
+            }
+        }, 
+        "tile_index": 23, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000206518540415 16489.1954033 25332.0192764"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            13474.429951814904, 
+            16602.629383775984, 
+            25337.65719568545, 
+            28061.886207987591
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_024_2016-04-04T0133291572384.bmp"
+            }
+        }, 
+        "tile_index": 24, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "7.32160090356e-05 13474.6293922 25337.6571957"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            10448.026862463472, 
+            13576.152835900162, 
+            25340.208934499489, 
+            28064.353592149353
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_025_2016-04-04T0133291572384.bmp"
+            }
+        }, 
+        "tile_index": 25, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "4.62469991169e-05 10448.1528392 25340.2089345"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            7422.806444803763, 
+            10551.025731347489, 
+            25340.312201329158, 
+            28064.564013359308
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_026_2016-04-04T0133291572384.bmp"
+            }
+        }, 
+        "tile_index": 26, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "8.05053944419e-05 7423.02574148 25340.3122013"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            5929.7508731886974, 
+            9057.9892987138865, 
+            27945.279834812522, 
+            30669.553624863893
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_027_2016-04-04T0133291572384.bmp"
+            }
+        }, 
+        "tile_index": 27, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "8.75321314091e-05 5929.75087319 27945.5536353"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            4439.58483607981, 
+            7568.2578768379544, 
+            30552.587092471356, 
+            33277.359979283603
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_028_2016-04-04T0133324881667.bmp"
+            }
+        }, 
+        "tile_index": 28, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000247113168159 4439.58483608 30553.3600625"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            2953.7237712936922, 
+            6082.281602731864, 
+            33161.01193790359, 
+            35885.652520254363
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_029_2016-04-04T0133324881667.bmp"
+            }
+        }, 
+        "tile_index": 29, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000204808015537 2953.72377129 33161.6525774"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            4484.2092468395376, 
+            7612.9407691506676, 
+            35785.564256019075, 
+            38510.404302665906
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_030_2016-04-04T0133324881667.bmp"
+            }
+        }, 
+        "tile_index": 30, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000268588526506 4484.20924684 35786.4044009"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            6011.8984849784592, 
+            9140.9151814459547, 
+            38412.774884597064, 
+            41137.942429125185
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_031_2016-04-04T0133324881667.bmp"
+            }
+        }, 
+        "tile_index": 31, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000373316613662 6011.89848498 38413.9426189"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            7535.6601760042668, 
+            10664.705743645196, 
+            41042.003773369979, 
+            43767.204474477381
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_032_2016-04-04T0133324881667.bmp"
+            }
+        }, 
+        "tile_index": 32, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000383920041884 7535.660176 41043.2046752"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            10539.042490643249, 
+            13668.163874116037, 
+            41050.600599126206, 
+            43775.888370025401
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_033_2016-04-04T0133324881667.bmp"
+            }
+        }, 
+        "tile_index": 33, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000411765304127 10539.0424906 41051.888601"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            13540.33884101331, 
+            16669.264511461144, 
+            41053.866510218817, 
+            43778.929518192723
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_034_2016-04-04T0133324881667.bmp"
+            }
+        }, 
+        "tile_index": 34, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000339886612982 13540.338841 41054.9296755"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            16539.531235672548, 
+            19668.672649585918, 
+            41051.18462679533, 
+            43776.495401528591
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_035_2016-04-04T0133324881667.bmp"
+            }
+        }, 
+        "tile_index": 35, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000419122128832 16539.5312357 41052.4956408"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            18031.075569535806, 
+            21159.641074133327, 
+            38423.317723865752, 
+            41147.967117896449
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_036_2016-04-04T0133425313533.bmp"
+            }
+        }, 
+        "tile_index": 36, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000207625556991 18031.0755695 38423.9671766"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            19524.299533827569, 
+            22653.399815156532, 
+            35794.52465812509, 
+            38519.788194450171
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_037_2016-04-04T0133425313533.bmp"
+            }
+        }, 
+        "tile_index": 37, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000404014920742 19524.2995338 35795.7884168"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            24023.349618745026, 
+            27152.839662991926, 
+            33156.04904925212, 
+            35881.760213837493
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_038_2016-04-04T0133456632669.bmp"
+            }
+        }, 
+        "tile_index": 38, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000547177897349 24023.3496187 33157.7606216"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            22520.962725720263, 
+            25649.883269231934, 
+            30541.182248994566, 
+            33266.239369095812
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_039_2016-04-04T0133456632669.bmp"
+            }
+        }, 
+        "tile_index": 39, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000338003748483 22520.9627257 30542.2395247"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            21015.626915097149, 
+            24144.055230279049, 
+            27929.563462657839, 
+            30654.05531255512
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_040_2016-04-04T0133456632669.bmp"
+            }
+        }, 
+        "tile_index": 40, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000157251784091 21015.6269151 27930.0553462"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            19506.558013882757, 
+            22634.598878966663, 
+            25322.123205611992, 
+            28046.170131547566
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_041_2016-04-04T0133456632669.bmp"
+            }
+        }, 
+        "tile_index": 41, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "1.50019766874e-05 19506.5988793 25322.1232056"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            17994.590583761434, 
+            21122.613696335975, 
+            22718.09078047752, 
+            25442.11732093944
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_042_2016-04-04T0133425313533.bmp"
+            }
+        }, 
+        "tile_index": 42, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "8.48480806754e-06 17994.6136964 22718.0907805"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            14972.101650869814, 
+            18100.511807681582, 
+            22728.562437696808, 
+            25453.03343524169
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_043_2016-04-04T0133425313533.bmp"
+            }
+        }, 
+        "tile_index": 43, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000150584550704 14972.5118431 22728.5624377"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            11947.278632774684, 
+            15075.829509527739, 
+            22733.229182838728, 
+            25457.861778594841
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_044_2016-04-04T0133425313533.bmp"
+            }
+        }, 
+        "tile_index": 44, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000202254304927 11947.8295735 22733.2291828"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            8921.3593698863551, 
+            12050.241112102405, 
+            22736.281589004899, 
+            25461.294149047506
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_045_2016-04-04T0134243665532.bmp"
+            }
+        }, 
+        "tile_index": 45, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000323754098045 8922.24127604 22736.281589"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            5890.5593897201397, 
+            9018.8655349518795, 
+            22735.510662841498, 
+            25459.862218354741
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_046_2016-04-04T0134243665532.bmp"
+            }
+        }, 
+        "tile_index": 46, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000112395377497 5890.86555471 22735.5106628"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            4396.5686185441373, 
+            7524.7608647542202, 
+            25333.408770121976, 
+            28057.62953078037
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_047_2016-04-04T0134243665532.bmp"
+            }
+        }, 
+        "tile_index": 47, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "7.05778316413e-05 4396.76087254 25333.4087701"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            2911.7395983906063, 
+            6040.0463910043673, 
+            27935.006150237939, 
+            30659.358449170486
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_048_2016-04-04T0134243665532.bmp"
+            }
+        }, 
+        "tile_index": 48, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000112633061501 2911.73959839 27935.3584664"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            1418.957768299487, 
+            4547.1227725796189, 
+            30542.010741303809, 
+            33266.200219176782
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_049_2016-04-04T0134243665532.bmp"
+            }
+        }, 
+        "tile_index": 49, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "6.05763543737e-05 1418.9577683 30542.2002242"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            -62.652706652410927, 
+            3065.3503574371875, 
+            33144.53812284115, 
+            35868.54164137043
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_050_2016-04-04T0134243665532.bmp"
+            }
+        }, 
+        "tile_index": 50, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "1.12501299907e-06 -62.6527066524 33144.5416414"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            1472.791841604243, 
+            4601.0649905760829, 
+            35770.898798144488, 
+            38495.212462561307
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_051_2016-04-04T0134243665532.bmp"
+            }
+        }, 
+        "tile_index": 51, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000100280715313 1472.7918416 35771.2124763"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            3004.0640238195247, 
+            6133.5695980396458, 
+            38399.639866941994, 
+            41125.368867494559
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_052_2016-04-04T0134243665532.bmp"
+            }
+        }, 
+        "tile_index": 52, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000552882666013 3004.06402382 38401.3692838"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            4532.5069325391514, 
+            7661.2718374270189, 
+            41031.348313174727, 
+            43756.226696334787
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_053_2016-04-04T0134129618429.bmp"
+            }
+        }, 
+        "tile_index": 53, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000280847378413 4532.50693254 41032.2268038"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            6058.3439555542718, 
+            9187.0283798614437, 
+            43663.049229989716, 
+            46387.835189564146
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_054_2016-04-04T0134129618429.bmp"
+            }
+        }, 
+        "tile_index": 54, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000251293348711 6058.34395555 43663.8352756"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            9057.9946412286517, 
+            12186.685754298518, 
+            43674.783732899959, 
+            46399.577373794542
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_055_2016-04-04T0134129618429.bmp"
+            }
+        }, 
+        "tile_index": 55, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000253749549205 9057.99464123 43675.5774615"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            12054.934825645925, 
+            15183.864197585384, 
+            43679.658481691571, 
+            46404.725740531969
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_056_2016-04-04T0134129618429.bmp"
+            }
+        }, 
+        "tile_index": 56, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.00034124599296 12054.9348256 43680.7258991"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            15051.116341770125, 
+            18180.048650449855, 
+            43681.494208338889, 
+            46406.564839791281
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_057_2016-04-04T0134129618429.bmp"
+            }
+        }, 
+        "tile_index": 57, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000342324509451 15051.1163418 43682.5649994"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            18050.032324242558, 
+            21179.350877232853, 
+            43678.55338056248, 
+            46404.06759160514
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_058_2016-04-04T0134129618429.bmp"
+            }
+        }, 
+        "tile_index": 58, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000484184910015 18050.0323242 43680.0679109"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            19537.48429052467, 
+            22666.956529691593, 
+            41046.425004702462, 
+            43772.115720425638
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_059_2016-04-04T0134129618429.bmp"
+            }
+        }, 
+        "tile_index": 59, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000540637435537 19537.4842905 41048.1161185"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            21030.583924799219, 
+            24158.589373941224, 
+            38415.517199104062, 
+            41139.523456417177
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_060_2016-04-04T0134129618429.bmp"
+            }
+        }, 
+        "tile_index": 60, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "2.00081038137e-06 21030.5839248 38415.5234564"
+            }
+        ], 
+        "width": 3128
+    }, 
+    {
+        "bbox": [
+            22525.161137388699, 
+            25653.49474959321, 
+            35785.092382247181, 
+            38509.475479423716
+        ], 
+        "height": 2724, 
+        "layer": 13, 
+        "maxIntensity": 255.0, 
+        "mfov": 23, 
+        "minIntensity": 0.0, 
+        "mipmapLevels": {
+            "0": {
+                "imageUrl": "file:///efs/ECS_test9_cropped/013_S13R1/000023/013_000023_061_2016-04-04T0133456632669.bmp"
+            }
+        }, 
+        "tile_index": 61, 
+        "transforms": [
+            {
+                "className": "mpicbg.trakem2.transform.RigidModel2D", 
+                "dataString": "0.000122480054399 22525.1611374 35785.4754999"
+            }
+        ], 
+        "width": 3128
+    }
+]
