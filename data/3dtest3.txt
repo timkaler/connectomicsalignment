@@ -1,0 +1,715 @@
+total-tiles: 102
+tile-start: [0]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 1
+	tile-bbox: [12632][15760][12469][15193]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_001_2016-09-21T1528377920854.bmp
+tile-end: [0]
+tile-start: [1]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 2
+	tile-bbox: [15655][18783][12459][15183]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_002_2016-09-21T1528377920854.bmp
+tile-end: [1]
+tile-start: [2]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 3
+	tile-bbox: [14115][17243][9852][12576]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_003_2016-09-21T1528377920854.bmp
+tile-end: [2]
+tile-start: [3]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 4
+	tile-bbox: [11088][14216][9860][12584]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_004_2016-09-21T1528377920854.bmp
+tile-end: [3]
+tile-start: [4]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 5
+	tile-bbox: [9610][12738][12476][15200]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_005_2016-09-21T1528377920854.bmp
+tile-end: [4]
+tile-start: [5]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 6
+	tile-bbox: [11154][14282][15090][17814]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_006_2016-09-21T1528377920854.bmp
+tile-end: [5]
+tile-start: [6]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 7
+	tile-bbox: [14174][17302][15082][17806]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_007_2016-09-21T1528377920854.bmp
+tile-end: [6]
+tile-start: [7]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 8
+	tile-bbox: [18675][21803][12445][15169]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_008_2016-09-21T1528303524528.bmp
+tile-end: [7]
+tile-start: [8]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 9
+	tile-bbox: [17139][20267][9837][12561]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_009_2016-09-21T1528303524528.bmp
+tile-end: [8]
+tile-start: [9]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 10
+	tile-bbox: [15600][18728][7234][9958]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_010_2016-09-21T1528377920854.bmp
+tile-end: [9]
+tile-start: [10]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 11
+	tile-bbox: [12571][15699][7246][9970]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_011_2016-09-21T1528379158063.bmp
+tile-end: [10]
+tile-start: [11]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 12
+	tile-bbox: [9539][12667][7254][9978]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_012_2016-09-21T1528379158063.bmp
+tile-end: [11]
+tile-start: [12]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 13
+	tile-bbox: [8061][11189][9864][12588]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_013_2016-09-21T1528379158063.bmp
+tile-end: [12]
+tile-start: [13]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 14
+	tile-bbox: [6586][9714][12477][15201]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_014_2016-09-21T1528379158063.bmp
+tile-end: [13]
+tile-start: [14]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 15
+	tile-bbox: [8135][11263][15093][17817]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_015_2016-09-21T1528379158063.bmp
+tile-end: [14]
+tile-start: [15]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 16
+	tile-bbox: [9681][12809][17712][20436]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_016_2016-09-21T1528379158063.bmp
+tile-end: [15]
+tile-start: [16]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 17
+	tile-bbox: [12696][15824][17708][20432]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_017_2016-09-21T1528379158063.bmp
+tile-end: [16]
+tile-start: [17]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 18
+	tile-bbox: [15710][18838][17698][20422]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_018_2016-09-21T1528379158063.bmp
+tile-end: [17]
+tile-start: [18]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 19
+	tile-bbox: [17191][20319][15071][17795]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_019_2016-09-21T1528303524528.bmp
+tile-end: [18]
+tile-start: [19]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 20
+	tile-bbox: [21693][24821][12425][15149]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_020_2016-09-21T1528378952261.bmp
+tile-end: [19]
+tile-start: [20]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 21
+	tile-bbox: [20163][23291][9820][12544]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_021_2016-09-21T1528378952261.bmp
+tile-end: [20]
+tile-start: [21]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 22
+	tile-bbox: [18629][21757][7218][9942]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_022_2016-09-21T1528378952261.bmp
+tile-end: [21]
+tile-start: [22]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 23
+	tile-bbox: [17091][20219][4619][7343]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_023_2016-09-21T1528303524528.bmp
+tile-end: [22]
+tile-start: [23]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 24
+	tile-bbox: [14062][17190][4633][7357]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_024_2016-09-21T1528303524528.bmp
+tile-end: [23]
+tile-start: [24]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 25
+	tile-bbox: [11025][14153][4644][7368]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_025_2016-09-21T1528303524528.bmp
+tile-end: [24]
+tile-start: [25]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 26
+	tile-bbox: [7988][11116][4651][7375]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_026_2016-09-21T1528303524528.bmp
+tile-end: [25]
+tile-start: [26]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 27
+	tile-bbox: [6509][9637][7256][9980]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_027_2016-09-21T1528303524528.bmp
+tile-end: [26]
+tile-start: [27]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 28
+	tile-bbox: [5033][8161][9863][12587]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_028_2016-09-21T1528378226041.bmp
+tile-end: [27]
+tile-start: [28]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 29
+	tile-bbox: [3562][6690][12473][15197]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_029_2016-09-21T1528378226041.bmp
+tile-end: [28]
+tile-start: [29]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 30
+	tile-bbox: [5115][8243][15091][17815]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_030_2016-09-21T1528378226041.bmp
+tile-end: [29]
+tile-start: [30]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 31
+	tile-bbox: [6665][9793][17712][20436]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_031_2016-09-21T1528378226041.bmp
+tile-end: [30]
+tile-start: [31]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 36
+	tile-bbox: [18723][21851][17684][20408]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_036_2016-09-21T1528378952261.bmp
+tile-end: [31]
+tile-start: [32]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 37
+	tile-bbox: [20206][23334][15055][17779]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_037_2016-09-21T1528378952261.bmp
+tile-end: [32]
+tile-start: [33]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 40
+	tile-bbox: [21655][24783][7197][9921]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_040_2016-09-21T1528379221471.bmp
+tile-end: [33]
+tile-start: [34]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 41
+	tile-bbox: [20122][23250][4601][7325]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_041_2016-09-21T1528379221471.bmp
+tile-end: [34]
+tile-start: [35]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 42
+	tile-bbox: [18584][21712][2008][4732]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_042_2016-09-21T1528378952261.bmp
+tile-end: [35]
+tile-start: [36]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 43
+	tile-bbox: [15548][18676][2024][4748]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_043_2016-09-21T1528378952261.bmp
+tile-end: [36]
+tile-start: [37]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 44
+	tile-bbox: [12513][15641][2038][4762]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_044_2016-09-21T1528378952261.bmp
+tile-end: [37]
+tile-start: [38]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 45
+	tile-bbox: [9473][12601][2047][4771]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_045_2016-09-21T1528377764268.bmp
+tile-end: [38]
+tile-start: [39]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 46
+	tile-bbox: [6432][9560][2050][4774]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_046_2016-09-21T1528377764268.bmp
+tile-end: [39]
+tile-start: [40]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 47
+	tile-bbox: [4951][8079][4650][7374]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_047_2016-09-21T1528377764268.bmp
+tile-end: [40]
+tile-start: [41]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 48
+	tile-bbox: [3479][6607][7251][9975]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_048_2016-09-21T1528377764268.bmp
+tile-end: [41]
+tile-start: [42]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 49
+	tile-bbox: [2003][5131][9858][12582]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_049_2016-09-21T1528377764268.bmp
+tile-end: [42]
+tile-start: [43]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 50
+	tile-bbox: [535][3663][12463][15187]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_050_2016-09-21T1528377764268.bmp
+tile-end: [43]
+tile-start: [44]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 51
+	tile-bbox: [2094][5222][15084][17808]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_051_2016-09-21T1528377764268.bmp
+tile-end: [44]
+tile-start: [45]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 52
+	tile-bbox: [3649][6777][17707][20431]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_052_2016-09-21T1528377764268.bmp
+tile-end: [45]
+tile-start: [46]
+	tile-section: 2
+	tile-mfov: 1
+	tile-index: 60
+	tile-bbox: [21735][24863][17666][20390]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_060_2016-09-21T1528376914247.bmp
+tile-end: [46]
+tile-start: [47]
+	tile-section: 2
+	tile-mfov: 2
+	tile-index: 49
+	tile-bbox: [21649][24777][0][2724]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000002/002_000002_049_2016-09-21T1528423628349.bmp
+tile-end: [47]
+tile-start: [48]
+	tile-section: 2
+	tile-mfov: 2
+	tile-index: 50
+	tile-bbox: [20187][23315][2612][5336]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000002/002_000002_050_2016-09-21T1528423628349.bmp
+tile-end: [48]
+tile-start: [49]
+	tile-section: 2
+	tile-mfov: 2
+	tile-index: 51
+	tile-bbox: [21747][24875][5233][7957]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000002/002_000002_051_2016-09-21T1528423628349.bmp
+tile-end: [49]
+tile-start: [50]
+	tile-section: 2
+	tile-mfov: 5
+	tile-index: 48
+	tile-bbox: [22199][25327][19087][21811]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000005/002_000005_048_2016-09-21T1528561688591.bmp
+tile-end: [50]
+tile-start: [51]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 1
+	tile-bbox: [12094][15222][17678][20402]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_001_2016-09-21T1525000937030.bmp
+tile-end: [51]
+tile-start: [52]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 2
+	tile-bbox: [15116][18244][17669][20393]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_002_2016-09-21T1525000937030.bmp
+tile-end: [52]
+tile-start: [53]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 3
+	tile-bbox: [13577][16705][15059][17783]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_003_2016-09-21T1525000937030.bmp
+tile-end: [53]
+tile-start: [54]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 4
+	tile-bbox: [10551][13679][15067][17791]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_004_2016-09-21T1525000937030.bmp
+tile-end: [54]
+tile-start: [55]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 5
+	tile-bbox: [9073][12201][17685][20409]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_005_2016-09-21T1525000937030.bmp
+tile-end: [55]
+tile-start: [56]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 6
+	tile-bbox: [10616][13744][20301][23025]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_006_2016-09-21T1525000937030.bmp
+tile-end: [56]
+tile-start: [57]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 7
+	tile-bbox: [13635][16763][20293][23017]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_007_2016-09-21T1525000937030.bmp
+tile-end: [57]
+tile-start: [58]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 8
+	tile-bbox: [18136][21264][17654][20378]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_008_2016-09-21T1524526540704.bmp
+tile-end: [58]
+tile-start: [59]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 9
+	tile-bbox: [16601][19729][15045][17769]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_009_2016-09-21T1524526540704.bmp
+tile-end: [59]
+tile-start: [60]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 10
+	tile-bbox: [15063][18191][12441][15165]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_010_2016-09-21T1525000937030.bmp
+tile-end: [60]
+tile-start: [61]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 11
+	tile-bbox: [12034][15162][12453][15177]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_011_2016-09-21T1525002174240.bmp
+tile-end: [61]
+tile-start: [62]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 12
+	tile-bbox: [9004][12132][12460][15184]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_012_2016-09-21T1525002174240.bmp
+tile-end: [62]
+tile-start: [63]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 13
+	tile-bbox: [7524][10652][15072][17796]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_013_2016-09-21T1525002174240.bmp
+tile-end: [63]
+tile-start: [64]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 14
+	tile-bbox: [6050][9178][17686][20410]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_014_2016-09-21T1525002174240.bmp
+tile-end: [64]
+tile-start: [65]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 15
+	tile-bbox: [7598][10726][20304][23028]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_015_2016-09-21T1525002174240.bmp
+tile-end: [65]
+tile-start: [66]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 16
+	tile-bbox: [9143][12271][22925][25649]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_016_2016-09-21T1525002174240.bmp
+tile-end: [66]
+tile-start: [67]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 17
+	tile-bbox: [12157][15285][22921][25645]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_017_2016-09-21T1525002174240.bmp
+tile-end: [67]
+tile-start: [68]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 18
+	tile-bbox: [15171][18299][22911][25635]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_018_2016-09-21T1525002174240.bmp
+tile-end: [68]
+tile-start: [69]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 19
+	tile-bbox: [16652][19780][20282][23006]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_019_2016-09-21T1524526540704.bmp
+tile-end: [69]
+tile-start: [70]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 20
+	tile-bbox: [21153][24281][17635][20359]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_020_2016-09-21T1525001968437.bmp
+tile-end: [70]
+tile-start: [71]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 21
+	tile-bbox: [19623][22751][15028][17752]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_021_2016-09-21T1525001968437.bmp
+tile-end: [71]
+tile-start: [72]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 22
+	tile-bbox: [18090][21218][12425][15149]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_022_2016-09-21T1525001968437.bmp
+tile-end: [72]
+tile-start: [73]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 23
+	tile-bbox: [16553][19681][9825][12549]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_023_2016-09-21T1524526540704.bmp
+tile-end: [73]
+tile-start: [74]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 24
+	tile-bbox: [13526][16654][9839][12563]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_024_2016-09-21T1524526540704.bmp
+tile-end: [74]
+tile-start: [75]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 25
+	tile-bbox: [10489][13617][9848][12572]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_025_2016-09-21T1524526540704.bmp
+tile-end: [75]
+tile-start: [76]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 26
+	tile-bbox: [7453][10581][9855][12579]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_026_2016-09-21T1524526540704.bmp
+tile-end: [76]
+tile-start: [77]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 27
+	tile-bbox: [5974][9102][12461][15185]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_027_2016-09-21T1524526540704.bmp
+tile-end: [77]
+tile-start: [78]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 28
+	tile-bbox: [4498][7626][15071][17795]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_028_2016-09-21T1525001242218.bmp
+tile-end: [78]
+tile-start: [79]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 29
+	tile-bbox: [3026][6154][17682][20406]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_029_2016-09-21T1525001242218.bmp
+tile-end: [79]
+tile-start: [80]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 30
+	tile-bbox: [4579][7707][20302][23026]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_030_2016-09-21T1525001242218.bmp
+tile-end: [80]
+tile-start: [81]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 31
+	tile-bbox: [6128][9256][22924][25648]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_031_2016-09-21T1525001242218.bmp
+tile-end: [81]
+tile-start: [82]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 36
+	tile-bbox: [18183][21311][22897][25621]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_036_2016-09-21T1525001968437.bmp
+tile-end: [82]
+tile-start: [83]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 37
+	tile-bbox: [19666][22794][20265][22989]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_037_2016-09-21T1525001968437.bmp
+tile-end: [83]
+tile-start: [84]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 40
+	tile-bbox: [21115][24243][12403][15127]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_040_2016-09-21T1525002393648.bmp
+tile-end: [84]
+tile-start: [85]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 41
+	tile-bbox: [19583][22711][9806][12530]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_041_2016-09-21T1525002393648.bmp
+tile-end: [85]
+tile-start: [86]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 42
+	tile-bbox: [18046][21174][7211][9935]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_042_2016-09-21T1525001968437.bmp
+tile-end: [86]
+tile-start: [87]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 43
+	tile-bbox: [15012][18140][7228][9952]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_043_2016-09-21T1525001968437.bmp
+tile-end: [87]
+tile-start: [88]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 44
+	tile-bbox: [11977][15105][7242][9966]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_044_2016-09-21T1525001968437.bmp
+tile-end: [88]
+tile-start: [89]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 45
+	tile-bbox: [8938][12066][7251][9975]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_045_2016-09-21T1525000780444.bmp
+tile-end: [89]
+tile-start: [90]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 46
+	tile-bbox: [5898][9026][7253][9977]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_046_2016-09-21T1525000780444.bmp
+tile-end: [90]
+tile-start: [91]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 47
+	tile-bbox: [4417][7545][9855][12579]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_047_2016-09-21T1525000780444.bmp
+tile-end: [91]
+tile-start: [92]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 48
+	tile-bbox: [2945][6073][12457][15181]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_048_2016-09-21T1525000780444.bmp
+tile-end: [92]
+tile-start: [93]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 49
+	tile-bbox: [1468][4596][15066][17790]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_049_2016-09-21T1525000780444.bmp
+tile-end: [93]
+tile-start: [94]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 50
+	tile-bbox: [0][3128][17672][20396]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_050_2016-09-21T1525000780444.bmp
+tile-end: [94]
+tile-start: [95]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 51
+	tile-bbox: [1558][4686][20294][23018]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_051_2016-09-21T1525000780444.bmp
+tile-end: [95]
+tile-start: [96]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 52
+	tile-bbox: [3113][6241][22919][25643]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_052_2016-09-21T1525000780444.bmp
+tile-end: [96]
+tile-start: [97]
+	tile-section: 1
+	tile-mfov: 1
+	tile-index: 60
+	tile-bbox: [21194][24322][22878][25602]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000001/001_000001_060_2016-09-21T1524599930424.bmp
+tile-end: [97]
+tile-start: [98]
+	tile-section: 1
+	tile-mfov: 2
+	tile-index: 49
+	tile-bbox: [21128][24256][5130][7854]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000002/001_000002_049_2016-09-21T1525046644525.bmp
+tile-end: [98]
+tile-start: [99]
+	tile-section: 1
+	tile-mfov: 2
+	tile-index: 50
+	tile-bbox: [19668][22796][7744][10468]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000002/001_000002_050_2016-09-21T1525046644525.bmp
+tile-end: [99]
+tile-start: [100]
+	tile-section: 1
+	tile-mfov: 2
+	tile-index: 51
+	tile-bbox: [21227][24355][10365][13089]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000002/001_000002_051_2016-09-21T1525046644525.bmp
+tile-end: [100]
+tile-start: [101]
+	tile-section: 1
+	tile-mfov: 5
+	tile-index: 48
+	tile-bbox: [21647][24775][24336][27060]
+	tile-filepath: /efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/001_S1R1/000005/001_000005_048_2016-09-21T1525183924766.bmp
+tile-end: [101]

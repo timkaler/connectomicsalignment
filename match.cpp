@@ -214,14 +214,41 @@ std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& 
       int i = _i;//distribution(g1);
       double dx = match_points_b[i].x - match_points_a[i].x;
       double dy = match_points_b[i].y - match_points_a[i].y;
-      int inliers = 0;
+      int inliers1 = 0;
+      int inliers2 = 0;
+      int inliers3 = 0;
+      int inliers4 = 0;
       for (int j = 0; j < match_points_b.size(); j++) {
         double ndx = match_points_b[j].x - match_points_a[j].x - dx;
         double ndy = match_points_b[j].y - match_points_a[j].y - dy;
         double dist = ndx*ndx+ndy*ndy;
         if (dist <= thresh*thresh) {
-          inliers++;
+          if (ndx >= 0) {
+            if (ndy >= 0) {
+              inliers1++;
+            } else {
+              inliers2++;
+            }
+          } else {
+            if (ndy >= 0) {
+              inliers3++;
+            } else {
+              inliers4++;
+            }
+
+          }
+          //inliers++;
         }
+      }
+      double inliers = inliers1;
+      if (inliers2>inliers) {
+        inliers=inliers2;
+      }
+      if (inliers3>inliers) {
+        inliers=inliers3;
+      }
+      if (inliers4>inliers) {
+        inliers=inliers4;
       }
       if (inliers > maxInliers) {
         maxInliers = inliers;
@@ -259,6 +286,8 @@ std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& 
           mask[j]=true;
         }
       }
+
+    
 
     printf("Number of inliers is %d and best_dx %f best_dy %f\n", maxInliers, best_dx, best_dy);
     return std::pair<double,double>(best_dx,best_dy);
@@ -1790,7 +1819,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
 
 
 
-    for (int section = 1; section < 2; section++) {
+    for (int section = 1; section < p_align_data->n_sections; section++) {
       int section_a = section-1;
       int section_b = section;
       std::vector <cv::KeyPoint > atile_kps_in_overlap;
@@ -1821,7 +1850,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       match_features(matches,
                      atile_kps_desc_in_overlap,
                      btile_kps_desc_in_overlap,
-                     0.98);
+                     0.92);
           printf("Done with the matching. Num matches is %d\n", matches.size());
           // Filter the matches with RANSAC
           std::vector<cv::Point2f> match_points_a, match_points_b;
@@ -1848,26 +1877,58 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
                 btile_kps_in_overlap[matches[tmpi].trainIdx].pt + cv::Point2f(x_start_b, y_start_b));
           }
           bool* mask = (bool*)calloc(matches.size()+1, 1);
-          std::pair<double,double> offset_pair = tfk_simple_ransac_strict_ret(match_points_a, match_points_b, 50.0, mask);
-      for (int c = 0; c < matches.size(); c++) {
-        if (mask[c]) {
+          std::pair<double,double> offset_pair = tfk_simple_ransac_strict_ret(match_points_a, match_points_b, 20.0, mask);
           std::vector< cv::Point2f > filtered_match_points_a(0);
           std::vector< cv::Point2f > filtered_match_points_b(0);
+      for (int c = 0; c < matches.size(); c++) {
+        if (mask[c]) {
           int atile_id = atile_kps_tile_list[matches[c].queryIdx];
           int btile_id = btile_kps_tile_list[matches[c].trainIdx];
+          //filtered_match_points_a.push_back(
+          //    atile_kps_in_overlap[matches[c].queryIdx].pt);
+          //filtered_match_points_b.push_back(
+          //    btile_kps_in_overlap[matches[c].trainIdx].pt);
+
           filtered_match_points_a.push_back(
-              atile_kps_in_overlap[matches[c].queryIdx].pt);
+              match_points_a[matches[c].queryIdx]);
           filtered_match_points_b.push_back(
-              btile_kps_in_overlap[matches[c].trainIdx].pt);
+              match_points_b[matches[c].trainIdx]);
+
           //merged_graph->insert_matches(atile_id, btile_id,
           //    filtered_match_points_a, filtered_match_points_b, 1.0);
         }
       }
+
+      int iteration_count = 0;
+      double b_offset_x = offset_pair.first;
+      double b_offset_y = offset_pair.second;
+      while(true) {
+        iteration_count++;
+        double grad_x = 0.0;
+        double grad_y = 0.0;
+        for (int subid = 0; subid < filtered_match_points_a.size(); subid++) {
+          cv::Point2f pt_a = filtered_match_points_a[subid];
+          cv::Point2f pt_b = filtered_match_points_b[subid];
+          grad_x += 2*(pt_b.x-b_offset_x-pt_a.x);
+          grad_y += 2*(pt_b.y-b_offset_y-pt_a.y);
+        }
+        grad_x = (100.0 / (100.0+iteration_count)) *grad_x*0.49/(filtered_match_points_a.size()+1);
+        grad_y = (100.0 / (100.0+iteration_count)) *grad_y*0.49/(filtered_match_points_a.size()+1);
+        b_offset_x += grad_x;
+        b_offset_y += grad_y;
+        if (std::abs(grad_x)+std::abs(grad_y) < 1e-2) {
+          break;
+        }
+        if (iteration_count % 100000 == 0) {
+          printf("Delta is currently %f\n", std::abs(grad_x)+std::abs(grad_y));
+        }
+      }
+
       free(mask);
       for (int v = 0; v < merged_graph->num_vertices(); v++) {
-        if (merged_graph->getVertexData(v)->z == section_a) {
-          merged_graph->getVertexData(v)->offset_x += offset_pair.first;
-          merged_graph->getVertexData(v)->offset_y += offset_pair.second;
+        if (merged_graph->getVertexData(v)->z <= section_a) {
+          merged_graph->getVertexData(v)->offset_x += b_offset_x;//offset_pair.first;
+          merged_graph->getVertexData(v)->offset_y += b_offset_y;//offset_pair.second;
         }
       }
 

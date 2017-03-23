@@ -13,7 +13,7 @@
 
 float CONTRAST_THRESH = 0.04;
 float CONTRAST_THRESH_3D = 0.04;
-float EDGE_THRESH_3D = 3.5;
+float EDGE_THRESH_3D = 5;
 #include "./common.h"
 #include "./align.h"
 #include "./match.h"
@@ -73,7 +73,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
 
       p_sift = new cv::xfeatures2d::SIFT_Impl(
                 0,  // num_features --- unsupported.
-                3,  // number of octaves
+                6,  // number of octaves
                 CONTRAST_THRESH_3D,  // contrast threshold.
                 EDGE_THRESH_3D,  // edge threshold.
                 1.6);  // sigma.
@@ -126,7 +126,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
 
       p_sift = new cv::xfeatures2d::SIFT_Impl(
                 0,  // num_features --- unsupported.
-                3,  // number of octaves
+                6,  // number of octaves
                 CONTRAST_THRESH_3D,  // contrast threshold.
                 EDGE_THRESH_3D,  // edge threshold.
                 1.6);  // sigma.
