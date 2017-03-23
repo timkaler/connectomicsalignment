@@ -1977,7 +1977,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
         std::to_string(p_align_data->sec_data[sec_id].section_id +
         p_align_data->base_section+1);
 
-    FILE* wafer_file = fopen((std::string("/efs/home/tfk/alignment_newrepo/temp/")+std::string("W01_Sec") +
+    FILE* wafer_file = fopen((std::string(p_align_data->output_dirpath)+std::string("/W01_Sec") +
         matchPadTo(section_id_string, 3)+std::string("_montaged.json")).c_str(), "w+");
     fprintf(wafer_file, "[\n");
     for (int i = 0; i < graph->num_vertices(); i++) {
