@@ -18,7 +18,7 @@ OUTPUTDIR=/efs/home/tfk/temp/
 
 ./setup.sh numactl --cpunodebind=$NUMANODE ./run_align 1 \
     $SECTION 1 \
-    $PWD/testing3d.txt \
+    $PWD/data/testing3d.txt \
     $OUTPUTDIR \
     $OUTPUTDIR
 
