@@ -33,11 +33,11 @@ ifdef LOGIMAGES
   CFLAGS += -DLOGIMAGES
 endif
 
-ifdef SKIPHDF5
+ifndef INCLUDEHDF5
   CFLAGS += -DSKIPHDF5
 endif
 
-ifdef SKIPJSON
+ifndef INCLUDEJSON
   CFLAGS += -DSKIPJSON
 endif
 
