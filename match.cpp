@@ -61,12 +61,14 @@ vdata getAffineTransform(std::vector<cv::Point2f>& pts1, std::vector<cv::Point2f
   tmp.offset_y = warp_mat.at<double>(1, 2);
   tmp.start_x = 0.0;
   tmp.start_y = 0.0;
+
+
   //printf("tmp values are %f %f %f %f %f %f\n", tmp.a00, tmp.a01, tmp.a10, tmp.a11, tmp.offset_x, tmp.offset_y);
 
   return tmp;
 }
 
-std::pair<double,double> tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points_a,
+vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points_a,
     std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
 
   double best_dx = 0.0;
@@ -98,7 +100,7 @@ std::pair<double,double> tfk_simple_ransac_strict_ret_affine(std::vector<cv::Poi
 
     vdata tmp_vertex_data;
 
-    for (int _i = 0; _i < match_points_a.size()*100; _i++) {
+    for (int _i = 0; _i < match_points_a.size()*match_points_a.size(); _i++) {
       //int i = _i;//distribution(g1);
 
       int i1 = distribution(g1);
@@ -114,18 +116,21 @@ std::pair<double,double> tfk_simple_ransac_strict_ret_affine(std::vector<cv::Poi
       pts2.push_back(match_points_b[i3]);
       tmp_vertex_data = getAffineTransform(pts1, pts2);
       vdata tmp = tmp_vertex_data;
-    if (std::abs(tmp_vertex_data.a00) > 1.5 || std::abs(tmp_vertex_data.a01) > 0.5 || std::abs(tmp_vertex_data.a10) > 0.5 || std::abs(tmp_vertex_data.a11 > 1.5)) {
-      continue; 
-    }
+    //if (std::abs(tmp_vertex_data.a00) > 1.5 || std::abs(tmp_vertex_data.a01) > 0.5 || std::abs(tmp_vertex_data.a10) > 0.5 || std::abs(tmp_vertex_data.a11 > 1.5)) {
+    //  continue; 
+    //}
 
       cv::Point2f test_point_a = pts1[0];
       cv::Point2f test_point_b = pts2[0];
 
+      //std::cout<<test_point_a<<std::endl;
       cv::Point2f test_point_a_transformed = transform_point(&tmp_vertex_data, test_point_a);
+      //std::cout << test_point_a_transformed << std::endl;
+
 
       if(std::abs(test_point_a_transformed.x - test_point_b.x) > 1e-1) {
-      printf("tmp values are %f %f %f %f %f %f\n", tmp.a00, tmp.a01, tmp.a10, tmp.a11, tmp.offset_x, tmp.offset_y);
-        printf("There is an error in the transform. point a before %f %f; point a after %f %f; point b %f %f\n", test_point_a.x, test_point_a.y, test_point_a_transformed.x, test_point_a_transformed.y, test_point_b.x, test_point_b.y);
+        //printf("tmp values are %f %f %f %f %f %f\n", tmp.a00, tmp.a01, tmp.a10, tmp.a11, tmp.offset_x, tmp.offset_y);
+        //printf("There is an error in the transform. point a before %f %f; point a after %f %f; point b %f %f\n", test_point_a.x, test_point_a.y, test_point_a_transformed.x, test_point_a_transformed.y, test_point_b.x, test_point_b.y);
         continue;
       }
 
@@ -186,8 +191,10 @@ std::pair<double,double> tfk_simple_ransac_strict_ret_affine(std::vector<cv::Poi
         }
       }
 
-    printf("Number of inliers is %d and best_dx %f best_dy %f\n", maxInliers, best_dx, best_dy);
-    return std::pair<double,double>(best_dx,best_dy);
+    printf("Best values are %f %f %f %f %f %f\n", best_vertex_data.a00, best_vertex_data.a01, best_vertex_data.a10, best_vertex_data.a11, best_vertex_data.offset_x, best_vertex_data.offset_y);
+    printf("Number of inliers is %d and best_dx %f best_dy %f\n", maxInliers, best_vertex_data.offset_x, best_vertex_data.offset_y);
+    return best_vertex_data;
+    //return std::pair<double,double>(best_vertex_data.offset_x,best_vertex_data.offset_y);
 }
 std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& match_points_a,
     std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
@@ -214,41 +221,14 @@ std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& 
       int i = _i;//distribution(g1);
       double dx = match_points_b[i].x - match_points_a[i].x;
       double dy = match_points_b[i].y - match_points_a[i].y;
-      int inliers1 = 0;
-      int inliers2 = 0;
-      int inliers3 = 0;
-      int inliers4 = 0;
+      int inliers = 0;
       for (int j = 0; j < match_points_b.size(); j++) {
         double ndx = match_points_b[j].x - match_points_a[j].x - dx;
         double ndy = match_points_b[j].y - match_points_a[j].y - dy;
         double dist = ndx*ndx+ndy*ndy;
         if (dist <= thresh*thresh) {
-          if (ndx >= 0) {
-            if (ndy >= 0) {
-              inliers1++;
-            } else {
-              inliers2++;
-            }
-          } else {
-            if (ndy >= 0) {
-              inliers3++;
-            } else {
-              inliers4++;
-            }
-
-          }
-          //inliers++;
+          inliers++;
         }
-      }
-      double inliers = inliers1;
-      if (inliers2>inliers) {
-        inliers=inliers2;
-      }
-      if (inliers3>inliers) {
-        inliers=inliers3;
-      }
-      if (inliers4>inliers) {
-        inliers=inliers4;
       }
       if (inliers > maxInliers) {
         maxInliers = inliers;
@@ -278,18 +258,21 @@ std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& 
       return;
     }*/
 
+   double error = 0.0;
    for (int j = 0; j < match_points_b.size(); j++) {
+
         double ndx = match_points_b[j].x - match_points_a[j].x - best_dx;
         double ndy = match_points_b[j].y - match_points_a[j].y - best_dy;
         double dist = ndx*ndx+ndy*ndy;
         if (dist <= thresh*thresh) {
+          error += dist;
           mask[j]=true;
         }
       }
 
     
 
-    printf("Number of inliers is %d and best_dx %f best_dy %f\n", maxInliers, best_dx, best_dy);
+    printf("Number of inliers is %d and best_dx %f best_dy %f error is %f\n", maxInliers, best_dx, best_dy, error);
     return std::pair<double,double>(best_dx,best_dy);
   }
 
@@ -1477,7 +1460,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
 
           cv::Mat model = cv::estimateRigidTransform(filtered_match_points_a,
               filtered_match_points_b, false);
-
+          
           //TRACE_1("    -- [%d_%d, %d_%d] estimated a %d by %d affine transform matrix.\n",
           //        a_tile->mfov_id, a_tile->index,
           //        b_tile->mfov_id, b_tile->index,
@@ -1670,7 +1653,11 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
             //void tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
             //    std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
             bool* mask = (bool*)calloc(matches.size()+1, 1);
-            tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 25.0, mask);
+            
+            tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 10.0, mask); 
+            cv::Mat H_transform = cv::estimateRigidTransform(match_points_a, match_points_b, false);
+            printf("The H_transform is below \n");
+            std::cout << H_transform << std::endl; 
         if (matches.size() > 4) { 
         for (int c = 0; c < matches.size(); c++) {
           if (mask[c]) {
@@ -1751,7 +1738,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
           //void tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
           //    std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
           bool* mask = (bool*)calloc(matches.size()+1, 1);
-          std::pair<double,double> offset_pair = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 10.0, mask);
+          std::pair<double,double> offset_pair;// = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 10.0, mask);
       for (int c = 0; c < matches.size(); c++) {
         if (mask[c]) {
           std::vector< cv::Point2f > filtered_match_points_a(0);
@@ -1877,7 +1864,9 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
                 btile_kps_in_overlap[matches[tmpi].trainIdx].pt + cv::Point2f(x_start_b, y_start_b));
           }
           bool* mask = (bool*)calloc(matches.size()+1, 1);
-          std::pair<double,double> offset_pair = tfk_simple_ransac_strict_ret(match_points_a, match_points_b, 20.0, mask);
+          //std::pair<double,double> offset_pair = tfk_simple_ransac_strict_ret(match_points_a, match_points_b, 50.0, mask);
+          std::pair<double,double> offset_pair;
+          vdata best_vertex_data  = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 25.0, mask); 
           std::vector< cv::Point2f > filtered_match_points_a(0);
           std::vector< cv::Point2f > filtered_match_points_b(0);
       for (int c = 0; c < matches.size(); c++) {
@@ -1890,45 +1879,198 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
           //    btile_kps_in_overlap[matches[c].trainIdx].pt);
 
           filtered_match_points_a.push_back(
-              match_points_a[matches[c].queryIdx]);
+              match_points_a[c]);
           filtered_match_points_b.push_back(
-              match_points_b[matches[c].trainIdx]);
+              match_points_b[c]);
 
           //merged_graph->insert_matches(atile_id, btile_id,
           //    filtered_match_points_a, filtered_match_points_b, 1.0);
         }
       }
+            //cv::Mat H_transform = cv::estimateRigidTransform(filtered_match_points_a, filtered_match_points_b, true);//cv::findHomography(match_points_a, match_points_b);
+            //cv::Mat H_transform = cv::findHomography(match_points_a, match_points_b, CV_RANSAC);
+            //printf("The H_transform is below \n");
+            //std::cout << H_transform << std::endl; 
 
-      int iteration_count = 0;
-      double b_offset_x = offset_pair.first;
-      double b_offset_y = offset_pair.second;
-      while(true) {
-        iteration_count++;
-        double grad_x = 0.0;
-        double grad_y = 0.0;
-        for (int subid = 0; subid < filtered_match_points_a.size(); subid++) {
-          cv::Point2f pt_a = filtered_match_points_a[subid];
-          cv::Point2f pt_b = filtered_match_points_b[subid];
-          grad_x += 2*(pt_b.x-b_offset_x-pt_a.x);
-          grad_y += 2*(pt_b.y-b_offset_y-pt_a.y);
-        }
-        grad_x = (100.0 / (100.0+iteration_count)) *grad_x*0.49/(filtered_match_points_a.size()+1);
-        grad_y = (100.0 / (100.0+iteration_count)) *grad_y*0.49/(filtered_match_points_a.size()+1);
-        b_offset_x += grad_x;
-        b_offset_y += grad_y;
-        if (std::abs(grad_x)+std::abs(grad_y) < 1e-2) {
-          break;
-        }
-        if (iteration_count % 100000 == 0) {
-          printf("Delta is currently %f\n", std::abs(grad_x)+std::abs(grad_y));
+
+      int min_x = 0.0;
+      int min_y = 0.0;
+      bool first_check = true;
+      for (int v = 0; v < merged_graph->num_vertices(); v++) {
+        if (merged_graph->getVertexData(v)->z <= section_a) {
+          if (first_check) {
+            first_check = false;
+            min_x = merged_graph->getVertexData(v)->start_x; 
+            min_y = merged_graph->getVertexData(v)->start_y; 
+          } else {
+            double lx = merged_graph->getVertexData(v)->start_x; 
+            double ly = merged_graph->getVertexData(v)->start_y; 
+            if (lx < min_x) min_x = lx;
+            if (ly < min_y) min_y = ly;
+          }
         }
       }
 
-      free(mask);
+      
+
+      //int iteration_count = 0;
+      //float b_offset_x = offset_pair.first;
+      //float b_offset_y = offset_pair.second;
+      //float b_a11 = 1.0;
+      //printf("Number of filtered match points is %d b_offst_x is %f b_offset_y %f\n", filtered_match_points_a.size(), b_offset_x, b_offset_y);
+
+      //while(true) {
+      //  iteration_count++;
+      //  float grad_x = 0.0;
+      //  float grad_y = 0.0;
+      //  float error = 0.0;
+      //  for (int subid = 0; subid < filtered_match_points_a.size(); subid++) {
+
+      //  double ndx = filtered_match_points_b[subid].x - filtered_match_points_a[subid].x - b_offset_x;
+      //  double ndy = filtered_match_points_b[subid].y - filtered_match_points_a[subid].y - b_offset_y;
+      //  double dist = ndx*ndx+ndy*ndy;
+
+
+      //    cv::Point2f pt_a = filtered_match_points_a[subid];
+      //    cv::Point2f pt_b = filtered_match_points_b[subid];
+      //    grad_x += 2*(pt_b.x-b_offset_x-pt_a.x);
+      //    grad_y += 2*(pt_b.y-b_offset_y-pt_a.y);
+      //    error += dist;
+      //  }
+      //  grad_x = (100000.0 / (100000.0+iteration_count)) *grad_x*0.49/(filtered_match_points_a.size()+1);
+      //  grad_y = (100000.0 / (100000.0+iteration_count)) *grad_y*0.49/(filtered_match_points_a.size()+1);
+      //  b_offset_x += grad_x;
+      //  b_offset_y += grad_y;
+      //  if (std::abs(grad_x)+std::abs(grad_y) < 1e-2) {
+      //    break;
+      //  }
+      //  //if (iteration_count % 100 == 0) {
+      //    printf("Delta is currently %f and error is %f\n", std::abs(grad_x)+std::abs(grad_y), error);
+      //  //}
+      //}
+      ////iteration_count=0;
+      ////while(true) {
+      ////  iteration_count++;
+      ////  double grad_a11 = 0.0;
+      //// 
+      ////  float error = 0.0;
+      ////  for (int subid = 0; subid < filtered_match_points_a.size(); subid++) {
+
+      ////  double ndx = filtered_match_points_b[subid].x - (filtered_match_points_a[subid].x + b_offset_x);
+      ////  double ndy = filtered_match_points_b[subid].y - b_a11*(filtered_match_points_a[subid].y + b_offset_y);
+      ////  double dist = ndx*ndx+ndy*ndy;
+
+
+      ////    cv::Point2f pt_a = filtered_match_points_a[subid];
+      ////    cv::Point2f pt_b = filtered_match_points_b[subid];
+      ////    grad_a11 += (b_a11*(filtered_match_points_a[subid].y + b_offset_y))*ndy;
+      ////    error += dist;
+      ////  }
+
+      ////  grad_a11 = (100.0 / (100.0+iteration_count)) *grad_a11*1e-2/(filtered_match_points_a.size()+1);
+      ////  if (grad_a11 > 1e-1*100.0/(100.0+iteration_count)) {
+      ////    grad_a11 = 1e-1*100.0/(100.0+iteration_count);
+      ////  }
+      ////  if (grad_a11 < -1e-1*100.0/(100.0+iteration_count)) {
+      ////    grad_a11 = -1e-1*100.0/(100.0+iteration_count);
+      ////  }
+      ////  b_a11 += grad_a11;
+
+
+      ////  if (std::abs(grad_a11) < 1e-7) {
+      ////    printf("Delta is currently %f and error is %f\n", std::abs(grad_a11), error);
+      ////    break;
+      ////  }
+      ////  if (iteration_count % 10000 == 0) {
+      ////    printf("Delta is currently %f and error is %f\n", std::abs(grad_a11), error);
+      ////  }
+      ////  
+      ////}
+
+      //free(mask);
+      //printf("After and best_dx %f best_dy %f best a11 %f\n", b_offset_x, b_offset_y, b_a11);
+      //b_a11 = 1.0;
+      //best_vertex_data.a10=0.0;
+      //best_vertex_data.a01=0.0;
       for (int v = 0; v < merged_graph->num_vertices(); v++) {
+         
         if (merged_graph->getVertexData(v)->z <= section_a) {
-          merged_graph->getVertexData(v)->offset_x += b_offset_x;//offset_pair.first;
-          merged_graph->getVertexData(v)->offset_y += b_offset_y;//offset_pair.second;
+          
+          double start_x = merged_graph->getVertexData(v)->start_x + merged_graph->getVertexData(v)->offset_x;
+          double start_y = merged_graph->getVertexData(v)->start_y + merged_graph->getVertexData(v)->offset_y;
+          double end_x = merged_graph->getVertexData(v)->end_x + merged_graph->getVertexData(v)->offset_x;
+          double end_y = merged_graph->getVertexData(v)->end_y + merged_graph->getVertexData(v)->offset_y;
+
+          double post_start_x1 = best_vertex_data.a00*start_x + best_vertex_data.a01*start_y;
+          double post_start_x2 = best_vertex_data.a00*start_x + best_vertex_data.a01*end_y;
+          double post_start_y1 = best_vertex_data.a11*start_y + best_vertex_data.a10*start_x;
+          double post_start_y2 = best_vertex_data.a11*start_y + best_vertex_data.a10*end_x;
+
+
+          double post_end_x1 = best_vertex_data.a00*end_x + best_vertex_data.a01*start_y;
+          double post_end_x2 = best_vertex_data.a00*end_x + best_vertex_data.a01*end_y;
+          double post_end_y1 = best_vertex_data.a11*end_y + best_vertex_data.a10*start_x;
+          double post_end_y2 = best_vertex_data.a11*end_y + best_vertex_data.a10*end_x;
+
+
+
+          if (post_start_y1 > post_start_y2) {
+            start_y = post_start_y1;
+          } else {
+            start_y = post_start_y2;
+          }
+
+          if (post_start_x1 > post_start_x2) {
+            start_x = post_start_x1;
+          } else {
+            start_x = post_start_x2;
+          }
+
+
+
+          if (post_end_y1 < post_end_y2) {
+            end_y = post_end_y1;
+          } else {
+            end_y = post_end_y2;
+          }
+
+          if (post_end_x1 < post_end_x2) {
+            end_x = post_end_x1;
+          } else {
+            end_x = post_end_x2;
+          }
+
+
+
+
+
+
+
+          //merged_graph->getVertexData(v)->start_x = best_vertex_data.a00*start_x + best_vertex_data.a01*start_y;
+          //merged_graph->getVertexData(v)->start_y = best_vertex_data.a11*start_y + best_vertex_data.a10*start_x;
+          merged_graph->getVertexData(v)->start_x = start_x;
+          merged_graph->getVertexData(v)->start_y = start_y;
+          merged_graph->getVertexData(v)->end_x = end_x;
+          merged_graph->getVertexData(v)->end_y = end_y;
+          //merged_graph->getVertexData(v)->start_x += merged_graph->getVertexData(v)->offset_x;
+          //merged_graph->getVertexData(v)->start_y += merged_graph->getVertexData(v)->offset_y;
+          //merged_graph->getVertexData(v)->end_x += merged_graph->getVertexData(v)->offset_x;
+          //merged_graph->getVertexData(v)->end_y += merged_graph->getVertexData(v)->offset_y;
+          merged_graph->getVertexData(v)->offset_x = best_vertex_data.offset_x;
+          merged_graph->getVertexData(v)->offset_y = best_vertex_data.offset_y;
+           
+          merged_graph->getVertexData(v)->a00 = best_vertex_data.a00;
+          merged_graph->getVertexData(v)->a01 = best_vertex_data.a01;
+          merged_graph->getVertexData(v)->a10 = best_vertex_data.a10;
+          merged_graph->getVertexData(v)->a11 = best_vertex_data.a11;
+
+          //merged_graph->getVertexData(v)->start_y = min_y + b_a11*(merged_graph->getVertexData(v)->start_y-min_y);//2*merged_graph->getVertexData(v)->start_y - min_y + min_y*b_a11;//offset_pair.first;
+          //merged_graph->getVertexData(v)->end_y = min_y + b_a11*(merged_graph->getVertexData(v)->end_y - min_y);
+          //merged_graph->getVertexData(v)->a11 = b_a11;
+          ////merged_graph->getVertexData(v)->offset_y *= b_a11;
+          //merged_graph->getVertexData(v)->offset_x += best_vertex_data.offset_x;//offset_pair.first;
+          //merged_graph->getVertexData(v)->offset_y += best_vertex_data.offset_y;//offset_pair.second;
+          
         }
       }
 
@@ -1981,7 +2123,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
         matchPadTo(section_id_string, 3)+std::string("_montaged.json")).c_str(), "w+");
     fprintf(wafer_file, "[\n");
     for (int i = 0; i < graph->num_vertices(); i++) {
-      printf("affine params %f %f %f %f\n", graph->getVertexData(i)->a00, graph->getVertexData(i)->a01, graph->getVertexData(i)->a10, graph->getVertexData(i)->a11);
+      //printf("affine params %f %f %f %f\n", graph->getVertexData(i)->a00, graph->getVertexData(i)->a01, graph->getVertexData(i)->a10, graph->getVertexData(i)->a11);
       vdata* vd = graph->getVertexData(i);
       //if (vd->z == 1) {
       //vd->a00 = 1.1;
@@ -1993,8 +2135,8 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       fprintf(wafer_file, "\t\t\"bbox\": [\n");
       fprintf(wafer_file,
           "\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f\n],",
-          vd->start_x+vd->offset_x, (vd->end_x+vd->offset_x),
-          vd->start_y+vd->offset_y, (vd->end_y+vd->offset_y));
+          0.0/*vd->start_x+vd->offset_x*/, (vd->end_x/*+vd->offset_x*/),
+          0.0/*vd->start_y+vd->offset_y*/, (vd->end_y/*+vd->offset_y*/));
       fprintf(wafer_file, "\t\t\"height\": %d,\n",2724);
       fprintf(wafer_file, "\t\t\"layer\": %d,\n",p_align_data->sec_data[sec_id].section_id + p_align_data->base_section+1);
       fprintf(wafer_file, "\t\t\"maxIntensity\": %f,\n",255.0);
@@ -2020,7 +2162,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
           "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.AffineModel2D\",\n");
       fprintf(wafer_file,
           "\t\t\t\t\"dataString\": \"%f %f %f %f %f %f\"\n", vd->a00,
-          vd->a01, vd->a10, vd->a11, vd->start_x + vd->offset_x, vd->start_y + vd->offset_y);
+          vd->a10, vd->a01, vd->a11, vd->start_x+vd->offset_x, vd->start_y+vd->offset_y);
 
       //fprintf(wafer_file,
       //    "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.RigidModel2D\",\n");
