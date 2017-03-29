@@ -48,6 +48,110 @@ std::string matchPadTo(std::string str, const size_t num, const char paddingChar
     return str;
 }
 
+void updateAffineTransform(vdata* vertex, vdata* transform) {
+      
+  //std::cout << warp_mat << std::endl;
+  vdata tmp;
+  tmp.a00 = vertex->a00*transform->a00 + vertex->a10*transform->a01;
+  tmp.a01 = vertex->a01*transform->a00 + vertex->a11*transform->a01;
+  tmp.a10 = vertex->a00*transform->a10 + vertex->a10*transform->a11;
+  tmp.a11 = vertex->a01*transform->a10 + vertex->a11*transform->a11;
+  tmp.offset_x = vertex->offset_x*transform->a00 + vertex->offset_y*transform->a01 + transform->offset_x;
+  tmp.offset_y = vertex->offset_x*transform->a10 + vertex->offset_y*transform->a11 + transform->offset_y; 
+  //tmp.start_x = 0.0;
+  //tmp.start_y = 0.0;
+
+          double start_x = vertex->start_x + vertex->offset_x;
+          double start_y = vertex->start_y + vertex->offset_y;
+          double end_x = vertex->end_x + vertex->offset_x;
+          double end_y = vertex->end_y + vertex->offset_y;
+
+          //double post_start_x1 = tmp.a00*start_x + tmp.a01*start_y;
+          //double post_start_x2 = tmp.a00*start_x + tmp.a01*end_y;
+          //double post_start_y1 = tmp.a11*start_y + tmp.a10*start_x;
+          //double post_start_y2 = tmp.a11*start_y + tmp.a10*end_x;
+
+
+          //double post_end_x1 = tmp.a00*end_x + tmp.a01*start_y;
+          //double post_end_x2 = tmp.a00*end_x + tmp.a01*end_y;
+          //double post_end_y1 = tmp.a11*end_y + tmp.a10*start_x;
+          //double post_end_y2 = tmp.a11*end_y + tmp.a10*end_x;
+
+
+          double post_start_x1 = transform->a00*start_x + transform->a01*start_y;
+          double post_start_x2 = transform->a00*start_x + transform->a01*end_y;
+          double post_start_y1 = transform->a11*start_y + transform->a10*start_x;
+          double post_start_y2 = transform->a11*start_y + transform->a10*end_x;
+
+
+          double post_end_x1 = transform->a00*end_x + transform->a01*start_y;
+          double post_end_x2 = transform->a00*end_x + transform->a01*end_y;
+          double post_end_y1 = transform->a11*end_y + transform->a10*start_x;
+          double post_end_y2 = transform->a11*end_y + transform->a10*end_x;
+
+
+
+          if (post_start_y1 > post_start_y2) {
+            start_y = post_start_y1;
+          } else {
+            start_y = post_start_y2;
+          }
+
+          if (post_start_x1 > post_start_x2) {
+            start_x = post_start_x1;
+          } else {
+            start_x = post_start_x2;
+          }
+
+
+
+          if (post_end_y1 < post_end_y2) {
+            end_y = post_end_y1;
+          } else {
+            end_y = post_end_y2;
+          }
+
+          if (post_end_x1 < post_end_x2) {
+            end_x = post_end_x1;
+          } else {
+            end_x = post_end_x2;
+          }
+
+
+
+
+
+
+
+          //merged_graph->getVertexData(v)->start_x = best_vertex_data.a00*start_x + best_vertex_data.a01*start_y;
+          //merged_graph->getVertexData(v)->start_y = best_vertex_data.a11*start_y + best_vertex_data.a10*start_x;
+          vertex->start_x = start_x;
+          vertex->start_y = start_y;
+          vertex->end_x = end_x;
+          vertex->end_y = end_y;
+          //merged_graph->getVertexData(v)->start_x += merged_graph->getVertexData(v)->offset_x;
+          //merged_graph->getVertexData(v)->start_y += merged_graph->getVertexData(v)->offset_y;
+          //merged_graph->getVertexData(v)->end_x += merged_graph->getVertexData(v)->offset_x;
+          //merged_graph->getVertexData(v)->end_y += merged_graph->getVertexData(v)->offset_y;
+          //merged_graph->getVertexData(v)->offset_x = best_vertex_data.offset_x;
+          //merged_graph->getVertexData(v)->offset_y = best_vertex_data.offset_y;
+ 
+
+
+
+
+
+  vertex->a00 = tmp.a00;
+  vertex->a01 = tmp.a01;
+  vertex->a10 = tmp.a10;
+  vertex->a11 = tmp.a11;
+  vertex->offset_x = 0.0;//tmp.offset_x;
+  vertex->offset_y = 0.0;//tmp.offset_y;
+
+  //printf("tmp values are %f %f %f %f %f %f\n", tmp.a00, tmp.a01, tmp.a10, tmp.a11, tmp.offset_x, tmp.offset_y);
+
+}
+
 
 vdata getAffineTransform(std::vector<cv::Point2f>& pts1, std::vector<cv::Point2f>& pts2) {
   cv::Mat warp_mat = cv::getAffineTransform(pts1, pts2);
@@ -1887,10 +1991,23 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
           //    filtered_match_points_a, filtered_match_points_b, 1.0);
         }
       }
-            //cv::Mat H_transform = cv::estimateRigidTransform(filtered_match_points_a, filtered_match_points_b, true);//cv::findHomography(match_points_a, match_points_b);
+            cv::Mat warp_mat = cv::estimateRigidTransform(filtered_match_points_a, filtered_match_points_b, true);//cv::findHomography(match_points_a, match_points_b);
             //cv::Mat H_transform = cv::findHomography(match_points_a, match_points_b, CV_RANSAC);
             //printf("The H_transform is below \n");
-            //std::cout << H_transform << std::endl; 
+            std::cout << warp_mat << std::endl; 
+  //std::cout << warp_mat << std::endl;
+  vdata tmp;
+  tmp.a00 = warp_mat.at<double>(0, 0); 
+  tmp.a01 = warp_mat.at<double>(0, 1);
+  tmp.offset_x = warp_mat.at<double>(0, 2);
+  tmp.a10 = warp_mat.at<double>(1, 0); 
+  tmp.a11 = warp_mat.at<double>(1, 1); 
+  tmp.offset_y = warp_mat.at<double>(1, 2);
+  tmp.start_x = 0.0;
+  tmp.start_y = 0.0;
+  printf("Best values are %f %f %f %f %f %f\n", tmp.a00, tmp.a01, tmp.a10, tmp.a11, tmp.offset_x, tmp.offset_y);
+  best_vertex_data = tmp;
+  //RETURNTFK
 
 
       int min_x = 0.0;
@@ -1993,8 +2110,10 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       //best_vertex_data.a10=0.0;
       //best_vertex_data.a01=0.0;
       for (int v = 0; v < merged_graph->num_vertices(); v++) {
-         
+            
         if (merged_graph->getVertexData(v)->z <= section_a) {
+          updateAffineTransform(merged_graph->getVertexData(v), &best_vertex_data);
+          continue;
           
           double start_x = merged_graph->getVertexData(v)->start_x + merged_graph->getVertexData(v)->offset_x;
           double start_y = merged_graph->getVertexData(v)->start_y + merged_graph->getVertexData(v)->offset_y;
@@ -2135,8 +2254,8 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       fprintf(wafer_file, "\t\t\"bbox\": [\n");
       fprintf(wafer_file,
           "\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f\n],",
-          0.0/*vd->start_x+vd->offset_x*/, (vd->end_x/*+vd->offset_x*/),
-          0.0/*vd->start_y+vd->offset_y*/, (vd->end_y/*+vd->offset_y*/));
+          vd->start_x+vd->offset_x, (vd->end_x+vd->offset_x),
+          vd->start_y+vd->offset_y, (vd->end_y+vd->offset_y));
       fprintf(wafer_file, "\t\t\"height\": %d,\n",2724);
       fprintf(wafer_file, "\t\t\"layer\": %d,\n",p_align_data->sec_data[sec_id].section_id + p_align_data->base_section+1);
       fprintf(wafer_file, "\t\t\"maxIntensity\": %f,\n",255.0);

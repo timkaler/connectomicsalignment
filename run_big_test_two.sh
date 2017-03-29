@@ -17,8 +17,8 @@ OUTPUTDIR=$PWD/temp/
 #    $OUTPUTDIR
 
 ./setup.sh numactl --cpunodebind=$NUMANODE ./run_align 1 \
-    $SECTION 2 \
-    $PWD/data/2mfov.txt \
+    $SECTION 3 \
+    $PWD/data/4mfov.txt \
     $OUTPUTDIR \
     $OUTPUTDIR
 
