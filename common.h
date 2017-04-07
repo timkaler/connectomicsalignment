@@ -189,9 +189,9 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 typedef struct _tile_data {
     int section_id;
-    int tile_id;
-    int mfov_id;
-    int index;
+    int tile_id; // index of this tile structure in tiles array of section_data.
+    int mfov_id; // index of the mfov within which this tile resides.
+    int index; // the location 0-61 of tile within the mfov.
     char filepath[MAX_FILEPATH];
     cv::Mat *p_image;
 
@@ -278,6 +278,13 @@ void log_pts_matches(
 
 bool is_tiles_overlap(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2);
 bool is_tiles_overlap_slack(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2, double slack);
+
+static std::string matchPadTo(std::string str, const size_t num, const char paddingChar = '0')
+{
+    if(num > str.size())
+        str.insert(0, num - str.size(), paddingChar);
+    return str;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL MACROS

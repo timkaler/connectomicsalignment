@@ -85,7 +85,7 @@ common.o: common.cpp
 common.S: common.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-match.o: match.cpp
+match.o: match.cpp match_output.h meshoptimize.h ransac.h
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 align.o: align.cpp othersift.cpp gaussianPyramid.cpp boxFilter.cpp filterengine.cpp rowsum.cpp columnsum.cpp minmaxfilter.cpp sift.config.h

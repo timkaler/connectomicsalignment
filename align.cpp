@@ -19,12 +19,13 @@ float EDGE_THRESH_3D = 5.0;
 #include "./match.h"
 #include "./fasttime.h"
 #include "./simple_mutex.h"
-#include "./sift.config.h"
+//#include "./sift.config.h"
 //#include "./othersift.cpp"
 #include "./othersift2.cpp"
 
 // Helper functions
 #include "align_helpers.cpp"
+#include "cilk_tools/Graph.h"
 
 void SIFT_initialize() {
   generateBoxBlurExecutionPlan();
@@ -73,10 +74,10 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
 
       p_sift = new cv::xfeatures2d::SIFT_Impl(
                 0,  // num_features --- unsupported.
-                3,  // number of octaves
+                6,  // number of octaves
                 CONTRAST_THRESH_3D,  // contrast threshold.
                 EDGE_THRESH_3D,  // edge threshold.
-                1.6);  // sigma.
+                1.6*2);  // sigma.
 
         // THEN: This tile is on the boundary, we need to compute SIFT features
         // on the entire section.
@@ -126,10 +127,10 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
 
       p_sift = new cv::xfeatures2d::SIFT_Impl(
                 0,  // num_features --- unsupported.
-                3,  // number of octaves
+                6,  // number of octaves
                 CONTRAST_THRESH_3D,  // contrast threshold.
                 EDGE_THRESH_3D,  // edge threshold.
-                1.6);  // sigma.
+                1.6*2);  // sigma.
 
         // ELSE THEN: This tile is in the interior of the MFOV. Only need to
         //     compute features along the boundary.
@@ -601,18 +602,26 @@ void align_execute(align_data_t *p_align_data) {
     TIMER_VAR(timer);
     START_TIMER(&t_timer);
     read_input(p_align_data);
+
     if (p_align_data->mode == MODE_COMPUTE_KPS_AND_MATCH) {
         START_TIMER(&timer);
         read_tiles(p_align_data);
         STOP_TIMER(&timer, "read_tiles time:");
         START_TIMER(&timer);
         compute_SIFT_parallel(p_align_data);
-        compute_SIFT_parallel_3d(p_align_data);
+        //compute_SIFT_parallel_3d(p_align_data);
         STOP_TIMER(&timer, "compute_SIFT time:");
     }
         free_tiles(p_align_data);
     START_TIMER(&timer);
+
+
+
+    // Before running the graph optimize code, set the graph_list by calling:
+    // set_graph_list(graph_list, true) (from match.h) 
+    // Runs the graph optimize code.
     compute_tile_matches(p_align_data, -1);
+
     STOP_TIMER(&timer, "compute_tile_matches time:");
     STOP_TIMER(&t_timer, "t_total-time:");
 }
