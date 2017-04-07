@@ -1,0 +1,1527 @@
+[
+	{
+		"bbox": [
+			16805.039146,
+			19933.039146,
+			20160.605652,
+			22884.605652
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_001_2016-09-21T1528377920854.bmp"
+			}
+		},
+		"tile_index": 1,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 16805.039146 20160.605652"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19827.592352,
+			22955.592352,
+			20150.910274,
+			22874.910274
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_002_2016-09-21T1528377920854.bmp"
+			}
+		},
+		"tile_index": 2,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 19827.592352 20150.910274"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			18287.707929,
+			21415.707929,
+			17543.194465,
+			20267.194465
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_003_2016-09-21T1528377920854.bmp"
+			}
+		},
+		"tile_index": 3,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 18287.707929 17543.194465"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			15260.458541,
+			18388.458541,
+			17550.922840,
+			20274.922840
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_004_2016-09-21T1528377920854.bmp"
+			}
+		},
+		"tile_index": 4,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 15260.458541 17550.922840"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			13782.661289,
+			16910.661289,
+			20167.264444,
+			22891.264444
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_005_2016-09-21T1528377920854.bmp"
+			}
+		},
+		"tile_index": 5,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 13782.661289 20167.264444"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			15326.371659,
+			18454.371659,
+			22781.721868,
+			25505.721868
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_006_2016-09-21T1528377920854.bmp"
+			}
+		},
+		"tile_index": 6,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 15326.371659 22781.721868"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			18346.733253,
+			21474.733253,
+			22773.607793,
+			25497.607793
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_007_2016-09-21T1528377920854.bmp"
+			}
+		},
+		"tile_index": 7,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 18346.733253 22773.607793"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			22847.619077,
+			25975.619077,
+			20136.197842,
+			22860.197842
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_008_2016-09-21T1528303524528.bmp"
+			}
+		},
+		"tile_index": 8,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 22847.619077 20136.197842"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			21312.045023,
+			24440.045023,
+			17528.717904,
+			20252.717904
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_009_2016-09-21T1528303524528.bmp"
+			}
+		},
+		"tile_index": 9,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 21312.045023 17528.717904"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19773.128353,
+			22901.128353,
+			14926.183190,
+			17650.183190
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_010_2016-09-21T1528377920854.bmp"
+			}
+		},
+		"tile_index": 10,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 19773.128353 14926.183190"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			16743.695224,
+			19871.695224,
+			14937.815250,
+			17661.815250
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_011_2016-09-21T1528379158063.bmp"
+			}
+		},
+		"tile_index": 11,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 16743.695224 14937.815250"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			13712.529788,
+			16840.529788,
+			14944.959265,
+			17668.959265
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_012_2016-09-21T1528379158063.bmp"
+			}
+		},
+		"tile_index": 12,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 13712.529788 14944.959265"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			12233.510326,
+			15361.510326,
+			17555.181313,
+			20279.181313
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_013_2016-09-21T1528379158063.bmp"
+			}
+		},
+		"tile_index": 13,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 12233.510326 17555.181313"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10758.902549,
+			13886.902549,
+			20167.852165,
+			22891.852165
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_014_2016-09-21T1528379158063.bmp"
+			}
+		},
+		"tile_index": 14,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 10758.902549 20167.852165"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			12308.112237,
+			15436.112237,
+			22784.043318,
+			25508.043318
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_015_2016-09-21T1528379158063.bmp"
+			}
+		},
+		"tile_index": 15,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 12308.112237 22784.043318"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			13853.778689,
+			16981.778689,
+			25403.477106,
+			28127.477106
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_016_2016-09-21T1528379158063.bmp"
+			}
+		},
+		"tile_index": 16,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 13853.778689 25403.477106"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			16868.653440,
+			19996.653440,
+			25399.877233,
+			28123.877233
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_017_2016-09-21T1528379158063.bmp"
+			}
+		},
+		"tile_index": 17,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 16868.653440 25399.877233"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19883.153249,
+			23011.153249,
+			25389.735017,
+			28113.735017
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_018_2016-09-21T1528379158063.bmp"
+			}
+		},
+		"tile_index": 18,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 19883.153249 25389.735017"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			21364.076117,
+			24492.076117,
+			22762.678571,
+			25486.678571
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_019_2016-09-21T1528303524528.bmp"
+			}
+		},
+		"tile_index": 19,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 21364.076117 22762.678571"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			25865.940320,
+			28993.940320,
+			20117.012445,
+			22841.012445
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_020_2016-09-21T1528378952261.bmp"
+			}
+		},
+		"tile_index": 20,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 25865.940320 20117.012445"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			24335.742154,
+			27463.742154,
+			17511.882389,
+			20235.882389
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_021_2016-09-21T1528378952261.bmp"
+			}
+		},
+		"tile_index": 21,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 24335.742154 17511.882389"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			22801.535263,
+			25929.535263,
+			14910.131582,
+			17634.131582
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_022_2016-09-21T1528378952261.bmp"
+			}
+		},
+		"tile_index": 22,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 22801.535263 14910.131582"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			21263.318900,
+			24391.318900,
+			12311.294645,
+			15035.294645
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_023_2016-09-21T1528303524528.bmp"
+			}
+		},
+		"tile_index": 23,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 21263.318900 12311.294645"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			18235.169642,
+			21363.169642,
+			12325.129032,
+			15049.129032
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_024_2016-09-21T1528303524528.bmp"
+			}
+		},
+		"tile_index": 24,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 18235.169642 12325.129032"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			15197.646744,
+			18325.646744,
+			12335.284647,
+			15059.284647
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_025_2016-09-21T1528303524528.bmp"
+			}
+		},
+		"tile_index": 25,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 15197.646744 12335.284647"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			12161.198585,
+			15289.198585,
+			12341.916986,
+			15065.916986
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_026_2016-09-21T1528303524528.bmp"
+			}
+		},
+		"tile_index": 26,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 12161.198585 12341.916986"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10681.741139,
+			13809.741139,
+			14946.890385,
+			17670.890385
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_027_2016-09-21T1528303524528.bmp"
+			}
+		},
+		"tile_index": 27,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 10681.741139 14946.890385"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			9205.989834,
+			12333.989834,
+			17554.262184,
+			20278.262184
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_028_2016-09-21T1528378226041.bmp"
+			}
+		},
+		"tile_index": 28,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 9205.989834 17554.262184"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			7734.681320,
+			10862.681320,
+			20163.894585,
+			22887.894585
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_029_2016-09-21T1528378226041.bmp"
+			}
+		},
+		"tile_index": 29,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 7734.681320 20163.894585"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			9288.494899,
+			12416.494899,
+			22782.177705,
+			25506.177705
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_030_2016-09-21T1528378226041.bmp"
+			}
+		},
+		"tile_index": 30,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 9288.494899 22782.177705"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10838.757579,
+			13966.757579,
+			25403.082326,
+			28127.082326
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_031_2016-09-21T1528378226041.bmp"
+			}
+		},
+		"tile_index": 31,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 10838.757579 25403.082326"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			12384.677448,
+			15512.677448,
+			28025.216588,
+			30749.216588
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_032_2016-09-21T1528378226041.bmp"
+			}
+		},
+		"tile_index": 32,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 12384.677448 28025.216588"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			15396.587728,
+			18524.587728,
+			28024.324033,
+			30748.324033
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_033_2016-09-21T1528378226041.bmp"
+			}
+		},
+		"tile_index": 33,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 15396.587728 28024.324033"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			18406.725602,
+			21534.725602,
+			28018.019511,
+			30742.019511
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_034_2016-09-21T1528378226041.bmp"
+			}
+		},
+		"tile_index": 34,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 18406.725602 28018.019511"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			21416.029836,
+			24544.029836,
+			28005.421157,
+			30729.421157
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_035_2016-09-21T1528378226041.bmp"
+			}
+		},
+		"tile_index": 35,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 21416.029836 28005.421157"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			22895.869489,
+			26023.869489,
+			25375.762200,
+			28099.762200
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_036_2016-09-21T1528378952261.bmp"
+			}
+		},
+		"tile_index": 36,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 22895.869489 25375.762200"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			24379.102012,
+			27507.102012,
+			22746.158755,
+			25470.158755
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_037_2016-09-21T1528378952261.bmp"
+			}
+		},
+		"tile_index": 37,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 24379.102012 22746.158755"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			28882.137627,
+			32010.137627,
+			20093.155740,
+			22817.155740
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_038_2016-09-21T1528379221471.bmp"
+			}
+		},
+		"tile_index": 38,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 28882.137627 20093.155740"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			27356.566863,
+			30484.566863,
+			17489.191545,
+			20213.191545
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_039_2016-09-21T1528379221471.bmp"
+			}
+		},
+		"tile_index": 39,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 27356.566863 17489.191545"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			25827.643888,
+			28955.643888,
+			14888.703439,
+			17612.703439
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_040_2016-09-21T1528379221471.bmp"
+			}
+		},
+		"tile_index": 40,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 25827.643888 14888.703439"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			24294.912143,
+			27422.912143,
+			12292.323154,
+			15016.323154
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_041_2016-09-21T1528379221471.bmp"
+			}
+		},
+		"tile_index": 41,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 24294.912143 12292.323154"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			22756.478218,
+			25884.478218,
+			9699.567930,
+			12423.567930
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_042_2016-09-21T1528378952261.bmp"
+			}
+		},
+		"tile_index": 42,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 22756.478218 9699.567930"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19720.600281,
+			22848.600281,
+			9716.112206,
+			12440.112206
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_043_2016-09-21T1528378952261.bmp"
+			}
+		},
+		"tile_index": 43,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 19720.600281 9716.112206"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			16685.759112,
+			19813.759112,
+			9729.726556,
+			12453.726556
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_044_2016-09-21T1528378952261.bmp"
+			}
+		},
+		"tile_index": 44,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 16685.759112 9729.726556"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			13646.125145,
+			16774.125145,
+			9738.750496,
+			12462.750496
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_045_2016-09-21T1528377764268.bmp"
+			}
+		},
+		"tile_index": 45,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 13646.125145 9738.750496"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10605.353861,
+			13733.353861,
+			9741.435827,
+			12465.435827
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_046_2016-09-21T1528377764268.bmp"
+			}
+		},
+		"tile_index": 46,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 10605.353861 9741.435827"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			9124.302758,
+			12252.302758,
+			12341.601707,
+			15065.601707
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_047_2016-09-21T1528377764268.bmp"
+			}
+		},
+		"tile_index": 47,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 9124.302758 12341.601707"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			7652.381042,
+			10780.381042,
+			14942.314905,
+			17666.314905
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_048_2016-09-21T1528377764268.bmp"
+			}
+		},
+		"tile_index": 48,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 7652.381042 14942.314905"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			6176.282973,
+			9304.282973,
+			17549.729095,
+			20273.729095
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_049_2016-09-21T1528377764268.bmp"
+			}
+		},
+		"tile_index": 49,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 6176.282973 17549.729095"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			4708.015175,
+			7836.015175,
+			20154.099685,
+			22878.099685
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_050_2016-09-21T1528377764268.bmp"
+			}
+		},
+		"tile_index": 50,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 4708.015175 20154.099685"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			6267.592917,
+			9395.592917,
+			22774.839949,
+			25498.839949
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_051_2016-09-21T1528377764268.bmp"
+			}
+		},
+		"tile_index": 51,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 6267.592917 22774.839949"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			7822.640780,
+			10950.640780,
+			25397.562619,
+			28121.562619
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_052_2016-09-21T1528377764268.bmp"
+			}
+		},
+		"tile_index": 52,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 7822.640780 25397.562619"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			9372.769666,
+			12500.769666,
+			28023.230064,
+			30747.230064
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_053_2016-09-21T1528376914247.bmp"
+			}
+		},
+		"tile_index": 53,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 9372.769666 28023.230064"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			10918.543556,
+			14046.543556,
+			30650.368946,
+			33374.368946
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_054_2016-09-21T1528376914247.bmp"
+			}
+		},
+		"tile_index": 54,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 10918.543556 30650.368946"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			13927.429174,
+			17055.429174,
+			30651.490933,
+			33375.490933
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_055_2016-09-21T1528376914247.bmp"
+			}
+		},
+		"tile_index": 55,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 13927.429174 30651.490933"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			16932.936776,
+			20060.936776,
+			30647.162795,
+			33371.162795
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_056_2016-09-21T1528376914247.bmp"
+			}
+		},
+		"tile_index": 56,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 16932.936776 30647.162795"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			19939.144122,
+			23067.144122,
+			30639.232840,
+			33363.232840
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_057_2016-09-21T1528376914247.bmp"
+			}
+		},
+		"tile_index": 57,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 19939.144122 30639.232840"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			22948.266092,
+			26076.266092,
+			30627.564749,
+			33351.564749
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_058_2016-09-21T1528376914247.bmp"
+			}
+		},
+		"tile_index": 58,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 22948.266092 30627.564749"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			24424.380753,
+			27552.380753,
+			27990.802329,
+			30714.802329
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_059_2016-09-21T1528376914247.bmp"
+			}
+		},
+		"tile_index": 59,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 24424.380753 27990.802329"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			25907.209804,
+			29035.209804,
+			25357.094724,
+			28081.094724
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_060_2016-09-21T1528376914247.bmp"
+			}
+		},
+		"tile_index": 60,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 25907.209804 25357.094724"
+			}
+		],
+		"width":3128
+	},
+	{
+		"bbox": [
+			27392.632770,
+			30520.632770,
+			22724.856353,
+			25448.856353
+],		"height": 2724,
+		"layer": 2,
+		"maxIntensity": 255.000000,
+		"mfov": 1,
+		"minIntensity": 0.000000,
+		"mipmapLevels": {
+		"0": {
+			"imageUrl": "/efs/IARPA_Dataset/sep14iarpa/wafer01/wafer01_holder02_20160921_19-23-06/002_S2R1/000001/002_000001_061_2016-09-21T1528379221471.bmp"
+			}
+		},
+		"tile_index": 61,
+		"transforms": [
+			{
+				"className": "mpicbg.trakem2.transform.AffineModel2D",
+				"dataString": "1.000000 0.000000 0.000000 1.000000 27392.632770 22724.856353"
+			}
+		],
+		"width":3128
+	}
+]
