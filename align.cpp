@@ -311,7 +311,47 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
   //TRACE_1("compute_SIFT_parallel: finish\n");
 }
 
+/*
+  This will get us an active set of tiles
+  Hopefully we will do something smart here eventually 
+    like a sliding window or the boundry of the expanding region
+  but for now assume nothing
+  it should work regardless of what this active set includes
+  they do nt have to be next to each other or in any pattern
+  not efficiency is really bad if they are not in some form of clump
 
+  currently just returns them in order
+*/
+void get_next_active_set(std::set<int>& /* OUTPUT*/ active_set, std::set<int> finished_set, int total) {
+  int max_size_of_set = 5;
+  if (finished_set.size() == total) {
+    return;
+  }
+  for (int i = 0; i < total; i++) {
+    if (active_set.size() == max_size_of_set) {
+      return;
+    }
+    if (finished_set.find(i) == finished_set.end()){
+      active_set.insert(i);
+    }
+  }
+}
+/*
+  Get all the neighbors for all of the elements in the active set
+*/
+void get_neighbors(std::set<int>& /* OUTPUT*/ neighbor_set, std::set<int> active_set, section_data_t *p_sec_data){
+  // loop over every element in the active set and then all of their neighbors
+  for (auto active : active_set) {
+    int indices_to_check[50];
+    int indices_to_check_len = get_all_close_tiles(active, p_sec_data, indices_to_check);
+    for (int i = 0; i < indices_to_check_len; i++) {
+      // if any are not in the active set add them to the neighbor set
+      if ( active_set.find(indices_to_check[i]) == active_set.end()) {
+        neighbor_set.insert(indices_to_check[i]);
+      }
+    }
+  }
+}
 
 void compute_SIFT_parallel(align_data_t *p_align_data) {
   static double totalTime = 0;
@@ -320,277 +360,322 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 
   SIFT_initialize();
 
+  // the graph_list
+  std::vector<Graph<vdata, edata>* > graph_list;
+
   std::set<std::string> created_paths;
   simple_mutex_t created_paths_lock;
   simple_mutex_init(&created_paths_lock);
   #pragma cilk grainsize=1
   cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
-    cilk_for (int tile_id = 0; tile_id < p_sec_data->n_tiles; tile_id++) {
-      tile_data_t *p_tile_data = &(p_sec_data->tiles[tile_id]);
+    std::set<int> active_set;
+    std::set<int> finished_set;
+    get_next_active_set(active_set, finished_set, p_sec_data->n_tiles);
+
+    // each section has its own graph
+    Graph<vdata, edata>* graph;
+    graph = new Graph<vdata, edata>();
+    printf("REsizing the graph to be size %d\n", p_sec_data->n_tiles);
+    graph->resize(p_sec_data->n_tiles);
+    graph_list.push_back(graph);
+
+    while (active_set.size() > 0) {
+      std::set<int> neighbor_set;
+      get_neighbors(neighbor_set, active_set, p_sec_data);
+      std::set<int> active_and_neighbors;
+      active_and_neighbors.insert(active_set.begin(), active_set.end());
+      active_and_neighbors.insert(neighbor_set.begin(), neighbor_set.end());
+      for (auto tile_id : active_and_neighbors) {
+        tile_data_t *p_tile_data = &(p_sec_data->tiles[tile_id]);
 
 
-      (*p_tile_data->p_image).create(3128, 2724, CV_8UC1);
-      (*p_tile_data->p_image) = cv::imread(
-          p_tile_data->filepath, 
-          CV_LOAD_IMAGE_UNCHANGED);
+        (*p_tile_data->p_image).create(3128, 2724, CV_8UC1);
+        (*p_tile_data->p_image) = cv::imread(
+            p_tile_data->filepath, 
+            CV_LOAD_IMAGE_UNCHANGED);
+
+        int rows = p_tile_data->p_image->rows;
+        int cols = p_tile_data->p_image->cols;
+
+        ASSERT((rows % SIFT_D1_SHIFT) == 0);
+        ASSERT((cols % SIFT_D2_SHIFT) == 0);
+        cv::Ptr<cv::Feature2D> p_sift;
 
 
 
+        std::vector<cv::KeyPoint> v_kps[SIFT_MAX_SUB_IMAGES];
+        cv::Mat m_kps_desc[SIFT_MAX_SUB_IMAGES];
 
-      int rows = p_tile_data->p_image->rows;
-      int cols = p_tile_data->p_image->cols;
+        int n_sub_images;
+        if ((p_tile_data->tile_id > MFOV_BOUNDARY_THRESH)) {
 
-      ASSERT((rows % SIFT_D1_SHIFT) == 0);
-      ASSERT((cols % SIFT_D2_SHIFT) == 0);
-      cv::Ptr<cv::Feature2D> p_sift;
+          p_sift = new cv::xfeatures2d::SIFT_Impl(
+                  0,  // num_features --- unsupported.
+                  6,  // number of octaves
+                  CONTRAST_THRESH,  // contrast threshold.
+                  5,  // edge threshold.
+                  1.6);  // sigma.
 
+          // THEN: This tile is on the boundary, we need to compute SIFT features
+          // on the entire section.
+          int max_rows = rows / SIFT_D1_SHIFT;
+          int max_cols = cols / SIFT_D2_SHIFT;
+          n_sub_images = max_rows * max_cols;
 
+          cilk_for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
+            cilk_for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
+              // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
+              cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(cur_d2, cur_d1,
+                  SIFT_D2_SHIFT, SIFT_D1_SHIFT));
 
-      std::vector<cv::KeyPoint> v_kps[SIFT_MAX_SUB_IMAGES];
-      cv::Mat m_kps_desc[SIFT_MAX_SUB_IMAGES];
+              // Mask for subimage
+              cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT, SIFT_D2_SHIFT,
+                  CV_8UC1);
 
-      int n_sub_images;
-      if ((p_tile_data->tile_id > MFOV_BOUNDARY_THRESH)) {
+              // Compute a subimage ID, refering to a tile within larger
+              //   2d image.
+              int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
+              int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
+              int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
 
-      p_sift = new cv::xfeatures2d::SIFT_Impl(
-                0,  // num_features --- unsupported.
-                6,  // number of octaves
-                CONTRAST_THRESH,  // contrast threshold.
-                5,  // edge threshold.
-                1.6);  // sigma.
+              // Detect the SIFT features within the subimage.
+              fasttime_t tstart = gettime();
+              p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
+                  m_kps_desc[sub_im_id]);
 
-        // THEN: This tile is on the boundary, we need to compute SIFT features
-        // on the entire section.
-        int max_rows = rows / SIFT_D1_SHIFT;
-        int max_cols = cols / SIFT_D2_SHIFT;
-        n_sub_images = max_rows * max_cols;
+              fasttime_t tend = gettime();
+              totalTime += tdiff(tstart, tend);
 
-        cilk_for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
-          cilk_for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
+              for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
+                v_kps[sub_im_id][i].pt.x += cur_d2;
+                v_kps[sub_im_id][i].pt.y += cur_d1;
+              }
+            }
+          }
+          // Regardless of whether we were on or off MFOV boundary, we concat
+          //   the keypoints and their descriptors here.
+          for (int i = 0; i < n_sub_images; i++) {
+              for (int j = 0; j < v_kps[i].size(); j++) {
+                  (*p_tile_data->p_kps).push_back(v_kps[i][j]);
+              }
+          }
+
+        } else {
+
+          p_sift = new cv::xfeatures2d::SIFT_Impl(
+                  0,  // num_features --- unsupported.
+                  6,  // number of octaves
+                  CONTRAST_THRESH,  // contrast threshold.
+                  5,  // edge threshold.
+                  1.6);  // sigma.
+
+          // ELSE THEN: This tile is in the interior of the MFOV. Only need to
+          //     compute features along the boundary.
+          n_sub_images = 4;
+
+          // BEGIN TOP SLICE
+          {
             // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
-            cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(cur_d2, cur_d1,
-                SIFT_D2_SHIFT, SIFT_D1_SHIFT));
+            cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
+                0, 0, 3128, OVERLAP_2D));
 
             // Mask for subimage
-            cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT, SIFT_D2_SHIFT,
-                CV_8UC1);
-
-            // Compute a subimage ID, refering to a tile within larger
-            //   2d image.
-            int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
-            int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
-            int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
+            cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, 3128, CV_8UC1);
+            int sub_im_id = 0;
 
             // Detect the SIFT features within the subimage.
             fasttime_t tstart = gettime();
             p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
                 m_kps_desc[sub_im_id]);
-
             fasttime_t tend = gettime();
             totalTime += tdiff(tstart, tend);
-
             for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
-              v_kps[sub_im_id][i].pt.x += cur_d2;
-              v_kps[sub_im_id][i].pt.y += cur_d1;
+                v_kps[sub_im_id][i].pt.x += 0;  // cur_d2;
+                v_kps[sub_im_id][i].pt.y += 0;  // cur_d1;
             }
           }
-        }
-        // Regardless of whether we were on or off MFOV boundary, we concat
-        //   the keypoints and their descriptors here.
-        for (int i = 0; i < n_sub_images; i++) {
-            for (int j = 0; j < v_kps[i].size(); j++) {
-                (*p_tile_data->p_kps).push_back(v_kps[i][j]);
+          // END TOP SLICE
+
+          // BEGIN LEFT SLICE
+          {
+            // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
+            cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
+                0, OVERLAP_2D, OVERLAP_2D, 2724-OVERLAP_2D));
+
+            // Mask for subimage
+            cv::Mat sum_im_mask = cv::Mat::ones(2724-OVERLAP_2D, OVERLAP_2D,
+                CV_8UC1);
+            int sub_im_id = 1;
+            // Detect the SIFT features within the subimage.
+            fasttime_t tstart = gettime();
+            p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
+               m_kps_desc[sub_im_id]);
+            fasttime_t tend = gettime();
+            totalTime += tdiff(tstart, tend);
+            for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
+                v_kps[sub_im_id][i].pt.x += 0;  // cur_d2;
+                v_kps[sub_im_id][i].pt.y += OVERLAP_2D;  // cur_d1;
             }
-        }
-
-      } else {
-
-      p_sift = new cv::xfeatures2d::SIFT_Impl(
-                0,  // num_features --- unsupported.
-                6,  // number of octaves
-                CONTRAST_THRESH,  // contrast threshold.
-                5,  // edge threshold.
-                1.6);  // sigma.
-
-        // ELSE THEN: This tile is in the interior of the MFOV. Only need to
-        //     compute features along the boundary.
-        n_sub_images = 4;
-
-        // BEGIN TOP SLICE
-        {
-          // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
-          cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
-              0, 0, 3128, OVERLAP_2D));
-
-          // Mask for subimage
-          cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, 3128, CV_8UC1);
-          int sub_im_id = 0;
-
-          // Detect the SIFT features within the subimage.
-          fasttime_t tstart = gettime();
-          p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-              m_kps_desc[sub_im_id]);
-          fasttime_t tend = gettime();
-          totalTime += tdiff(tstart, tend);
-          for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
-              v_kps[sub_im_id][i].pt.x += 0;  // cur_d2;
-              v_kps[sub_im_id][i].pt.y += 0;  // cur_d1;
           }
-        }
-        // END TOP SLICE
+          // END LEFT SLICE
 
-        // BEGIN LEFT SLICE
-        {
-          // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
-          cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
-              0, OVERLAP_2D, OVERLAP_2D, 2724-OVERLAP_2D));
+          // BEGIN RIGHT SLICE
+          {
+            // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
+            cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
+                3128-OVERLAP_2D, OVERLAP_2D, OVERLAP_2D, 2724-OVERLAP_2D));
 
-          // Mask for subimage
-          cv::Mat sum_im_mask = cv::Mat::ones(2724-OVERLAP_2D, OVERLAP_2D,
-              CV_8UC1);
-          int sub_im_id = 1;
-          // Detect the SIFT features within the subimage.
-          fasttime_t tstart = gettime();
-          p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-             m_kps_desc[sub_im_id]);
-          fasttime_t tend = gettime();
-          totalTime += tdiff(tstart, tend);
-          for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
-              v_kps[sub_im_id][i].pt.x += 0;  // cur_d2;
-              v_kps[sub_im_id][i].pt.y += OVERLAP_2D;  // cur_d1;
-          }
-        }
-        // END LEFT SLICE
+            // Mask for subimage
+            cv::Mat sum_im_mask = cv::Mat::ones(2724-OVERLAP_2D, OVERLAP_2D,
+                CV_8UC1);
+            int sub_im_id = 2;
+            // Detect the SIFT features within the subimage.
+            fasttime_t tstart = gettime();
 
-        // BEGIN RIGHT SLICE
-        {
-          // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
-          cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
-              3128-OVERLAP_2D, OVERLAP_2D, OVERLAP_2D, 2724-OVERLAP_2D));
-
-          // Mask for subimage
-          cv::Mat sum_im_mask = cv::Mat::ones(2724-OVERLAP_2D, OVERLAP_2D,
-              CV_8UC1);
-          int sub_im_id = 2;
-          // Detect the SIFT features within the subimage.
-          fasttime_t tstart = gettime();
-
-          p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-              m_kps_desc[sub_im_id]);
-          fasttime_t tend = gettime();
-          totalTime += tdiff(tstart, tend);
-          for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
-              v_kps[sub_im_id][i].pt.x += 3128-OVERLAP_2D;  // cur_d2;
-              v_kps[sub_im_id][i].pt.y += OVERLAP_2D;  // cur_d1;
-          }
-        }
-        // END RIGHT SLICE
-
-        // BEGIN BOTTOM SLICE
-        {
-          // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
-          cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
-              OVERLAP_2D, 2724-OVERLAP_2D, 3128-OVERLAP_2D, OVERLAP_2D));
-
-          // Mask for subimage
-          cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, 3128-OVERLAP_2D,
-              CV_8UC1);
-          // Compute a subimage ID, refering to a tile within larger
-          //   2d image.
-          int sub_im_id = 3;
-          // Detect the SIFT features within the subimage.
-          fasttime_t tstart = gettime();
-
-          p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-              m_kps_desc[sub_im_id]);
-          fasttime_t tend = gettime();
-          totalTime += tdiff(tstart, tend);
-          for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
-              v_kps[sub_im_id][i].pt.x += OVERLAP_2D;  // cur_d2;
-              v_kps[sub_im_id][i].pt.y += (2724-OVERLAP_2D);  // cur_d1;
-          }
-        }
-        // END BOTTOM SLICE
-
-        // Regardless of whether we were on or off MFOV boundary, we concat
-        //   the keypoints and their descriptors here.
-        for (int i = 0; i < n_sub_images; i++) {
-            for (size_t j = 0; j < v_kps[i].size(); j++) {
-                (*p_tile_data->p_kps).push_back(v_kps[i][j]);
+            p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
+                m_kps_desc[sub_im_id]);
+            fasttime_t tend = gettime();
+            totalTime += tdiff(tstart, tend);
+            for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
+                v_kps[sub_im_id][i].pt.x += 3128-OVERLAP_2D;  // cur_d2;
+                v_kps[sub_im_id][i].pt.y += OVERLAP_2D;  // cur_d1;
             }
+          }
+          // END RIGHT SLICE
+
+          // BEGIN BOTTOM SLICE
+          {
+            // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
+            cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
+                OVERLAP_2D, 2724-OVERLAP_2D, 3128-OVERLAP_2D, OVERLAP_2D));
+
+            // Mask for subimage
+            cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, 3128-OVERLAP_2D,
+                CV_8UC1);
+            // Compute a subimage ID, refering to a tile within larger
+            //   2d image.
+            int sub_im_id = 3;
+            // Detect the SIFT features within the subimage.
+            fasttime_t tstart = gettime();
+
+            p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
+                m_kps_desc[sub_im_id]);
+            fasttime_t tend = gettime();
+            totalTime += tdiff(tstart, tend);
+            for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
+                v_kps[sub_im_id][i].pt.x += OVERLAP_2D;  // cur_d2;
+                v_kps[sub_im_id][i].pt.y += (2724-OVERLAP_2D);  // cur_d1;
+            }
+          }
+          // END BOTTOM SLICE
+
+          // Regardless of whether we were on or off MFOV boundary, we concat
+          //   the keypoints and their descriptors here.
+          for (int i = 0; i < n_sub_images; i++) {
+              for (size_t j = 0; j < v_kps[i].size(); j++) {
+                  (*p_tile_data->p_kps).push_back(v_kps[i][j]);
+              }
+          }
         }
-      }
 
-      cv::vconcat(m_kps_desc, n_sub_images, *(p_tile_data->p_kps_desc));
+        cv::vconcat(m_kps_desc, n_sub_images, *(p_tile_data->p_kps_desc));
 
-      int NUM_KEYPOINTS = p_tile_data->p_kps->size();
-      printf("The number of keypoints is %d\n", NUM_KEYPOINTS);
-      if (NUM_KEYPOINTS > 0) {
-        #ifndef SKIPHDF5
-        // NOTE(TFK): Begin HDF5 preparation
-        std::vector<float> locations;
-        std::vector<float> octaves;
-        std::vector<float> responses;
-        std::vector<float> sizes;
-        for (int i = 0; i < NUM_KEYPOINTS; i++) {
-          locations.push_back((*(p_tile_data->p_kps))[i].pt.x);
-          locations.push_back((*(p_tile_data->p_kps))[i].pt.y);
-          octaves.push_back((*(p_tile_data->p_kps))[i].octave);
-          responses.push_back((*(p_tile_data->p_kps))[i].response);
-          sizes.push_back((*(p_tile_data->p_kps))[i].size);
-        }
-        std::string filepath = std::string(p_tile_data->filepath);
-        std::string timagename = filepath.substr(filepath.find_last_of("/")+1);
-        std::string real_section_id =
-            timagename.substr(0, timagename.find("_"));
-        std::string image_path = std::string(p_align_data->output_dirpath) +
-            "/sifts/W01_Sec"+real_section_id+"/" +
-            padTo(std::to_string(p_tile_data->mfov_id), 6);
+        int NUM_KEYPOINTS = p_tile_data->p_kps->size();
+        printf("The number of keypoints is %d\n", NUM_KEYPOINTS);
+        if (NUM_KEYPOINTS > 0) {
+          #ifndef SKIPHDF5
+            // NOTE(TFK): Begin HDF5 preparation
+            std::vector<float> locations;
+            std::vector<float> octaves;
+            std::vector<float> responses;
+            std::vector<float> sizes;
+            for (int i = 0; i < NUM_KEYPOINTS; i++) {
+              locations.push_back((*(p_tile_data->p_kps))[i].pt.x);
+              locations.push_back((*(p_tile_data->p_kps))[i].pt.y);
+              octaves.push_back((*(p_tile_data->p_kps))[i].octave);
+              responses.push_back((*(p_tile_data->p_kps))[i].response);
+              sizes.push_back((*(p_tile_data->p_kps))[i].size);
+            }
+            std::string filepath = std::string(p_tile_data->filepath);
+            std::string timagename = filepath.substr(filepath.find_last_of("/")+1);
+            std::string real_section_id =
+                timagename.substr(0, timagename.find("_"));
+            std::string image_path = std::string(p_align_data->output_dirpath) +
+                "/sifts/W01_Sec"+real_section_id+"/" +
+                padTo(std::to_string(p_tile_data->mfov_id), 6);
 
-        simple_acquire(&created_paths_lock);
-        if (created_paths.find(image_path) == created_paths.end()) {
-          system((std::string("mkdir -p ") + image_path).c_str());
-          created_paths.insert(image_path);
-        }
-        simple_release(&created_paths_lock);
+            simple_acquire(&created_paths_lock);
+            if (created_paths.find(image_path) == created_paths.end()) {
+              system((std::string("mkdir -p ") + image_path).c_str());
+              created_paths.insert(image_path);
+            }
+            simple_release(&created_paths_lock);
 
-        printf("timagename is %s, real_section_id %s\n", timagename.c_str(),
-           real_section_id.c_str());
-        image_path = image_path + std::string("/W01_Sec")+real_section_id +
-            std::string("_sifts_") +
-            timagename.substr(0, timagename.find_last_of(".")) +
-            std::string(".hdf5");
+            printf("timagename is %s, real_section_id %s\n", timagename.c_str(),
+               real_section_id.c_str());
+            image_path = image_path + std::string("/W01_Sec")+real_section_id +
+                std::string("_sifts_") +
+                timagename.substr(0, timagename.find_last_of(".")) +
+                std::string(".hdf5");
 
-        //printf("creating hdf5 with size %d\n", sizes.size());
-        printf("creating hdf5 with path %s\n", image_path.c_str());
-        create_sift_hdf5(image_path.c_str(), p_tile_data->p_kps->size(), sizes,
-            responses, octaves, locations, p_tile_data->filepath);
-        cv::Ptr<cv::hdf::HDF5> h5io =
-            cv::hdf::open(cv::String(image_path.c_str()));
-        int offset1[2] = {0, 0};
-        int offset2[2] = {(int)p_tile_data->p_kps->size(), 128};
-        h5io->dswrite(*(p_tile_data->p_kps_desc), cv::String("descs"),
-            &(offset1[0]), &(offset2[0]));
-        h5io->close();
-        // NOTE(TFK): End HDF5 preparation.
-        #endif
-        //TRACE_1("    -- n_kps      : %lu\n", p_tile_data->p_kps->size());
-        //TRACE_1("    -- n_kps_desc : %d %d\n", p_tile_data->p_kps_desc->rows,
-        //    p_tile_data->p_kps_desc->cols);
+            //printf("creating hdf5 with size %d\n", sizes.size());
+            printf("creating hdf5 with path %s\n", image_path.c_str());
+            create_sift_hdf5(image_path.c_str(), p_tile_data->p_kps->size(), sizes,
+                responses, octaves, locations, p_tile_data->filepath);
+            cv::Ptr<cv::hdf::HDF5> h5io =
+                cv::hdf::open(cv::String(image_path.c_str()));
+            int offset1[2] = {0, 0};
+            int offset2[2] = {(int)p_tile_data->p_kps->size(), 128};
+            h5io->dswrite(*(p_tile_data->p_kps_desc), cv::String("descs"),
+                &(offset1[0]), &(offset2[0]));
+            h5io->close();
+            // NOTE(TFK): End HDF5 preparation.
+          #endif
+          //TRACE_1("    -- n_kps      : %lu\n", p_tile_data->p_kps->size());
+          //TRACE_1("    -- n_kps_desc : %d %d\n", p_tile_data->p_kps_desc->rows,
+          //    p_tile_data->p_kps_desc->cols);
 
-        #ifdef LOGIMAGES
-        LOG_KPS(p_tile_data);
-        #endif
+          #ifdef LOGIMAGES
+          LOG_KPS(p_tile_data);
+          #endif
         } else {
-           printf("WARNING::: NO KEYPOINTS FOUND!\n");
+             printf("WARNING::: NO KEYPOINTS FOUND!\n");
         }
         (*p_tile_data->p_image).release();
       }
 
-     
-      compute_tile_matches(p_align_data, sec_id);
+      compute_tile_matches_active_set(p_align_data, sec_id, active_set, graph, neighbor_set);
+      finished_set.insert(active_set.begin(), active_set.end());
+      active_set.clear();
+      get_next_active_set(active_set, finished_set, p_sec_data->n_tiles);
     }
+    // Initialize data in the graph representation.
+    printf("Size of the graph is %d\n", graph->num_vertices());
+    for (int i = 0; i < graph->num_vertices(); i++) {
+      vdata* d = graph->getVertexData(i);
+      _tile_data tdata = p_sec_data->tiles[i];
+      d->vertex_id = i;
+      d->mfov_id = tdata.mfov_id;
+      d->tile_index = tdata.index;
+      d->tile_id = i;
+      d->start_x = tdata.x_start;
+      d->end_x = tdata.x_finish;
+      d->start_y = tdata.y_start;
+      d->end_y = tdata.y_finish;
+      d->offset_x = 0.0;
+      d->offset_y = 0.0;
+      d->iteration_count = 0;
+      d->last_radius_value = 9.0;
+      d->z = sec_id;
+      d->a00 = 1.0;
+      d->a01 = 0.0;
+      d->a10 = 0.0;
+      d->a11 = 1.0;
+    }
+    graph->section_id = sec_id;
+  }
+  set_graph_list(graph_list, true);
   //TRACE_1("compute_SIFT_parallel: finish\n");
 }
 

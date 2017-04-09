@@ -72,9 +72,7 @@ static bool bbox_contains(float pt_x, float pt_y,
 }
 
 // Helper method to match the features of two tiles.
-static void match_features(std::vector< cv::DMatch > &matches,
-                           cv::Mat &descs1, cv::Mat &descs2,
-                           float rod) {
+static void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, cv::Mat &descs2, float rod) {
   std::vector< std::vector < cv::DMatch > > raw_matches;
   if (descs1.rows + descs1.cols > descs2.rows + descs2.cols) {
     //cv::BFMatcher matcher(cv::NORM_L2, false);
@@ -123,6 +121,26 @@ static double dist(const cv::Point2f a_pt, const cv::Point2f b_pt) {
 ////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////
+/*
+  gets all of the close tiles with an ID more than atile_id
+  and puts the list into the array indices to check
+  assuures that their are less than 50 close tiles
+*/
+int get_all_close_tiles(int atile_id, section_data_t *p_sec_data, int* indices_to_check) {
+  int indices_to_check_len = 0;
+  tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
+  for (int i = atile_id+1; i < p_sec_data->n_tiles; i++) {
+    tile_data_t *b_tile = &(p_sec_data->tiles[i]);
+    // Skip tiles that don't overlap
+    if (!is_tiles_overlap(a_tile, b_tile)) continue;
+    indices_to_check[indices_to_check_len++] = i;
+    if (indices_to_check_len > 49) {
+       printf("Major error!!! wtf\n");
+    }
+    assert(indices_to_check_len <= 49);
+  }
+  return indices_to_check_len;
+}
 
 void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   TRACE_1("compute_tile_matches: start\n");
@@ -155,20 +173,11 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
         printf("Big error!\n");    
       }
       tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
-      int indices_to_check[50];
-      int indices_to_check_len = 0;
 
       // get all close tiles.
-      for (int i = atile_id+1; i < p_sec_data->n_tiles; i++) {
-        tile_data_t *b_tile = &(p_sec_data->tiles[i]);
-        // Skip tiles that don't overlap
-        if (!is_tiles_overlap(a_tile, b_tile)) continue;
-        indices_to_check[indices_to_check_len++] = i;
-        if (indices_to_check_len > 49) {
-           printf("Major error!!! wtf\n");
-        }
-        assert(indices_to_check_len <= 49);
-      }
+      int indices_to_check[50];
+      int indices_to_check_len = get_all_close_tiles(atile_id, p_sec_data, indices_to_check);
+
 
       for (int tmpindex = 0; tmpindex < indices_to_check_len; tmpindex++) {
          do {
@@ -548,4 +557,240 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   }
 
   //TRACE_1("compute_tile_matches: finish\n");
+}
+
+void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std::set<int> active_set, Graph<vdata, edata>* graph, std::set<int> neighbor_set) {
+  TRACE_1("compute_tile_matches: start\n");
+
+  //section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
+
+  // Iterate over all pairs of tiles
+  
+  section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
+
+  for (auto it = active_set.begin(); it != active_set.end(); ++it) {
+    int atile_id = *it;
+    //printf("The tile id is %d\n", atile_id);
+    if (atile_id >= p_sec_data->n_tiles) {
+      printf("Big error!\n");    
+    }
+    tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
+
+    // get all close tiles.
+    int indices_to_check[50];
+    int indices_to_check_len = get_all_close_tiles(atile_id, p_sec_data, indices_to_check);
+
+
+    for (int tmpindex = 0; tmpindex < indices_to_check_len; tmpindex++) {
+       do {
+      int btile_id = indices_to_check[tmpindex];
+      tile_data_t *b_tile = &(p_sec_data->tiles[btile_id]);
+
+      // Skip tiles that don't overlap
+      if (!is_tiles_overlap(a_tile, b_tile)) continue;  // just in case.
+
+      // Index pair is:
+      // a_tile->mfov_id, a_tile->index
+      // b_tile->mfov_id, b_tile->index
+      //TRACE_1("    -- index_pair [%d_%d, %d_%d]\n",
+      //        a_tile->mfov_id, a_tile->index,
+      //        b_tile->mfov_id, b_tile->index);
+
+      //TRACE_1("    -- %d_%d features_num: %lu\n",
+      //        a_tile->mfov_id, a_tile->index,
+      //        a_tile->p_kps->size());
+      //TRACE_1("    -- %d_%d features_num: %lu\n",
+      //        b_tile->mfov_id, b_tile->index,
+      //        b_tile->p_kps->size());
+
+      // Check that both tiles have enough features to match.
+      if (a_tile->p_kps->size() < MIN_FEATURES_NUM) {
+        //TRACE_1("Less than %d features in tile %d_%d, saving empty match file\n",
+        //        MIN_FEATURES_NUM,
+        //        a_tile->mfov_id, a_tile->index);
+        continue;
+      }
+      if (b_tile->p_kps->size() < MIN_FEATURES_NUM) {
+        //TRACE_1("Less than %d features in tile %d_%d, saving empty match file\n",
+        //        MIN_FEATURES_NUM,
+        //        b_tile->mfov_id, b_tile->index);
+        continue;
+      }
+
+      // Filter the features, so that only features that are in the
+      // overlapping tile will be matches.
+      std::vector< cv::KeyPoint > atile_kps_in_overlap, btile_kps_in_overlap;
+      atile_kps_in_overlap.reserve(a_tile->p_kps->size());
+      btile_kps_in_overlap.reserve(b_tile->p_kps->size());
+      // atile_kps_in_overlap.clear(); btile_kps_in_overlap.clear();
+      cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
+      {
+        // Compute bounding box of overlap
+        int overlap_x_start = a_tile->x_start > b_tile->x_start ?
+                                  a_tile->x_start : b_tile->x_start;
+        int overlap_x_finish = a_tile->x_finish < b_tile->x_finish ?
+                                  a_tile->x_finish : b_tile->x_finish;
+        int overlap_y_start = a_tile->y_start > b_tile->y_start ?
+                                  a_tile->y_start : b_tile->y_start;
+        int overlap_y_finish = a_tile->y_finish < b_tile->y_finish ?
+                                  a_tile->y_finish : b_tile->y_finish;
+        // Add 50-pixel offset
+        const int OFFSET = 50;
+        overlap_x_start -= OFFSET;
+        overlap_x_finish += OFFSET;
+        overlap_y_start -= OFFSET;
+        overlap_y_finish += OFFSET;
+
+        std::vector< cv::Mat > atile_kps_desc_in_overlap_list;
+        atile_kps_desc_in_overlap_list.reserve(a_tile->p_kps->size());
+        std::vector< cv::Mat > btile_kps_desc_in_overlap_list;
+        btile_kps_desc_in_overlap_list.reserve(b_tile->p_kps->size());
+
+        // Filter the points in a_tile.
+        for (size_t pt_idx = 0; pt_idx < a_tile->p_kps->size(); ++pt_idx) {
+          cv::Point2f pt = (*a_tile->p_kps)[pt_idx].pt;
+          if (bbox_contains(pt.x + a_tile->x_start,
+                            pt.y + a_tile->y_start,  // transformed_pt[0],
+                            overlap_x_start, overlap_x_finish,
+                            overlap_y_start, overlap_y_finish)) {
+            atile_kps_in_overlap.push_back((*a_tile->p_kps)[pt_idx]);
+            atile_kps_desc_in_overlap_list.push_back(
+                a_tile->p_kps_desc->row(pt_idx).clone());
+          }
+        }
+        cv::vconcat(atile_kps_desc_in_overlap_list,
+            (atile_kps_desc_in_overlap));
+
+        // Filter the points in b_tile.
+        for (size_t pt_idx = 0; pt_idx < b_tile->p_kps->size(); ++pt_idx) {
+          cv::Point2f pt = (*b_tile->p_kps)[pt_idx].pt;
+          if (bbox_contains(pt.x + b_tile->x_start,
+                            pt.y + b_tile->y_start,  // transformed_pt[0],
+                            overlap_x_start, overlap_x_finish,
+                            overlap_y_start, overlap_y_finish)) {
+            btile_kps_in_overlap.push_back((*b_tile->p_kps)[pt_idx]);
+            btile_kps_desc_in_overlap_list.push_back(b_tile->p_kps_desc->row(pt_idx).clone());
+          }
+        }
+        cv::vconcat(btile_kps_desc_in_overlap_list,
+            (btile_kps_desc_in_overlap));
+      }
+
+      //TRACE_1("    -- %d_%d overlap_features_num: %lu\n",
+      //        a_tile->mfov_id, a_tile->index,
+      //        atile_kps_in_overlap.size());
+      //TRACE_1("    -- %d_%d overlap_features_num: %lu\n",
+      //        b_tile->mfov_id, b_tile->index,
+      //        btile_kps_in_overlap.size());
+
+      // TODO(TB): Deal with optionally filtering the maximal number of
+      // features from one tile.
+      //
+      // TB: The corresponding code in the Python pipeline did not
+      // appear to run at all, at least on the small data set, so
+      // I'm skipping this part for now.
+
+      // Check that both tiles have enough features in the overlap
+      // to match.
+      if (atile_kps_in_overlap.size() < MIN_FEATURES_NUM) {
+        //TRACE_1("Less than %d features in the overlap in tile %d_%d, saving empty match file\n",
+        //        MIN_FEATURES_NUM,
+        //        a_tile->mfov_id, a_tile->index);
+        continue;
+      }
+      if (btile_kps_in_overlap.size() < MIN_FEATURES_NUM) {
+        //TRACE_1("Less than %d features in the overlap in tile %d_%d, saving empty match file\n",
+        //        MIN_FEATURES_NUM,
+        //        b_tile->mfov_id, b_tile->index);
+        continue;
+      }
+
+      // Match the features
+      std::vector< cv::DMatch > matches;
+      match_features(matches,
+                     atile_kps_desc_in_overlap,
+                     btile_kps_desc_in_overlap,
+                     ROD);
+
+      //TRACE_1("    -- [%d_%d, %d_%d] matches: %lu\n",
+      //        a_tile->mfov_id, a_tile->index,
+      //        b_tile->mfov_id, b_tile->index,
+      //        matches.size());
+
+
+      // Filter the matches with RANSAC
+      std::vector<cv::Point2f> match_points_a, match_points_b;
+      for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
+        match_points_a.push_back(
+            atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
+        match_points_b.push_back(
+            btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
+      }
+
+      // Use cv::findHomography to run RANSAC on the match points.
+      //
+      // TB: Using the maxEpsilon value (10) from
+      // conf_example.json as the ransacReprojThreshold for
+      // findHomography.
+      //
+      // TODO(TB): Read the appropriate RANSAC settings from the
+      // configuration file.
+      if (matches.size() < MIN_FEATURES_NUM) {
+        //TRACE_1("Less than %d matched features, saving empty match file\n",
+        //        MIN_FEATURES_NUM);
+        if (matches.size() == 0) printf("There are zero matches.\n");
+        continue;
+      }
+
+      bool* mask = (bool*) calloc(match_points_a.size(), 1);
+      double thresh = 10.0;
+      tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
+
+
+      std::vector< cv::Point2f > filtered_match_points_a(0);
+      std::vector< cv::Point2f > filtered_match_points_b(0);
+
+      int num_matches_filtered = 0;
+      // Use the output mask to filter the matches
+      for (size_t i = 0; i < matches.size(); ++i) {
+        if (mask[i]) {
+          num_matches_filtered++;
+          filtered_match_points_a.push_back(
+              atile_kps_in_overlap[matches[i].queryIdx].pt);
+          filtered_match_points_b.push_back(
+              btile_kps_in_overlap[matches[i].trainIdx].pt);
+        }
+      }
+      free(mask);
+      if (num_matches_filtered > 0) {
+        graph->insert_matches(atile_id, btile_id,
+            filtered_match_points_a, filtered_match_points_b, 1.0);
+      }
+
+
+      // NOTE(TFK): Previously we only output features if we had at least MIN_FEATURES_NUM because
+      //              the code reading the match files would add "fake" matches between adjacent tiles
+      //              which tended to do better than less than MIN_FEATURES_NUM real matches.
+      //if (filtered_match_points_a.size() < MIN_FEATURES_NUM) {
+      //  //TRACE_1("Less than %d matched features, saving empty match file\n",
+      //  //        MIN_FEATURES_NUM);
+      //  continue;
+      //}
+
+    } while (false); // end the do while wrapper.
+    }  // for (btile_id)
+  }  // for (atile_id)
+
+
+  std::set<int> active_and_neighbors;
+  active_and_neighbors.insert(active_set.begin(), active_set.end());
+  active_and_neighbors.insert(neighbor_set.begin(), neighbor_set.end());
+  // Release the memory for keypoints after they've been filtered via matching.
+  for (auto it = active_and_neighbors.begin(); it != active_and_neighbors.end(); ++it) {
+    int atile_id = *it;
+    tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
+    a_tile->p_kps->clear();
+    std::vector<cv::KeyPoint>().swap(*(a_tile->p_kps));
+    ((a_tile->p_kps_desc))->release();
+  }
 }

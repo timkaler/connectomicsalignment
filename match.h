@@ -27,9 +27,11 @@ const int MAX_EPSILON = 10;
 /////////////////////////////////////////////////////////////////////////////////////////
 //void compute_tile_matches(align_data_t *p_align_data);
 void compute_tile_matches(align_data_t *p_align_data, int force_section_id);
+void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std::set<int> active_set, Graph<vdata, edata>* graph, std::set<int> neighbor_set);
 
 void set_graph_list(std::vector<Graph<vdata,edata>* > graph_list, bool startEmpty);
 
+int get_all_close_tiles(int atile_id, section_data_t *p_sec_data, int* indices_to_check);
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL MACROS
