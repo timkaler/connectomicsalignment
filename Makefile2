@@ -37,6 +37,10 @@ ifndef INCLUDEHDF5
   CFLAGS += -DSKIPHDF5
 endif
 
+ifdef MEMCHECK
+  CFLAGS += -DMEMCHECK
+endif
+
 ifndef INCLUDEJSON
   CFLAGS += -DSKIPJSON
 endif
