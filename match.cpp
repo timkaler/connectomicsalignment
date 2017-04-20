@@ -23,6 +23,56 @@
 #include "./fasttime.h"
 #include "./simple_mutex.h"
 #include "cilk_tools/engine.h"
+void concat_two_tiles_all(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list) {
+
+  for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
+    cv::Point2f pt = (*a_tile->p_kps_3d)[pt_idx].pt;
+    //if (pt.x < ref_tile->x_start + radius) continue;
+    //if (pt.y < ref_tile->y_start + radius) continue;
+    //if (pt.x > ref_tile->x_end - radius) continue;
+    //if (pt.y > ref_tile->y_end - radius) continue;
+    atile_kps_in_overlap.push_back((*a_tile->p_kps_3d)[pt_idx]);
+    atile_kps_desc_in_overlap_list.push_back(a_tile->p_kps_desc_3d->row(pt_idx).clone());
+    atile_kps_tile_list.push_back(atile_id);
+  }
+}
+
+
+
+void concat_two_tiles(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list, tile_data_t* ref_tile, double radius) {
+  //printf("Comparing the tiles a_tile %d b_tile %d\n", atile_id, btile_id);
+  //std::vector< cv::KeyPoint > atile_kps_in_overlap, btile_kps_in_overlap;
+  //atile_kps_in_overlap.reserve(a_tile->p_kps->size());
+  //btile_kps_in_overlap.reserve(b_tile->p_kps->size());
+  //std::vector< cv::Mat > atile_kps_desc_in_overlap_list;
+  //atile_kps_desc_in_overlap_list.reserve(a_tile->p_kps->size());
+  //std::vector< cv::Mat > btile_kps_desc_in_overlap_list;
+  //btile_kps_desc_in_overlap_list.reserve(b_tile->p_kps->size());
+
+  //cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
+  // Filter the points in a_tile.
+
+  for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
+    cv::Point2f pt = (*a_tile->p_kps_3d)[pt_idx].pt;
+    if (pt.x+a_tile->x_start < ref_tile->x_start + radius) continue;
+    if (pt.y+a_tile->y_start < ref_tile->y_start + radius) continue;
+    if (pt.x+a_tile->x_start > ref_tile->x_finish - radius) continue;
+    if (pt.y+a_tile->y_start > ref_tile->y_finish - radius) continue;
+    atile_kps_in_overlap.push_back((*a_tile->p_kps_3d)[pt_idx]);
+    atile_kps_desc_in_overlap_list.push_back(a_tile->p_kps_desc_3d->row(pt_idx).clone());
+    atile_kps_tile_list.push_back(atile_id);
+  }
+/*
+  for (size_t pt_idx = 0; pt_idx < b_tile->p_kps->size(); ++pt_idx) {
+    cv::Point2f pt = (*b_tile->p_kps)[pt_idx].pt;
+    btile_kps_in_overlap.push_back((*b_tile->p_kps)[pt_idx]);
+    btile_kps_desc_in_overlap_list.push_back(b_tile->p_kps_desc->row(pt_idx).clone());
+    btile_kps_tile_list.push_back(btile_id);
+  }
+*/
+  //cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
+}
+
 
 static cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local) {
   float new_x = point_local.x*vertex->a00 + point_local.y * vertex->a01 + vertex->offset_x + vertex->start_x;
@@ -74,7 +124,7 @@ static bool bbox_contains(float pt_x, float pt_y,
 // Helper method to match the features of two tiles.
 static void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, cv::Mat &descs2, float rod) {
   std::vector< std::vector < cv::DMatch > > raw_matches;
-  if (descs1.rows + descs1.cols > descs2.rows + descs2.cols) {
+  if (true || descs1.rows + descs1.cols > descs2.rows + descs2.cols) {
     //cv::BFMatcher matcher(cv::NORM_L2, false);
     cv::FlannBasedMatcher matcher;
     matcher.knnMatch(descs1, descs2,
@@ -467,6 +517,14 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   e->run();
   printf("ending run\n");
 
+  coarse_alignment_3d(merged_graph, p_align_data);
+
+
+
+
+
+
+
   // Unpack the graphs within the merged graph.
   vertex_id_offset = 0;
   for (int i = 0; i < graph_list.size(); i++) {
@@ -502,8 +560,8 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       fprintf(wafer_file, "\t\t\"bbox\": [\n");
       fprintf(wafer_file,
           "\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f\n],",
-          vd->start_x+vd->offset_x, (vd->end_x+vd->offset_x),
-          vd->start_y+vd->offset_y, (vd->end_y+vd->offset_y));
+          vd->start_x/*+vd->offset_x*/, (vd->end_x/*+vd->offset_x*/),
+          vd->start_y/*+vd->offset_y*/, (vd->end_y/*+vd->offset_y*/));
       fprintf(wafer_file, "\t\t\"height\": %d,\n",2724);
       fprintf(wafer_file, "\t\t\"layer\": %d,\n",p_align_data->sec_data[sec_id].section_id + p_align_data->base_section+1);
       fprintf(wafer_file, "\t\t\"maxIntensity\": %f,\n",255.0);

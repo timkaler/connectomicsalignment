@@ -62,8 +62,8 @@
 
 #define OVERLAP_2D (200)
 
-//#define MFOV_BOUNDARY_THRESH 37 // any section with id > 37 is on boundary.
-#define MFOV_BOUNDARY_THRESH -1 // any section with id > 37 is on boundary.
+#define MFOV_BOUNDARY_THRESH 37 // any section with id > 37 is on boundary.
+//#define MFOV_BOUNDARY_THRESH -1 // any section with id > 37 is on boundary.
 
 
 
@@ -78,6 +78,9 @@
 
 //#define SIFT_D1_SHIFT (1024)
 //#define SIFT_D2_SHIFT (1024)
+#define SIFT_D1_SHIFT_3D (681*4)
+#define SIFT_D2_SHIFT_3D (782*4)
+
 #define SIFT_D1_SHIFT (681)
 #define SIFT_D2_SHIFT (782)
 

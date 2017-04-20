@@ -1,6 +1,106 @@
 static simple_mutex_t mutex = 0;
 
-void updateAffineTransform(vdata* vertex, vdata* transform) {
+void updateAffineTransform(vdata* vertex, cv::Mat& transform) {
+     
+
+  cv::Mat A(3, 3, cv::DataType<double>::type);
+
+  //vdata tmp;
+  //tmp.a00 = warp_mat.at<double>(0, 0); 
+  //tmp.a01 = warp_mat.at<double>(0, 1);
+  //tmp.offset_x = warp_mat.at<double>(0, 2);
+  //tmp.a10 = warp_mat.at<double>(1, 0); 
+  //tmp.a11 = warp_mat.at<double>(1, 1); 
+  //tmp.offset_y = warp_mat.at<double>(1, 2);
+  //tmp.start_x = 0.0;
+  //tmp.start_y = 0.0;
+
+
+  A.at<double>(0,0) = vertex->a00;
+  A.at<double>(0,1) = vertex->a01;
+  A.at<double>(0,2) = vertex->offset_x;
+  A.at<double>(1,0) = vertex->a10;
+  A.at<double>(1,1) = vertex->a11;
+  A.at<double>(1,2) = vertex->offset_y;
+  A.at<double>(2,0) = 0.0;
+  A.at<double>(2,1) = 0.0;
+  A.at<double>(2,2) = 1.0;
+
+  cv::Mat B = transform*A;
+
+
+  vertex->a00 = B.at<double>(0,0);
+  vertex->a01 = B.at<double>(0,1);
+  vertex->a10 = B.at<double>(1,0);
+  vertex->a11 = B.at<double>(1,1);
+  vertex->offset_x = B.at<double>(0,2);
+  vertex->offset_y = B.at<double>(1,2);
+
+          double start_x = vertex->start_x;
+          double start_y = vertex->start_y;
+          double end_x = vertex->end_x;
+          double end_y = vertex->end_y;
+
+
+          double post_start_x1 = transform.at<double>(0,0)*start_x + transform.at<double>(0,1)*start_y;
+          double post_start_x2 = transform.at<double>(0,0)*start_x + transform.at<double>(0,1)*end_y;
+          double post_start_y1 = transform.at<double>(1,1)*start_y + transform.at<double>(1,0)*start_x;
+          double post_start_y2 = transform.at<double>(1,1)*start_y + transform.at<double>(1,0)*end_x;
+
+
+          double post_end_x1 = transform.at<double>(0,0)*end_x + transform.at<double>(0,1)*start_y;
+          double post_end_x2 = transform.at<double>(0,0)*end_x + transform.at<double>(0,1)*end_y;
+          double post_end_y1 = transform.at<double>(1,1)*end_y + transform.at<double>(1,0)*start_x;
+          double post_end_y2 = transform.at<double>(1,1)*end_y + transform.at<double>(1,0)*end_x;
+
+
+
+          if (post_start_y1 > post_start_y2) {
+            start_y = post_start_y1;
+          } else {
+            start_y = post_start_y2;
+          }
+
+          if (post_start_x1 > post_start_x2) {
+            start_x = post_start_x1;
+          } else {
+            start_x = post_start_x2;
+          }
+
+
+
+          if (post_end_y1 < post_end_y2) {
+            end_y = post_end_y1;
+          } else {
+            end_y = post_end_y2;
+          }
+
+          if (post_end_x1 < post_end_x2) {
+            end_x = post_end_x1;
+          } else {
+            end_x = post_end_x2;
+          }
+
+
+
+
+
+
+
+          //merged_graph->getVertexData(v)->start_x = best_vertex_data.a00*start_x + best_vertex_data.a01*start_y;
+          //merged_graph->getVertexData(v)->start_y = best_vertex_data.a11*start_y + best_vertex_data.a10*start_x;
+          vertex->start_x = start_x;// + transform.at<double>(0,2);
+          vertex->start_y = start_y;// + transform.at<double>(1,2);
+          vertex->end_x = end_x;// + transform.at<double>(0,2);
+          vertex->end_y = end_y;// + transform.at<double>(1,2);
+
+  
+
+
+
+}
+
+void updateAffineTransformOld(vdata* vertex, vdata* transform) {
       
   //std::cout << warp_mat << std::endl;
   vdata tmp;
@@ -17,17 +117,6 @@ void updateAffineTransform(vdata* vertex, vdata* transform) {
           double start_y = vertex->start_y;
           double end_x = vertex->end_x;
           double end_y = vertex->end_y;
-
-          //double post_start_x1 = tmp.a00*start_x + tmp.a01*start_y;
-          //double post_start_x2 = tmp.a00*start_x + tmp.a01*end_y;
-          //double post_start_y1 = tmp.a11*start_y + tmp.a10*start_x;
-          //double post_start_y2 = tmp.a11*start_y + tmp.a10*end_x;
-
-
-          //double post_end_x1 = tmp.a00*end_x + tmp.a01*start_y;
-          //double post_end_x2 = tmp.a00*end_x + tmp.a01*end_y;
-          //double post_end_y1 = tmp.a11*end_y + tmp.a10*start_x;
-          //double post_end_y2 = tmp.a11*end_y + tmp.a10*end_x;
 
 
           double post_start_x1 = transform->a00*start_x + transform->a01*start_y;
@@ -108,6 +197,7 @@ void updateAffineTransform(vdata* vertex, vdata* transform) {
 vdata getAffineTransform(std::vector<cv::Point2f>& pts1, std::vector<cv::Point2f>& pts2) {
   cv::Mat warp_mat = cv::getAffineTransform(pts1, pts2);
   //std::cout << warp_mat << std::endl;
+
   vdata tmp;
   tmp.a00 = warp_mat.at<double>(0, 0); 
   tmp.a01 = warp_mat.at<double>(0, 1);
@@ -195,7 +285,7 @@ vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points
       random = true;
     }
 
-    uint64_t the_limit = match_points_a.size()*match_points_a.size();
+    uint64_t the_limit = match_points_a.size()*match_points_a.size()*match_points_a.size();
 
 
     //for (int angle = 0; angle < 18; angle++) {
@@ -217,8 +307,8 @@ vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points
     //      if (point3_angle != angle) {
     //        continue;
     //      }
-    for (int _j = 0; _j < the_limit/10000+1; _j++) {
-    if (maxInliers > 0.3*match_points_a.size()) { 
+    for (int _j = 0; _j < the_limit/10000 + 1; _j++) {
+    if (maxInliers > 0.3*match_points_a.size() && _j > 2000) { 
       printf("Max inliers is fraction %f breaking\n", maxInliers*1.0/match_points_a.size());
       break;
     }

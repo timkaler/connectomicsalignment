@@ -13,7 +13,8 @@
 
 float CONTRAST_THRESH = 0.04;
 float CONTRAST_THRESH_3D = 0.04;
-float EDGE_THRESH_3D = 5.0;
+float EDGE_THRESH_3D = 3.0;
+float EDGE_THRESH_2D = 5.0;
 #include "./common.h"
 #include "./align.h"
 #include "./match.h"
@@ -60,8 +61,8 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
       int rows = p_tile_data->p_image->rows;
       int cols = p_tile_data->p_image->cols;
 
-      ASSERT((rows % SIFT_D1_SHIFT) == 0);
-      ASSERT((cols % SIFT_D2_SHIFT) == 0);
+      ASSERT((rows % SIFT_D1_SHIFT_3D) == 0);
+      ASSERT((cols % SIFT_D2_SHIFT_3D) == 0);
       cv::Ptr<cv::Feature2D> p_sift;
 
 
@@ -70,49 +71,53 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
       cv::Mat m_kps_desc[SIFT_MAX_SUB_IMAGES];
 
       int n_sub_images;
-      if ((p_tile_data->tile_id > MFOV_BOUNDARY_THRESH)) {
+      if (true || (p_tile_data->tile_id > MFOV_BOUNDARY_THRESH)) {
 
       p_sift = new cv::xfeatures2d::SIFT_Impl(
                 0,  // num_features --- unsupported.
                 6,  // number of octaves
                 CONTRAST_THRESH_3D,  // contrast threshold.
                 EDGE_THRESH_3D,  // edge threshold.
-                1.6*2);  // sigma.
+                1.6);  // sigma.
+      
+      cv::xfeatures2d::min_size = 20.0; 
 
         // THEN: This tile is on the boundary, we need to compute SIFT features
         // on the entire section.
-        int max_rows = rows / SIFT_D1_SHIFT;
-        int max_cols = cols / SIFT_D2_SHIFT;
+        int max_rows = rows / SIFT_D1_SHIFT_3D;
+        int max_cols = cols / SIFT_D2_SHIFT_3D;
         n_sub_images = max_rows * max_cols;
 
-        cilk_for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
-          cilk_for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
+        cilk_for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT_3D) {
+          cilk_for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT_3D) {
             // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
             cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(cur_d2, cur_d1,
-                SIFT_D2_SHIFT, SIFT_D1_SHIFT));
+                SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D));
 
             // Mask for subimage
-            cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT, SIFT_D2_SHIFT,
+            cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT_3D, SIFT_D2_SHIFT_3D,
                 CV_8UC1);
 
             // Compute a subimage ID, refering to a tile within larger
             //   2d image.
-            int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
-            int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
+            int cur_d1_id = cur_d1 / SIFT_D1_SHIFT_3D;
+            int cur_d2_id = cur_d2 / SIFT_D2_SHIFT_3D;
             int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
 
             // Detect the SIFT features within the subimage.
             fasttime_t tstart = gettime();
             p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-                m_kps_desc[sub_im_id]);
+                m_kps_desc[sub_im_id], false);
 
             fasttime_t tend = gettime();
             totalTime += tdiff(tstart, tend);
 
             for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
+              //printf("Keypoint size: %f, angle %f, response %f, octave %d\n", v_kps[sub_im_id][i].size, v_kps[sub_im_id][i].angle, v_kps[sub_im_id][i].response, v_kps[sub_im_id][i].octave);
               v_kps[sub_im_id][i].pt.x += cur_d2;
               v_kps[sub_im_id][i].pt.y += cur_d1;
             }
+            //exit(0);
           }
         }
         // Regardless of whether we were on or off MFOV boundary, we concat
@@ -130,8 +135,8 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
                 6,  // number of octaves
                 CONTRAST_THRESH_3D,  // contrast threshold.
                 EDGE_THRESH_3D,  // edge threshold.
-                1.6*2);  // sigma.
-
+                1.6);  // sigma.
+      cv::xfeatures2d::min_size = 20.0; 
         // ELSE THEN: This tile is in the interior of the MFOV. Only need to
         //     compute features along the boundary.
         n_sub_images = 4;
@@ -149,7 +154,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
           // Detect the SIFT features within the subimage.
           fasttime_t tstart = gettime();
           p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-              m_kps_desc[sub_im_id]);
+              m_kps_desc[sub_im_id], false);
           fasttime_t tend = gettime();
           totalTime += tdiff(tstart, tend);
           for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
@@ -172,7 +177,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
           // Detect the SIFT features within the subimage.
           fasttime_t tstart = gettime();
           p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-             m_kps_desc[sub_im_id]);
+             m_kps_desc[sub_im_id], false);
           fasttime_t tend = gettime();
           totalTime += tdiff(tstart, tend);
           for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
@@ -196,7 +201,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
           fasttime_t tstart = gettime();
 
           p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-              m_kps_desc[sub_im_id]);
+              m_kps_desc[sub_im_id], false);
           fasttime_t tend = gettime();
           totalTime += tdiff(tstart, tend);
           for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
@@ -222,7 +227,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
           fasttime_t tstart = gettime();
 
           p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-              m_kps_desc[sub_im_id]);
+              m_kps_desc[sub_im_id], false);
           fasttime_t tend = gettime();
           totalTime += tdiff(tstart, tend);
           for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
@@ -414,9 +419,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                   0,  // num_features --- unsupported.
                   6,  // number of octaves
                   CONTRAST_THRESH,  // contrast threshold.
-                  5,  // edge threshold.
+                  EDGE_THRESH_2D,  // edge threshold.
                   1.6);  // sigma.
 
+          cv::xfeatures2d::min_size = 8.0; 
           // THEN: This tile is on the boundary, we need to compute SIFT features
           // on the entire section.
           int max_rows = rows / SIFT_D1_SHIFT;
@@ -467,9 +473,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                   0,  // num_features --- unsupported.
                   6,  // number of octaves
                   CONTRAST_THRESH,  // contrast threshold.
-                  5,  // edge threshold.
+                  EDGE_THRESH_2D,  // edge threshold.
                   1.6);  // sigma.
 
+          cv::xfeatures2d::min_size = 8.0; 
           // ELSE THEN: This tile is in the interior of the MFOV. Only need to
           //     compute features along the boundary.
           n_sub_images = 4;
@@ -693,8 +700,8 @@ void align_execute(align_data_t *p_align_data) {
         read_tiles(p_align_data);
         STOP_TIMER(&timer, "read_tiles time:");
         START_TIMER(&timer);
+        compute_SIFT_parallel_3d(p_align_data);
         compute_SIFT_parallel(p_align_data);
-        //compute_SIFT_parallel_3d(p_align_data);
         STOP_TIMER(&timer, "compute_SIFT time:");
     }
         free_tiles(p_align_data);

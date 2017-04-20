@@ -132,11 +132,13 @@
 
 #include "gaussianPyramid.cpp"
 
+
 namespace cv
 {
 namespace xfeatures2d
 {
 
+static float min_size = 0.0; 
 /*!
  SIFT implementation.
 
@@ -148,7 +150,6 @@ public:
     explicit SIFT_Impl( int nfeatures = 0, int nOctaveLayers = 3,
                           double contrastThreshold = 0.04, double edgeThreshold = 10,
                           double sigma = 1.6);
-
     //! returns the descriptor size in floats (128)
     int descriptorSize() const;
 
@@ -160,6 +161,12 @@ public:
 
     //! finds the keypoints and computes descriptors for them using SIFT algorithm.
     //! Optionally it can compute descriptors for the user-provided keypoints
+
+    void detectAndCompute(InputArray img, InputArray mask,
+                    std::vector<KeyPoint>& keypoints,
+                    OutputArray descriptors,
+                    bool useProvidedKeypoints = false, float size = 0.0);
+
     void detectAndCompute(InputArray img, InputArray mask,
                     std::vector<KeyPoint>& keypoints,
                     OutputArray descriptors,
@@ -877,11 +884,12 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
 
         if( !mask.empty() )
             KeyPointsFilter::runByPixelsMask( keypoints, mask );
+        KeyPointsFilter::runByKeypointSize( keypoints, min_size);
     }
     else
     {
         // filter keypoints by mask
-        //KeyPointsFilter::runByPixelsMask( keypoints, mask );
+        KeyPointsFilter::runByKeypointSize( keypoints, min_size);
     }
 
     if( _descriptors.needed() )

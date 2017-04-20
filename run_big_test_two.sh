@@ -22,17 +22,17 @@ OUTPUTDIR=$PWD/temp/
 #    $OUTPUTDIR \
 #    $OUTPUTDIR
 
-./setup.sh ./run_align 1 \
-    $SECTION 7 \
-    $PWD/data/9mfov.txt \
-    $OUTPUTDIR \
-    $OUTPUTDIR
-
 #./setup.sh ./run_align 1 \
-#    24 1 \
-#    $PWD/data/txtspecs_iarpa.txt \
+#    $SECTION 7 \
+#    $PWD/data/9mfov.txt \
 #    $OUTPUTDIR \
 #    $OUTPUTDIR
+
+./setup.sh /usr/bin/time -v ./run_align 1 \
+    24 3 \
+    $PWD/data/txtspecs_iarpa_full.txt \
+    $OUTPUTDIR \
+    $OUTPUTDIR
 
 
 #./setup.sh ./run_align 1 \
