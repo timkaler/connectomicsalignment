@@ -25,6 +25,10 @@ ifdef PROFILE
   LDFLAGS += -lprofiler
 endif
 
+ifdef 3D
+  CFLAGS += -DALIGN3D
+endif
+
 ifdef SKIPOUTPUT
   CFLAGS += -DSKIPOUTPUT
 endif
@@ -35,6 +39,10 @@ endif
 
 ifndef INCLUDEHDF5
   CFLAGS += -DSKIPHDF5
+endif
+
+ifdef MEMCHECK
+  CFLAGS += -DMEMCHECK
 endif
 
 ifndef INCLUDEJSON

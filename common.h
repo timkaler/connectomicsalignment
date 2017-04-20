@@ -237,6 +237,11 @@ typedef struct _align_data {
     
     int base_section;
     int n_sections;
+    bool do_subvolume;
+    int min_x;
+    int min_y;
+    int max_x;
+    int max_y;
     section_data_t sec_data[MAX_SECTIONS];
     
     cv::Mat *p_section_transforms[MAX_SECTIONS];

@@ -517,8 +517,10 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   e->run();
   printf("ending run\n");
 
-  coarse_alignment_3d(merged_graph, p_align_data);
 
+  #ifdef ALIGN3D
+  coarse_alignment_3d(merged_graph, p_align_data);
+  #endif
 
 
 
@@ -617,7 +619,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   //TRACE_1("compute_tile_matches: finish\n");
 }
 
-void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std::set<int> active_set, Graph<vdata, edata>* graph, std::set<int> neighbor_set) {
+void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std::set<int> active_set, Graph<vdata, edata>* graph) {
   TRACE_1("compute_tile_matches: start\n");
 
   //section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
@@ -838,17 +840,21 @@ void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std
     } while (false); // end the do while wrapper.
     }  // for (btile_id)
   }  // for (atile_id)
+//<<<<<<< HEAD
 
 
-  std::set<int> active_and_neighbors;
-  active_and_neighbors.insert(active_set.begin(), active_set.end());
-  active_and_neighbors.insert(neighbor_set.begin(), neighbor_set.end());
-  // Release the memory for keypoints after they've been filtered via matching.
-  for (auto it = active_and_neighbors.begin(); it != active_and_neighbors.end(); ++it) {
-    int atile_id = *it;
-    tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
-    a_tile->p_kps->clear();
-    std::vector<cv::KeyPoint>().swap(*(a_tile->p_kps));
-    ((a_tile->p_kps_desc))->release();
-  }
+//  std::set<int> active_and_neighbors;
+//  active_and_neighbors.insert(active_set.begin(), active_set.end());
+//  active_and_neighbors.insert(neighbor_set.begin(), neighbor_set.end());
+//  // Release the memory for keypoints after they've been filtered via matching.
+//  for (auto it = active_and_neighbors.begin(); it != active_and_neighbors.end(); ++it) {
+//    int atile_id = *it;
+//    tile_data_t *a_tile = &(p_sec_data->tiles[atile_id]);
+//    a_tile->p_kps->clear();
+//    std::vector<cv::KeyPoint>().swap(*(a_tile->p_kps));
+//    ((a_tile->p_kps_desc))->release();
+//  }
 }
+//=======
+//}
+//>>>>>>> c14d91436faca55e27ea0ec2883fcfc36ad79a19

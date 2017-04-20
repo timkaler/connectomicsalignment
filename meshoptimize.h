@@ -155,7 +155,7 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
       match_features(matches,
                      atile_kps_desc_in_overlap,
                      btile_kps_desc_in_overlap,
-                     0.92);
+                     0.65);
           printf("Done with the matching. Num matches is %d\n", matches.size());
           // Filter the matches with RANSAC
           std::vector<cv::Point2f> match_points_a, match_points_b;

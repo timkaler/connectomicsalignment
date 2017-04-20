@@ -35,7 +35,7 @@ void parse_args(
     int argc, 
     char **argv) {
     
-    ASSERT_MSG(argc == 7, "Usage: %s [mode] [base_section] [num_sections] [input_filepath] [work_dir] [output_dir]\n", argv[0]);
+    ASSERT_MSG((argc == 7 || argc == 7+4), "Usage: %s [mode] [base_section] [num_sections] [input_filepath] [work_dir] [output_dir]\n", argv[0]);
     
     int idx = 1;
     
@@ -60,8 +60,23 @@ void parse_args(
     
     p_align_data->output_dirpath = argv[idx];
     idx++;
-    
-    
+  
+    if (argc == 7+4) {
+      p_align_data->do_subvolume = true;
+      p_align_data->min_x = atoi(argv[idx]);
+      idx++;
+      p_align_data->min_y = atoi(argv[idx]);
+      idx++;
+      p_align_data->max_x = atoi(argv[idx]);
+      idx++;
+      p_align_data->max_y = atoi(argv[idx]);
+      idx++;
+      printf("Working on a subvolume with minx %d miny %d, maxx %d, maxy %d\n",
+          p_align_data->min_x, p_align_data->min_y, p_align_data->max_x, p_align_data->max_y); 
+    } else {
+      p_align_data->do_subvolume = false;
+    }
+  
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

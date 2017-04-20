@@ -172,17 +172,19 @@ void read_input(align_data_t *p_align_data) {
             (in_section_id >= (p_align_data->base_section + p_align_data->n_sections))) {
             continue;
         }
-        
-        float MIN_X = 10000.0;
-        float MIN_Y = 10000.0;
-        float MAX_X = 40000.0;
-        float MAX_Y = 40000.0;
-
-        if (in_x_start < MIN_X ||
-            in_y_start < MIN_Y ||
-            in_x_finish > MAX_X ||
-            in_y_finish > MAX_Y) {
-          continue;
+       
+        if (p_align_data->do_subvolume) {
+          float MIN_X = p_align_data->min_x;
+          float MIN_Y = p_align_data->min_y;
+          float MAX_X = p_align_data->max_x;
+          float MAX_Y = p_align_data->max_y;
+  
+          if (in_x_start < MIN_X ||
+              in_y_start < MIN_Y ||
+              in_x_finish > MAX_X ||
+              in_y_finish > MAX_Y) {
+            continue;
+          }
         }
 
         cur_section_idx = in_section_id - p_align_data->base_section;
