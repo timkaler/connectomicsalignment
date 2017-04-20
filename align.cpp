@@ -80,7 +80,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
                 EDGE_THRESH_3D,  // edge threshold.
                 1.6);  // sigma.
       
-      cv::xfeatures2d::min_size = 20.0; 
+      cv::xfeatures2d::min_size = 64.0; 
 
         // THEN: This tile is on the boundary, we need to compute SIFT features
         // on the entire section.

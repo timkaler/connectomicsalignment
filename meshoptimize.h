@@ -99,7 +99,7 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
 
     if ( vertex_data->iteration_count < 20000000 && (
       std::abs(vertex_data->offset_x - original_offset_x) +
-      std::abs(vertex_data->offset_y - original_offset_y) > 1e-3)) {
+      std::abs(vertex_data->offset_y - original_offset_y) > 1e-2)) {
       scheduler->add_task(vid, updateVertex2DAlign);
       for (int i = 0; i < edges.size(); i++) {
         scheduler->add_task(edges[i].neighbor_id, updateVertex2DAlign);
@@ -193,7 +193,7 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
               match_points_b[c]);
         }
       }
-      //cv::Mat warp_mat = cv::estimateRigidTransform(filtered_match_points_a, filtered_match_points_b, true);//cv::findHomography(match_points_a, match_points_b);
+      //cv::Mat warp_mat = cv::estimateRigidTransform(filtered_match_points_a, filtered_match_points_b, false);//cv::findHomography(match_points_a, match_points_b);
 
 
       cv::Mat warp_mat;
