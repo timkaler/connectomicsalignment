@@ -14,7 +14,7 @@
 
 float CONTRAST_THRESH = 0.04;
 float CONTRAST_THRESH_3D = 0.04;
-float EDGE_THRESH_3D = 3.0;
+float EDGE_THRESH_3D = 5.0;
 float EDGE_THRESH_2D = 5.0;
 #include "./common.h"
 #include "./align.h"
@@ -44,8 +44,8 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
   std::set<std::string> created_paths;
   simple_mutex_t created_paths_lock;
   simple_mutex_init(&created_paths_lock);
-  #pragma cilk grainsize=1
-  cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+  //#pragma cilk grainsize=1
+  for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
     cilk_for (int tile_id = 0; tile_id < p_sec_data->n_tiles; tile_id++) {
       tile_data_t *p_tile_data = &(p_sec_data->tiles[tile_id]);
@@ -81,7 +81,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
                 EDGE_THRESH_3D,  // edge threshold.
                 1.6);  // sigma.
       
-      cv::xfeatures2d::min_size = 64.0; 
+      cv::xfeatures2d::min_size = 32.0; 
 
         // THEN: This tile is on the boundary, we need to compute SIFT features
         // on the entire section.
@@ -491,7 +491,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                   EDGE_THRESH_2D,  // edge threshold.
                   1.6);  // sigma.
 
-          cv::xfeatures2d::min_size = 8.0; 
+          cv::xfeatures2d::min_size = 4.0; 
           // THEN: This tile is on the boundary, we need to compute SIFT features
           // on the entire section.
           int max_rows = rows / SIFT_D1_SHIFT;
@@ -560,7 +560,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                   EDGE_THRESH_2D,  // edge threshold.
                   1.6);  // sigma.
 
-          cv::xfeatures2d::min_size = 8.0; 
+          cv::xfeatures2d::min_size = 4.0; 
           // ELSE THEN: This tile is in the interior of the MFOV. Only need to
           //     compute features along the boundary.
           n_sub_images = 4;
@@ -791,6 +791,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       d->a01 = 0.0;
       d->a10 = 0.0;
       d->a11 = 1.0;
+      d->neighbor_grad_x = 0.0;
+      d->neighbor_grad_y = 0.0;
     }
     graph->section_id = sec_id;
   }
@@ -827,6 +829,10 @@ void align_execute(align_data_t *p_align_data) {
     // set_graph_list(graph_list, true) (from match.h) 
     // Runs the graph optimize code.
     compute_tile_matches(p_align_data, -1);
+
+
+    //output_section_image(&(p_align_data->sec_data[0]), 0,0,40000,40000, "labeled_image0.tif");
+    //output_section_image(&(p_align_data->sec_data[1]), 0,0,40000,40000, "labeled_image1.tif");
 
     STOP_TIMER(&timer, "compute_tile_matches time:");
     STOP_TIMER(&t_timer, "t_total-time:");

@@ -28,11 +28,17 @@ OUTPUTDIR=$PWD/temp/
 #    $OUTPUTDIR \
 #    $OUTPUTDIR
 
+#./setup.sh /usr/bin/time -v gdb --args ./run_align 1 \
 ./setup.sh /usr/bin/time -v ./run_align 1 \
-    24 3 \
+    24 6 \
     $PWD/data/txtspecs_iarpa_full.txt \
     $OUTPUTDIR \
-    $OUTPUTDIR 10000 10000 40000 40000 
+    $OUTPUTDIR
+#./setup.sh /usr/bin/time -v ./run_align 1 \
+#    28 2 \
+#    $PWD/data/txtspecs_iarpa_full.txt \
+#    $OUTPUTDIR \
+#    $OUTPUTDIR 10000 10000 40000 40000
 
 
 #./setup.sh ./run_align 1 \

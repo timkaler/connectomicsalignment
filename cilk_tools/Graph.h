@@ -40,9 +40,14 @@ typedef struct {
   double end_x;
   double start_y;
   double end_y;
+
+  double corner_x[4];
+  double corner_y[4];
+
   int z;
   double scale;
-
+  double neighbor_grad_x;
+  double neighbor_grad_y;
 
   // parameters for affine warp.
   double a00;

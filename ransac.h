@@ -18,10 +18,10 @@ void updateAffineTransform(vdata* vertex, cv::Mat& transform) {
 
   A.at<double>(0,0) = vertex->a00;
   A.at<double>(0,1) = vertex->a01;
-  A.at<double>(0,2) = vertex->offset_x;
+  A.at<double>(0,2) = vertex->offset_x + vertex->start_x;
   A.at<double>(1,0) = vertex->a10;
   A.at<double>(1,1) = vertex->a11;
-  A.at<double>(1,2) = vertex->offset_y;
+  A.at<double>(1,2) = vertex->offset_y + vertex->start_y;
   A.at<double>(2,0) = 0.0;
   A.at<double>(2,1) = 0.0;
   A.at<double>(2,2) = 1.0;
@@ -36,59 +36,60 @@ void updateAffineTransform(vdata* vertex, cv::Mat& transform) {
   vertex->offset_x = B.at<double>(0,2);
   vertex->offset_y = B.at<double>(1,2);
 
-          double start_x = vertex->start_x;
-          double start_y = vertex->start_y;
-          double end_x = vertex->end_x;
-          double end_y = vertex->end_y;
-
-
-          double post_start_x1 = transform.at<double>(0,0)*start_x + transform.at<double>(0,1)*start_y;
-          double post_start_x2 = transform.at<double>(0,0)*start_x + transform.at<double>(0,1)*end_y;
-          double post_start_y1 = transform.at<double>(1,1)*start_y + transform.at<double>(1,0)*start_x;
-          double post_start_y2 = transform.at<double>(1,1)*start_y + transform.at<double>(1,0)*end_x;
-
-
-          double post_end_x1 = transform.at<double>(0,0)*end_x + transform.at<double>(0,1)*start_y;
-          double post_end_x2 = transform.at<double>(0,0)*end_x + transform.at<double>(0,1)*end_y;
-          double post_end_y1 = transform.at<double>(1,1)*end_y + transform.at<double>(1,0)*start_x;
-          double post_end_y2 = transform.at<double>(1,1)*end_y + transform.at<double>(1,0)*end_x;
+          double start_x = 0.0;
+          double start_y = 0.0;
+          double end_x = 0.0;
+          double end_y = 0.0;
 
 
 
-          if (post_start_y1 > post_start_y2) {
-            start_y = post_start_y1;
-          } else {
-            start_y = post_start_y2;
-          }
-
-          if (post_start_x1 > post_start_x2) {
-            start_x = post_start_x1;
-          } else {
-            start_x = post_start_x2;
-          }
+          //double post_start_x1 = transform.at<double>(0,0)*start_x + transform.at<double>(0,1)*start_y;
+          //double post_start_x2 = transform.at<double>(0,0)*start_x + transform.at<double>(0,1)*end_y;
+          //double post_start_y1 = transform.at<double>(1,1)*start_y + transform.at<double>(1,0)*start_x;
+          //double post_start_y2 = transform.at<double>(1,1)*start_y + transform.at<double>(1,0)*end_x;
 
 
-
-          if (post_end_y1 < post_end_y2) {
-            end_y = post_end_y1;
-          } else {
-            end_y = post_end_y2;
-          }
-
-          if (post_end_x1 < post_end_x2) {
-            end_x = post_end_x1;
-          } else {
-            end_x = post_end_x2;
-          }
+          //double post_end_x1 = transform.at<double>(0,0)*end_x + transform.at<double>(0,1)*start_y;
+          //double post_end_x2 = transform.at<double>(0,0)*end_x + transform.at<double>(0,1)*end_y;
+          //double post_end_y1 = transform.at<double>(1,1)*end_y + transform.at<double>(1,0)*start_x;
+          //double post_end_y2 = transform.at<double>(1,1)*end_y + transform.at<double>(1,0)*end_x;
 
 
 
+          //if (post_start_y1 > post_start_y2) {
+          //  start_y = post_start_y1;
+          //} else {
+          //  start_y = post_start_y2;
+          //}
+
+          //if (post_start_x1 > post_start_x2) {
+          //  start_x = post_start_x1;
+          //} else {
+          //  start_x = post_start_x2;
+          //}
+
+
+
+          //if (post_end_y1 < post_end_y2) {
+          //  end_y = post_end_y1;
+          //} else {
+          //  end_y = post_end_y2;
+          //}
+
+          //if (post_end_x1 < post_end_x2) {
+          //  end_x = post_end_x1;
+          //} else {
+          //  end_x = post_end_x2;
+          //}
 
 
 
 
-          //merged_graph->getVertexData(v)->start_x = best_vertex_data.a00*start_x + best_vertex_data.a01*start_y;
-          //merged_graph->getVertexData(v)->start_y = best_vertex_data.a11*start_y + best_vertex_data.a10*start_x;
+
+
+
+          ////merged_graph->getVertexData(v)->start_x = best_vertex_data.a00*start_x + best_vertex_data.a01*start_y;
+          ////merged_graph->getVertexData(v)->start_y = best_vertex_data.a11*start_y + best_vertex_data.a10*start_x;
           vertex->start_x = start_x;// + transform.at<double>(0,2);
           vertex->start_y = start_y;// + transform.at<double>(1,2);
           vertex->end_x = end_x;// + transform.at<double>(0,2);
@@ -594,7 +595,50 @@ void tfk_simple_ransac_strict(std::vector<cv::Point2f>& match_points_a,
 }
 
 
-void tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
+int tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
+    std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
+
+  double best_dx = 0.0;
+  double best_dy = 0.0;
+  int maxInliers = 0;
+  int prevMaxInliers = 0;
+  double thresh = _thresh;
+
+    for (int i = 0; i < match_points_a.size(); i++) {
+      double dx = match_points_b[i].x - match_points_a[i].x;
+      double dy = match_points_b[i].y - match_points_a[i].y;
+      if (maxInliers > 0.2 * match_points_a.size() && maxInliers > 5) break; 
+      int inliers = 0;
+      for (int j = 0; j < match_points_b.size(); j++) {
+        double ndx = match_points_b[j].x - match_points_a[j].x - dx;
+        double ndy = match_points_b[j].y - match_points_a[j].y - dy;
+        double dist = ndx*ndx+ndy*ndy;
+        if (dist <= thresh*thresh) {
+          inliers++;
+        }
+      }
+      if (inliers > maxInliers) {
+        maxInliers = inliers;
+        best_dx = dx;
+        best_dy = dy;
+      }
+    }
+
+    printf("number of inliers is %d fraction is %f\n", maxInliers, (1.0*maxInliers) / match_points_a.size());
+
+      // mark inliers
+      for (int j = 0; j < match_points_b.size(); j++) {
+        double ndx = match_points_b[j].x - match_points_a[j].x - best_dx;
+        double ndy = match_points_b[j].y - match_points_a[j].y - best_dy;
+        double dist = ndx*ndx+ndy*ndy;
+        if (dist <= thresh*thresh) {
+          mask[j]=true;
+        }
+      }
+      return maxInliers;
+}
+
+void tfk_simple_ransac_old(std::vector<cv::Point2f>& match_points_a,
     std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
 
   double best_dx = 0.0;

@@ -516,7 +516,11 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   printf("starting run\n");
   e->run();
   printf("ending run\n");
+  for (int i = 0; i < merged_graph->num_vertices(); i++) {
+    scheduler->add_task(i, computeError2DAlign);
+  }
 
+  e->run();
 
   #ifdef ALIGN3D
   coarse_alignment_3d(merged_graph, p_align_data);
@@ -552,6 +556,10 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     for (int i = 0; i < graph->num_vertices(); i++) {
       //printf("affine params %f %f %f %f\n", graph->getVertexData(i)->a00, graph->getVertexData(i)->a01, graph->getVertexData(i)->a10, graph->getVertexData(i)->a11);
       vdata* vd = graph->getVertexData(i);
+      p_align_data->sec_data[sec_id].tiles[vd->tile_id].x_start = vd->start_x+vd->offset_x;
+      p_align_data->sec_data[sec_id].tiles[vd->tile_id].x_finish = vd->end_x + vd->offset_x;
+      p_align_data->sec_data[sec_id].tiles[vd->tile_id].y_start = vd->start_y+vd->offset_y;
+      p_align_data->sec_data[sec_id].tiles[vd->tile_id].y_finish = vd->end_y + vd->offset_y;
       //if (vd->z == 1) {
       //vd->a00 = 1.1;
       //vd->a01 = 0.0;
@@ -562,8 +570,8 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       fprintf(wafer_file, "\t\t\"bbox\": [\n");
       fprintf(wafer_file,
           "\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f\n],",
-          vd->start_x/*+vd->offset_x*/, (vd->end_x/*+vd->offset_x*/),
-          vd->start_y/*+vd->offset_y*/, (vd->end_y/*+vd->offset_y*/));
+          vd->start_x+vd->offset_x, (vd->end_x+vd->offset_x),
+          vd->start_y+vd->offset_y, (vd->end_y+vd->offset_y));
       fprintf(wafer_file, "\t\t\"height\": %d,\n",2724);
       fprintf(wafer_file, "\t\t\"layer\": %d,\n",p_align_data->sec_data[sec_id].section_id + p_align_data->base_section+1);
       fprintf(wafer_file, "\t\t\"maxIntensity\": %f,\n",255.0);
@@ -765,68 +773,76 @@ void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std
         continue;
       }
 
-      // Match the features
-      std::vector< cv::DMatch > matches;
-      match_features(matches,
-                     atile_kps_desc_in_overlap,
-                     btile_kps_desc_in_overlap,
-                     ROD);
 
-      //TRACE_1("    -- [%d_%d, %d_%d] matches: %lu\n",
-      //        a_tile->mfov_id, a_tile->index,
-      //        b_tile->mfov_id, b_tile->index,
-      //        matches.size());
+      float trial_rod;
+      for (int trial = 0; trial < 4; trial++) {
+        if (trial == 0) trial_rod = 0.7;
+        if (trial == 1) trial_rod = 0.8;
+        if (trial == 2) trial_rod = 0.92;
+        if (trial == 3) trial_rod = 0.96;
+        // Match the features
+        std::vector< cv::DMatch > matches;
+        match_features(matches,
+                       atile_kps_desc_in_overlap,
+                       btile_kps_desc_in_overlap,
+                       trial_rod);
 
-
-      // Filter the matches with RANSAC
-      std::vector<cv::Point2f> match_points_a, match_points_b;
-      for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
-        match_points_a.push_back(
-            atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
-        match_points_b.push_back(
-            btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
-      }
-
-      // Use cv::findHomography to run RANSAC on the match points.
-      //
-      // TB: Using the maxEpsilon value (10) from
-      // conf_example.json as the ransacReprojThreshold for
-      // findHomography.
-      //
-      // TODO(TB): Read the appropriate RANSAC settings from the
-      // configuration file.
-      if (matches.size() < MIN_FEATURES_NUM) {
-        //TRACE_1("Less than %d matched features, saving empty match file\n",
-        //        MIN_FEATURES_NUM);
-        if (matches.size() == 0) printf("There are zero matches.\n");
-        continue;
-      }
-
-      bool* mask = (bool*) calloc(match_points_a.size(), 1);
-      double thresh = 10.0;
-      tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
+        //TRACE_1("    -- [%d_%d, %d_%d] matches: %lu\n",
+        //        a_tile->mfov_id, a_tile->index,
+        //        b_tile->mfov_id, b_tile->index,
+        //        matches.size());
 
 
-      std::vector< cv::Point2f > filtered_match_points_a(0);
-      std::vector< cv::Point2f > filtered_match_points_b(0);
+        // Filter the matches with RANSAC
+        std::vector<cv::Point2f> match_points_a, match_points_b;
+        for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
+          match_points_a.push_back(
+              atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
+          match_points_b.push_back(
+              btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
+        }
 
-      int num_matches_filtered = 0;
-      // Use the output mask to filter the matches
-      for (size_t i = 0; i < matches.size(); ++i) {
-        if (mask[i]) {
-          num_matches_filtered++;
-          filtered_match_points_a.push_back(
-              atile_kps_in_overlap[matches[i].queryIdx].pt);
-          filtered_match_points_b.push_back(
-              btile_kps_in_overlap[matches[i].trainIdx].pt);
+        // Use cv::findHomography to run RANSAC on the match points.
+        //
+        // TB: Using the maxEpsilon value (10) from
+        // conf_example.json as the ransacReprojThreshold for
+        // findHomography.
+        //
+        // TODO(TB): Read the appropriate RANSAC settings from the
+        // configuration file.
+        if (matches.size() < MIN_FEATURES_NUM) {
+          //TRACE_1("Less than %d matched features, saving empty match file\n",
+          //        MIN_FEATURES_NUM);
+          if (matches.size() == 0) printf("There are zero matches.\n");
+          continue;
+        }
+
+        bool* mask = (bool*) calloc(match_points_a.size(), 1);
+        double thresh = 5.0;
+        tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
+
+
+        std::vector< cv::Point2f > filtered_match_points_a(0);
+        std::vector< cv::Point2f > filtered_match_points_b(0);
+
+        int num_matches_filtered = 0;
+        // Use the output mask to filter the matches
+        for (size_t i = 0; i < matches.size(); ++i) {
+          if (mask[i]) {
+            num_matches_filtered++;
+            filtered_match_points_a.push_back(
+                atile_kps_in_overlap[matches[i].queryIdx].pt);
+            filtered_match_points_b.push_back(
+                btile_kps_in_overlap[matches[i].trainIdx].pt);
+          }
+        }
+        free(mask);
+        if (num_matches_filtered > 4) {
+          graph->insert_matches(atile_id, btile_id,
+              filtered_match_points_a, filtered_match_points_b, 1.0);
+          break;
         }
       }
-      free(mask);
-      if (num_matches_filtered > 0) {
-        graph->insert_matches(atile_id, btile_id,
-            filtered_match_points_a, filtered_match_points_b, 1.0);
-      }
-
 
       // NOTE(TFK): Previously we only output features if we had at least MIN_FEATURES_NUM because
       //              the code reading the match files would add "fake" matches between adjacent tiles

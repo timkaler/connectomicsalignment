@@ -6,6 +6,79 @@ std::string padTo(std::string str, const size_t num, const char paddingChar = '0
     return str;
 }
 
+
+
+
+void output_section_image(section_data_t* section, int min_x, int min_y,
+   int max_x,
+   int max_y, std::string filename) {
+
+  //int min_x = 100000000.0;
+  //int min_y = 100000000.0;
+  //int max_x = 0.0;
+  //int max_y = 0.0;
+  //for (int i = 0; i < section->n_tiles; i++) {
+  //  tile_data_t tile = section->tiles[i];
+  //  if (tile.x_start < min_x) {
+  //    min_x = tile.x_start;
+  //  }
+  //  if (tile.x_end > max_x) {
+  //    max_x = tile.x_end;
+  //  }
+  //  if (tile.y_start < min_y) {
+  //    min_y = tile.y_start;
+  //  }
+  //  if (tile.y_end > max_y) {
+  //    max_y = tile.y_end;
+  //  }
+  //}
+
+  int nrows = max_y-min_y;
+  int ncols = max_x-min_x;
+  section->p_out = new cv::Mat();
+  (*section->p_out).create(nrows, ncols, CV_8UC1);
+
+  for (int i = 0; i < section->n_tiles; i++) {
+    tile_data_t tile = section->tiles[i];
+    (*tile.p_image).create(3128, 2724, CV_8UC1);
+    (*tile.p_image) = cv::imread(
+        tile.filepath,
+        CV_LOAD_IMAGE_UNCHANGED);
+
+    for (int y = tile.y_start; y < tile.y_finish; y++) {
+      for (int x = tile.x_start; x < tile.x_finish; x++) {
+        unsigned char val =
+            tile.p_image->at<unsigned char>((int)(y-tile.y_start), (int)(x-tile.x_start));
+        section->p_out->at<unsigned char>(y-min_y, x-min_x) = val;
+      }
+    }
+    tile.p_image->release();
+  }
+
+    //cv::Mat outImage;
+    //drawKeypoints(
+    //    *(section->p_out),
+    //    *(section->p_kps),
+    //    outImage,
+    //    cv::Scalar::all(-1), 
+    //    cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    //sprintf(filepath, "%s/kps_tile_%.4d_%.4d_%.4d.tif", 
+    //sprintf(filepath, "%s/kps_tile_%.4d_%.4d_%.4d.tif", 
+    //    LOG_DIR, 
+    //    p_tile_data->section_id,
+    //    p_tile_data->mfov_id,
+    //    p_tile_data->index);
+
+    //cv::imwrite(std::string("raw_") + filename, outImage);
+
+
+  cv::Mat outImage2;
+  cv::resize((*section->p_out), outImage2, cv::Size(), 0.5,0.5);
+  //cv::imwrite("outimagetest1.tif", (*section->p_out));
+  cv::imwrite(filename, outImage2);
+}
+
+
 void create_sift_hdf5(const char* filename, int num_points, std::vector<float> sizes,
     std::vector<float> responses, std::vector<float> octaves,
     std::vector<float> locations, const char* imageUrl){

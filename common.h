@@ -223,8 +223,8 @@ typedef struct _section_data {
     cv::Mat *p_warps[MAX_TILES];
     std::vector<int> *p_warp_order;
     cv::Mat *p_out;
-    
-    
+    std::vector<cv::KeyPoint> *p_kps;
+
 } section_data_t;
 
 typedef struct _align_data {
