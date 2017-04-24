@@ -309,7 +309,7 @@ vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points
     //        continue;
     //      }
     for (int _j = 0; _j < the_limit/10000 + 1; _j++) {
-    if (maxInliers > 0.3*match_points_a.size() && _j > 2000) { 
+    if (maxInliers > 0.2*match_points_a.size() && _j > 2000) { 
       printf("Max inliers is fraction %f breaking\n", maxInliers*1.0/match_points_a.size());
       break;
     }
@@ -339,12 +339,28 @@ vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points
 
       cv::Point2f test_point_a_transformed = transform_point(&tmp_vertex_data, test_point_a);
 
+      int tmp_inliers = 0;
+      for (int k = 0; k < 100; k++) {
+        int i4 = distribution(g1);
+        cv::Point2f point_a = transform_point(&tmp_vertex_data, match_points_a[k]);      
+        cv::Point2f point_b = match_points_b[k];
+
+        double ndx = point_b.x - point_a.x;
+        double ndy = point_b.y - point_a.y;
+        double dist = ndx*ndx+ndy*ndy;
+        if (dist <= thresh*thresh) {
+           tmp_inliers++;
+        }
+      }
+      if (tmp_inliers < 10) continue;
+
       if(std::abs(test_point_a_transformed.x - test_point_b.x) > 1e-1) {
       } else {
 
       int inliers = 0;
 
       for (int j = 0; j < match_points_b.size(); j++) {
+
         cv::Point2f point_a = transform_point(&tmp_vertex_data, match_points_a[j]);      
         cv::Point2f point_b = match_points_b[j];
 

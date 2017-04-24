@@ -184,32 +184,38 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
        grad_error_x += 2*(delta_x)*weights[iter];
        grad_error_y += 2*(delta_y)*weights[iter];
 
-       neighbor_pointers[iter]->neighbor_grad_x -= 0.4*2*delta_x*weights[iter];
-       neighbor_pointers[iter]->neighbor_grad_y -= 0.4*2*delta_y*weights[iter];
+       neighbor_pointers[iter]->neighbor_grad_x -= 0.6*2*delta_x*weights[iter];
+       neighbor_pointers[iter]->neighbor_grad_y -= 0.6*2*delta_y*weights[iter];
        neighbor_errors_x[neighbor_pointers[iter]->vertex_id] += delta_x*weights[iter];
        neighbor_errors_y[neighbor_pointers[iter]->vertex_id] += delta_y*weights[iter];
        weight_sum += weights[iter];
     }
+
     grad_error_x += vertex_data->neighbor_grad_x;
     grad_error_y += vertex_data->neighbor_grad_y;
+    //for (std::map<int, double>::iterator iter = neighbor_errors_x.begin(); iter != neighbor_errors_x.end(); ++iter) {
+    //  graph->getVertexData(iter->first)->neighbor_grad_x += vertex_data->neighbor_grad_x*0.4*2;
+    //  graph->getVertexData(iter->first)->neighbor_grad_y += vertex_data->neighbor_grad_y*0.4*2;
+    //}
+
     vertex_data->neighbor_grad_x = 0.0;
-    vertex_data->neighbor_grad_x = 0.0;
+    vertex_data->neighbor_grad_y = 0.0;
     vertex_data->offset_x += /*(1.0-2*4.0/30.0)*/grad_error_x*0.49/(weight_sum);
     vertex_data->offset_y += /*(1.0-2*4.0/30.0)*/grad_error_y*0.49/(weight_sum);
 
-    for (int iter = 0; iter < filtered_match_points_a.size(); iter++) {
-       double delta_x = filtered_match_points_b[iter].x - filtered_match_points_a[iter].x;
-       double delta_y = filtered_match_points_b[iter].y - filtered_match_points_a[iter].y;
-       //error_sq += (delta_x*delta_x + delta_y*delta_y)*weights[iter];
-       //grad_error_x += 2*(delta_x)*weights[iter];
-       //grad_error_y += 2*(delta_y)*weights[iter];
+    //for (int iter = 0; iter < filtered_match_points_a.size(); iter++) {
+    //   double delta_x = filtered_match_points_b[iter].x - filtered_match_points_a[iter].x;
+    //   double delta_y = filtered_match_points_b[iter].y - filtered_match_points_a[iter].y;
+    //   //error_sq += (delta_x*delta_x + delta_y*delta_y)*weights[iter];
+    //   //grad_error_x += 2*(delta_x)*weights[iter];
+    //   //grad_error_y += 2*(delta_y)*weights[iter];
 
-       //neighbor_pointers[iter]->neighbor_grad_x -= 0.4*2*delta_x*weights[iter];
-       //neighbor_pointers[iter]->neighbor_grad_y -= 0.4*2*delta_y*weights[iter];
-       neighbor_errors_x[neighbor_pointers[iter]->vertex_id] += delta_x*weights[iter];
-       neighbor_errors_y[neighbor_pointers[iter]->vertex_id] += delta_y*weights[iter];
-       weight_sum += weights[iter];
-    }
+    //   //neighbor_pointers[iter]->neighbor_grad_x -= 0.4*2*delta_x*weights[iter];
+    //   //neighbor_pointers[iter]->neighbor_grad_y -= 0.4*2*delta_y*weights[iter];
+    //   //neighbor_errors_x[neighbor_pointers[iter]->vertex_id] += delta_x*weights[iter];
+    //   //neighbor_errors_y[neighbor_pointers[iter]->vertex_id] += delta_y*weights[iter];
+    //   weight_sum += weights[iter];
+    //}
 
 
     error_sq = 0.0;
@@ -282,109 +288,128 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
       cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
       cv::vconcat(btile_kps_desc_in_overlap_list, (btile_kps_desc_in_overlap));
 
-      std::vector< cv::DMatch > matches;
-      match_features(matches,
-                     atile_kps_desc_in_overlap,
-                     btile_kps_desc_in_overlap,
-                     0.65);
-          printf("Done with the matching. Num matches is %d\n", matches.size());
-          // Filter the matches with RANSAC
-          std::vector<cv::Point2f> match_points_a, match_points_b;
-
-          p_align_data->sec_data[section_a].p_kps = new std::vector<cv::KeyPoint>();
-          p_align_data->sec_data[section_b].p_kps = new std::vector<cv::KeyPoint>();
 
 
-
-          for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
-            int atile_id = atile_kps_tile_list[matches[tmpi].queryIdx];
-            int btile_id = btile_kps_tile_list[matches[tmpi].trainIdx];
-
-            //int x_start_a = merged_graph->getVertexData(atile_id)->start_x + merged_graph->getVertexData(atile_id)->offset_x;
-            //int y_start_a = merged_graph->getVertexData(atile_id)->start_y + merged_graph->getVertexData(atile_id)->offset_y;
-
-            //int x_start_b = merged_graph->getVertexData(btile_id)->start_x + merged_graph->getVertexData(btile_id)->offset_x;
-            //int y_start_b = merged_graph->getVertexData(btile_id)->start_y + merged_graph->getVertexData(btile_id)->offset_y;
-
-            match_points_a.push_back(
-                transform_point(merged_graph->getVertexData(atile_id),atile_kps_in_overlap[matches[tmpi].queryIdx].pt));
-            match_points_b.push_back(
-                transform_point(merged_graph->getVertexData(btile_id),btile_kps_in_overlap[matches[tmpi].trainIdx].pt));
-
-
-            atile_kps_in_overlap[matches[tmpi].queryIdx].pt = transform_point(merged_graph->getVertexData(atile_id),atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
-            p_align_data->sec_data[section_a].p_kps->push_back(atile_kps_in_overlap[matches[tmpi].queryIdx]);
-            btile_kps_in_overlap[matches[tmpi].trainIdx].pt = transform_point(merged_graph->getVertexData(btile_id),btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
-            p_align_data->sec_data[section_b].p_kps->push_back(btile_kps_in_overlap[matches[tmpi].trainIdx]);
-
-            //match_points_a.push_back(
-            //    atile_kps_in_overlap[matches[tmpi].queryIdx].pt + cv::Point2f(x_start_a, y_start_a));
-            //match_points_b.push_back(
-            //    btile_kps_in_overlap[matches[tmpi].trainIdx].pt + cv::Point2f(x_start_b, y_start_b));
-          }
-          bool* mask = (bool*)calloc(matches.size()+1, 1);
-          std::pair<double,double> offset_pair;
-          vdata best_vertex_data  = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 25.0, mask); 
-          std::vector< cv::Point2f > filtered_match_points_a(0);
-          std::vector< cv::Point2f > filtered_match_points_b(0);
-      for (int c = 0; c < matches.size(); c++) {
-        if (mask[c]) {
-          int atile_id = atile_kps_tile_list[matches[c].queryIdx];
-          int btile_id = btile_kps_tile_list[matches[c].trainIdx];
-          filtered_match_points_a.push_back(
-              match_points_a[c]);
-          filtered_match_points_b.push_back(
-              match_points_b[c]);
-        }
-      }
-      //cv::Mat warp_mat = cv::estimateRigidTransform(filtered_match_points_a, filtered_match_points_b, false);//cv::findHomography(match_points_a, match_points_b);
-
-
-      cv::Mat warp_mat;
-      cv::computeAffineTFK(filtered_match_points_a, filtered_match_points_b, warp_mat);
-//cv::estimateRigidTransform(filtered_match_points_a, filtered_match_points_b, true);
+      for (int trial = 0; trial < 4; trial++) {
+        float trial_rod = 0.5;
+        if (trial == 1) trial_rod = 0.6;
+        if (trial == 2) trial_rod = 0.65;
+        if (trial == 3) trial_rod = 0.7;
+        std::vector< cv::DMatch > matches;
+        match_features(matches,
+                       atile_kps_desc_in_overlap,
+                       btile_kps_desc_in_overlap,
+                       trial_rod);
 
 
 
-      std::cout << warp_mat << std::endl; 
-      vdata tmp;
-      tmp.a00 = warp_mat.at<double>(0, 0); 
-      tmp.a01 = warp_mat.at<double>(0, 1);
-      tmp.offset_x = warp_mat.at<double>(0, 2);
-      tmp.a10 = warp_mat.at<double>(1, 0); 
-      tmp.a11 = warp_mat.at<double>(1, 1); 
-      tmp.offset_y = warp_mat.at<double>(1, 2);
-      tmp.start_x = 0.0;
-      tmp.start_y = 0.0;
-      printf("Best values are %f %f %f %f %f %f\n", tmp.a00, tmp.a01, tmp.a10, tmp.a11, tmp.offset_x, tmp.offset_y);
-      best_vertex_data = tmp;
-      //RETURNTFK
 
-      int min_x = 0.0;
-      int min_y = 0.0;
-      bool first_check = true;
-      for (int v = 0; v < merged_graph->num_vertices(); v++) {
-        if (merged_graph->getVertexData(v)->z <= section_a) {
-          if (first_check) {
-            first_check = false;
-            min_x = merged_graph->getVertexData(v)->start_x;
-            min_y = merged_graph->getVertexData(v)->start_y;
-          } else {
-            double lx = merged_graph->getVertexData(v)->start_x;
-            double ly = merged_graph->getVertexData(v)->start_y;
-            if (lx < min_x) min_x = lx;
-            if (ly < min_y) min_y = ly;
+
+            printf("Done with the matching. Num matches is %d\n", matches.size());
+            // Filter the matches with RANSAC
+            std::vector<cv::Point2f> match_points_a, match_points_b;
+
+            p_align_data->sec_data[section_a].p_kps = new std::vector<cv::KeyPoint>();
+            p_align_data->sec_data[section_b].p_kps = new std::vector<cv::KeyPoint>();
+
+
+
+            for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
+              int atile_id = atile_kps_tile_list[matches[tmpi].queryIdx];
+              int btile_id = btile_kps_tile_list[matches[tmpi].trainIdx];
+
+              //int x_start_a = merged_graph->getVertexData(atile_id)->start_x + merged_graph->getVertexData(atile_id)->offset_x;
+              //int y_start_a = merged_graph->getVertexData(atile_id)->start_y + merged_graph->getVertexData(atile_id)->offset_y;
+
+              //int x_start_b = merged_graph->getVertexData(btile_id)->start_x + merged_graph->getVertexData(btile_id)->offset_x;
+              //int y_start_b = merged_graph->getVertexData(btile_id)->start_y + merged_graph->getVertexData(btile_id)->offset_y;
+
+              match_points_a.push_back(
+                  transform_point(merged_graph->getVertexData(atile_id),atile_kps_in_overlap[matches[tmpi].queryIdx].pt));
+              match_points_b.push_back(
+                  transform_point(merged_graph->getVertexData(btile_id),btile_kps_in_overlap[matches[tmpi].trainIdx].pt));
+
+
+              atile_kps_in_overlap[matches[tmpi].queryIdx].pt = transform_point(merged_graph->getVertexData(atile_id),atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
+              p_align_data->sec_data[section_a].p_kps->push_back(atile_kps_in_overlap[matches[tmpi].queryIdx]);
+              btile_kps_in_overlap[matches[tmpi].trainIdx].pt = transform_point(merged_graph->getVertexData(btile_id),btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
+              p_align_data->sec_data[section_b].p_kps->push_back(btile_kps_in_overlap[matches[tmpi].trainIdx]);
+
+              //match_points_a.push_back(
+              //    atile_kps_in_overlap[matches[tmpi].queryIdx].pt + cv::Point2f(x_start_a, y_start_a));
+              //match_points_b.push_back(
+              //    btile_kps_in_overlap[matches[tmpi].trainIdx].pt + cv::Point2f(x_start_b, y_start_b));
+            }
+            bool* mask = (bool*)calloc(matches.size()+1, 1);
+            std::pair<double,double> offset_pair;
+            vdata best_vertex_data  = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 10.0, mask);
+            
+            std::vector< cv::Point2f > filtered_match_points_a(0);
+            std::vector< cv::Point2f > filtered_match_points_b(0);
+        int num_filtered = 0;
+        for (int c = 0; c < matches.size(); c++) {
+          if (mask[c]) {
+            num_filtered++;
+            int atile_id = atile_kps_tile_list[matches[c].queryIdx];
+            int btile_id = btile_kps_tile_list[matches[c].trainIdx];
+            filtered_match_points_a.push_back(
+                match_points_a[c]);
+            filtered_match_points_b.push_back(
+                match_points_b[c]);
           }
         }
-      }
-
-      for (int v = 0; v < merged_graph->num_vertices(); v++) {
-        if (merged_graph->getVertexData(v)->z <= section_a) {
-          updateAffineTransform(merged_graph->getVertexData(v), /*&best_vertex_data*/warp_mat);
+        if (num_filtered < 0.1*matches.size()) {
+          printf("Not enough matches %d for section %d\n", num_filtered, section_a);
           continue;
         }
-      }
+        //cv::Mat warp_mat = cv::estimateRigidTransform(filtered_match_points_a, filtered_match_points_b, false);//cv::findHomography(match_points_a, match_points_b);
 
+
+        cv::Mat warp_mat;
+        cv::computeAffineTFK(filtered_match_points_a, filtered_match_points_b, warp_mat);
+//cv::  estimateRigidTransform(filtered_match_points_a, filtered_match_points_b, true);
+
+
+
+        std::cout << warp_mat << std::endl; 
+        vdata tmp;
+        tmp.a00 = warp_mat.at<double>(0, 0); 
+        tmp.a01 = warp_mat.at<double>(0, 1);
+        tmp.offset_x = warp_mat.at<double>(0, 2);
+        tmp.a10 = warp_mat.at<double>(1, 0); 
+        tmp.a11 = warp_mat.at<double>(1, 1); 
+        tmp.offset_y = warp_mat.at<double>(1, 2);
+        tmp.start_x = 0.0;
+        tmp.start_y = 0.0;
+        printf("Best values are %f %f %f %f %f %f\n", tmp.a00, tmp.a01, tmp.a10, tmp.a11, tmp.offset_x, tmp.offset_y);
+        best_vertex_data = tmp;
+        //RETURNTFK
+
+        int min_x = 0.0;
+        int min_y = 0.0;
+        bool first_check = true;
+        for (int v = 0; v < merged_graph->num_vertices(); v++) {
+          if (merged_graph->getVertexData(v)->z <= section_a) {
+            if (first_check) {
+              first_check = false;
+              min_x = merged_graph->getVertexData(v)->start_x;
+              min_y = merged_graph->getVertexData(v)->start_y;
+            } else {
+              double lx = merged_graph->getVertexData(v)->start_x;
+              double ly = merged_graph->getVertexData(v)->start_y;
+              if (lx < min_x) min_x = lx;
+              if (ly < min_y) min_y = ly;
+            }
+          }
+        }
+
+        for (int v = 0; v < merged_graph->num_vertices(); v++) {
+          if (merged_graph->getVertexData(v)->z <= section_a) {
+            updateAffineTransform(merged_graph->getVertexData(v), /*&best_vertex_data*/warp_mat);
+            continue;
+          }
+        }
+      }
     }
 
     }

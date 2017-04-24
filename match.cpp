@@ -636,8 +636,15 @@ void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std
   
   section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
 
+  int active_set_array [active_set.size()];
+  int i = 0;
   for (auto it = active_set.begin(); it != active_set.end(); ++it) {
-    int atile_id = *it;
+    active_set_array[i] = *it;
+    i++;
+  }
+
+  cilk_for (int j = 0; j < i; j++) {
+    int atile_id = active_set_array[j];
     //printf("The tile id is %d\n", atile_id);
     if (atile_id >= p_sec_data->n_tiles) {
       printf("Big error!\n");    
