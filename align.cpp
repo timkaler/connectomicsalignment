@@ -343,7 +343,10 @@ void get_neighbors(std::set<int>& /* OUTPUT*/ neighbor_set, std::set<int> active
   they do nt have to be next to each other or in any pattern
   not efficiency is really bad if they are not in some form of clump
 
-  currently just returns a row at a time
+  The active set is roughly a rectangle it is deined with a height, which is the number of tiles in the first demension it is
+  and also by a number of tiles  in the set
+
+  this function also cleans up the tile data when we no longer need it, it should do its best to not delete things we will need to calculate again
 */
 // by row
 void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set, std::set<int>& /* OUTPUT */ neighbor_set,
@@ -352,18 +355,27 @@ void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set
   int total = p_sec_data->n_tiles;
   int tiles[total];
   int max_size_of_active_set = total;
+  int height_of_active_set = 1;
   for (int i = 0; i < total; i++) {
     tiles[i] = i;
   }
-  struct Local {
-    Local(section_data_t *p_sec_data) { this->p_sec_data = p_sec_data; }
+  struct X_Sort {
+    X_Sort(section_data_t *p_sec_data) { this->p_sec_data = p_sec_data; }
     bool operator () (int i, int j) {
       return p_sec_data->tiles[i].x_start < p_sec_data->tiles[j].x_start;
     }
 
     section_data_t *p_sec_data;
   };
-  std::sort( tiles,tiles+total, Local(p_sec_data));
+  struct Y_Sort {
+    Y_Sort(section_data_t *p_sec_data) { this->p_sec_data = p_sec_data; }
+    bool operator () (int i, int j) {
+      return p_sec_data->tiles[i].y_start < p_sec_data->tiles[j].y_start;
+    }
+
+    section_data_t *p_sec_data;
+  };
+  std::sort( tiles,tiles+total, X_Sort(p_sec_data));
 
   if (finished_set.size() == total) {
     // clean up the memory
@@ -390,13 +402,24 @@ void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set
       break;
     }
   }
+  int x_bound = p_sec_data->tiles[tiles[starting_tile]].x_start + height_of_active_set * (
+              p_sec_data->tiles[tiles[starting_tile]].x_finish - p_sec_data->tiles[tiles[starting_tile]].x_start);
+  int tiles_in_x[total];
+  int num_pos = 0;
   for (int i = starting_tile; i < total; i++) {
-    if ((p_sec_data->tiles[tiles[starting_tile]].x_finish < p_sec_data->tiles[tiles[i]].x_start) ||
-         (active_set.size() >= max_size_of_active_set) ) {
+    if (x_bound < p_sec_data->tiles[tiles[i]].x_start) {
       break;
     }
-    active_set.insert(tiles[i]);
+    if (finished_set.find(tiles[i]) == finished_set.end()) {
+      tiles_in_x[num_pos]= tiles[i];
+      num_pos++;
+    }
   }
+  std::sort(tiles_in_x,tiles_in_x+num_pos, Y_Sort(p_sec_data));
+  for (int i = 0; (i < num_pos) && (i < max_size_of_active_set); i++) {
+    active_set.insert(tiles_in_x[i]);
+  }
+
   get_neighbors(neighbor_set, active_set, p_sec_data);
 
   // forget the things in know that we don't need anymore
@@ -448,7 +471,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     // each section has its own graph
     Graph<vdata, edata>* graph;
     graph = new Graph<vdata, edata>();
-    printf("REsizing the graph to be size %d\n", p_sec_data->n_tiles);
+    printf("Resizing the graph to be size %d\n", p_sec_data->n_tiles);
     graph->resize(p_sec_data->n_tiles);
     graph_list.push_back(graph);
     int work_count_total = 0;
@@ -456,9 +479,18 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       std::set<int> active_and_neighbors;
       active_and_neighbors.insert(active_set.begin(), active_set.end());
       active_and_neighbors.insert(neighbor_set.begin(), neighbor_set.end());
+      int active_and_neighbors_array[active_and_neighbors.size()];
+      int tiles_to_get = 0;
       for (auto tile_id : active_and_neighbors) {
         if (known_set.find(tile_id) == known_set.end()) {
           work_count_total++;
+          active_and_neighbors_array[tiles_to_get] = tile_id;
+          tiles_to_get++;
+        }
+      }
+      cilk_for (int i = 0; i < tiles_to_get; i++) {
+        int tile_id = active_and_neighbors_array[i];
+        if (known_set.find(tile_id) == known_set.end()) {
           #ifndef MEMCHECK
           tile_data_t *p_tile_data = &(p_sec_data->tiles[tile_id]);
 
@@ -483,34 +515,19 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
           int n_sub_images;
           if ((p_tile_data->tile_id > MFOV_BOUNDARY_THRESH)) {
 
-//<<<<<<< HEAD
-          p_sift = new cv::xfeatures2d::SIFT_Impl(
-                  0,  // num_features --- unsupported.
-                  6,  // number of octaves
-                  CONTRAST_THRESH,  // contrast threshold.
-                  EDGE_THRESH_2D,  // edge threshold.
-                  1.6);  // sigma.
+            p_sift = new cv::xfeatures2d::SIFT_Impl(
+                    0,  // num_features --- unsupported.
+                    6,  // number of octaves
+                    CONTRAST_THRESH,  // contrast threshold.
+                    EDGE_THRESH_2D,  // edge threshold.
+                    1.6);  // sigma.
 
-          cv::xfeatures2d::min_size = 8.0; 
-          // THEN: This tile is on the boundary, we need to compute SIFT features
-          // on the entire section.
-          int max_rows = rows / SIFT_D1_SHIFT;
-          int max_cols = cols / SIFT_D2_SHIFT;
-          n_sub_images = max_rows * max_cols;
-//=======
-//            p_sift = new cv::xfeatures2d::SIFT_Impl(
-//                    0,  // num_features --- unsupported.
-//                    6,  // number of octaves
-//                    CONTRAST_THRESH,  // contrast threshold.
-//                    EDGE_THRESH_2D,  // edge threshold.
-//                    1.6);  // sigma.
-//
-//            // THEN: This tile is on the boundary, we need to compute SIFT features
-//            // on the entire section.
-//            int max_rows = rows / SIFT_D1_SHIFT;
-//            int max_cols = cols / SIFT_D2_SHIFT;
-//            n_sub_images = max_rows * max_cols;
-//>>>>>>> c14d91436faca55e27ea0ec2883fcfc36ad79a19
+            cv::xfeatures2d::min_size = 8.0; 
+            // THEN: This tile is on the boundary, we need to compute SIFT features
+            // on the entire section.
+            int max_rows = rows / SIFT_D1_SHIFT;
+            int max_cols = cols / SIFT_D2_SHIFT;
+            n_sub_images = max_rows * max_cols;
 
             cilk_for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
               cilk_for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
@@ -552,30 +569,17 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 
           } else {
 
-//<<<<<<< HEAD
-          p_sift = new cv::xfeatures2d::SIFT_Impl(
-                  0,  // num_features --- unsupported.
-                  6,  // number of octaves
-                  CONTRAST_THRESH,  // contrast threshold.
-                  EDGE_THRESH_2D,  // edge threshold.
-                  1.6);  // sigma.
+            p_sift = new cv::xfeatures2d::SIFT_Impl(
+                    0,  // num_features --- unsupported.
+                    6,  // number of octaves
+                    CONTRAST_THRESH,  // contrast threshold.
+                    EDGE_THRESH_2D,  // edge threshold.
+                    1.6);  // sigma.
 
-          cv::xfeatures2d::min_size = 8.0; 
-          // ELSE THEN: This tile is in the interior of the MFOV. Only need to
-          //     compute features along the boundary.
-          n_sub_images = 4;
-//=======
-//            p_sift = new cv::xfeatures2d::SIFT_Impl(
-//                    0,  // num_features --- unsupported.
-//                    6,  // number of octaves
-//                    CONTRAST_THRESH,  // contrast threshold.
-//                    5,  // edge threshold.
-//                    1.6);  // sigma.
-//
-//            // ELSE THEN: This tile is in the interior of the MFOV. Only need to
-//            //     compute features along the boundary.
-//            n_sub_images = 4;
-//>>>>>>> c14d91436faca55e27ea0ec2883fcfc36ad79a19
+            cv::xfeatures2d::min_size = 8.0; 
+            // ELSE THEN: This tile is in the interior of the MFOV. Only need to
+            //     compute features along the boundary.
+            n_sub_images = 4;
 
             // BEGIN TOP SLICE
             {
@@ -769,7 +773,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     // Initialize data in the graph representation.
     printf("Size of the graph is %d\nThe average work per tile was %f\n", graph->num_vertices(), ((float) work_count_total)/ p_sec_data->n_tiles);
     #ifdef MEMCHECK
-     printf("max size of actve_set and neighbor_set = %d\n", max_known);
+     printf("max size of active_set and neighbor_set = %d\n", max_known);
     #endif
     for (int i = 0; i < graph->num_vertices(); i++) {
       vdata* d = graph->getVertexData(i);
