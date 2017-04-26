@@ -45,7 +45,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
   simple_mutex_t created_paths_lock;
   simple_mutex_init(&created_paths_lock);
   //#pragma cilk grainsize=1
-  for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+  cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
     cilk_for (int tile_id = 0; tile_id < p_sec_data->n_tiles; tile_id++) {
       tile_data_t *p_tile_data = &(p_sec_data->tiles[tile_id]);
@@ -79,7 +79,7 @@ void compute_SIFT_parallel_3d(align_data_t *p_align_data) {
                 6,  // number of octaves
                 CONTRAST_THRESH_3D,  // contrast threshold.
                 EDGE_THRESH_3D,  // edge threshold.
-                1.6);  // sigma.
+                1.6*2);  // sigma.
       
       cv::xfeatures2d::min_size = 32.0; 
 
@@ -795,6 +795,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       d->a11 = 1.0;
       d->neighbor_grad_x = 0.0;
       d->neighbor_grad_y = 0.0;
+      d->converged = false;
     }
     graph->section_id = sec_id;
   }

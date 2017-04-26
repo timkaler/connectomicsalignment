@@ -4,6 +4,12 @@
 /efs/home/tfk/rh_aligner/run_render.sh -s 0.3 --from_x 0 --to_x 50000 --from_y 0 --to_y 50000 $PWD/temp/W01_Sec028_montaged.json section4
 /efs/home/tfk/rh_aligner/run_render.sh -s 0.3 --from_x 0 --to_x 50000 --from_y 0 --to_y 50000 $PWD/temp/W01_Sec029_montaged.json section5
 /efs/home/tfk/rh_aligner/run_render.sh -s 0.3 --from_x 0 --to_x 50000 --from_y 0 --to_y 50000 $PWD/temp/W01_Sec030_montaged.json section6
+/efs/home/tfk/rh_aligner/run_render.sh -s 0.3 --from_x 0 --to_x 50000 --from_y 0 --to_y 50000 $PWD/temp/W01_Sec031_montaged.json section7
+/efs/home/tfk/rh_aligner/run_render.sh -s 0.3 --from_x 0 --to_x 50000 --from_y 0 --to_y 50000 $PWD/temp/W01_Sec032_montaged.json section8
+/efs/home/tfk/rh_aligner/run_render.sh -s 0.3 --from_x 0 --to_x 50000 --from_y 0 --to_y 50000 $PWD/temp/W01_Sec033_montaged.json section9
+/efs/home/tfk/rh_aligner/run_render.sh -s 0.3 --from_x 0 --to_x 50000 --from_y 0 --to_y 50000 $PWD/temp/W01_Sec034_montaged.json section10
+#/efs/home/tfk/rh_aligner/run_render.sh -s 0.3 --from_x 0 --to_x 50000 --from_y 0 --to_y 50000 $PWD/temp/W01_Sec029_montaged.json section5
+#/efs/home/tfk/rh_aligner/run_render.sh -s 0.3 --from_x 0 --to_x 50000 --from_y 0 --to_y 50000 $PWD/temp/W01_Sec030_montaged.json section6
 #/efs/home/tfk/rh_aligner/run_render.sh -s 0.3 --from_x 10000 --to_x 80000 --from_y 10000 --to_y 80000 $PWD/temp/W01_Sec028_montaged.json section4
 #/efs/home/tfk/rh_aligner/run_render.sh -s 0.3 --from_x 0 --to_x 40000 --from_y 0 --to_y 40000 $PWD/temp/W01_Sec003_montaged.json section3
 #./run_render.sh -s 0.3 --from_x 0 --to_x 40000 --from_y 0 --to_y 40000 /efs/home/tfk/alignment_newrepo/temp/W01_Sec002_montaged.json section2

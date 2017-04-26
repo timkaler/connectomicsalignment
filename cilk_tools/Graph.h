@@ -61,6 +61,7 @@ typedef struct {
   double offset_y;
   int iteration_count;
   double last_radius_value;
+  bool converged;
 } vdata;
 
 typedef struct {

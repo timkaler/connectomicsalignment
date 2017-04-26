@@ -510,18 +510,52 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       new Scheduler(merged_graph->vertexColors, ncolors+1, merged_graph->num_vertices());
   scheduler->graph_void = (void*) merged_graph;
   e = new engine<vdata, edata>(merged_graph, scheduler);
+
+
+  // pick one section to be "converged"
+  std::set<int> section_list;
+  for (int i = 0; i < merged_graph->num_vertices(); i++) {
+    int z = merged_graph->getVertexData(i)->z;
+    merged_graph->getVertexData(i)->converged = false;
+    if (section_list.find(z) == section_list.end()) {
+      if (merged_graph->edgeData[i].size() > 4) {
+        section_list.insert(z);
+        merged_graph->getVertexData(i)->converged = true;
+      }
+    }
+  }
+
   for (int i = 0; i < merged_graph->num_vertices(); i++) {
     scheduler->add_task(i, updateVertex2DAlign);
   }
   printf("starting run\n");
   e->run();
   printf("ending run\n");
+
+  //for (int i = 0; i < merged_graph->num_vertices(); i++) {
+  //  merged_graph->getVertexData(i)->iteration_count = 0;
+  //  scheduler->add_task(i, updateVertex2DAlign);
+  //}
+
+  //printf("starting run\n");
+  //e->run();
+  //printf("ending run\n");
+
+  //for (int i = 0; i < merged_graph->num_vertices(); i++) {
+  //  merged_graph->getVertexData(i)->iteration_count = 0;
+  //  scheduler->add_task(i, updateVertex2DAlign);
+  //}
+  //printf("starting run\n");
+  //e->run();
+  //printf("ending run\n");
   for (int i = 0; i < merged_graph->num_vertices(); i++) {
-    scheduler->add_task(i, computeError2DAlign);
+    merged_graph->getVertexData(i)->iteration_count = 0;
+    computeError2DAlign(i, (void*) scheduler);
+    //scheduler->add_task(i, computeError2DAlign);
   }
 
-  e->run();
-
+  //e->run();
+  printf("Global error sq2 is %f\n", global_error_sq);
   #ifdef ALIGN3D
   coarse_alignment_3d(merged_graph, p_align_data);
   #endif
@@ -844,7 +878,7 @@ void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std
           }
         }
         free(mask);
-        if (num_matches_filtered > 4) {
+        if (num_matches_filtered > 12) {
           graph->insert_matches(atile_id, btile_id,
               filtered_match_points_a, filtered_match_points_b, 1.0);
           break;

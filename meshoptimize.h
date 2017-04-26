@@ -1,4 +1,5 @@
 static int global_iteration_count = 0;
+static double global_error_sq = 0;
 namespace cv {
 
   static bool computeAffineTFK(const std::vector<cv::Point2f> &srcPoints, const std::vector<cv::Point2f> &dstPoints, Mat &transf)
@@ -50,17 +51,22 @@ void computeError2DAlign(int vid, void* scheduler_void) {
 
   std::vector<cv::Point2f> source_points(0), dest_points(0);
 
-  if (edges.size() == 0) return;
+  if (edges.size() == 0) {
+     printf("Vertex %d has no edges\n", vid);
+     return;
+  }
+  if (!vertex_data->converged) printf("vertex %d didn't converge\n", vid);
 
   std::vector<cv::Point2f> original_points;
   std::vector<cv::Point2f> original_points2;
   std::vector<float> weights;
-
+  bool empty_converged = true;
   for (int i = 0; i < edges.size(); i++) {
-    if (i != vertex_data->iteration_count%edges.size()) continue;
     std::vector<cv::Point2f>* v_points = edges[i].v_points;
     std::vector<cv::Point2f>* n_points = edges[i].n_points;
     vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
+    //if (!neighbor_vertex->converged) continue;
+    empty_converged = false;
     double curr_weight = 1.0/v_points->size();
 
     if (graph->getVertexData(edges[i].neighbor_id)->z != graph->getVertexData(vid)->z) {
@@ -78,7 +84,7 @@ void computeError2DAlign(int vid, void* scheduler_void) {
       weights.push_back(curr_weight);
     }
   }
-  
+  if (empty_converged) return; 
   std::vector<cv::Point2f>& filtered_match_points_a = source_points;
   std::vector<cv::Point2f>& filtered_match_points_b = dest_points;
 
@@ -92,17 +98,22 @@ void computeError2DAlign(int vid, void* scheduler_void) {
        double delta_x = filtered_match_points_b[iter].x - filtered_match_points_a[iter].x;
        double delta_y = filtered_match_points_b[iter].y - filtered_match_points_a[iter].y;
        error_sq += (delta_x*delta_x + delta_y*delta_y)*weights[iter];
-       grad_error_x += 2*(delta_x)*weights[iter];
-       grad_error_y += 2*(delta_y)*weights[iter];
+       grad_error_x += (delta_x)*weights[iter];
+       grad_error_y += (delta_y)*weights[iter];
        weight_sum += weights[iter];
     }
     //vertex_data->offset_x += /*(1.0-2*4.0/30.0)*/grad_error_x*0.49/(weight_sum);
     //vertex_data->offset_y += /*(1.0-2*4.0/30.0)*/grad_error_y*0.49/(weight_sum);
     //vertex_data->offset_x += (2*4.0/30.0)*zgrad_error_x*0.49/(zweight_sum+weight_sum);
     //vertex_data->offset_y += (2*4.0/30.0)*zgrad_error_y*0.49/(zweight_sum+weight_sum);
-
+    double error_sq2 = grad_error_x*grad_error_x + grad_error_y*grad_error_y;
+   
+    //int error_sq2_val = lround(error_sq2);
+    global_error_sq += error_sq2;
+    //__sync_fetch_and_add(&global_error_sq, error_sq2_val); 
+ 
     if (error_sq > 10.0) {
-       printf("The error of vertex %d is %f\n", vid, error_sq);
+       printf("The error of vertex %d is %f vs %f edges size %d num matches %d\n", vid, error_sq2, error_sq, edges.size(), filtered_match_points_a.size());
     }
 
     //if ( vertex_data->iteration_count < 5000000 && /*(
@@ -147,6 +158,7 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
     std::vector<cv::Point2f>* v_points = edges[i].v_points;
     std::vector<cv::Point2f>* n_points = edges[i].n_points;
     vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
+    if (!neighbor_vertex->converged) continue;
     double curr_weight = 1.0/v_points->size();
 
     if (graph->getVertexData(edges[i].neighbor_id)->z != graph->getVertexData(vid)->z) {
@@ -170,6 +182,8 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
 
   std::vector<cv::Point2d> match_points_a_fixed(0);
   if (filtered_match_points_a.size() > 0) {
+    double learning_rate = 0.49;
+    while (true) {
     double grad_error_x = 0.0;
     double grad_error_y = 0.0;
     double weight_sum = 1.0;
@@ -183,25 +197,25 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
        error_sq += (delta_x*delta_x + delta_y*delta_y)*weights[iter];
        grad_error_x += 2*(delta_x)*weights[iter];
        grad_error_y += 2*(delta_y)*weights[iter];
-
-       neighbor_pointers[iter]->neighbor_grad_x -= 0.6*2*delta_x*weights[iter];
-       neighbor_pointers[iter]->neighbor_grad_y -= 0.6*2*delta_y*weights[iter];
-       neighbor_errors_x[neighbor_pointers[iter]->vertex_id] += delta_x*weights[iter];
-       neighbor_errors_y[neighbor_pointers[iter]->vertex_id] += delta_y*weights[iter];
+       //neighbor_pointers[iter]->neighbor_grad_x -= 2*delta_x*weights[iter];
+       //neighbor_pointers[iter]->neighbor_grad_y -= 2*delta_y*weights[iter];
+       //neighbor_errors_x[neighbor_pointers[iter]->vertex_id] += delta_x*weights[iter];
+       //neighbor_errors_y[neighbor_pointers[iter]->vertex_id] += delta_y*weights[iter];
        weight_sum += weights[iter];
     }
-
-    grad_error_x += vertex_data->neighbor_grad_x;
-    grad_error_y += vertex_data->neighbor_grad_y;
+    //grad_error_x += vertex_data->neighbor_grad_x;
+    //grad_error_y += vertex_data->neighbor_grad_y;
     //for (std::map<int, double>::iterator iter = neighbor_errors_x.begin(); iter != neighbor_errors_x.end(); ++iter) {
-    //  graph->getVertexData(iter->first)->neighbor_grad_x += vertex_data->neighbor_grad_x*0.4*2;
-    //  graph->getVertexData(iter->first)->neighbor_grad_y += vertex_data->neighbor_grad_y*0.4*2;
+    //  graph->getVertexData(iter->first)->neighbor_grad_x += vertex_data->neighbor_grad_x*0.4;
+    //  graph->getVertexData(iter->first)->neighbor_grad_y += vertex_data->neighbor_grad_y*0.4;
     //}
 
     vertex_data->neighbor_grad_x = 0.0;
     vertex_data->neighbor_grad_y = 0.0;
-    vertex_data->offset_x += /*(1.0-2*4.0/30.0)*/grad_error_x*0.49/(weight_sum);
-    vertex_data->offset_y += /*(1.0-2*4.0/30.0)*/grad_error_y*0.49/(weight_sum);
+    //if (!vertex_data->converged) {
+      vertex_data->offset_x += /*(1.0-2*4.0/30.0)*/grad_error_x*learning_rate/(weight_sum);
+      vertex_data->offset_y += /*(1.0-2*4.0/30.0)*/grad_error_y*learning_rate/(weight_sum);
+    //}
 
     //for (int iter = 0; iter < filtered_match_points_a.size(); iter++) {
     //   double delta_x = filtered_match_points_b[iter].x - filtered_match_points_a[iter].x;
@@ -219,31 +233,44 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
 
 
     error_sq = 0.0;
-    for (std::map<int, double>::iterator iter = neighbor_errors_x.begin(); iter != neighbor_errors_x.end(); ++iter) {
-      error_sq += (iter->second)*(iter->second);
-    }
-    for (std::map<int, double>::iterator iter = neighbor_errors_y.begin(); iter != neighbor_errors_y.end(); ++iter) {
-      error_sq += (iter->second)*(iter->second);
-    }
+    //for (std::map<int, double>::iterator iter = neighbor_errors_x.begin(); iter != neighbor_errors_x.end(); ++iter) {
+    //  error_sq += (iter->second)*(iter->second);
+    //}
+    //for (std::map<int, double>::iterator iter = neighbor_errors_y.begin(); iter != neighbor_errors_y.end(); ++iter) {
+    //  error_sq += (iter->second)*(iter->second);
+    //}
 
 
     //vertex_data->offset_x += (2*4.0/30.0)*zgrad_error_x*0.49/(zweight_sum+weight_sum);
     //vertex_data->offset_y += (2*4.0/30.0)*zgrad_error_y*0.49/(zweight_sum+weight_sum);
-
-    if (vertex_data->iteration_count < 40000 /*&& (
+    double total_error = grad_error_x*grad_error_x + grad_error_y*grad_error_y;
+    if (/*vertex_data->iteration_count < 40000*/ (total_error > 1e-4)/*(
       std::abs(vertex_data->offset_x - original_offset_x) +
-      std::abs(vertex_data->offset_y - original_offset_y) > 1e-1)*/ /*error_sq > 50.0*/) {
+      std::abs(vertex_data->offset_y - original_offset_y) > 1.0)*/ /*error_sq > 50.0*/) {
       int c = __sync_fetch_and_add(&global_iteration_count, 1);
+      //if (vertex_data->iteration_count > 10000*0.9 && grad_error_x*grad_error_x + grad_error_y*grad_error_y > 10.0) vertex_data->iteration_count -= 2;
       if (c%100000 == 0) {
-        printf("The error is %f\n", error_sq);
+        printf("The error is %f\n", total_error);
       } 
       scheduler->add_task(vid, updateVertex2DAlign);
       for (int i = 0; i < edges.size(); i++) {
         scheduler->add_task(edges[i].neighbor_id, updateVertex2DAlign);
       }
-    }
+    } else {
+      vertex_data->converged = true; 
+    } /*else {
+      for (int i = 0; i < edges.size(); i++) {
+        double ngrad_x = graph->getVertexData(edges[i].neighbor_id)->neighbor_grad_x;
+        double ngrad_y = graph->getVertexData(edges[i].neighbor_id)->neighbor_grad_y;
+        if (ngrad_x*ngrad_x+ngrad_y*ngrad_y > 20.0) {
+          scheduler->add_task(edges[i].neighbor_id, updateVertex2DAlign);
+        }
+      }
+    }*/
+  break;
   }
   vertex_data->iteration_count++;
+  }
 }
 
 
@@ -287,20 +314,29 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
       cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
       cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
       cv::vconcat(btile_kps_desc_in_overlap_list, (btile_kps_desc_in_overlap));
+      bool done = false;
 
+      //for (int trial_thresh = 0; trial_thresh < 4; trial_thresh++) {
+      //  if (done) break;
+      //for (int trial = 0; trial < 6; trial++) {
+      //  if (done) break;
+      //  float trial_rod = 0.55;
+      //  if (trial == 1) trial_rod = 0.6;
+      //  if (trial == 2) trial_rod = 0.7;
+      //  if (trial == 3) trial_rod = 0.8;
+      //  if (trial == 4) trial_rod = 0.92;
+      //  if (trial == 5) trial_rod = 0.96;
 
+      //  double thresh_for_trial = 4.0;
+      //  if (trial_thresh == 1) thresh_for_trial = 5.0;
+      //  if (trial_thresh == 2) thresh_for_trial = 6.0;
+      //  if (trial_thresh == 3) thresh_for_trial = 7.0;
 
-      for (int trial = 0; trial < 4; trial++) {
-        float trial_rod = 0.5;
-        if (trial == 1) trial_rod = 0.6;
-        if (trial == 2) trial_rod = 0.65;
-        if (trial == 3) trial_rod = 0.7;
         std::vector< cv::DMatch > matches;
         match_features(matches,
                        atile_kps_desc_in_overlap,
                        btile_kps_desc_in_overlap,
-                       trial_rod);
-
+                       0.92);
 
 
 
@@ -340,27 +376,57 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
               //match_points_b.push_back(
               //    btile_kps_in_overlap[matches[tmpi].trainIdx].pt + cv::Point2f(x_start_b, y_start_b));
             }
+
+
+            
+
             bool* mask = (bool*)calloc(matches.size()+1, 1);
             std::pair<double,double> offset_pair;
-            vdata best_vertex_data  = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 10.0, mask);
+            tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 1024.0, mask);
             
-            std::vector< cv::Point2f > filtered_match_points_a(0);
-            std::vector< cv::Point2f > filtered_match_points_b(0);
+            std::vector< cv::Point2f > filtered_match_points_a_pre(0);
+            std::vector< cv::Point2f > filtered_match_points_b_pre(0);
+
         int num_filtered = 0;
         for (int c = 0; c < matches.size(); c++) {
           if (mask[c]) {
             num_filtered++;
             int atile_id = atile_kps_tile_list[matches[c].queryIdx];
             int btile_id = btile_kps_tile_list[matches[c].trainIdx];
-            filtered_match_points_a.push_back(
+            filtered_match_points_a_pre.push_back(
                 match_points_a[c]);
-            filtered_match_points_b.push_back(
+            filtered_match_points_b_pre.push_back(
                 match_points_b[c]);
           }
         }
-        if (num_filtered < 0.1*matches.size()) {
-          printf("Not enough matches %d for section %d\n", num_filtered, section_a);
+        free(mask); 
+        mask = (bool*)calloc(matches.size()+1, 1);
+        printf("First pass filter got %d matches\n", num_filtered);
+        vdata best_vertex_data  = tfk_simple_ransac_strict_ret_affine(filtered_match_points_a_pre, filtered_match_points_b_pre, 10.0, mask);
+        std::vector< cv::Point2f > filtered_match_points_a(0);
+        std::vector< cv::Point2f > filtered_match_points_b(0);
+
+        num_filtered = 0;
+        for (int c = 0; c < filtered_match_points_a_pre.size(); c++) {
+          if (mask[c]) {
+            num_filtered++;
+            filtered_match_points_a.push_back(
+                filtered_match_points_a_pre[c]);
+            filtered_match_points_b.push_back(
+                filtered_match_points_b_pre[c]);
+          }
+        }
+        printf("Second pass filter got %d matches\n", num_filtered);
+
+
+        if (/*num_filtered < 0.05*filtered_match_points_a_pre.size() *//*matches.size()*/ /*||*/ num_filtered < 12) {
+          //printf("Not enough matches %d for section %d with thresh %f\n", num_filtered, section_a, thresh_for_trial);
+          printf("Not enough matches %d for section %d with thresh\n", num_filtered, section_a);
           continue;
+        } else {
+          //printf("Got enough matches %d for section %d with thresh %f\n", num_filtered, section_a, thresh_for_trial);
+          printf("Got enough matches %d for section %d with thresh\n", num_filtered, section_a);
+          //done = true;
         }
         //cv::Mat warp_mat = cv::estimateRigidTransform(filtered_match_points_a, filtered_match_points_b, false);//cv::findHomography(match_points_a, match_points_b);
 
@@ -409,7 +475,8 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
             continue;
           }
         }
-      }
+      //}
+      //}
     }
 
     }
