@@ -592,12 +592,53 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       //scheduler->add_task(i, computeError2DAlign);
     }
     printf("Global error sq2 on iter %d is %f\n", trial, global_error_sq);
-    if (global_error_sq < 1.5*p_align_data->n_sections) break;
+    if (global_error_sq < 2.0*p_align_data->n_sections) break;
   }
   //e->run();
   #ifdef ALIGN3D
   coarse_alignment_3d(merged_graph, p_align_data);
   fine_alignment_3d(merged_graph, p_align_data);
+  for (int trial = 0; trial < 5; trial++) {
+    //merged_graph->getVertexData(i)->iteration_count = 0;
+    global_error_sq = 0.0; 
+    //global_learning_rate = 0.6/(trial+1);
+    global_learning_rate = 0.9;
+    std::vector<int> vertex_ids;
+    for (int i = 0; i < merged_graph->num_vertices(); i++) {
+      vertex_ids.push_back(i);
+    } 
+    std::random_shuffle(vertex_ids.begin(), vertex_ids.end());
+    // pick one section to be "converged"
+    std::set<int> section_list;
+    for (int _i = 0; _i < merged_graph->num_vertices(); _i++) {
+      int i = _i;//vertex_ids[_i];
+      //merged_graph->getVertexData(i)->offset_x += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
+      //merged_graph->getVertexData(i)->offset_y += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
+      int z = merged_graph->getVertexData(i)->z;
+      merged_graph->getVertexData(i)->converged = 0;
+      merged_graph->getVertexData(i)->iteration_count = 0;
+      if (section_list.find(z) == section_list.end()) {
+        if (merged_graph->edgeData[i].size() > 4) {
+          section_list.insert(z);
+          merged_graph->getVertexData(i)->converged = 1;
+        }
+      }
+    }
+    for (int i = 0; i < merged_graph->num_vertices(); i++) {
+      scheduler->add_task(i, updateVertex2DAlign);
+    }
+    printf("starting run\n");
+    e->run();
+    printf("ending run\n");
+
+    for (int i = 0; i < merged_graph->num_vertices(); i++) {
+      merged_graph->getVertexData(i)->iteration_count = 0;
+      computeError2DAlign(i, (void*) scheduler);
+      //scheduler->add_task(i, computeError2DAlign);
+    }
+    printf("Global error sq2 on iter %d is %f\n", trial, global_error_sq);
+    if (global_error_sq < 2.0*p_align_data->n_sections) break;
+    }
   #endif
 
 

@@ -138,7 +138,7 @@ namespace cv
 namespace xfeatures2d
 {
 
-static float min_size = 0.0; 
+//static float min_size = 0.0; 
 /*!
  SIFT implementation.
 
@@ -230,7 +230,7 @@ static const float SIFT_DESCR_MAG_THR = 0.2f;
 // factor used to convert floating-point descriptor to unsigned char
 static const float SIFT_INT_DESCR_FCTR = 512.f;
 
-#if 0 
+#if 1 
 // intermediate type used for DoG pyramids
 typedef short sift_wt;
 static const int SIFT_FIXPT_SCALE = 48;
@@ -545,7 +545,7 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
 
 
     int mutex = 0;
-
+    float min_size = nfeatures*1.0;
     for( int o = 0; o < nOctaves; o++ )
         for( int i = 1; i <= nOctaveLayers; i++ )
         {
@@ -556,6 +556,9 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
             int step = (int)img.step1();
             int rows = img.rows, cols = img.cols;
 
+            float size_ub = sigma*powf(2.f, 1)*(1 << o)*2;
+            if (size_ub < min_size) continue;
+            
             for( int r = SIFT_IMG_BORDER; r < rows-SIFT_IMG_BORDER; r++)
             {
                 const sift_wt* currptr = img.ptr<sift_wt>(r);
@@ -860,15 +863,15 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
 
     //t = (double)getTickCount() - t;
     //printf("pyramid construction time: %g\n", t*1000./tf);
-
+    float min_size = 1.0*nfeatures;
     if( !useProvidedKeypoints )
     {
         //t = (double)getTickCount();
         findScaleSpaceExtrema(gpyr, dogpyr, keypoints);
         KeyPointsFilter::removeDuplicated( keypoints );
 
-        if( nfeatures > 0 )
-            KeyPointsFilter::retainBest(keypoints, nfeatures);
+        //if( nfeatures > 0 )
+        //    KeyPointsFilter::retainBest(keypoints, nfeatures);
         //t = (double)getTickCount() - t;
         //printf("keypoint detection time: %g\n", t*1000./tf);
 
