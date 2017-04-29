@@ -18,11 +18,13 @@
 #include <algorithm>
 #include <vector>
 #include <random>
+#include <algorithm>
 #include "./common.h"
 #include "./align.h"
 #include "./fasttime.h"
 #include "./simple_mutex.h"
 #include "cilk_tools/engine.h"
+
 void concat_two_tiles_all(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list) {
 
   for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
@@ -71,6 +73,15 @@ void concat_two_tiles(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoi
   }
 */
   //cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
+}
+
+
+static cv::Point2d transform_point_double(vdata* vertex, cv::Point2f point_local) {
+  double new_x = point_local.x*vertex->a00 + point_local.y * vertex->a01 + vertex->offset_x + vertex->start_x;
+  double new_y = point_local.x*vertex->a10 + point_local.y * vertex->a11 + vertex->offset_y + vertex->start_y;
+  //float new_x = point_local.x+vertex->offset_x+vertex->start_x;
+  //float new_y = point_local.y+vertex->offset_y+vertex->start_y;
+  return cv::Point2d(new_x, new_y);
 }
 
 
@@ -386,7 +397,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
         if (matches.size() < MIN_FEATURES_NUM) {
           //TRACE_1("Less than %d matched features, saving empty match file\n",
           //        MIN_FEATURES_NUM);
-          if (matches.size() == 0) printf("There are zero matches.\n");
+          //if (matches.size() == 0) printf("There are zero matches.\n");
           continue;
         }
 
@@ -511,53 +522,82 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   scheduler->graph_void = (void*) merged_graph;
   e = new engine<vdata, edata>(merged_graph, scheduler);
 
-
-  // pick one section to be "converged"
-  std::set<int> section_list;
-  for (int i = 0; i < merged_graph->num_vertices(); i++) {
-    int z = merged_graph->getVertexData(i)->z;
-    merged_graph->getVertexData(i)->converged = false;
-    if (section_list.find(z) == section_list.end()) {
-      if (merged_graph->edgeData[i].size() > 4) {
-        section_list.insert(z);
-        merged_graph->getVertexData(i)->converged = true;
+  for (int trial = 0; trial < 5; trial++) {
+    global_error_sq = 0.0; 
+    //global_learning_rate = 0.6/(trial+1);
+    global_learning_rate = 0.9;
+    std::vector<int> vertex_ids;
+    for (int i = 0; i < merged_graph->num_vertices(); i++) {
+      vertex_ids.push_back(i);
+    } 
+    std::random_shuffle(vertex_ids.begin(), vertex_ids.end());
+    // pick one section to be "converged"
+    std::set<int> section_list;
+    for (int _i = 0; _i < merged_graph->num_vertices(); _i++) {
+      int i = _i;//vertex_ids[_i];
+      //merged_graph->getVertexData(i)->offset_x += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
+      //merged_graph->getVertexData(i)->offset_y += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
+      int z = merged_graph->getVertexData(i)->z;
+      merged_graph->getVertexData(i)->converged = 0;
+      merged_graph->getVertexData(i)->iteration_count = 0;
+      if (section_list.find(z) == section_list.end()) {
+        if (merged_graph->edgeData[i].size() > 4) {
+          section_list.insert(z);
+          merged_graph->getVertexData(i)->converged = 1;
+        }
       }
     }
+    for (int i = 0; i < merged_graph->num_vertices(); i++) {
+      scheduler->add_task(i, updateVertex2DAlign);
+    }
+    printf("starting run\n");
+    e->run();
+    //std::priority_queue<std::pair<double, int> > queue;
+
+    //// perform initial enqueue.
+    //for (int i = 0; i < merged_graph->num_vertices(); i++) {
+    //  serialUpdateVertex2DAlign(i, -1.0, (void*)scheduler, &queue);
+    //}
+
+    //while (!queue.empty()) {
+    //  std::pair<double, int> vid = queue.top();
+    //  queue.pop();
+    //  if (vid.first < 1e-3) {
+    //    printf("converged\n");
+    //    break;
+    //  }
+    //  serialUpdateVertex2DAlign(vid.second, vid.first, (void*)scheduler, &queue);
+    //}
+    ////int update_count = 0;
+    ////while (!queue.empty()) {
+    ////  std::pair<double, int> vid = queue.top();
+    ////  queue.pop();
+    ////  if (update_count % 100*merged_graph->num_vertices() == 0) {
+    ////    global_learning_rate *= 0.99;
+    ////    printf("Learning rate %f worst value is %f\n", global_learning_rate, vid.first);
+    ////  }
+    ////  update_count++; 
+    ////  if (vid.first < 1e-3) {
+    ////    printf("converged\n");
+    ////    break;
+    ////  }
+    ////  serialUpdateVertex2DAlign(vid.second, vid.first, (void*)scheduler, &queue);
+    ////}
+
+    printf("ending run\n");
+
+    for (int i = 0; i < merged_graph->num_vertices(); i++) {
+      merged_graph->getVertexData(i)->iteration_count = 0;
+      computeError2DAlign(i, (void*) scheduler);
+      //scheduler->add_task(i, computeError2DAlign);
+    }
+    printf("Global error sq2 on iter %d is %f\n", trial, global_error_sq);
+    if (global_error_sq < 1.5*p_align_data->n_sections) break;
   }
-
-  for (int i = 0; i < merged_graph->num_vertices(); i++) {
-    scheduler->add_task(i, updateVertex2DAlign);
-  }
-  printf("starting run\n");
-  e->run();
-  printf("ending run\n");
-
-  //for (int i = 0; i < merged_graph->num_vertices(); i++) {
-  //  merged_graph->getVertexData(i)->iteration_count = 0;
-  //  scheduler->add_task(i, updateVertex2DAlign);
-  //}
-
-  //printf("starting run\n");
   //e->run();
-  //printf("ending run\n");
-
-  //for (int i = 0; i < merged_graph->num_vertices(); i++) {
-  //  merged_graph->getVertexData(i)->iteration_count = 0;
-  //  scheduler->add_task(i, updateVertex2DAlign);
-  //}
-  //printf("starting run\n");
-  //e->run();
-  //printf("ending run\n");
-  for (int i = 0; i < merged_graph->num_vertices(); i++) {
-    merged_graph->getVertexData(i)->iteration_count = 0;
-    computeError2DAlign(i, (void*) scheduler);
-    //scheduler->add_task(i, computeError2DAlign);
-  }
-
-  //e->run();
-  printf("Global error sq2 is %f\n", global_error_sq);
   #ifdef ALIGN3D
   coarse_alignment_3d(merged_graph, p_align_data);
+  fine_alignment_3d(merged_graph, p_align_data);
   #endif
 
 
@@ -577,8 +617,8 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   }
 
 
-  for (int i = 0; i < graph_list.size(); i++) {
-    Graph<vdata, edata>* graph = graph_list[i];
+  for (int _i = 0; _i < graph_list.size(); _i++) {
+    Graph<vdata, edata>* graph = graph_list[_i];
     int sec_id = graph->section_id;
     std::string section_id_string =
         std::to_string(p_align_data->sec_data[sec_id].section_id +
@@ -653,9 +693,9 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       }
     }
     fclose(wafer_file);
-    delete graph;
-    delete scheduler;
-    delete e;
+    //delete graph;
+    //delete scheduler;
+    //delete e;
   }
 
   //TRACE_1("compute_tile_matches: finish\n");
@@ -854,7 +894,7 @@ void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std
         if (matches.size() < MIN_FEATURES_NUM) {
           //TRACE_1("Less than %d matched features, saving empty match file\n",
           //        MIN_FEATURES_NUM);
-          if (matches.size() == 0) printf("There are zero matches.\n");
+          //if (matches.size() == 0) printf("There are zero matches.\n");
           continue;
         }
 

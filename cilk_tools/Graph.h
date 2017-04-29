@@ -54,14 +54,14 @@ typedef struct {
   double a01;
   double a10;
   double a11;
-
+  double last_error_value;
 
   // dynamic data we'll update.
   double offset_x;
   double offset_y;
   int iteration_count;
   double last_radius_value;
-  bool converged;
+  int converged;
 } vdata;
 
 typedef struct {

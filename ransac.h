@@ -644,7 +644,7 @@ int tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
       }
     }
 
-    printf("number of inliers is %d fraction is %f\n", maxInliers, (1.0*maxInliers) / match_points_a.size());
+    //printf("number of inliers is %d fraction is %f\n", maxInliers, (1.0*maxInliers) / match_points_a.size());
 
       // mark inliers
       for (int j = 0; j < match_points_b.size(); j++) {
