@@ -2,7 +2,7 @@
 
 
 
-export CILK_NWORKERS=16
+export CILK_NWORKERS=36
 NUMANODE=0
 SECTION=0
 WORKINGDIR=$PWD
@@ -34,11 +34,18 @@ OUTPUTDIR=$PWD/temp/
 #    $PWD/data/txtspecs_iarpa_full.txt \
 #    $OUTPUTDIR \
 #    $OUTPUTDIR
+
 ./setup.sh /usr/bin/time -v ./run_align 1 \
-    1 4\
+    0 50\
     $PWD/data/txtspecs_iarpa_full.txt \
     $OUTPUTDIR \
-    $OUTPUTDIR 10000 10000 40000 40000
+    $OUTPUTDIR
+
+#./setup.sh /usr/bin/time -v ./run_align 1 \
+#    25 24\
+#    $PWD/data/txtspecs_iarpa_full.txt \
+#    $OUTPUTDIR \
+#    $OUTPUTDIR
 
 
 #./setup.sh ./run_align 1 \

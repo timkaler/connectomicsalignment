@@ -596,7 +596,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   }
   //e->run();
   #ifdef ALIGN3D
-  coarse_alignment_3d(merged_graph, p_align_data);
+  coarse_alignment_3d(merged_graph, p_align_data, 64);
   fine_alignment_3d(merged_graph, p_align_data);
   for (int trial = 0; trial < 5; trial++) {
     //merged_graph->getVertexData(i)->iteration_count = 0;
@@ -639,6 +639,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     printf("Global error sq2 on iter %d is %f\n", trial, global_error_sq);
     if (global_error_sq < 2.0*p_align_data->n_sections) break;
     }
+  coarse_alignment_3d(merged_graph, p_align_data, 20.0);
   #endif
 
 

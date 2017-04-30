@@ -385,6 +385,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 
   // the graph_list
   std::vector<Graph<vdata, edata>* > graph_list;
+  graph_list.resize(p_align_data->n_sections);
 
   std::set<std::string> created_paths;
   simple_mutex_t created_paths_lock;
@@ -404,7 +405,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
   //}
 
   //for (int sec_id = split_start; sec_id < split_end/*p_align_data->n_sections*/; sec_id++) {
-  for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+  cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
     std::set<int> active_set;
     std::set<int> finished_set;
@@ -417,7 +418,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     graph = new Graph<vdata, edata>();
     printf("Resizing the graph to be size %d\n", p_sec_data->n_tiles);
     graph->resize(p_sec_data->n_tiles);
-    graph_list.push_back(graph);
+    //graph_list.push_back(graph);
+    graph_list[sec_id] = (graph);
     int work_count_total = 0;
     if (section_data_exists(sec_id, p_align_data)) {
       goto read_graph_from_file;
@@ -845,7 +847,7 @@ void align_execute(align_data_t *p_align_data) {
     //  store_3d_matches(i, p_align_data);
     //}
 
-    //compute_tile_matches(p_align_data, -1);
+    compute_tile_matches(p_align_data, -1);
 
 
 
