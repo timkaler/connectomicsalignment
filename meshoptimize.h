@@ -520,16 +520,16 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
       std::vector<double> atile_weights;
       std::vector<double> btile_weights;
 
-      for (int v = 1; v < merged_graph->num_vertices(); v++) {
+      for (int v = 0; v < merged_graph->num_vertices(); v++) {
         if (merged_graph->edgeData[v].size() == 0) continue;
         if (merged_graph->getVertexData(v)->z == section_a /*|| merged_graph->getVertexData(v)->z == section_a-1*/) {
           int curr_z = merged_graph->getVertexData(v)->z;
           _tile_data tdata_a = p_align_data->sec_data[curr_z].tiles[merged_graph->getVertexData(v)->tile_id];
-          concat_two_tiles_all(&tdata_a, v, atile_kps_in_overlap, atile_kps_desc_in_overlap_list, atile_kps_tile_list);
+          concat_two_tiles_all(merged_graph->getVertexData(v), &tdata_a, v, atile_kps_in_overlap, atile_kps_desc_in_overlap_list, atile_kps_tile_list);
           
         } else if (merged_graph->getVertexData(v)->z == section_b) {
           _tile_data tdata_b = p_align_data->sec_data[section_b].tiles[merged_graph->getVertexData(v)->tile_id];
-          concat_two_tiles_all(&tdata_b, v, btile_kps_in_overlap, btile_kps_desc_in_overlap_list, btile_kps_tile_list);
+          concat_two_tiles_all(merged_graph->getVertexData(v), &tdata_b, v, btile_kps_in_overlap, btile_kps_desc_in_overlap_list, btile_kps_tile_list);
         }
       }
 
@@ -589,16 +589,18 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
 
               //int x_start_b = merged_graph->getVertexData(btile_id)->start_x + merged_graph->getVertexData(btile_id)->offset_x;
               //int y_start_b = merged_graph->getVertexData(btile_id)->start_y + merged_graph->getVertexData(btile_id)->offset_y;
+              match_points_a.push_back(atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
+              match_points_b.push_back(btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
 
-              match_points_a.push_back(
-                  transform_point(merged_graph->getVertexData(atile_id),atile_kps_in_overlap[matches[tmpi].queryIdx].pt));
-              match_points_b.push_back(
-                  transform_point(merged_graph->getVertexData(btile_id),btile_kps_in_overlap[matches[tmpi].trainIdx].pt));
+              //match_points_a.push_back(
+              //    transform_point(merged_graph->getVertexData(atile_id),atile_kps_in_overlap[matches[tmpi].queryIdx].pt));
+              //match_points_b.push_back(
+              //    transform_point(merged_graph->getVertexData(btile_id),btile_kps_in_overlap[matches[tmpi].trainIdx].pt));
 
 
-              atile_kps_in_overlap[matches[tmpi].queryIdx].pt = transform_point(merged_graph->getVertexData(atile_id),atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
+              //atile_kps_in_overlap[matches[tmpi].queryIdx].pt = transform_point(merged_graph->getVertexData(atile_id),atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
               p_align_data->sec_data[section_a].p_kps->push_back(atile_kps_in_overlap[matches[tmpi].queryIdx]);
-              btile_kps_in_overlap[matches[tmpi].trainIdx].pt = transform_point(merged_graph->getVertexData(btile_id),btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
+              //btile_kps_in_overlap[matches[tmpi].trainIdx].pt = transform_point(merged_graph->getVertexData(btile_id),btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
               p_align_data->sec_data[section_b].p_kps->push_back(btile_kps_in_overlap[matches[tmpi].trainIdx]);
 
               //match_points_a.push_back(
@@ -663,7 +665,9 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
 
         cv::Mat warp_mat;
         cv::computeAffineTFK(filtered_match_points_a, filtered_match_points_b, warp_mat);
+        //cv::Mat warp_mat = cv::findHomography(filtered_match_points_a, filtered_match_points_b);
 //cv::  estimateRigidTransform(filtered_match_points_a, filtered_match_points_b, true);
+
 
 
 
@@ -679,6 +683,15 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
         tmp.start_y = 0.0;
         printf("Best values are %f %f %f %f %f %f\n", tmp.a00, tmp.a01, tmp.a10, tmp.a11, tmp.offset_x, tmp.offset_y);
         best_vertex_data = tmp;
+        float error_sqrt = 0.0;
+        for (int t = 0; t < filtered_match_points_a.size(); t++) {
+          cv::Point2f t_point = transform_point(&best_vertex_data,filtered_match_points_a[t]);
+          cv::Point2f o_point = filtered_match_points_b[t];
+          float error_sq = (t_point.x-o_point.x)*(t_point.x-o_point.x) +
+                           (t_point.y-o_point.y)*(t_point.y-o_point.y);
+          error_sqrt += std::sqrt(error_sq);
+        }
+        printf("Total error sqrt is total:%f avg:%f\n", error_sqrt, error_sqrt / filtered_match_points_a.size());
         //RETURNTFK
 
         int min_x = 0.0;

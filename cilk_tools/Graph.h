@@ -43,7 +43,8 @@ typedef struct {
 
   double corner_x[4];
   double corner_y[4];
-
+  cv::Point2f original_center_point;
+  cv::Point2f center_point;
   int z;
   double scale;
   double neighbor_grad_x;

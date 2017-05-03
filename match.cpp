@@ -25,21 +25,59 @@
 #include "./simple_mutex.h"
 #include "cilk_tools/engine.h"
 
-void concat_two_tiles_all(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list) {
+static cv::Point2d transform_point_double(vdata* vertex, cv::Point2f point_local) {
+  double new_x = point_local.x*vertex->a00 + point_local.y * vertex->a01 + vertex->offset_x + vertex->start_x;
+  double new_y = point_local.x*vertex->a10 + point_local.y * vertex->a11 + vertex->offset_y + vertex->start_y;
+  //float new_x = point_local.x+vertex->offset_x+vertex->start_x;
+  //float new_y = point_local.y+vertex->offset_y+vertex->start_y;
+  return cv::Point2d(new_x, new_y);
+}
+
+static cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local) {
+  float new_x = point_local.x*vertex->a00 + point_local.y * vertex->a01 + vertex->offset_x + vertex->start_x;
+  float new_y = point_local.x*vertex->a10 + point_local.y * vertex->a11 + vertex->offset_y + vertex->start_y;
+  //float new_x = point_local.x+vertex->offset_x+vertex->start_x;
+  //float new_y = point_local.y+vertex->offset_y+vertex->start_y;
+  return cv::Point2f(new_x, new_y);
+}
+
+
+void concat_two_tiles_all(vdata* vertex_data, tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list) {
 
   for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
-    cv::Point2f pt = (*a_tile->p_kps_3d)[pt_idx].pt;
+    //cv::Point2f pt = (*a_tile->p_kps_3d)[pt_idx].pt;
     //if (pt.x < ref_tile->x_start + radius) continue;
     //if (pt.y < ref_tile->y_start + radius) continue;
     //if (pt.x > ref_tile->x_end - radius) continue;
     //if (pt.y > ref_tile->y_end - radius) continue;
-    atile_kps_in_overlap.push_back((*a_tile->p_kps_3d)[pt_idx]);
+    cv::Point2f pt = transform_point(vertex_data, (*a_tile->p_kps_3d)[pt_idx].pt);
+    cv::KeyPoint kpt = (*a_tile->p_kps_3d)[pt_idx];
+    kpt.pt = pt;
+    atile_kps_in_overlap.push_back(kpt);
     atile_kps_desc_in_overlap_list.push_back(a_tile->p_kps_desc_3d->row(pt_idx).clone());
     atile_kps_tile_list.push_back(atile_id);
   }
 }
 
+void concat_two_tiles_all_filter(vdata* vertex_data, tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list,
+double _min_x, double _min_y, double _max_x, double _max_y) {
 
+  //printf("Bounding box is %f %f %f %f\n", _min_x, _min_y, _max_x, _max_y);
+  for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
+    cv::Point2f pt = transform_point(vertex_data, (*a_tile->p_kps_3d)[pt_idx].pt);
+    cv::KeyPoint kpt = (*a_tile->p_kps_3d)[pt_idx];
+    kpt.pt = pt;
+    //if (pt.x < _min_x || pt.x > _max_x || pt.y < _min_y || pt.y > _max_y) {
+    //  //printf("Filtered: %f,%f\n", pt.x, pt.y);
+    //  continue;
+    //} else {
+    //  //printf("Unfiltered: %f,%f\n", pt.x, pt.y);
+    //}
+    atile_kps_in_overlap.push_back(kpt);
+    atile_kps_desc_in_overlap_list.push_back(a_tile->p_kps_desc_3d->row(pt_idx).clone());
+    atile_kps_tile_list.push_back(atile_id);
+  }
+}
 
 void concat_two_tiles(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list, tile_data_t* ref_tile, double radius) {
   //printf("Comparing the tiles a_tile %d b_tile %d\n", atile_id, btile_id);
@@ -75,23 +113,6 @@ void concat_two_tiles(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoi
   //cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
 }
 
-
-static cv::Point2d transform_point_double(vdata* vertex, cv::Point2f point_local) {
-  double new_x = point_local.x*vertex->a00 + point_local.y * vertex->a01 + vertex->offset_x + vertex->start_x;
-  double new_y = point_local.x*vertex->a10 + point_local.y * vertex->a11 + vertex->offset_y + vertex->start_y;
-  //float new_x = point_local.x+vertex->offset_x+vertex->start_x;
-  //float new_y = point_local.y+vertex->offset_y+vertex->start_y;
-  return cv::Point2d(new_x, new_y);
-}
-
-
-static cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local) {
-  float new_x = point_local.x*vertex->a00 + point_local.y * vertex->a01 + vertex->offset_x + vertex->start_x;
-  float new_y = point_local.x*vertex->a10 + point_local.y * vertex->a11 + vertex->offset_y + vertex->start_y;
-  //float new_x = point_local.x+vertex->offset_x+vertex->start_x;
-  //float new_y = point_local.y+vertex->offset_y+vertex->start_y;
-  return cv::Point2f(new_x, new_y);
-}
 
 #include "ransac.h" 
 
@@ -598,48 +619,52 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   #ifdef ALIGN3D
   coarse_alignment_3d(merged_graph, p_align_data, 64);
   fine_alignment_3d(merged_graph, p_align_data);
-  for (int trial = 0; trial < 5; trial++) {
-    //merged_graph->getVertexData(i)->iteration_count = 0;
-    global_error_sq = 0.0; 
-    //global_learning_rate = 0.6/(trial+1);
-    global_learning_rate = 0.9;
-    std::vector<int> vertex_ids;
-    for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      vertex_ids.push_back(i);
-    } 
-    std::random_shuffle(vertex_ids.begin(), vertex_ids.end());
-    // pick one section to be "converged"
-    std::set<int> section_list;
-    for (int _i = 0; _i < merged_graph->num_vertices(); _i++) {
-      int i = _i;//vertex_ids[_i];
-      //merged_graph->getVertexData(i)->offset_x += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
-      //merged_graph->getVertexData(i)->offset_y += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
-      int z = merged_graph->getVertexData(i)->z;
-      merged_graph->getVertexData(i)->converged = 0;
-      merged_graph->getVertexData(i)->iteration_count = 0;
-      if (section_list.find(z) == section_list.end()) {
-        if (merged_graph->edgeData[i].size() > 4) {
-          section_list.insert(z);
-          merged_graph->getVertexData(i)->converged = 1;
-        }
-      }
-    }
-    for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      scheduler->add_task(i, updateVertex2DAlign);
-    }
-    printf("starting run\n");
-    e->run();
-    printf("ending run\n");
+  //for (int trial = 0; trial < 5; trial++) {
+  //  //fine_alignment_3d(merged_graph, p_align_data);
+  //  //merged_graph->getVertexData(i)->iteration_count = 0;
+  //  global_error_sq = 0.0; 
+  //  //global_learning_rate = 0.6/(trial+1);
+  //  global_learning_rate = 0.9;
+  //  std::vector<int> vertex_ids;
+  //  for (int i = 0; i < merged_graph->num_vertices(); i++) {
+  //    vertex_ids.push_back(i);
+  //  } 
+  //  std::random_shuffle(vertex_ids.begin(), vertex_ids.end());
+  //  // pick one section to be "converged"
+  //  std::set<int> section_list;
+  //  for (int _i = 0; _i < merged_graph->num_vertices(); _i++) {
+  //    int i = _i;//vertex_ids[_i];
+  //    //merged_graph->getVertexData(i)->offset_x += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
+  //    //merged_graph->getVertexData(i)->offset_y += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
+  //    int z = merged_graph->getVertexData(i)->z;
+  //    merged_graph->getVertexData(i)->converged = 0;
+  //    merged_graph->getVertexData(i)->iteration_count = 0;
+  //    if (section_list.find(z) == section_list.end()) {
+  //      if (merged_graph->edgeData[i].size() > 4) {
+  //        section_list.insert(z);
+  //        merged_graph->getVertexData(i)->converged = 1;
+  //      }
+  //    }
+  //  }
+  //  for (int i = 0; i < merged_graph->num_vertices(); i++) {
+  //    scheduler->add_task(i, updateVertex2DAlign);
+  //  }
+  //  printf("starting run\n");
+  //  e->run();
+  //  printf("ending run\n");
 
-    for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      merged_graph->getVertexData(i)->iteration_count = 0;
-      computeError2DAlign(i, (void*) scheduler);
-      //scheduler->add_task(i, computeError2DAlign);
-    }
-    printf("Global error sq2 on iter %d is %f\n", trial, global_error_sq);
-    if (global_error_sq < 2.0*p_align_data->n_sections) break;
-    }
-  coarse_alignment_3d(merged_graph, p_align_data, 20.0);
+  //  for (int i = 0; i < merged_graph->num_vertices(); i++) {
+  //    merged_graph->getVertexData(i)->iteration_count = 0;
+  //    computeError2DAlign(i, (void*) scheduler);
+  //    //scheduler->add_task(i, computeError2DAlign);
+  //  }
+  //  printf("Global error sq2 on iter %d is %f\n", trial, global_error_sq);
+  //  if (global_error_sq < 2.0*p_align_data->n_sections) break;
+  ////  fine_alignment_3d(merged_graph, p_align_data);
+  //}
+  ////coarse_alignment_3d(merged_graph, p_align_data, 64.0);
+  ////fine_alignment_3d(merged_graph, p_align_data);
+  //fine_alignment_3d_dampen(merged_graph, p_align_data);
   #endif
 
 
