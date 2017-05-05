@@ -804,6 +804,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
         cv::Point2f((tdata.x_finish-tdata.x_start)/2,
                     (tdata.y_finish-tdata.y_start)/2);
     }
+
     graph->section_id = sec_id;
   }
   //}

@@ -546,7 +546,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   for (int trial = 0; trial < 5; trial++) {
     global_error_sq = 0.0; 
     //global_learning_rate = 0.6/(trial+1);
-    global_learning_rate = 0.9;
+    global_learning_rate = 0.49;
     std::vector<int> vertex_ids;
     for (int i = 0; i < merged_graph->num_vertices(); i++) {
       vertex_ids.push_back(i);
@@ -568,6 +568,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
         }
       }
     }
+
     for (int i = 0; i < merged_graph->num_vertices(); i++) {
       scheduler->add_task(i, updateVertex2DAlign);
     }
@@ -607,17 +608,26 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
 
     printf("ending run\n");
 
+    mfov_alignment_3d(merged_graph, p_align_data);
+    for (int i = 0; i < merged_graph->num_vertices(); i++) {
+      merged_graph->getVertexData(i)->iteration_count = 0;
+      scheduler->add_task(i, updateVertex2DAlignFULL);
+    }
+    printf("starting run\n");
+    e->run();
+
     for (int i = 0; i < merged_graph->num_vertices(); i++) {
       merged_graph->getVertexData(i)->iteration_count = 0;
       computeError2DAlign(i, (void*) scheduler);
       //scheduler->add_task(i, computeError2DAlign);
     }
     printf("Global error sq2 on iter %d is %f\n", trial, global_error_sq);
-    if (global_error_sq < 2.0*p_align_data->n_sections) break;
+    //if (global_error_sq < 2.0*p_align_data->n_sections) break;
+    break;
   }
   //e->run();
   #ifdef ALIGN3D
-  coarse_alignment_3d(merged_graph, p_align_data, 64);
+  coarse_alignment_3d(merged_graph, p_align_data, 64.0);
   fine_alignment_3d(merged_graph, p_align_data);
   //for (int trial = 0; trial < 5; trial++) {
   //  //fine_alignment_3d(merged_graph, p_align_data);
