@@ -609,6 +609,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     printf("ending run\n");
 
     mfov_alignment_3d(merged_graph, p_align_data);
+
     for (int i = 0; i < merged_graph->num_vertices(); i++) {
       merged_graph->getVertexData(i)->iteration_count = 0;
       scheduler->add_task(i, updateVertex2DAlignFULL);
@@ -628,7 +629,19 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   //e->run();
   #ifdef ALIGN3D
   coarse_alignment_3d(merged_graph, p_align_data, 64.0);
-  fine_alignment_3d(merged_graph, p_align_data);
+  fine_alignment_3d_mfov(merged_graph, p_align_data);
+  coarse_alignment_3d(merged_graph, p_align_data, 64.0);
+  fine_alignment_3d_mfov(merged_graph, p_align_data);
+  //fine_alignment_3d_mfov(merged_graph, p_align_data);
+  //fine_alignment_3d_mfov(merged_graph, p_align_data);
+  //fine_alignment_3d_mfov(merged_graph, p_align_data);
+  //fine_alignment_3d_mfov(merged_graph, p_align_data);
+  //mfov_alignment_3d(merged_graph, p_align_data);
+  //mfov_alignment_3d(merged_graph, p_align_data);
+  //coarse_alignment_3d(merged_graph, p_align_data, 64.0);
+  //fine_alignment_3d_mfov(merged_graph, p_align_data);
+
+  //fine_alignment_3d(merged_graph, p_align_data);
   //for (int trial = 0; trial < 5; trial++) {
   //  //fine_alignment_3d(merged_graph, p_align_data);
   //  //merged_graph->getVertexData(i)->iteration_count = 0;

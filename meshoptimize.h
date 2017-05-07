@@ -411,48 +411,16 @@ void updateVertex2DAlignMFOV(int vid, void* scheduler_void) {
        //neighbor_errors_y[neighbor_pointers[iter]->vertex_id] += delta_y*weights[iter];
        weight_sum += weights[iter];
     }
-    //grad_error_x += vertex_data->neighbor_grad_x;
-    //grad_error_y += vertex_data->neighbor_grad_y;
-    //for (std::map<int, double>::iterator iter = neighbor_errors_x.begin(); iter != neighbor_errors_x.end(); ++iter) {
-    //  graph->getVertexData(iter->first)->neighbor_grad_x += vertex_data->neighbor_grad_x*0.4;
-    //  graph->getVertexData(iter->first)->neighbor_grad_y += vertex_data->neighbor_grad_y*0.4;
-    //}
 
     vertex_data->neighbor_grad_x = 0.0;
     vertex_data->neighbor_grad_y = 0.0;
-    //if (!vertex_data->converged) {
-      vertex_data->offset_x += /*(1.0-2*4.0/30.0)*/grad_error_x*learning_rate/(weight_sum);
-      vertex_data->offset_y += /*(1.0-2*4.0/30.0)*/grad_error_y*learning_rate/(weight_sum);
-    //}
 
-    //for (int iter = 0; iter < filtered_match_points_a.size(); iter++) {
-    //   double delta_x = filtered_match_points_b[iter].x - filtered_match_points_a[iter].x;
-    //   double delta_y = filtered_match_points_b[iter].y - filtered_match_points_a[iter].y;
-    //   //error_sq += (delta_x*delta_x + delta_y*delta_y)*weights[iter];
-    //   //grad_error_x += 2*(delta_x)*weights[iter];
-    //   //grad_error_y += 2*(delta_y)*weights[iter];
-
-    //   //neighbor_pointers[iter]->neighbor_grad_x -= 0.4*2*delta_x*weights[iter];
-    //   //neighbor_pointers[iter]->neighbor_grad_y -= 0.4*2*delta_y*weights[iter];
-    //   //neighbor_errors_x[neighbor_pointers[iter]->vertex_id] += delta_x*weights[iter];
-    //   //neighbor_errors_y[neighbor_pointers[iter]->vertex_id] += delta_y*weights[iter];
-    //   weight_sum += weights[iter];
-    //}
+    vertex_data->offset_x += /*(1.0-2*4.0/30.0)*/grad_error_x*learning_rate/(weight_sum);
+    vertex_data->offset_y += /*(1.0-2*4.0/30.0)*/grad_error_y*learning_rate/(weight_sum);
 
 
-    //error_sq = 0.0;
-    //for (std::map<int, double>::iterator iter = neighbor_errors_x.begin(); iter != neighbor_errors_x.end(); ++iter) {
-    //  error_sq += (iter->second)*(iter->second);
-    //}
-    //for (std::map<int, double>::iterator iter = neighbor_errors_y.begin(); iter != neighbor_errors_y.end(); ++iter) {
-    //  error_sq += (iter->second)*(iter->second);
-    //}
 
-
-    //vertex_data->offset_x += (2*4.0/30.0)*zgrad_error_x*0.49/(zweight_sum+weight_sum);
-    //vertex_data->offset_y += (2*4.0/30.0)*zgrad_error_y*0.49/(zweight_sum+weight_sum);
     double total_error = std::sqrt(grad_error_x*grad_error_x + grad_error_y*grad_error_y);
-    //if (/*vertex_data->iteration_count < 40000*/ (total_error > 1e-4*edges.size() /* || error_sq > 25.0*edges.size()*/ || trigger_change)/*(
     if (/*vertex_data->iteration_count < 40000*/ (vertex_data->iteration_count < 1000 /* || error_sq > 25.0*edges.size()*/ || trigger_change)/*(
       std::abs(vertex_data->offset_x - original_offset_x) +
       std::abs(vertex_data->offset_y - original_offset_y) > 1.0)*/ /*error_sq > 50.0*/) {
