@@ -36,6 +36,17 @@ void updateAffineTransform(vdata* vertex, cv::Mat& transform) {
   vertex->offset_x = B.at<double>(0,2);
   vertex->offset_y = B.at<double>(1,2);
 
+  cv::Mat D;
+  cv::invertAffineTransform(B, D);
+  vertex->ia00 = D.at<double>(0,0);
+  vertex->ia01 = D.at<double>(0,1);
+  vertex->ia10 = D.at<double>(1,0);
+  vertex->ia11 = D.at<double>(1,1);
+  vertex->ioffset_x = D.at<double>(0,2);
+  vertex->ioffset_y = D.at<double>(1,2);
+
+
+
           double start_x = 0.0;
           double start_y = 0.0;
           double end_x = 0.0;

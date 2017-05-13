@@ -49,7 +49,7 @@ typedef struct {
   double scale;
   double neighbor_grad_x;
   double neighbor_grad_y;
-
+  bool boundary;
   // parameters for affine warp.
   double a00;
   double a01;
@@ -60,6 +60,16 @@ typedef struct {
   // dynamic data we'll update.
   double offset_x;
   double offset_y;
+
+  double ia00;
+  double ia01;
+  double ia10;
+  double ia11;
+
+  // dynamic data we'll update.
+  double ioffset_x;
+  double ioffset_y;
+
   int iteration_count;
   double last_radius_value;
   int converged;

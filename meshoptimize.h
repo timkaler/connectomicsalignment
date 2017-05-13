@@ -73,7 +73,7 @@ void computeError2DAlign(int vid, void* scheduler_void) {
     double curr_weight = 1.0/v_points->size();
 
     if (graph->getVertexData(edges[i].neighbor_id)->z != graph->getVertexData(vid)->z) {
-      printf("Danger mesh optimize code has edges across sections!\n");
+      //printf("Danger mesh optimize code has edges across sections!\n");
     }
 
     for (int j = 0; j < v_points->size(); j++) {
@@ -172,7 +172,7 @@ void serialUpdateValues(int vid, void* scheduler_void,
     double curr_weight = 1.0/v_points->size();
 
     if (graph->getVertexData(edges[i].neighbor_id)->z != graph->getVertexData(vid)->z) {
-      printf("Danger mesh optimize code has edges across sections!\n");
+      //printf("Danger mesh optimize code has edges across sections!\n");
     }
 
     for (int j = 0; j < v_points->size(); j++) {
@@ -262,7 +262,7 @@ void serialUpdateVertex2DAlign(int vid, double check_value, void* scheduler_void
     double curr_weight = 1.0/v_points->size();
 
     if (graph->getVertexData(edges[i].neighbor_id)->z != graph->getVertexData(vid)->z) {
-      printf("Danger mesh optimize code has edges across sections!\n");
+      //printf("Danger mesh optimize code has edges across sections!\n");
     }
 
     for (int j = 0; j < v_points->size(); j++) {
@@ -370,7 +370,7 @@ void updateVertex2DAlignMFOV(int vid, void* scheduler_void) {
     double curr_weight = 1.0/v_points->size();
 
     if (graph->getVertexData(edges[i].neighbor_id)->z != graph->getVertexData(vid)->z) {
-      printf("Danger mesh optimize code has edges across sections!\n");
+      //printf("Danger mesh optimize code has edges across sections!\n");
     }
 
     for (int j = 0; j < v_points->size(); j++) {
@@ -514,7 +514,7 @@ void updateVertex2DAlignFULL(int vid, void* scheduler_void) {
     double curr_weight = 1.0/v_points->size();
 
     if (graph->getVertexData(edges[i].neighbor_id)->z != graph->getVertexData(vid)->z) {
-      printf("Danger mesh optimize code has edges across sections!\n");
+      //printf("Danger mesh optimize code has edges across sections!\n");
     }
 
     for (int j = 0; j < v_points->size(); j++) {
@@ -535,7 +535,7 @@ void updateVertex2DAlignFULL(int vid, void* scheduler_void) {
   std::vector<cv::Point2d> match_points_a_fixed(0);
   if (filtered_match_points_a.size() > 0) {
     double learning_rate = global_learning_rate;//0.4 + 0.6*((rand()%100)*1.0/100);
-    while (true) {
+    if (true) {
     double grad_error_x = 0.0;
     double grad_error_y = 0.0;
     double weight_sum = 1.0;
@@ -597,7 +597,7 @@ void updateVertex2DAlignFULL(int vid, void* scheduler_void) {
     //vertex_data->offset_y += (2*4.0/30.0)*zgrad_error_y*0.49/(zweight_sum+weight_sum);
     double total_error = std::sqrt(grad_error_x*grad_error_x + grad_error_y*grad_error_y);
     //if (/*vertex_data->iteration_count < 40000*/ (total_error > 1e-4*edges.size() /* || error_sq > 25.0*edges.size()*/ || trigger_change)/*(
-    if (/*vertex_data->iteration_count < 40000*/ (vertex_data->iteration_count < 5000 /* || error_sq > 25.0*edges.size()*/ || trigger_change)/*(
+    if (/*vertex_data->iteration_count < 40000*/ (vertex_data->iteration_count < 5000 /* || error_sq > 25.0*edges.size()*/)/*(
       std::abs(vertex_data->offset_x - original_offset_x) +
       std::abs(vertex_data->offset_y - original_offset_y) > 1.0)*/ /*error_sq > 50.0*/) {
       //int c = __sync_fetch_and_add(&global_iteration_count, 1);
@@ -631,7 +631,7 @@ void updateVertex2DAlignFULL(int vid, void* scheduler_void) {
         }
       }
     }*/
-  break;
+  //break;
   }
   vertex_data->iteration_count++;
   }
@@ -693,7 +693,7 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
     double curr_weight = 1.0/v_points->size();
 
     if (graph->getVertexData(edges[i].neighbor_id)->z != graph->getVertexData(vid)->z) {
-      printf("Danger mesh optimize code has edges across sections!\n");
+      //printf("Danger mesh optimize code has edges across sections!\n");
     }
 
     for (int j = 0; j < v_points->size(); j++) {
@@ -743,6 +743,8 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
 
     vertex_data->neighbor_grad_x = 0.0;
     vertex_data->neighbor_grad_y = 0.0;
+    if (isnan(grad_error_x*learning_rate/(weight_sum))) return; 
+    if (isnan(grad_error_y*learning_rate/(weight_sum))) return; 
     //if (!vertex_data->converged) {
       vertex_data->offset_x += /*(1.0-2*4.0/30.0)*/grad_error_x*learning_rate/(weight_sum);
       vertex_data->offset_y += /*(1.0-2*4.0/30.0)*/grad_error_y*learning_rate/(weight_sum);
@@ -776,7 +778,7 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
     //vertex_data->offset_y += (2*4.0/30.0)*zgrad_error_y*0.49/(zweight_sum+weight_sum);
     double total_error = std::sqrt(grad_error_x*grad_error_x + grad_error_y*grad_error_y);
     //if (/*vertex_data->iteration_count < 40000*/ (total_error > 1e-4*edges.size() /* || error_sq > 25.0*edges.size()*/ || trigger_change)/*(
-    if (/*vertex_data->iteration_count < 40000*/ (vertex_data->iteration_count < 5000 /* || error_sq > 25.0*edges.size()*/ || trigger_change)/*(
+    if (/*vertex_data->iteration_count < 40000*/ (vertex_data->iteration_count < 5000)/*(
       std::abs(vertex_data->offset_x - original_offset_x) +
       std::abs(vertex_data->offset_y - original_offset_y) > 1.0)*/ /*error_sq > 50.0*/) {
       //int c = __sync_fetch_and_add(&global_iteration_count, 1);
