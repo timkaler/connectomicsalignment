@@ -56,7 +56,7 @@
 #define MAX_INPUT_BUF (2000)
 
 //#define MAX_TILES (1024)
-#define MAX_TILES (2048)
+#define MAX_TILES (1024*1024)
 //#define MAX_SECTIONS (256)
 #define MAX_SECTIONS (64)
 
