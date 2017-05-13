@@ -12,6 +12,6 @@ OUTPUTDIR=$PWD/temp/
     $OUTPUTDIR \
     $OUTPUTDIR
 
-#cd tilespec_comparison
-#./run_test.sh python compare.py --old ../tests/compare_multiplemfov_gt/ --new ../tests/compare_multiplemfov/
+cd tilespec_comparison
+./run_test.sh python compare.py --old ../tests/compare_multiplemfov_gt/ --new ../tests/compare_multiplemfov/
 #

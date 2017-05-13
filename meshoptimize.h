@@ -49,8 +49,8 @@ void computeError2DAlign(int vid, void* scheduler_void) {
   vdata* vertex_data = graph->getVertexData(vid);
   std::vector<edata> edges = graph->edgeData[vid];
 
-  double original_offset_x = vertex_data->offset_x;
-  double original_offset_y = vertex_data->offset_y;
+  //double original_offset_x = vertex_data->offset_x;
+  //double original_offset_y = vertex_data->offset_y;
 
   std::vector<cv::Point2d> source_points(0), dest_points(0);
 
@@ -144,8 +144,8 @@ void serialUpdateValues(int vid, void* scheduler_void,
   vdata* vertex_data = graph->getVertexData(vid);
   std::vector<edata> edges = graph->edgeData[vid];
 
-  double original_offset_x = vertex_data->offset_x;
-  double original_offset_y = vertex_data->offset_y;
+  //double original_offset_x = vertex_data->offset_x;
+  //double original_offset_y = vertex_data->offset_y;
 
   std::vector<cv::Point2d> source_points(0), dest_points(0);
 
@@ -157,14 +157,14 @@ void serialUpdateValues(int vid, void* scheduler_void,
 
   std::vector<vdata*> neighbor_pointers;
 
-  bool trigger_change = false;
+  //bool trigger_change = false;
 
   for (int i = 0; i < edges.size(); i++) {
     //if (i != vertex_data->iteration_count%edges.size()) continue;
     std::vector<cv::Point2f>* v_points = edges[i].v_points;
     std::vector<cv::Point2f>* n_points = edges[i].n_points;
     vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
-    int n_conv = neighbor_vertex->converged;
+    //int n_conv = neighbor_vertex->converged;
     //if (n_conv == 0) continue;
     //if (n_conv > vertex_data->converged) continue;
 
@@ -192,7 +192,7 @@ void serialUpdateValues(int vid, void* scheduler_void,
 
   std::vector<cv::Point2d> match_points_a_fixed(0);
   if (filtered_match_points_a.size() > 0) {
-    double learning_rate = global_learning_rate;//0.4 + 0.6*((rand()%100)*1.0/100);
+    //double learning_rate = global_learning_rate;//0.4 + 0.6*((rand()%100)*1.0/100);
     while (true) {
     double grad_error_x = 0.0;
     double grad_error_y = 0.0;
@@ -234,8 +234,8 @@ void serialUpdateVertex2DAlign(int vid, double check_value, void* scheduler_void
 
   if (check_value > 0.0 && vertex_data->last_error_value != check_value) return; // stale.
 
-  double original_offset_x = vertex_data->offset_x;
-  double original_offset_y = vertex_data->offset_y;
+  //double original_offset_x = vertex_data->offset_x;
+  //double original_offset_y = vertex_data->offset_y;
 
   std::vector<cv::Point2d> source_points(0), dest_points(0);
 
@@ -247,14 +247,14 @@ void serialUpdateVertex2DAlign(int vid, double check_value, void* scheduler_void
 
   std::vector<vdata*> neighbor_pointers;
 
-  bool trigger_change = false;
+  //bool trigger_change = false;
 
   for (int i = 0; i < edges.size(); i++) {
     //if (i != vertex_data->iteration_count%edges.size()) continue;
     std::vector<cv::Point2f>* v_points = edges[i].v_points;
     std::vector<cv::Point2f>* n_points = edges[i].n_points;
     vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
-    int n_conv = neighbor_vertex->converged;
+    //int n_conv = neighbor_vertex->converged;
     //if (n_conv == 0) continue;
     //if (n_conv > vertex_data->converged) continue;
 
@@ -324,8 +324,8 @@ void updateVertex2DAlignMFOV(int vid, void* scheduler_void) {
   vdata* vertex_data = graph->getVertexData(vid);
   std::vector<edata> edges = graph->edgeData[vid];
 
-  double original_offset_x = vertex_data->offset_x;
-  double original_offset_y = vertex_data->offset_y;
+  //double original_offset_x = vertex_data->offset_x;
+  //double original_offset_y = vertex_data->offset_y;
 
   std::vector<cv::Point2f> source_points(0), dest_points(0);
 
@@ -362,7 +362,7 @@ void updateVertex2DAlignMFOV(int vid, void* scheduler_void) {
     std::vector<cv::Point2f>* v_points = edges[i].v_points;
     std::vector<cv::Point2f>* n_points = edges[i].n_points;
     vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
-    int n_conv = neighbor_vertex->converged;
+    //int n_conv = neighbor_vertex->converged;
     //if (n_conv == 0) continue;
     //if (n_conv > vertex_data->converged) continue;
 
@@ -420,7 +420,7 @@ void updateVertex2DAlignMFOV(int vid, void* scheduler_void) {
 
 
 
-    double total_error = std::sqrt(grad_error_x*grad_error_x + grad_error_y*grad_error_y);
+    //double total_error = std::sqrt(grad_error_x*grad_error_x + grad_error_y*grad_error_y);
     if (/*vertex_data->iteration_count < 40000*/ (vertex_data->iteration_count < 1000 /* || error_sq > 25.0*edges.size()*/ || trigger_change)/*(
       std::abs(vertex_data->offset_x - original_offset_x) +
       std::abs(vertex_data->offset_y - original_offset_y) > 1.0)*/ /*error_sq > 50.0*/) {
@@ -431,7 +431,7 @@ void updateVertex2DAlignMFOV(int vid, void* scheduler_void) {
       //}
       scheduler->add_task(vid, updateVertex2DAlignMFOV);
       for (int i = 0; i < edges.size(); i++) {
-        int n_conv = edges[i].neighbor_id;
+        //int n_conv = edges[i].neighbor_id;
         //if (n_conv == 0 || n_conv <= vertex_data->converged) {
           scheduler->add_task(edges[i].neighbor_id, updateVertex2DAlignMFOV);
         //}
@@ -468,8 +468,8 @@ void updateVertex2DAlignFULL(int vid, void* scheduler_void) {
   vdata* vertex_data = graph->getVertexData(vid);
   std::vector<edata> edges = graph->edgeData[vid];
 
-  double original_offset_x = vertex_data->offset_x;
-  double original_offset_y = vertex_data->offset_y;
+  ///double original_offset_x = vertex_data->offset_x;
+  ///double original_offset_y = vertex_data->offset_y;
 
   std::vector<cv::Point2f> source_points(0), dest_points(0);
 
@@ -506,7 +506,7 @@ void updateVertex2DAlignFULL(int vid, void* scheduler_void) {
     std::vector<cv::Point2f>* v_points = edges[i].v_points;
     std::vector<cv::Point2f>* n_points = edges[i].n_points;
     vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
-    int n_conv = neighbor_vertex->converged;
+    //int n_conv = neighbor_vertex->converged;
     //if (n_conv == 0) continue;
     //if (n_conv > vertex_data->converged) continue;
 
@@ -595,7 +595,7 @@ void updateVertex2DAlignFULL(int vid, void* scheduler_void) {
 
     //vertex_data->offset_x += (2*4.0/30.0)*zgrad_error_x*0.49/(zweight_sum+weight_sum);
     //vertex_data->offset_y += (2*4.0/30.0)*zgrad_error_y*0.49/(zweight_sum+weight_sum);
-    double total_error = std::sqrt(grad_error_x*grad_error_x + grad_error_y*grad_error_y);
+    //double total_error = std::sqrt(grad_error_x*grad_error_x + grad_error_y*grad_error_y);
     //if (/*vertex_data->iteration_count < 40000*/ (total_error > 1e-4*edges.size() /* || error_sq > 25.0*edges.size()*/ || trigger_change)/*(
     if (/*vertex_data->iteration_count < 40000*/ (vertex_data->iteration_count < 5000 /* || error_sq > 25.0*edges.size()*/)/*(
       std::abs(vertex_data->offset_x - original_offset_x) +
@@ -607,7 +607,7 @@ void updateVertex2DAlignFULL(int vid, void* scheduler_void) {
       //}
       scheduler->add_task(vid, updateVertex2DAlignFULL);
       for (int i = 0; i < edges.size(); i++) {
-        int n_conv = edges[i].neighbor_id;
+        //int n_conv = edges[i].neighbor_id;
         //if (n_conv == 0 || n_conv <= vertex_data->converged) {
           scheduler->add_task(edges[i].neighbor_id, updateVertex2DAlignFULL);
         //}
@@ -645,8 +645,8 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
   vdata* vertex_data = graph->getVertexData(vid);
   std::vector<edata> edges = graph->edgeData[vid];
 
-  double original_offset_x = vertex_data->offset_x;
-  double original_offset_y = vertex_data->offset_y;
+  //double original_offset_x = vertex_data->offset_x;
+  //double original_offset_y = vertex_data->offset_y;
 
   std::vector<cv::Point2f> source_points(0), dest_points(0);
 
@@ -685,7 +685,7 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
     std::vector<cv::Point2f>* n_points = edges[i].n_points;
     vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
     if (neighbor_vertex->mfov_id != vertex_data->mfov_id) continue;
-    int n_conv = neighbor_vertex->converged;
+    //int n_conv = neighbor_vertex->converged;
     //if (n_conv == 0) continue;
     //if (n_conv > vertex_data->converged) continue;
 
@@ -776,7 +776,7 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
 
     //vertex_data->offset_x += (2*4.0/30.0)*zgrad_error_x*0.49/(zweight_sum+weight_sum);
     //vertex_data->offset_y += (2*4.0/30.0)*zgrad_error_y*0.49/(zweight_sum+weight_sum);
-    double total_error = std::sqrt(grad_error_x*grad_error_x + grad_error_y*grad_error_y);
+    //double total_error = std::sqrt(grad_error_x*grad_error_x + grad_error_y*grad_error_y);
     //if (/*vertex_data->iteration_count < 40000*/ (total_error > 1e-4*edges.size() /* || error_sq > 25.0*edges.size()*/ || trigger_change)/*(
     if (/*vertex_data->iteration_count < 40000*/ (vertex_data->iteration_count < 5000)/*(
       std::abs(vertex_data->offset_x - original_offset_x) +
@@ -788,7 +788,7 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
       //}
       scheduler->add_task(vid, updateVertex2DAlign);
       for (int i = 0; i < edges.size(); i++) {
-        int n_conv = edges[i].neighbor_id;
+        //int n_conv = edges[i].neighbor_id;
         //if (n_conv == 0 || n_conv <= vertex_data->converged) {
           scheduler->add_task(edges[i].neighbor_id, updateVertex2DAlign);
         //}
@@ -822,7 +822,7 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
 #include "mfov_alignment.h"
 void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data, double distance_thresh){
     if (true) {
-    int vertex_id_offset = 0;
+    //int vertex_id_offset = 0;
 
     for (int v = 0; v < merged_graph->num_vertices(); v++) {
       merged_graph->getVertexData(v)->offset_x += merged_graph->getVertexData(v)->start_x;
@@ -865,13 +865,13 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
 
 
 
-      printf("Total size of a tile kps is %d\n", atile_kps_in_overlap.size());
-      printf("Total size of b tile kps is %d\n", btile_kps_in_overlap.size());
+      printf("Total size of a tile kps is %lu\n", atile_kps_in_overlap.size());
+      printf("Total size of b tile kps is %lu\n", btile_kps_in_overlap.size());
 
       cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
       cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
       cv::vconcat(btile_kps_desc_in_overlap_list, (btile_kps_desc_in_overlap));
-      bool done = false;
+      //bool done = false;
 
       //for (int trial_thresh = 0; trial_thresh < 4; trial_thresh++) {
       //  if (done) break;
@@ -898,7 +898,7 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
 
 
 
-            printf("Done with the matching. Num matches is %d\n", matches.size());
+            printf("Done with the matching. Num matches is %lu\n", matches.size());
             // Filter the matches with RANSAC
             std::vector<cv::Point2f> match_points_a, match_points_b;
 
@@ -908,8 +908,8 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
 
 
             for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
-              int atile_id = atile_kps_tile_list[matches[tmpi].queryIdx];
-              int btile_id = btile_kps_tile_list[matches[tmpi].trainIdx];
+              //int atile_id = atile_kps_tile_list[matches[tmpi].queryIdx];
+              //int btile_id = btile_kps_tile_list[matches[tmpi].trainIdx];
 
               //int x_start_a = merged_graph->getVertexData(atile_id)->start_x + merged_graph->getVertexData(atile_id)->offset_x;
               //int y_start_a = merged_graph->getVertexData(atile_id)->start_y + merged_graph->getVertexData(atile_id)->offset_y;
@@ -950,8 +950,8 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
         for (int c = 0; c < matches.size(); c++) {
           if (mask[c]) {
             num_filtered++;
-            int atile_id = atile_kps_tile_list[matches[c].queryIdx];
-            int btile_id = btile_kps_tile_list[matches[c].trainIdx];
+            //int atile_id = atile_kps_tile_list[matches[c].queryIdx];
+            //int btile_id = btile_kps_tile_list[matches[c].trainIdx];
             filtered_match_points_a_pre.push_back(
                 match_points_a[c]);
             filtered_match_points_b_pre.push_back(

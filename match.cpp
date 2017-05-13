@@ -294,8 +294,8 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   //for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
   for (int sec_id = force_section_id; sec_id < force_section_id+1 && force_section_id != -1; sec_id++) {
     Graph<vdata, edata>* graph;
-    Scheduler* scheduler;
-    engine<vdata, edata>* e;
+    //Scheduler* scheduler;
+    //engine<vdata, edata>* e;
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
 
     // Record the set of mfov ID's encountered.  Right now, this set

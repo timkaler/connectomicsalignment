@@ -12,6 +12,8 @@
 #include <vector>
 #include <algorithm>
 
+bool STORE_ALIGN_RESULTS = false;
+
 float CONTRAST_THRESH = 0.04;
 float CONTRAST_THRESH_3D = 0.04;
 float EDGE_THRESH_3D = 5.0;
@@ -51,6 +53,14 @@ void get_neighbors(std::set<int>& /* OUTPUT*/ neighbor_set, std::set<int> active
   }
 }
 
+uint64_t interleave_bits(int x, int y) {
+  uint64_t z = 0;
+  // the 8 is the number of bits per byte
+  for (int i = 0; i < sizeof(x)*8; i++) {
+    z |= (x & 1UL << i ) << i | ( y & 1UL << i ) << (i+1);
+  }
+  return z;
+}
 /*
   This will get us an active set of tiles
   Hopefully we will do something smart here eventually 
@@ -68,22 +78,22 @@ void get_neighbors(std::set<int>& /* OUTPUT*/ neighbor_set, std::set<int> active
 // by row
 void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set, std::set<int>& /* OUTPUT */ neighbor_set,
                                           std::set<int> finished_set, section_data_t *p_sec_data, 
-                                          std::set<int> /* MODIFIED */ known_set) {
+                                          std::set<int>& /* MODIFIED */ known_set, int *tiles) {
   int total = p_sec_data->n_tiles;
-  int tiles[total];
-  int max_size_of_active_set = total;
-  int height_of_active_set = 8;
-  for (int i = 0; i < total; i++) {
-    tiles[i] = i;
+  #define Z_ORDER 0
+  #define ORIG_IMPL 0
+  #define LINE 1
+  #define RECT_HEIGHT 50
+  int max_size_of_active_set;
+  int height_of_active_set;
+  if (LINE) {
+    max_size_of_active_set = total;
+    height_of_active_set = 1;
+  } else {
+    max_size_of_active_set = RECT_HEIGHT;
+    height_of_active_set = RECT_HEIGHT;
   }
-  struct X_Sort {
-    X_Sort(section_data_t *p_sec_data) { this->p_sec_data = p_sec_data; }
-    bool operator () (int i, int j) {
-      return p_sec_data->tiles[i].x_start < p_sec_data->tiles[j].x_start;
-    }
-
-    section_data_t *p_sec_data;
-  };
+  
   struct Y_Sort {
     Y_Sort(section_data_t *p_sec_data) { this->p_sec_data = p_sec_data; }
     bool operator () (int i, int j) {
@@ -92,7 +102,17 @@ void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set
 
     section_data_t *p_sec_data;
   };
-  std::sort( tiles,tiles+total, X_Sort(p_sec_data));
+  struct Z_Sort {
+    Z_Sort(section_data_t *p_sec_data) { this->p_sec_data = p_sec_data; }
+    bool operator () (int i, int j) {
+      return interleave_bits(p_sec_data->tiles[i].x_start, p_sec_data->tiles[i].y_start) < interleave_bits(p_sec_data->tiles[j].x_start, p_sec_data->tiles[j].y_start);
+    }
+
+    section_data_t *p_sec_data;
+  };
+  if (Z_ORDER){
+    std::sort( tiles,tiles+total, Z_Sort(p_sec_data));
+  }
 
   if (finished_set.size() == total) {
     // clean up the memory
@@ -106,35 +126,49 @@ void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set
   }
   // this section of code makes the active set all of the tiles, use this if you want to test the original implementation
   // it will be almost exactly the same as doing the original implementation
-  if (false) {
+  if (ORIG_IMPL) {
     for (int i = 0; i < total; i++) {
-      active_set.insert(i);
+      if (finished_set.find(i) == finished_set.end()) {
+	      if (active_set.size() >= total) {
+	        break;
+        }
+        active_set.insert(i);
+      }
     }
-    return;
-  }
-  int starting_tile = 0;
-  for (int i = 0; i < total; i++) {
-    if (finished_set.find(tiles[i]) == finished_set.end()) {
-      starting_tile = i;
-      break;
+  } else if (Z_ORDER) {
+    for (int i = 0; i < total; i++) {
+      if (finished_set.find(tiles[i]) == finished_set.end()) {
+        for (int j = i; (j < i + max_size_of_active_set) & (j < p_sec_data->n_tiles) ; j++) {
+          active_set.insert(tiles[j]);
+        }
+        break;
+      }
     }
-  }
-  int x_bound = p_sec_data->tiles[tiles[starting_tile]].x_start + height_of_active_set * (
-              p_sec_data->tiles[tiles[starting_tile]].x_finish - p_sec_data->tiles[tiles[starting_tile]].x_start);
-  int tiles_in_x[total];
-  int num_pos = 0;
-  for (int i = starting_tile; i < total; i++) {
-    if (x_bound < p_sec_data->tiles[tiles[i]].x_start) {
-      break;
+  } else { // what should normally happen
+    int starting_tile = 0;
+    for (int i = 0; i < total; i++) {
+      if (finished_set.find(tiles[i]) == finished_set.end()) {
+        starting_tile = i;
+        break;
+      }
     }
-    if (finished_set.find(tiles[i]) == finished_set.end()) {
-      tiles_in_x[num_pos]= tiles[i];
-      num_pos++;
+    int x_bound = p_sec_data->tiles[tiles[starting_tile]].x_start + height_of_active_set * (
+                p_sec_data->tiles[tiles[starting_tile]].x_finish - p_sec_data->tiles[tiles[starting_tile]].x_start);
+    int tiles_in_x[total];
+    int num_pos = 0;
+    for (int i = starting_tile; i < total; i++) {
+      if (x_bound < p_sec_data->tiles[tiles[i]].x_start) {
+        break;
+      }
+      if (finished_set.find(tiles[i]) == finished_set.end()) {
+        tiles_in_x[num_pos]= tiles[i];
+        num_pos++;
+      }
     }
-  }
-  std::sort(tiles_in_x,tiles_in_x+num_pos, Y_Sort(p_sec_data));
-  for (int i = 0; (i < num_pos) && (i < max_size_of_active_set); i++) {
-    active_set.insert(tiles_in_x[i]);
+    std::sort(tiles_in_x,tiles_in_x+num_pos, Y_Sort(p_sec_data));
+    for (int i = 0; (i < num_pos) && (i < max_size_of_active_set); i++) {
+      active_set.insert(tiles_in_x[i]);
+    }
   }
 
   get_neighbors(neighbor_set, active_set, p_sec_data);
@@ -153,9 +187,10 @@ void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set
     std::vector<cv::KeyPoint>().swap(*(a_tile->p_kps));
     ((a_tile->p_kps_desc))->release();
   }
-  printf("active size = %d, neighbor size = %d, finished size = %d, known size() = %d\n",
+  #ifndef MEMCHECK
+  printf("active size = %lu, neighbor size = %lu, finished size = %lu, known size() = %lu\n",
     active_set.size(), neighbor_set.size(), finished_set.size(), known_set.size());
-
+  #endif
 
 }
 
@@ -195,7 +230,20 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     std::set<int> finished_set;
     std::set<int> neighbor_set;
     std::set<int> known_set;
-    get_next_active_set_and_neighbor_set(active_set, neighbor_set, finished_set, p_sec_data, known_set);
+    struct X_Sort {
+      X_Sort(section_data_t *p_sec_data) { this->p_sec_data = p_sec_data; }
+      bool operator () (int i, int j) {
+        return p_sec_data->tiles[i].x_start < p_sec_data->tiles[j].x_start;
+      }
+
+      section_data_t *p_sec_data;
+    };
+    int tiles[p_sec_data->n_tiles];
+    for (int i = 0; i < p_sec_data->n_tiles; i++) {
+      tiles[i] = i;
+    }
+    std::sort( tiles,tiles+p_sec_data->n_tiles, X_Sort(p_sec_data));
+    get_next_active_set_and_neighbor_set(active_set, neighbor_set, finished_set, p_sec_data, known_set, tiles);
 
     // each section has its own graph
     Graph<vdata, edata>* graph;
@@ -221,16 +269,15 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
           tiles_to_get++;
         }
       }
-      cilk_for (int i = 0; i < tiles_to_get; i++) {
-        int tile_id = active_and_neighbors_array[i];
-        if (known_set.find(tile_id) == known_set.end()) {
-          #ifndef MEMCHECK
+      cilk_for (int unique_index = 0; unique_index < tiles_to_get; unique_index++) {
+        int tile_id = active_and_neighbors_array[unique_index];
+        #ifndef MEMCHECK
           tile_data_t *p_tile_data = &(p_sec_data->tiles[tile_id]);
 
 
           (*p_tile_data->p_image).create(3128, 2724, CV_8UC1);
           (*p_tile_data->p_image) = cv::imread(
-              p_tile_data->filepath, 
+              p_tile_data->filepath,
               CV_LOAD_IMAGE_UNCHANGED);
 
 
@@ -300,7 +347,6 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                     EDGE_THRESH_2D,  // edge threshold.
                     1.6);  // sigma.
 
-            //cv::xfeatures2d::min_size = 4.0; 
             // THEN: This tile is on the boundary, we need to compute SIFT features
             // on the entire section.
             int max_rows = rows / SIFT_D1_SHIFT;
@@ -353,7 +399,6 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                     EDGE_THRESH_2D,  // edge threshold.
                     1.6);  // sigma.
 
-            //cv::xfeatures2d::min_size = 4.0; 
             // ELSE THEN: This tile is in the interior of the MFOV. Only need to
             //     compute features along the boundary.
             n_sub_images = 4;
@@ -527,8 +572,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
                printf("WARNING::: NO KEYPOINTS FOUND!\n");
           }
           (*p_tile_data->p_image).release();
-          #endif
-        }
+        #endif
       }
       #ifndef MEMCHECK
       compute_tile_matches_active_set(p_align_data, sec_id, active_set, graph);
@@ -544,7 +588,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       known_set.insert(neighbor_set.begin(), neighbor_set.end());
       active_set.clear();
       neighbor_set.clear();
-      get_next_active_set_and_neighbor_set(active_set, neighbor_set, finished_set, p_sec_data, known_set);
+      get_next_active_set_and_neighbor_set(active_set, neighbor_set, finished_set, p_sec_data, known_set, tiles); 
     }
 
     // Initialize data in the graph representation.
@@ -553,8 +597,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
      printf("max size of active_set and neighbor_set = %d\n", max_known);
     #endif
 
-    store_2d_graph(graph, sec_id, p_align_data);
-    store_3d_matches(sec_id, p_align_data);
+    if (STORE_ALIGN_RESULTS) { 
+      store_2d_graph(graph, sec_id, p_align_data);
+      store_3d_matches(sec_id, p_align_data);
+    }
 
     goto skip_read_graph_from_file;
     read_graph_from_file:

@@ -11,7 +11,7 @@ void calculateBoxBlurSize(double sigma, int n, int *res)
 	int m=round(double(12*sigma*sigma-n*wl*wl-4*n*wl-3*n)/(-4*wl-4));
 	assert(m>=0 && m<=n);
 	//printf("%d %d %d %d\n",m,n,wl,wu);
-	double sigmaActual = sqrt((m*wl*wl + (n-m)*wu*wu - n)/12.0);
+	//double sigmaActual = sqrt((m*wl*wl + (n-m)*wu*wu - n)/12.0);
 	//printf("desired sigma = %.6lf\n, actual sigma = %.6lf\n", sigma, sigmaActual);
 	rep(i,0,n-1) if (i<m) res[i]=wl; else res[i]=wu;
 }
@@ -172,8 +172,8 @@ void BuildGaussianPyramid_BoxBlurApproximation( const cv::Mat& baseimg, std::vec
 	// !NOTE! is shallow copy really fine?  
 	base = baseimg;
 	
-	static double GBlurTime=0;
-	fasttime_t tstart=gettime();
+	//static double GBlurTime=0;
+	//fasttime_t tstart=gettime();
 	for( int o = 0; o < nOctaves; o++ )
 	{
 		if (o)
@@ -201,7 +201,7 @@ void BuildGaussianPyramid_BoxBlurApproximation( const cv::Mat& baseimg, std::vec
 			cv::swap(pyr[o*(nOctaveLayers + 3) + i], tmplist[BoxBlurExecutionPlan.target[i]]);
 
 	}
-	fasttime_t tend=gettime();
+	//fasttime_t tend=gettime();
 	
 	//GaussianPyramidBoxBlurTimer_mutex.lock();
 	//GBlurTime+=tdiff(tstart,tend);

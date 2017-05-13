@@ -32,7 +32,7 @@ void get_mfov_graph(Graph<vdata, edata>* merged_graph, align_data_t* p_align_dat
 
 
 
-  printf("There are %d mfovs\n", mfov_added_list.size());
+  printf("There are %lu mfovs\n", mfov_added_list.size());
 
   mfov_graph->resize(mfov_added_list.size());
 
@@ -146,7 +146,7 @@ void mfov_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
   
 
 
-  printf("There are %d mfovs\n", mfov_added_list.size());
+  printf("There are %lu mfovs\n", mfov_added_list.size());
 
   mfov_graph->resize(mfov_added_list.size());
 
@@ -235,7 +235,7 @@ void mfov_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
 void fine_alignment_3d_mfov(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data){
 
     printf("STARTING THE FINE ALIGNMENT IT SO FINE (I hope)");
-    int vertex_id_offset = 0;
+    //int vertex_id_offset = 0;
 
     for (int v = 0; v < merged_graph->num_vertices(); v++) {
       merged_graph->getVertexData(v)->offset_x += merged_graph->getVertexData(v)->start_x;
@@ -358,7 +358,7 @@ void fine_alignment_3d_mfov(Graph<vdata, edata>* merged_graph, align_data_t* p_a
           if (overlap > 2000.0*2000.0) {
             section_b_overlap_tiles.push_back(tile_ids_b[i]); 
             int v = tile_ids_b[i];
-            int curr_z = merged_graph->getVertexData(v)->z;
+            //int curr_z = merged_graph->getVertexData(v)->z;
             _tile_data tdata_b = p_align_data->sec_data[section_b].tiles[merged_graph->getVertexData(v)->tile_id];
             concat_two_tiles_all_filter(merged_graph->getVertexData(v),&tdata_b, v, btile_kps_in_overlap, btile_kps_desc_in_overlap_list, btile_kps_tile_list, mfov_start_x, mfov_start_y, mfov_end_x, mfov_end_y);
           }
@@ -368,14 +368,14 @@ void fine_alignment_3d_mfov(Graph<vdata, edata>* merged_graph, align_data_t* p_a
           continue;
         }
 
-        printf("Total size of a tile kps is %d\n", atile_kps_in_overlap.size());
-        printf("Total size of b tile kps is %d\n", btile_kps_in_overlap.size());
+        printf("Total size of a tile kps is %lu\n", atile_kps_in_overlap.size());
+        printf("Total size of b tile kps is %lu\n", btile_kps_in_overlap.size());
         //if (atile_kps_tile_list.size() == 0 || btile_kps_tile_list.size() == 0) continue;
 
         cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
         cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
         cv::vconcat(btile_kps_desc_in_overlap_list, (btile_kps_desc_in_overlap));
-        bool done = false;
+        //bool done = false;
 
         std::vector< cv::DMatch > matches;
         match_features(matches,
@@ -383,12 +383,12 @@ void fine_alignment_3d_mfov(Graph<vdata, edata>* merged_graph, align_data_t* p_a
                        btile_kps_desc_in_overlap,
                        0.92);
 
-        printf("Done with the matching. Num matches is %d\n", matches.size());
+        printf("Done with the matching. Num matches is %lu\n", matches.size());
         if (matches.size() == 0) continue;
 
               for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
-                int atile_id = atile_kps_tile_list[matches[tmpi].queryIdx];
-                int btile_id = btile_kps_tile_list[matches[tmpi].trainIdx];
+                //int atile_id = atile_kps_tile_list[matches[tmpi].queryIdx];
+                //int btile_id = btile_kps_tile_list[matches[tmpi].trainIdx];
 
                 match_points_a.push_back(atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
                 match_points_b.push_back(btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
@@ -426,7 +426,7 @@ void fine_alignment_3d_mfov(Graph<vdata, edata>* merged_graph, align_data_t* p_a
 
           std::pair<int, int> mfov_key = std::make_pair(section_a, mfov);
           int mfov_vid = mfov_to_id[mfov_key];
-          vdata* mfov_vdata = mfov_graph->getVertexData(mfov_vid);
+          //vdata* mfov_vdata = mfov_graph->getVertexData(mfov_vid);
           for (int p = 0; p < mfov_graph->edgeData[mfov_vid].size(); p++) {
             std::vector<cv::Point2f>* v_points = mfov_graph->edgeData[mfov_vid][p].v_points;
             std::vector<cv::Point2f>* n_points = mfov_graph->edgeData[mfov_vid][p].n_points;
@@ -843,7 +843,7 @@ void better_mfov_align(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
     for (int i = 0; i < merged_graph->edgeData[v].size(); i++) {
       int nid = merged_graph->edgeData[v][i].neighbor_id;
       cv::Point2f npoint = merged_graph->getVertexData(nid)->original_center_point;
-      cv::Point2f midpoint = cv::Point2f((vpoint.x+npoint.x)/2,(vpoint.y+npoint.y)/2);
+      //cv::Point2f midpoint = cv::Point2f((vpoint.x+npoint.x)/2,(vpoint.y+npoint.y)/2);
       std::vector<cv::Point2f> npoints;
       std::vector<cv::Point2f> vpoints;
       npoints.push_back(npoint);

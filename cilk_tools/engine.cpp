@@ -37,7 +37,7 @@ void engine<VertexType, EdgeType>::process_update_task(
 template<typename VertexType, typename EdgeType>
 void engine<VertexType, EdgeType>::parallel_process(
     std::vector<std::vector<Scheduler::update_task>*> subbags) {
-  #pragma cilk grainsize=1
+  //#pragma cilk grainsize=1
   cilk_for (int _i = 0; _i < subbags.size(); _i++) {
     cilk_for (int _j = 0; _j < subbags[_i]->size(); _j++) {
       this->process_update_task((*(subbags[_i]))[_j]);

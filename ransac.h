@@ -268,7 +268,7 @@ vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points
 //    //}
 //  }
 
-  printf("After filtering the number of match points is %d\n", match_points_a.size());
+  printf("After filtering the number of match points is %lu\n", match_points_a.size());
 
   double best_dx = 0.0;
   double best_dy = 0.0;
@@ -281,7 +281,6 @@ vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points
   vdata best_vertex_data;
 
   int maxInliers = 0;
-  int prevMaxInliers = 0;
   double thresh = 1.0;
 
   int num_iterations = 0;
@@ -463,7 +462,6 @@ std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& 
   double best_dx = 0.0;
   double best_dy = 0.0;
   int maxInliers = 0;
-  int prevMaxInliers = 0;
   double thresh = 1.0;
 
   int num_iterations = 0;
@@ -549,6 +547,7 @@ std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& 
         }
       }
   printf("The test count is %d\n", test_count);
+  return std::pair<double,double>(0,0);
 }
 
 
@@ -558,7 +557,6 @@ void tfk_simple_ransac_strict(std::vector<cv::Point2f>& match_points_a,
   double best_dx = 0.0;
   double best_dy = 0.0;
   int maxInliers = 0;
-  int prevMaxInliers = 0;
   double thresh = _thresh;
 
   int num_iterations = 0;
@@ -567,7 +565,6 @@ void tfk_simple_ransac_strict(std::vector<cv::Point2f>& match_points_a,
   //for (; thresh <= _thresh; thresh += 1.0) {
   for (thresh = _thresh; num_iterations < 1;) {
     num_iterations++;
-    int limit = 100000;
     //if (match_points_a.size() < limit) limit = match_points_a.size();
     for (int _i = 0; _i < match_points_a.size(); _i++) {
       int i = _i;//distribution(g1);
@@ -632,7 +629,7 @@ int tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
   double best_dx = 0.0;
   double best_dy = 0.0;
   int maxInliers = 0;
-  int prevMaxInliers = 0;
+  //int prevMaxInliers = 0;
   double thresh = _thresh;
 
     for (int i = 0; i < match_points_a.size(); i++) {

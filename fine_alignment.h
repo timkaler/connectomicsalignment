@@ -2,7 +2,7 @@
 void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data){
     printf("STARTING THE FINE ALIGNMENT IT SO FINE (I hope)");
     if (true) {
-    int vertex_id_offset = 0;
+    //int vertex_id_offset = 0;
 
     for (int v = 0; v < merged_graph->num_vertices(); v++) {
       merged_graph->getVertexData(v)->offset_x += merged_graph->getVertexData(v)->start_x;
@@ -114,8 +114,8 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
 
 
 
-        printf("Total size of a tile kps is %d\n", atile_kps_in_overlap.size());
-        printf("Total size of b tile kps is %d\n", btile_kps_in_overlap.size());
+        printf("Total size of a tile kps is %lu\n", atile_kps_in_overlap.size());
+        printf("Total size of b tile kps is %lu\n", btile_kps_in_overlap.size());
         if (atile_kps_tile_list.size() == 0 || btile_kps_tile_list.size() == 0) continue;
 
 
@@ -123,7 +123,7 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
         cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
         cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
         cv::vconcat(btile_kps_desc_in_overlap_list, (btile_kps_desc_in_overlap));
-        bool done = false;
+        //bool done = false;
 
         //for (int trial_thresh = 0; trial_thresh < 4; trial_thresh++) {
         //  if (done) break;
@@ -150,7 +150,7 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
 
 
 
-              printf("Done with the matching. Num matches is %d\n", matches.size());
+              printf("Done with the matching. Num matches is %lu\n", matches.size());
 
               p_align_data->sec_data[section_a].p_kps = new std::vector<cv::KeyPoint>();
               p_align_data->sec_data[section_b].p_kps = new std::vector<cv::KeyPoint>();
@@ -158,8 +158,8 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
 
 
               for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
-                int atile_id = atile_kps_tile_list[matches[tmpi].queryIdx];
-                int btile_id = btile_kps_tile_list[matches[tmpi].trainIdx];
+                //int atile_id = atile_kps_tile_list[matches[tmpi].queryIdx];
+                //int btile_id = btile_kps_tile_list[matches[tmpi].trainIdx];
 
                 //int x_start_a = merged_graph->getVertexData(atile_id)->start_x + merged_graph->getVertexData(atile_id)->offset_x;
                 //int y_start_a = merged_graph->getVertexData(atile_id)->start_y + merged_graph->getVertexData(atile_id)->offset_y;
@@ -397,7 +397,7 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
 void fine_alignment_3d_dampen(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data){
     printf("STARTING THE FINE ALIGNMENT IT SO FINE (I hope)");
     if (true) {
-    int vertex_id_offset = 0;
+    //int vertex_id_offset = 0;
 
     for (int v = 0; v < merged_graph->num_vertices(); v++) {
       merged_graph->getVertexData(v)->offset_x += merged_graph->getVertexData(v)->start_x;
@@ -482,8 +482,8 @@ void fine_alignment_3d_dampen(Graph<vdata, edata>* merged_graph, align_data_t* p
 
 
 
-        printf("Total size of a tile kps is %d\n", atile_kps_in_overlap.size());
-        printf("Total size of b tile kps is %d\n", btile_kps_in_overlap.size());
+        printf("Total size of a tile kps is %lu\n", atile_kps_in_overlap.size());
+        printf("Total size of b tile kps is %lu\n", btile_kps_in_overlap.size());
         if (atile_kps_tile_list.size() == 0 || btile_kps_tile_list.size() == 0) continue;
 
 
@@ -491,7 +491,7 @@ void fine_alignment_3d_dampen(Graph<vdata, edata>* merged_graph, align_data_t* p
         cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
         cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
         cv::vconcat(btile_kps_desc_in_overlap_list, (btile_kps_desc_in_overlap));
-        bool done = false;
+        //bool done = false;
 
         //for (int trial_thresh = 0; trial_thresh < 4; trial_thresh++) {
         //  if (done) break;
@@ -518,7 +518,7 @@ void fine_alignment_3d_dampen(Graph<vdata, edata>* merged_graph, align_data_t* p
 
 
 
-              printf("Done with the matching. Num matches is %d\n", matches.size());
+              printf("Done with the matching. Num matches is %lu\n", matches.size());
 
               p_align_data->sec_data[section_a].p_kps = new std::vector<cv::KeyPoint>();
               p_align_data->sec_data[section_b].p_kps = new std::vector<cv::KeyPoint>();
@@ -526,8 +526,8 @@ void fine_alignment_3d_dampen(Graph<vdata, edata>* merged_graph, align_data_t* p
 
 
               for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
-                int atile_id = atile_kps_tile_list[matches[tmpi].queryIdx];
-                int btile_id = btile_kps_tile_list[matches[tmpi].trainIdx];
+                //int atile_id = atile_kps_tile_list[matches[tmpi].queryIdx];
+                //int btile_id = btile_kps_tile_list[matches[tmpi].trainIdx];
 
                 //int x_start_a = merged_graph->getVertexData(atile_id)->start_x + merged_graph->getVertexData(atile_id)->offset_x;
                 //int y_start_a = merged_graph->getVertexData(atile_id)->start_y + merged_graph->getVertexData(atile_id)->offset_y;
