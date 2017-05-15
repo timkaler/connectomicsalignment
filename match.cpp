@@ -51,7 +51,41 @@ static cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local) {
   return cv::Point2f(new_x, new_y);
 }
 
+
+
+
 std::string get_point_transform_string(Graph<vdata, edata>* merged_graph, vdata* vd) {
+
+  //cv::Point2f center_point = transform_point(vd, vd->original_center_point);
+  //float start_x = center_point.x - 10000.0;
+  //float end_x = center_point.x + 10000.0;
+  //float start_y = center_point.y - 10000.0;
+  //float end_y = center_point.y + 10000.0;
+  //std::string ret = std::to_string(start_x) + " " + std::to_string(start_y) + " " + std::to_string(start_x) + " " + std::to_string(start_y) + " 1.0 ";
+  //ret += std::to_string(end_x) + " " + std::to_string(end_y) + " " + std::to_string(end_x) + " " + std::to_string(end_y) + " 1.0 ";
+  //ret += std::to_string(start_x) + " " + std::to_string(end_y) + " " + std::to_string(start_x) + " " + std::to_string(end_y) + " 1.0 ";
+  //ret += std::to_string(end_x) + " " + std::to_string(start_y) + " " + std::to_string(end_x) + " " + std::to_string(start_y) + " 1.0 ";
+  //ret += std::to_string(center_point.x) + " " + std::to_string(center_point.y) + " " + std::to_string(center_point.x) + " " + std::to_string(center_point.y) + " 1.0";
+  std::string ret = "";  
+  int vid = vd->vertex_id;
+  int count = 0;
+  for (int i = 0; i < 4; i++) {
+      cv::Point2f my_point = vd->corner_points[i];
+      cv::Point2f n_point = transform_point(vd,vd->corner_points[i]);
+      if (i == 0) {
+      ret += std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
+             std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
+      } else {
+      ret += " " + std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
+             std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
+      }
+  }
+  return ret;
+}
+
+
+
+std::string get_point_transform_string_old(Graph<vdata, edata>* merged_graph, vdata* vd) {
 
   cv::Point2f center_point = transform_point(vd, vd->original_center_point);
   float start_x = center_point.x - 10000.0;
@@ -671,11 +705,11 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
 
     mfov_alignment_3d(merged_graph, p_align_data);
 
-    for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      merged_graph->getVertexData(i)->iteration_count = 0;
-      scheduler->add_task(i, updateVertex2DAlignFULL);
-    }
-    printf("starting run\n");
+    //for (int i = 0; i < merged_graph->num_vertices(); i++) {
+    //  merged_graph->getVertexData(i)->iteration_count = 0;
+    //  scheduler->add_task(i, updateVertex2DAlignFULL);
+    //}
+    //printf("starting run\n");
     e->run();
 
     for (int i = 0; i < merged_graph->num_vertices(); i++) {
@@ -730,7 +764,21 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     }
   }
 
+  for (int v = 0; v < merged_graph->num_vertices(); v++) {
+    vdata* vd = merged_graph->getVertexData(v);
+    vd->corner_points[0] = cv::Point2f(0.0, 0.0);
+    vd->corner_points[1] = cv::Point2f(0.0, 2724.0);
+    vd->corner_points[2] = cv::Point2f(3128.0, 0.0);
+    vd->corner_points[3] = cv::Point2f(3128.0, 2724.0);
+  }
+
   coarse_alignment_3d(merged_graph, p_align_data, 64.0);
+
+
+  
+
+
+
   //fine_alignment_3d_mfov(merged_graph, p_align_data);
 //  better_mfov_align(merged_graph, p_align_data);
 
@@ -743,101 +791,110 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   //coarse_alignment_3d(merged_graph, p_align_data, 64.0);
   //fine_alignment_3d_mfov(merged_graph, p_align_data);
 
-  fine_alignment_3d(merged_graph, p_align_data);
-
-  // add matches above and below.
-  cilk_for (int va = 0; va < merged_graph->num_vertices(); va++) {
-    vdata* vda = merged_graph->getVertexData(va);
-    cv::Point2f centera = transform_point(vda, vda->original_center_point);
-
-
-    for (int vb = va+1; vb < merged_graph->num_vertices(); vb++) {
-      vdata* vdb = merged_graph->getVertexData(vb);
-      if (vdb->z != vda->z-1 && vdb->z != vda->z+1) {
-        continue; 
-      }
-      cv::Point2f centerb = transform_point(vdb, vdb->original_center_point);
-      std::vector<cv::Point2f> points_b(0);
-      std::vector<cv::Point2f> points_a(0);
-
-      // center of point a relative to the btile.
-      cv::Point2f centera_rb = invert_transform_point(vdb, centera);
-      cv::Point2f centerb_ra = invert_transform_point(vda, centerb);
-
-      float dx = (centera_rb.x - vdb->original_center_point.x);
-      float dy = (centera_rb.y - vdb->original_center_point.y);
-      float dist = dx*dx+dy*dy;
-      if (dist > 1500.0*1500.0) continue;
-      dx = (centerb_ra.x - vda->original_center_point.x);
-      dy = (centerb_ra.y - vda->original_center_point.y);
-      dist = dx*dx+dy*dy;
-      if (dist > 1500.0*1500.0) continue;
-
-      //if (isnan(centera_rb.x) || isnan(centera_rb.y)) continue;
-      //if (isnan(centerb_ra.x) || isnan(centerb_ra.y)) continue;
-
-      //if ((centera_rb.x >0 && centera_rb.x < 2700) &&
-      //     (centera_rb.y>0 && centera_rb.y < 00)) {
-      //   points_a.push_back(vda->original_center_point);
-      //   points_b.push_back(centera_rb);
-      //}
-
-      points_a.push_back(centerb_ra);
-      points_b.push_back(vdb->original_center_point);
-
-      merged_graph->insert_matches(va,vb,points_a,points_b, 1.0);
-    }
-  }
-
-  ncolors = merged_graph->compute_trivial_coloring();
-  scheduler =
-      new Scheduler(merged_graph->vertexColors, ncolors+1, merged_graph->num_vertices());
-  scheduler->graph_void = (void*) merged_graph;
-  e = new engine<vdata, edata>(merged_graph, scheduler);
-  for (int trial = 0; trial < 2; trial++) {
-    global_error_sq = 0.0; 
-    //global_learning_rate = 0.6/(trial+1);
-    global_learning_rate = 0.9;
-    std::vector<int> vertex_ids;
-    for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      vertex_ids.push_back(i);
-    } 
-    std::random_shuffle(vertex_ids.begin(), vertex_ids.end());
-    // pick one section to be "converged"
-    std::set<int> section_list;
-    for (int _i = 0; _i < merged_graph->num_vertices(); _i++) {
-      int i = _i;//vertex_ids[_i];
-      //merged_graph->getVertexData(i)->offset_x += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
-      //merged_graph->getVertexData(i)->offset_y += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
-      int z = merged_graph->getVertexData(i)->z;
-      merged_graph->getVertexData(i)->converged = 0;
-      merged_graph->getVertexData(i)->iteration_count = 0;
-      if (section_list.find(z) == section_list.end()) {
-        if (merged_graph->edgeData[i].size() > 4) {
-          section_list.insert(z);
-          merged_graph->getVertexData(i)->converged = 1;
-        }
-      }
-    }
-    for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      scheduler->add_task(i, updateVertex2DAlignFULL);
-    }
-    printf("starting run\n");
-    e->run();
-    printf("ending run\n");
-
-    for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      merged_graph->getVertexData(i)->iteration_count = 0;
-      computeError2DAlign(i, (void*) scheduler);
-      //scheduler->add_task(i, computeError2DAlign);
-    }
-    printf("Global error sq2 on iter %d is %f\n", trial, global_error_sq);
-    if (global_error_sq < 2.0*p_align_data->n_sections) break;
-  //  fine_alignment_3d(merged_graph, p_align_data);
-  }
-  //coarse_alignment_3d(merged_graph, p_align_data, 64.0);
   //fine_alignment_3d(merged_graph, p_align_data);
-  //fine_alignment_3d_dampen(merged_graph, p_align_data);
+
+  //// add matches above and below.
+  //cilk_for (int va = 0; va < merged_graph->num_vertices(); va++) {
+  //  vdata* vda = merged_graph->getVertexData(va);
+  //  cv::Point2f centera = transform_point(vda, vda->original_center_point);
+
+
+  //  for (int vb = va+1; vb < merged_graph->num_vertices(); vb++) {
+  //    vdata* vdb = merged_graph->getVertexData(vb);
+  //    if (vdb->z != vda->z-1 && vdb->z != vda->z+1) {
+  //      continue; 
+  //    }
+  //    cv::Point2f centerb = transform_point(vdb, vdb->original_center_point);
+  //    std::vector<cv::Point2f> points_b(0);
+  //    std::vector<cv::Point2f> points_a(0);
+
+  //    // center of point a relative to the btile.
+  //    cv::Point2f centera_rb = invert_transform_point(vdb, centera);
+  //    cv::Point2f centerb_ra = invert_transform_point(vda, centerb);
+
+  //    float dx = (centera_rb.x - vdb->original_center_point.x);
+  //    float dy = (centera_rb.y - vdb->original_center_point.y);
+  //    float dist = dx*dx+dy*dy;
+  //    if (dist > 1500.0*1500.0) continue;
+  //    dx = (centerb_ra.x - vda->original_center_point.x);
+  //    dy = (centerb_ra.y - vda->original_center_point.y);
+  //    dist = dx*dx+dy*dy;
+  //    if (dist > 1500.0*1500.0) continue;
+
+  //    //if (isnan(centera_rb.x) || isnan(centera_rb.y)) continue;
+  //    //if (isnan(centerb_ra.x) || isnan(centerb_ra.y)) continue;
+
+  //    //if ((centera_rb.x >0 && centera_rb.x < 2700) &&
+  //    //     (centera_rb.y>0 && centera_rb.y < 00)) {
+  //    //   points_a.push_back(vda->original_center_point);
+  //    //   points_b.push_back(centera_rb);
+  //    //}
+
+  //    points_a.push_back(centerb_ra);
+  //    points_b.push_back(vdb->original_center_point);
+
+  //    merged_graph->insert_matches(va,vb,points_a,points_b, 1.0);
+  //  }
+  //}
+
+  //ncolors = merged_graph->compute_trivial_coloring();
+  //scheduler =
+  //    new Scheduler(merged_graph->vertexColors, ncolors+1, merged_graph->num_vertices());
+  //scheduler->graph_void = (void*) merged_graph;
+  //e = new engine<vdata, edata>(merged_graph, scheduler);
+
+  //// undo the affine transforms.
+  //for (int v = 0; v < merged_graph->num_vertices(); v++) {
+  //  merged_graph->getVertexData(v)->a11 = 1.0;
+  //  merged_graph->getVertexData(v)->a00 = 1.0;
+  //  merged_graph->getVertexData(v)->a01 = 0.0;
+  //  merged_graph->getVertexData(v)->a10 = 0.0;
+  //}
+
+  //for (int trial = 0; trial < 2; trial++) {
+  //  global_error_sq = 0.0; 
+  //  //global_learning_rate = 0.6/(trial+1);
+  //  global_learning_rate = 0.9;
+  //  std::vector<int> vertex_ids;
+  //  for (int i = 0; i < merged_graph->num_vertices(); i++) {
+  //    vertex_ids.push_back(i);
+  //  } 
+  //  std::random_shuffle(vertex_ids.begin(), vertex_ids.end());
+  //  // pick one section to be "converged"
+  //  std::set<int> section_list;
+  //  for (int _i = 0; _i < merged_graph->num_vertices(); _i++) {
+  //    int i = _i;//vertex_ids[_i];
+  //    //merged_graph->getVertexData(i)->offset_x += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
+  //    //merged_graph->getVertexData(i)->offset_y += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
+  //    int z = merged_graph->getVertexData(i)->z;
+  //    merged_graph->getVertexData(i)->converged = 0;
+  //    merged_graph->getVertexData(i)->iteration_count = 0;
+  //    if (section_list.find(z) == section_list.end()) {
+  //      if (merged_graph->edgeData[i].size() > 4) {
+  //        section_list.insert(z);
+  //        merged_graph->getVertexData(i)->converged = 1;
+  //      }
+  //    }
+  //  }
+  //  for (int i = 0; i < merged_graph->num_vertices(); i++) {
+  //    scheduler->add_task(i, updateVertex2DAlignFULL);
+  //  }
+  //  printf("starting run\n");
+  //  e->run();
+  //  printf("ending run\n");
+
+  //  for (int i = 0; i < merged_graph->num_vertices(); i++) {
+  //    merged_graph->getVertexData(i)->iteration_count = 0;
+  //    computeError2DAlign(i, (void*) scheduler);
+  //    //scheduler->add_task(i, computeError2DAlign);
+  //  }
+  //  printf("Global error sq2 on iter %d is %f\n", trial, global_error_sq);
+  //  if (global_error_sq < 2.0*p_align_data->n_sections) break;
+  ////  fine_alignment_3d(merged_graph, p_align_data);
+  //}
+  ////coarse_alignment_3d(merged_graph, p_align_data, 64.0);
+  ////fine_alignment_3d(merged_graph, p_align_data);
+  ////fine_alignment_3d_dampen(merged_graph, p_align_data);
   #endif
 
 
@@ -894,12 +951,42 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       //vd->a10 = 0.0;
       //vd->a11 = 1.1;
       //}
+
+      cv::Point2f corner_points_transformed[4];
+      for (int t = 0; t < 4; t++) {
+        corner_points_transformed[t] = vd->corner_points[t];//transform_point(vd, vd->corner_points[t]);
+      }
+      double min_x = corner_points_transformed[0].x; 
+      double max_x = corner_points_transformed[0].x; 
+      double min_y = corner_points_transformed[0].y; 
+      double max_y = corner_points_transformed[0].y;
+      for (int t = 1; t < 4; t++) {
+        if (corner_points_transformed[t].x < min_x) {
+          min_x = corner_points_transformed[t].x;
+        }
+        if (corner_points_transformed[t].y < min_y) {
+          min_y = corner_points_transformed[t].y;
+        }
+        if (corner_points_transformed[t].x > max_x) {
+          max_x = corner_points_transformed[t].x;
+        }
+        if (corner_points_transformed[t].y > max_y) {
+          max_y = corner_points_transformed[t].y;
+        }
+      }
+
       fprintf(wafer_file, "\t{\n");
       fprintf(wafer_file, "\t\t\"bbox\": [\n");
+
+      //fprintf(wafer_file,
+      //    "\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f\n],",
+      //    vd->start_x+vd->offset_x, (vd->end_x+vd->offset_x),
+      //    vd->start_y+vd->offset_y, (vd->end_y+vd->offset_y));
       fprintf(wafer_file,
           "\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f\n],",
-          vd->start_x+vd->offset_x, (vd->end_x+vd->offset_x),
-          vd->start_y+vd->offset_y, (vd->end_y+vd->offset_y));
+          min_x, max_x,
+          min_y, max_y);
+
       fprintf(wafer_file, "\t\t\"height\": %d,\n",2724);
       fprintf(wafer_file, "\t\t\"layer\": %d,\n",p_align_data->sec_data[sec_id].section_id + p_align_data->base_section+1);
       fprintf(wafer_file, "\t\t\"maxIntensity\": %f,\n",255.0);
@@ -917,21 +1004,25 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       fprintf(wafer_file, "\t\t\"transforms\": [\n");
       // {'className': 'mpicbg.trakem2.transform.AffineModel2D', 'dataString': '0.1 0.0 0.0 0.1 0.0 0.0'}
 
-      fprintf(wafer_file, "\t\t\t{\n");
-      fprintf(wafer_file,
-          "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.AffineModel2D\",\n");
-      fprintf(wafer_file,
-          "\t\t\t\t\"dataString\": \"%f %f %f %f %f %f\"\n", vd->a00,
-          vd->a10, vd->a01, vd->a11, vd->start_x+vd->offset_x, vd->start_y+vd->offset_y);
+      //fprintf(wafer_file, "\t\t\t{\n");
+      //fprintf(wafer_file,
+      //    "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.AffineModel2D\",\n");
+      ////fprintf(wafer_file,
+      ////    "\t\t\t\t\"dataString\": \"%f %f %f %f %f %f\"\n", vd->a00,
+      ////    vd->a10, vd->a01, vd->a11, vd->start_x+vd->offset_x, vd->start_y+vd->offset_y);
+      //fprintf(wafer_file,
+      //    "\t\t\t\t\"dataString\": \"%f %f %f %f %f %f\"\n", 1.0,
+      //    0.0, 0.0, 1.0, 0.0, 0.0);
 
       //fprintf(wafer_file,
       //    "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.RigidModel2D\",\n");
       //fprintf(wafer_file,
       //    "\t\t\t\t\"dataString\": \"%f %f %f\"\n", 0.0,
       //    vd->start_x+vd->offset_x, vd->start_y + vd->offset_y);
-      if (false && (vd->boundary || true)) {
-      fprintf(wafer_file,
-          "\t\t\t},\n");
+      //if (false && (vd->boundary || true)) {
+      if (true) {
+      //fprintf(wafer_file,
+      //    "\t\t\t},\n");
 
       fprintf(wafer_file, "\t\t\t{\n");
       fprintf(wafer_file,
