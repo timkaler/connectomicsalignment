@@ -791,7 +791,11 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   //coarse_alignment_3d(merged_graph, p_align_data, 64.0);
   //fine_alignment_3d_mfov(merged_graph, p_align_data);
 
-  //fine_alignment_3d(merged_graph, p_align_data);
+  fine_alignment_3d(merged_graph, p_align_data);
+  fine_alignment_3d_2(merged_graph, p_align_data,128.0);
+  fine_alignment_3d_2(merged_graph, p_align_data,64.0);
+  fine_alignment_3d_2(merged_graph, p_align_data,32.0);
+  fine_alignment_3d_2(merged_graph, p_align_data,16.0);
 
   //// add matches above and below.
   //cilk_for (int va = 0; va < merged_graph->num_vertices(); va++) {
