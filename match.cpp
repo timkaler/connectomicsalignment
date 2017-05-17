@@ -22,9 +22,9 @@
 #include "./common.h"
 #include "./align.h"
 #include "./fasttime.h"
+#include "./mesh.h"
 #include "./simple_mutex.h"
 #include "cilk_tools/engine.h"
-
 static cv::Point2f invert_transform_point(vdata* vertex, cv::Point2f point_local) {
   float new_x = point_local.x*vertex->ia00 + point_local.y * vertex->ia01 + vertex->ioffset_x;// + vertex->start_x;
   float new_y = point_local.x*vertex->ia10 + point_local.y * vertex->ia11 + vertex->ioffset_y;// + vertex->start_y;
@@ -53,8 +53,28 @@ static cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local) {
 
 
 
-
 std::string get_point_transform_string(Graph<vdata, edata>* merged_graph, vdata* vd) {
+
+  std::string ret = "";  
+  int vid = vd->vertex_id;
+  int count = 0;
+  for (int i = 0; i < vd->my_mesh_points->size(); i++) {
+      cv::Point2f my_point = (*(vd->section_data.mesh_orig))[(*(vd->my_mesh_points))[i]];
+      cv::Point2f n_point = (*(vd->section_data.mesh))[(*(vd->my_mesh_points))[i]];
+      //cv::Point2f n_point = ;
+      if (i == 0) {
+      ret += std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
+             std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
+      } else {
+      ret += " " + std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
+             std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
+      }
+  }
+  return ret;
+}
+
+
+std::string get_point_transform_string_dep(Graph<vdata, edata>* merged_graph, vdata* vd) {
 
   //cv::Point2f center_point = transform_point(vd, vd->original_center_point);
   //float start_x = center_point.x - 10000.0;
@@ -725,44 +745,44 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   #ifdef ALIGN3D
 
 
-  for (int i = 0; i < merged_graph->num_vertices(); i++) {
-    merged_graph->edgeData[i].clear();
-  }
-  // before we align lets compute overlap correctly.
-  cilk_for (int i = 0; i < merged_graph->num_vertices(); i++) {
-    vdata* vd = merged_graph->getVertexData(i);
-    double start_x = vd->start_x+vd->offset_x;
-    double start_y = vd->start_y+vd->offset_y;
-    double end_x = vd->end_x+vd->offset_x;
-    double end_y = vd->end_y+vd->offset_y;
-    for (int j = i+1; j < merged_graph->num_vertices(); j++) {
-    vdata* vd2 = merged_graph->getVertexData(j);
-    double start_x2 = vd2->start_x+vd2->offset_x;
-    double start_y2 = vd2->start_y+vd2->offset_y;
-    double end_x2 = vd2->end_x+vd2->offset_x;
-    double end_y2 = vd2->end_y+vd2->offset_y;
+  //for (int i = 0; i < merged_graph->num_vertices(); i++) {
+  //  merged_graph->edgeData[i].clear();
+  //}
+  //// before we align lets compute overlap correctly.
+  //cilk_for (int i = 0; i < merged_graph->num_vertices(); i++) {
+  //  vdata* vd = merged_graph->getVertexData(i);
+  //  double start_x = vd->start_x+vd->offset_x;
+  //  double start_y = vd->start_y+vd->offset_y;
+  //  double end_x = vd->end_x+vd->offset_x;
+  //  double end_y = vd->end_y+vd->offset_y;
+  //  for (int j = i+1; j < merged_graph->num_vertices(); j++) {
+  //  vdata* vd2 = merged_graph->getVertexData(j);
+  //  double start_x2 = vd2->start_x+vd2->offset_x;
+  //  double start_y2 = vd2->start_y+vd2->offset_y;
+  //  double end_x2 = vd2->end_x+vd2->offset_x;
+  //  double end_y2 = vd2->end_y+vd2->offset_y;
 
-    double overlap_x_start = std::max(start_x, start_x2);
-    double overlap_x_end = std::min(end_x, end_x2);
-    double overlap_y_start = std::max(start_y, start_y2);
-    double overlap_y_end = std::min(end_y, end_y2);
+  //  double overlap_x_start = std::max(start_x, start_x2);
+  //  double overlap_x_end = std::min(end_x, end_x2);
+  //  double overlap_y_start = std::max(start_y, start_y2);
+  //  double overlap_y_end = std::min(end_y, end_y2);
 
-    if (overlap_y_start >= overlap_y_end || overlap_x_start >= overlap_x_end) continue;
-    if (vd->z != vd2->z) continue;
-    // otherwise add evenly spaced matches.
-    std::vector<cv::Point2f> points_a(0), points_b(0);
-    for (int k = 0; k < 5; k += 1) {
-      for (int m = 0; m < 5; m += 1) {
-        float fake_x = overlap_x_start + (overlap_x_end-overlap_x_start)*(k*1.0/5.0 + m*1.0/25.0);
-        float fake_y = overlap_y_start + (overlap_y_end-overlap_y_start)*(m*1.0/5.0 + k*1.0/25.0);
-        points_a.push_back(cv::Point2f(fake_x - start_x, fake_y - start_y)); 
-        points_b.push_back(cv::Point2f(fake_x - start_x2, fake_y - start_y2));
-        assert(fake_x-start_x>=0 && fake_y-start_y >=0 && fake_x - start_x2 >=0 && fake_y - start_y2 >= 0);
-      }
-    }
-    merged_graph->insert_matches(i,j,points_a, points_b, 1.0);
-    }
-  }
+  //  if (overlap_y_start >= overlap_y_end || overlap_x_start >= overlap_x_end) continue;
+  //  if (vd->z != vd2->z) continue;
+  //  // otherwise add evenly spaced matches.
+  //  std::vector<cv::Point2f> points_a(0), points_b(0);
+  //  for (int k = 0; k < 5; k += 1) {
+  //    for (int m = 0; m < 5; m += 1) {
+  //      float fake_x = overlap_x_start + (overlap_x_end-overlap_x_start)*(k*1.0/5.0 + m*1.0/25.0);
+  //      float fake_y = overlap_y_start + (overlap_y_end-overlap_y_start)*(m*1.0/5.0 + k*1.0/25.0);
+  //      points_a.push_back(cv::Point2f(fake_x - start_x, fake_y - start_y)); 
+  //      points_b.push_back(cv::Point2f(fake_x - start_x2, fake_y - start_y2));
+  //      assert(fake_x-start_x>=0 && fake_y-start_y >=0 && fake_x - start_x2 >=0 && fake_y - start_y2 >= 0);
+  //    }
+  //  }
+  //  merged_graph->insert_matches(i,j,points_a, points_b, 1.0);
+  //  }
+  //}
 
   for (int v = 0; v < merged_graph->num_vertices(); v++) {
     vdata* vd = merged_graph->getVertexData(v);
@@ -772,30 +792,167 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     vd->corner_points[3] = cv::Point2f(3128.0, 2724.0);
   }
 
+  // Unpack the graphs within the merged graph.
+  vertex_id_offset = 0;
+  for (int i = 0; i < graph_list.size(); i++) {
+    for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
+      vdata* d = merged_graph->getVertexData(j+vertex_id_offset);
+      *(graph_list[i]->getVertexData(j)) = *d;
+      (graph_list[i]->getVertexData(j))->vertex_id -= vertex_id_offset;
+    }
+    vertex_id_offset += graph_list[i]->num_vertices();
+  }
+  for (int i = 0; i < graph_list.size(); i++) {
+    construct_triangles(graph_list[i], 12000.0); 
+  }
+
+  // repack.
+  vertex_id_offset = 0;
+  for (int i = 0; i < graph_list.size(); i++) {
+    for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
+      vdata* d = merged_graph->getVertexData(j+vertex_id_offset);
+      *d = *(graph_list[i]->getVertexData(j));
+      d->vertex_id += vertex_id_offset;
+    }
+    vertex_id_offset += graph_list[i]->num_vertices();
+  }
+
+
+
+
+
   coarse_alignment_3d(merged_graph, p_align_data, 64.0);
-
-
-  
-
-
-
-  //fine_alignment_3d_mfov(merged_graph, p_align_data);
-//  better_mfov_align(merged_graph, p_align_data);
-
-  //fine_alignment_3d_mfov(merged_graph, p_align_data);
-  //fine_alignment_3d_mfov(merged_graph, p_align_data);
-  //fine_alignment_3d_mfov(merged_graph, p_align_data);
-  //fine_alignment_3d_mfov(merged_graph, p_align_data);
-  //mfov_alignment_3d(merged_graph, p_align_data);
-  //mfov_alignment_3d(merged_graph, p_align_data);
-  //coarse_alignment_3d(merged_graph, p_align_data, 64.0);
-  //fine_alignment_3d_mfov(merged_graph, p_align_data);
-
   fine_alignment_3d(merged_graph, p_align_data);
-  fine_alignment_3d_2(merged_graph, p_align_data,128.0);
-  fine_alignment_3d_2(merged_graph, p_align_data,64.0);
-  fine_alignment_3d_2(merged_graph, p_align_data,32.0);
-  fine_alignment_3d_2(merged_graph, p_align_data,16.0);
+
+  std::set<int> sections_done;
+  sections_done.clear();
+  // now transform the mesh points using section transforms.
+  for (int v = 0; v < merged_graph->num_vertices(); v++) {
+    vdata* vd = merged_graph->getVertexData(v);
+    if (sections_done.find(vd->z) == sections_done.end()) {
+      printf("Doing an update for section %d\n", vd->z);
+      sections_done.insert(vd->z);
+      graph_section_data section_data = vd->section_data;
+      std::vector<cv::Point2f>* mesh = section_data.mesh;
+      std::vector<cv::Point2f>* mesh_orig = section_data.mesh_orig;
+      cv::Mat warp_mat = *(section_data.transform);
+      vdata tmp;
+      tmp.a00 = warp_mat.at<double>(0, 0); 
+      tmp.a01 = warp_mat.at<double>(0, 1);
+      tmp.offset_x = warp_mat.at<double>(0, 2);
+      tmp.a10 = warp_mat.at<double>(1, 0); 
+      tmp.a11 = warp_mat.at<double>(1, 1); 
+      tmp.offset_y = warp_mat.at<double>(1, 2);
+      tmp.start_x = 0.0;
+      tmp.start_y = 0.0;
+
+      for (int mesh_index = 0; mesh_index < mesh->size(); mesh_index++) {
+        (*mesh)[mesh_index] = transform_point(&tmp, (*mesh)[mesh_index]);
+        (*mesh_orig)[mesh_index] = transform_point(&tmp, (*mesh_orig)[mesh_index]);
+      } 
+    }
+  }
+
+  // this is going to give us the matches.
+  std::vector<tfkMatch> mesh_matches;
+  fine_alignment_3d_2(merged_graph, p_align_data,32.0, mesh_matches);
+  printf("The number of mesh matches is %d\n", mesh_matches.size()); 
+
+  {
+    double cross_slice_weight = 1.0;
+    double cross_slice_winsor = 20.0;
+    double intra_slice_weight = 1.0;
+    double intra_slice_winsor = 200.0;
+    int max_iterations = 100;
+    double min_stepsize = 1e-20;
+
+    std::map<int, graph_section_data> section_data_map;
+    section_data_map.clear();
+    for (int i = 0; i < mesh_matches.size(); i++) {
+      int az = mesh_matches[i].my_section_data.z;
+      int bz = mesh_matches[i].n_section_data.z;
+      if (section_data_map.find(az) == section_data_map.end()) {
+        section_data_map[az] = mesh_matches[i].my_section_data;
+      }
+      if (section_data_map.find(bz) == section_data_map.end()) {
+        section_data_map[bz] = mesh_matches[i].n_section_data;
+      }
+    }
+
+      for (std::map<int, graph_section_data>::iterator it = section_data_map.begin();
+           it != section_data_map.end(); ++it) {
+        it->second.gradients = new cv::Point2f[it->second.mesh->size()];
+        it->second.rest_lengths = new double[it->second.triangle_edges->size()];
+        it->second.rest_areas = new double[it->second.triangles->size()];
+
+        // init
+        for (int j = 0; j < it->second.mesh->size(); j++) {
+          it->second.gradients[j] = cv::Point2f(0.0,0.0);  
+        }
+
+        for (int j = 0; j < it->second.triangle_edges->size(); j++) {
+          cv::Point2f p1 = (*(it->second.mesh))[(*(it->second.triangle_edges))[j].first];
+          cv::Point2f p2 = (*(it->second.mesh))[(*(it->second.triangle_edges))[j].second];
+          double dx = p1.x-p2.x;
+          double dy = p1.y-p2.y;
+          double len = std::sqrt(dx*dx+dy*dy);
+          it->second.rest_lengths[j] = len;
+        }
+
+        // now triangle areas.
+        for (int j = 0; j < it->second.triangles->size(); j++) {
+          tfkTriangle tri = (*(it->second.triangles))[j];
+          cv::Point2f p1 = (*(it->second.mesh))[tri.index1];
+          cv::Point2f p2 = (*(it->second.mesh))[tri.index2];
+          cv::Point2f p3 = (*(it->second.mesh))[tri.index3];
+          it->second.rest_areas[j] = computeTriangleArea(p1,p2,p3);
+        }
+      }
+ 
+    for (int iter = 0; iter < max_iterations; iter++) {
+      double cost = 0.0;
+
+      for (std::map<int, graph_section_data>::iterator it = section_data_map.begin();
+           it != section_data_map.end(); ++it) {
+        // clear old gradients.
+        for (int j = 0; j < it->second.mesh->size(); j++) {
+          it->second.gradients[j] = cv::Point2f(0.0,0.0);  
+        }
+      }
+
+      // compute internal gradients.
+      for (std::map<int, graph_section_data>::iterator it = section_data_map.begin();
+           it != section_data_map.end(); ++it) {
+        // internal_mesh_derivs
+        double all_weight = 
+        double sigma = 
+        std::vector<cv::Point2f>* mesh = it->second.mesh;
+        cv::Point2f* gradients = it->second.gradients;
+        std::vector<std::pair<int, int> >* triangle_edges = it->second.triangle_edges;
+        double* rest_lengths = it->second.rest_lengths;
+        for (int j = 0; j < triangle_edges->size(); j++) {
+          cost += internal_mesh_derivs(mesh, gradients, (*triangle_edges)[j], rest_lengths[j],
+                                       all_weight, sigma);
+        }
+      }
+
+      
+
+      for (int j = 0; j < mesh_matches.size(); j++) {
+        cost += internal_mesh_derivs(mesh_matches[j].my_section_data); 
+      }
+    }
+      
+  } // END BLOCK.
+    
+    
+
+  //}
+//  exit(0);
+
+  //fine_alignment_3d_2(merged_graph, p_align_data,128.0);
+  //fine_alignment_3d_2(merged_graph, p_align_data,32.0);
+  //fine_alignment_3d_2(merged_graph, p_align_data,16.0);
 
   //// add matches above and below.
   //cilk_for (int va = 0; va < merged_graph->num_vertices(); va++) {
@@ -1008,12 +1165,12 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       fprintf(wafer_file, "\t\t\"transforms\": [\n");
       // {'className': 'mpicbg.trakem2.transform.AffineModel2D', 'dataString': '0.1 0.0 0.0 0.1 0.0 0.0'}
 
-      //fprintf(wafer_file, "\t\t\t{\n");
-      //fprintf(wafer_file,
-      //    "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.AffineModel2D\",\n");
-      ////fprintf(wafer_file,
-      ////    "\t\t\t\t\"dataString\": \"%f %f %f %f %f %f\"\n", vd->a00,
-      ////    vd->a10, vd->a01, vd->a11, vd->start_x+vd->offset_x, vd->start_y+vd->offset_y);
+      fprintf(wafer_file, "\t\t\t{\n");
+      fprintf(wafer_file,
+          "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.AffineModel2D\",\n");
+      fprintf(wafer_file,
+          "\t\t\t\t\"dataString\": \"%f %f %f %f %f %f\"\n", vd->a00,
+          vd->a10, vd->a01, vd->a11, vd->start_x+vd->offset_x, vd->start_y+vd->offset_y);
       //fprintf(wafer_file,
       //    "\t\t\t\t\"dataString\": \"%f %f %f %f %f %f\"\n", 1.0,
       //    0.0, 0.0, 1.0, 0.0, 0.0);
@@ -1025,8 +1182,8 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       //    vd->start_x+vd->offset_x, vd->start_y + vd->offset_y);
       //if (false && (vd->boundary || true)) {
       if (true) {
-      //fprintf(wafer_file,
-      //    "\t\t\t},\n");
+      fprintf(wafer_file,
+          "\t\t\t},\n");
 
       fprintf(wafer_file, "\t\t\t{\n");
       fprintf(wafer_file,

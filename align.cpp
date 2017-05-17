@@ -31,7 +31,6 @@ float EDGE_THRESH_2D = 5.0;
 #include "align_helpers.cpp"
 #include "cilk_tools/Graph.h"
 #include "serialize.h"
-#include "mesh.h"
 void SIFT_initialize() {
   generateBoxBlurExecutionPlan();
 }
@@ -658,51 +657,59 @@ void align_execute(align_data_t *p_align_data) {
     TIMER_VAR(timer);
     START_TIMER(&t_timer);
 
-
-    cv::Rect rect(-20.0,-20.0,170.0,170.0);
-    cv::Subdiv2D subdiv(rect);
-
- 
-//std::vector<cv::Point2f>* generate_hex_grid(double* bounding_box, double spacing) {
-
-    double bounding_box[4];
-    bounding_box[0] = 0.0;
-    bounding_box[1] = 100.0;
-    bounding_box[2] = 0.0;
-    bounding_box[3] = 100.0;
-    double spacing = 10.0;
-    std::vector<cv::Point2f>* hex_grid = generate_hex_grid(bounding_box, spacing);
-    for (int i = 0; i < hex_grid->size(); i++) {
-      cv::Point2f pt = (*hex_grid)[i];
-      printf("hex grid %f, %f\n", pt.x, pt.y);
-      subdiv.insert(pt);
-    }
-    //for (int i = 0; i < 10; i++) {
-    //  for (int j = 0; j < 10; j++) {
-    //    cv::Point2f pt = cv::Point2f(1.0*i,1.0*j);
-    //    subdiv.insert(pt);
-    //  }
-    //}
-    printf("The subdiv has been created.\n");
-    std::vector<cv::Vec6f> triangle_list;
-    subdiv.getTriangleList(triangle_list);
-    printf("The triangle list length is %lu\n", triangle_list.size());
-
-    int edge=0;
-    int vertex=0;
-    int ret = 0;
-    ret = subdiv.locate(cv::Point2f(2.6,2.5), edge, vertex); 
-    printf("Edge %d, Vertex %d, Ret %d\n", edge, vertex, ret);
-
-
-//void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
-//   float &u, float &v, float &w)
-    float u,v,w;
-    Barycentric(cv::Point2f(1.0,8.0), cv::Point2f(0.0,0.0), cv::Point2f(10.0,10.0),
-    cv::Point2f(0.0, 10.0), u, v, w);
-    printf("Bary coords are %f %f %f\n", u,v,w);
-    exit(0);
-
+//if (false) {
+//    cv::Rect rect(-20.0,-20.0,170.0,170.0);
+//    cv::Subdiv2D subdiv(rect);
+//
+// 
+////std::vector<cv::Point2f>* generate_hex_grid(double* bounding_box, double spacing) {
+//
+//    double bounding_box[4];
+//    bounding_box[0] = 0.0;
+//    bounding_box[1] = 100.0;
+//    bounding_box[2] = 0.0;
+//    bounding_box[3] = 100.0;
+//    double spacing = 10.0;
+//    std::vector<cv::Point2f>* hex_grid = generate_hex_grid(bounding_box, spacing);
+//    for (int i = 0; i < hex_grid->size(); i++) {
+//      cv::Point2f pt = (*hex_grid)[i];
+//      printf("hex grid %f, %f\n", pt.x, pt.y);
+//      subdiv.insert(pt);
+//    }
+//    //for (int i = 0; i < 10; i++) {
+//    //  for (int j = 0; j < 10; j++) {
+//    //    cv::Point2f pt = cv::Point2f(1.0*i,1.0*j);
+//    //    subdiv.insert(pt);
+//    //  }
+//    //}
+//    printf("The subdiv has been created.\n");
+//    std::vector<cv::Vec6f> triangle_list;
+//    subdiv.getTriangleList(triangle_list);
+//    printf("The triangle list length is %lu\n", triangle_list.size());
+//
+//    int edge=0;
+//    int vertex=0;
+//    int ret = 0;
+//    ret = subdiv.locate(cv::Point2f(2.6,2.5), edge, vertex); 
+//    printf("Edge %d, Vertex %d, Ret %d\n", edge, vertex, ret);
+//
+//    //void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
+//    //   float &u, float &v, float &w)
+//    float u,v,w;
+//    Barycentric(cv::Point2f(1.0,8.0), cv::Point2f(0.0,0.0), cv::Point2f(10.0,10.0),
+//    cv::Point2f(0.0, 10.0), u, v, w);
+//    printf("Bary coords are %f %f %f\n", u,v,w);
+//
+//    cv::Point2f test_mutable(1.0,2.0);
+//    printf("point is %f, %f\n", test_mutable.x, test_mutable.y);
+//    test_mutable.x += 0.5;
+//    test_mutable.y += 1.0;
+//    printf("point is %f, %f\n", test_mutable.x, test_mutable.y);
+//    test_mutable.x += 0.5;
+//    test_mutable.y += 1.0;
+//    printf("point is %f, %f\n", test_mutable.x, test_mutable.y);
+//    exit(0);
+//}
 
 
 
@@ -722,7 +729,6 @@ void align_execute(align_data_t *p_align_data) {
     }
         free_tiles(p_align_data);
     START_TIMER(&timer);
-
     
 
     // Before running the graph optimize code, set the graph_list by calling:

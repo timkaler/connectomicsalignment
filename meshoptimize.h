@@ -1039,9 +1039,16 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
           }
         }
 
+        std::set<int> sections_done;
+        sections_done.clear();
         for (int v = 0; v < merged_graph->num_vertices(); v++) {
           if (merged_graph->getVertexData(v)->z <= section_a) {
             updateAffineTransform(merged_graph->getVertexData(v), /*&best_vertex_data*/warp_mat);
+
+            if (sections_done.find(merged_graph->getVertexData(v)->z) == sections_done.end()) {
+              sections_done.insert(merged_graph->getVertexData(v)->z);
+              updateAffineSectionTransform(merged_graph->getVertexData(v), warp_mat);
+            }
             continue;
           }
         }

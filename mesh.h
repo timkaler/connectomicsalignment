@@ -14,8 +14,10 @@ std::vector<cv::Point2f>* generate_hex_grid(double* bounding_box, double spacing
   std::vector<cv::Point2f>* hex_grid = new std::vector<cv::Point2f>();
   for (int i = -2; i < sizex; i++) {
     for (int j = -2; j < sizey; j++) {
-      double xpos = i * spacing;
-      double ypos = j * spacing;
+      //double xpos = i * spacing;
+      //double ypos = j * spacing;
+      double xpos = i * horizspacing;
+      double ypos = j * vertspacing;
       if (j % 2 == 1) {
         xpos += spacing * 0.5;
       }
@@ -216,6 +218,7 @@ double area_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* d_cost_d_me
 float Dot(cv::Point2f a, cv::Point2f b) {
   return a.x*b.x + a.y*b.y;
 }
+
 void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
    float &u, float &v, float &w)
 {
@@ -230,3 +233,203 @@ void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
     w = (d00 * d21 - d01 * d20) / denom;
     u = 1.0f - v - w;
 }
+
+
+
+void construct_triangles(Graph<vdata,edata>* graph, double hex_spacing) {
+  double min_x, max_x, min_y, max_y;
+  for (int v = 0; v < graph->num_vertices(); v++) {
+     vdata* vd = graph->getVertexData(v);
+     if (v==0) {
+       min_x = vd->start_x;
+       max_x = vd->end_x;
+       min_y = vd->start_y;
+       max_y = vd->end_y;
+     }
+     double xvals[2] = {vd->start_x, vd->end_x};
+     double yvals[2] = {vd->start_y, vd->end_y};
+     for (int i = 0; i < 2; i++) {
+       if (xvals[i] < min_x) min_x = xvals[i];
+       if (xvals[i] > max_x) max_x = xvals[i];
+     }
+     for (int i = 0; i < 2; i++) {
+       if (yvals[i] < min_y) min_y = yvals[i];
+       if (yvals[i] > max_y) max_y = yvals[i];
+     }
+  }
+
+  double bounding_box[4] = {min_x,max_x,min_y,max_y};
+  std::vector<cv::Point2f>* hex_grid = generate_hex_grid(bounding_box, hex_spacing);
+
+  cv::Rect rect(min_x-hex_spacing*2,min_y-hex_spacing*2,max_x-min_x+hex_spacing*4, max_y-min_y + hex_spacing*4); 
+  cv::Subdiv2D subdiv(rect);
+  subdiv.initDelaunay(rect);
+  for (int i = 0; i < hex_grid->size(); i++) {
+    cv::Point2f pt = (*hex_grid)[i];
+    //printf("hex grid %f, %f\n", pt.x, pt.y);
+    //printf("grid values are %f, %f, %f, %f\n",min_x-hex_spacing*2,min_y-hex_spacing*2,max_x-min_x+hex_spacing*4, max_y-min_y + hex_spacing*4); 
+    subdiv.insert(pt);
+  }
+
+  std::vector<cv::Vec6f> triangle_list;
+  subdiv.getTriangleList(triangle_list);
+
+  printf("The number of triangles is %d\n", triangle_list.size()); 
+
+  //cv::Point2f* d_cost_d_mesh = new cv::Point2f[hex_grid->size()];
+
+  std::vector<tfkTriangle> triangle_list_index;
+  for (int i = 0; i < triangle_list.size(); i++) {
+    cv::Point2f tpt1 = cv::Point2f(triangle_list[i][0],triangle_list[i][1]);
+    cv::Point2f tpt2 = cv::Point2f(triangle_list[i][2],triangle_list[i][3]);
+    cv::Point2f tpt3 = cv::Point2f(triangle_list[i][4],triangle_list[i][5]);
+    int index1=-1;
+    int index2=-1;
+    int index3=-1;
+
+    for (int j = 0; j < hex_grid->size(); j++) {
+      cv::Point2f pt = (*hex_grid)[j];
+      if (std::abs(pt.x-tpt1.x) < 0.01 && std::abs(pt.y-tpt1.y) < 0.01) {
+        index1 = j;    
+      }
+
+      if (std::abs(pt.x-tpt2.x) < 0.01 && std::abs(pt.y-tpt2.y) < 0.01) {
+        index2 = j;    
+      }
+      
+      if (std::abs(pt.x-tpt3.x) < 0.01 && std::abs(pt.y-tpt3.y) < 0.01) {
+        index3 = j;    
+      }
+    }
+    printf("triangle is %f %f %f %f %f %f\n", triangle_list[i][0], triangle_list[i][1], triangle_list[i][2], triangle_list[i][3], triangle_list[i][4], triangle_list[i][5]);
+    printf("points are %f %f %f %f %f %f\n", tpt1.x, tpt1.y, tpt2.x, tpt2.y, tpt3.x, tpt3.y);
+    if (!(index1 >= 0 && index2 >= 0 && index3 >=0)) continue;
+    printf("Success\n");
+    tfkTriangle tri;
+    tri.index1 = index1;
+    tri.index2 = index2;
+    tri.index3 = index3;
+    triangle_list_index.push_back(tri);
+  }
+
+  printf("Triangle_list_index length is %d\n", triangle_list_index.size());
+
+  std::vector<std::pair<int,int> > triangle_edges;
+  for (int i = 0; i < triangle_list_index.size(); i++) {
+    tfkTriangle tri = triangle_list_index[i];
+
+    if (tri.index1 < tri.index2) {
+      triangle_edges.push_back(std::make_pair(tri.index1,tri.index2));
+    } else {
+      triangle_edges.push_back(std::make_pair(tri.index2,tri.index1));
+    }
+
+    if (tri.index2 < tri.index3) {
+      triangle_edges.push_back(std::make_pair(tri.index2,tri.index3));
+    } else {
+      triangle_edges.push_back(std::make_pair(tri.index3,tri.index2));
+    }
+
+    if (tri.index1 < tri.index3) {
+      triangle_edges.push_back(std::make_pair(tri.index1,tri.index3));
+    } else {
+      triangle_edges.push_back(std::make_pair(tri.index3,tri.index1));
+    }
+  } 
+
+  std::vector<std::pair<int,int> > triangle_edges_dedupe;
+  std::set<std::pair<int, int> > triangle_edges_set;
+  for (int i = 0; i < triangle_edges.size(); i++) {
+    if (triangle_edges_set.find(triangle_edges[i]) == triangle_edges_set.end()) {
+      triangle_edges_set.insert(triangle_edges[i]);
+      triangle_edges_dedupe.push_back(triangle_edges[i]);
+    }
+  }
+
+
+  std::vector<std::pair<int, int> >* _triangle_edges = new std::vector<std::pair<int, int> >();
+  for (int i = 0; i < triangle_edges_dedupe.size(); i++) {
+    _triangle_edges->push_back(triangle_edges_dedupe[i]);
+  }
+  std::vector<tfkTriangle>* _triangle_list = new std::vector<tfkTriangle>();
+  for (int i = 0; i < triangle_list_index.size(); i++) {
+    _triangle_list->push_back(triangle_list_index[i]);
+  }  
+
+  std::vector<cv::Point2f>* orig_hex_grid = new std::vector<cv::Point2f>();
+  for (int i = 0; i < hex_grid->size(); i++) {
+    orig_hex_grid->push_back((*hex_grid)[i]);
+  }
+ 
+  graph_section_data section_data;
+  section_data.triangle_edges = _triangle_edges;
+  section_data.mesh_orig = orig_hex_grid;
+  section_data.mesh = hex_grid;
+  section_data.triangles = _triangle_list;
+  section_data.transform = new cv::Mat(3,3,cv::DataType<double>::type);
+  section_data.transform->at<double>(0,0) = 1.0;
+  section_data.transform->at<double>(0,1) = 0.0;
+  section_data.transform->at<double>(0,2) = 0.0;
+  section_data.transform->at<double>(1,0) = 0.0;
+  section_data.transform->at<double>(1,1) = 1.0;
+  section_data.transform->at<double>(1,2) = 0.0;
+  section_data.transform->at<double>(2,0) = 0.0;
+  section_data.transform->at<double>(2,1) = 0.0;
+  section_data.transform->at<double>(2,2) = 1.0;
+  section_data.z = graph->getVertexData(0)->z;
+
+  for (int v = 0; v < graph->num_vertices(); v++) {
+    graph->getVertexData(v)->section_data = section_data;
+
+    double min_x = graph->getVertexData(v)->start_x - hex_spacing*2;
+    double min_y = graph->getVertexData(v)->start_y - hex_spacing*2;
+    double max_x = graph->getVertexData(v)->end_x + hex_spacing*2;
+    double max_y = graph->getVertexData(v)->end_y + hex_spacing*2;
+    
+    std::vector<int>* my_mesh_points = new std::vector<int>();
+    graph->getVertexData(v)->my_mesh_points = my_mesh_points;
+    // get all triangles overlapping.
+    for (int i = 0; i < hex_grid->size(); i++) {
+      cv::Point2f pt = (*hex_grid)[i];
+      if (pt.x < min_x || pt.x > max_x) continue;
+      if (pt.y < min_y || pt.y > max_y) continue;
+      my_mesh_points->push_back(i);
+    }
+    printf("Vertex %d has mesh point count %d\n", v, my_mesh_points->size());
+  }
+
+  printf("Now done with setup num edges is before dedupe %d, after %d\n", triangle_edges.size(), triangle_edges_dedupe.size());
+
+  
+
+  // need array of edges in triangulation.
+  //for (int i = 0; i < triangle_list.size(); i++) {
+  //  std::pair<int, int> e1 =  
+  //} 
+
+
+}
+
+double computeTriangleArea(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3) {
+
+
+  double dx,dy;
+  dx = p1.x-p2.x;
+  dy = p1.y-p2.y;
+  double p1p2 = std::sqrt(dx*dx+dy*dy);
+
+  dx = p1.x-p3.x;
+  dy = p1.y-p3.y;
+  double p1p3 = std::sqrt(dx*dx+dy*dy);
+
+  dx = p2.x-p3.x;
+  dy = p2.y-p3.y;
+  double p2p3 = std::sqrt(dx*dx+dy*dy);
+
+  double p = (p1p2+p1p3+p2p3)/2;
+  double area = std::sqrt(p*(p-p1p2)*(p-p1p3)*(p-p2p3));
+  return area;
+}
+
+
+

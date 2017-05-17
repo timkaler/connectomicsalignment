@@ -35,8 +35,8 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
 
 
 
-
     for (int section = 1; section < p_align_data->n_sections; section++) {
+      std::map<int, int> tile_id_to_match_count;
       std::vector< cv::Point2f > filtered_match_points_a(0);
       std::vector< cv::Point2f > filtered_match_points_b(0);
         int section_a = section-1;
@@ -158,9 +158,6 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
 
 
               for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
-                //int atile_id = atile_kps_tile_list[matches[tmpi].queryIdx];
-                //int btile_id = btile_kps_tile_list[matches[tmpi].trainIdx];
-
                 //int x_start_a = merged_graph->getVertexData(atile_id)->start_x + merged_graph->getVertexData(atile_id)->offset_x;
                 //int y_start_a = merged_graph->getVertexData(atile_id)->start_y + merged_graph->getVertexData(atile_id)->offset_y;
 
@@ -202,6 +199,10 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
           //cv::Mat warp_mat = cv::estimateRigidTransform(filtered_match_points_a, filtered_match_points_b, false);//cv::findHomography(match_points_a, match_points_b);
                 for (int c = 0; c < match_points_a.size(); c++) {
                   if (mask[c]) {
+                    int atile_id = atile_kps_tile_list[matches[c].queryIdx];
+                    int btile_id = btile_kps_tile_list[matches[c].trainIdx];
+                    tile_id_to_match_count[atile_id] += 1;
+                    //tile_id_to_match_count[btile_id] += 1;
                     filtered_match_points_a.push_back(
                         match_points_a[c]);
                     filtered_match_points_b.push_back(
@@ -238,6 +239,8 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
         //  mfov_ids_general[z].insert(mfov_id);
         //}
 
+          std::set<int> sections_done;
+          sections_done.clear();
           for (int v = 0; v < merged_graph->num_vertices(); v++) {
             //cv::Point2d center = merged_graph->getVertexData(v)->center_point;//transform_point_double(merged_graph->getVertexData(v), merged_graph->getVertexData(v)->original_center_point);
             //double vx = 1.0*((double) center.x);//merged_graph->getVertexData(v)->start_x + merged_graph->getVertexData(v)->offset_x;
@@ -253,8 +256,17 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
             if (merged_graph->getVertexData(v)->z <= section_a/*merged_graph->getVertexData(v)->z <= section_a || merged_graph->getVertexData(v)->z == section_a - 1 || merged_graph->getVertexData(v)->z == section_a-2*/) {
 
               updateAffineTransform(merged_graph->getVertexData(v), /*&best_vertex_data*/warp_mat);
+            if (sections_done.find(merged_graph->getVertexData(v)->z) == sections_done.end()) {
+              sections_done.insert(merged_graph->getVertexData(v)->z);
+              updateAffineSectionTransform(merged_graph->getVertexData(v), warp_mat);
+            }
               continue;
             }
+          }
+          
+          for (std::map<int, int>::iterator iter = tile_id_to_match_count.begin();
+               iter != tile_id_to_match_count.end(); ++iter) {
+            printf("tile id %d, count %d\n", iter->first, iter->second);
           }
       }
 
@@ -616,7 +628,7 @@ void fine_alignment_3d_dampen_remove(Graph<vdata, edata>* merged_graph, align_da
     }
 }
 
-void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data, double ransac_thresh){
+void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data, double ransac_thresh, std::vector<tfkMatch>& mesh_matches){
     printf("STARTING THE FINE ALIGNMENT IT SO FINE (I hope)");
     if (true) {
     //int vertex_id_offset = 0;
@@ -828,6 +840,68 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
           free(mask);
 
       }}
+
+      graph_section_data section_data_a, section_data_b;
+
+      for (int v = 0; v < merged_graph->num_vertices(); v++) {
+        if (merged_graph->getVertexData(v)->z == section_a) {
+          section_data_a = merged_graph->getVertexData(v)->section_data;
+          break;
+        }
+      }
+      for (int v = 0; v < merged_graph->num_vertices(); v++) {
+        if (merged_graph->getVertexData(v)->z == section_b) {
+          section_data_b = merged_graph->getVertexData(v)->section_data;
+          break;
+        }
+      }
+
+
+      for (int m = 0; m < filtered_match_points_a.size(); m++) {
+        cv::Point2f my_pt = filtered_match_points_a[m];
+        cv::Point2f n_pt = filtered_match_points_b[m];
+
+        tfkMatch match;
+        // find the triangle...
+        std::vector<tfkTriangle>* triangles = section_data_a.triangles;
+        std::vector<cv::Point2f>* mesh = section_data_a.mesh;
+        int my_triangle_index = -1;
+        int n_triangle_index = -1;
+        for (int s = 0; s < triangles->size(); s++) {
+          float u,v,w;
+          cv::Point2f pt1 = (*mesh)[(*triangles)[s].index1];
+          cv::Point2f pt2 = (*mesh)[(*triangles)[s].index2];
+          cv::Point2f pt3 = (*mesh)[(*triangles)[s].index3];
+          Barycentric(my_pt, pt1,pt2,pt3,u,v,w);
+          if (u <= 0 || v <= 0 || w <= 0) continue;
+          my_triangle_index = s;
+          match.my_tri = (*triangles)[my_triangle_index];
+          match.my_barys[0] = u;
+          match.my_barys[1] = v;
+          match.my_barys[2] = w;
+          break;
+        }
+
+        for (int s = 0; s < triangles->size(); s++) {
+          float u,v,w;
+          cv::Point2f pt1 = (*mesh)[(*triangles)[s].index1];
+          cv::Point2f pt2 = (*mesh)[(*triangles)[s].index2];
+          cv::Point2f pt3 = (*mesh)[(*triangles)[s].index3];
+          Barycentric(n_pt, pt1,pt2,pt3,u,v,w);
+          if (u <= 0 || v <= 0 || w <= 0) continue;
+          n_triangle_index = s; 
+          match.n_tri = (*triangles)[n_triangle_index];
+          match.n_barys[0] = u;
+          match.n_barys[1] = v;
+          match.n_barys[2] = w;
+          break;
+        }
+        if (my_triangle_index == -1 || n_triangle_index == -1) continue;
+        match.my_section_data = section_data_a; 
+        match.n_section_data = section_data_b;
+        mesh_matches.push_back(match); 
+      }
+
           cv::Mat warp_mat;
           cv::computeAffineTFK(filtered_match_points_a, filtered_match_points_b, warp_mat);
 
@@ -854,25 +928,30 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
         //  int z = merged_graph->getVertexData(v)->z;
         //  mfov_ids_general[z].insert(mfov_id);
         //}
+        //std::set<int> sections_done;
+        //sections_done.clear();
+        //  for (int v = 0; v < merged_graph->num_vertices(); v++) {
+        //    //cv::Point2d center = merged_graph->getVertexData(v)->center_point;//transform_point_double(merged_graph->getVertexData(v), merged_graph->getVertexData(v)->original_center_point);
+        //    //double vx = 1.0*((double) center.x);//merged_graph->getVertexData(v)->start_x + merged_graph->getVertexData(v)->offset_x;
+        //    //double vy = 1.0*((double) center.y);//merged_graph->getVertexData(v)->start_y + merged_graph->getVertexData(v)->offset_y;
+        //    //if (vx < box_min_x-6000.0 || vx > box_max_x+6000.0 || vy < box_min_y -6000.0 || vy > box_max_y+6000.0) continue;
+        //    //if (vx < box_min_x || vx > box_max_x || vy < box_min_y || vy > box_max_y) continue;
+        //    
+        //  //int mfov_id = merged_graph->getVertexData(v)->mfov_id;
+        //  //int z = merged_graph->getVertexData(v)->z;
+        //  //if (mfov_ids_general[z].find(mfov_id) == mfov_ids_general[z].end()) continue;
 
-          for (int v = 0; v < merged_graph->num_vertices(); v++) {
-            //cv::Point2d center = merged_graph->getVertexData(v)->center_point;//transform_point_double(merged_graph->getVertexData(v), merged_graph->getVertexData(v)->original_center_point);
-            //double vx = 1.0*((double) center.x);//merged_graph->getVertexData(v)->start_x + merged_graph->getVertexData(v)->offset_x;
-            //double vy = 1.0*((double) center.y);//merged_graph->getVertexData(v)->start_y + merged_graph->getVertexData(v)->offset_y;
-            //if (vx < box_min_x-6000.0 || vx > box_max_x+6000.0 || vy < box_min_y -6000.0 || vy > box_max_y+6000.0) continue;
-            //if (vx < box_min_x || vx > box_max_x || vy < box_min_y || vy > box_max_y) continue;
-            
-          //int mfov_id = merged_graph->getVertexData(v)->mfov_id;
-          //int z = merged_graph->getVertexData(v)->z;
-          //if (mfov_ids_general[z].find(mfov_id) == mfov_ids_general[z].end()) continue;
+        //    //if (merged_graph->getVertexData(v)->z <= section_a || merged_graph->getVertexData(v)->z == section_a - 1 || merged_graph->getVertexData(v)->z == section_a-2) {
+        //    if (merged_graph->getVertexData(v)->z <= section_a/*merged_graph->getVertexData(v)->z <= section_a || merged_graph->getVertexData(v)->z == section_a - 1 || merged_graph->getVertexData(v)->z == section_a-2*/) {
 
-            //if (merged_graph->getVertexData(v)->z <= section_a || merged_graph->getVertexData(v)->z == section_a - 1 || merged_graph->getVertexData(v)->z == section_a-2) {
-            if (merged_graph->getVertexData(v)->z <= section_a/*merged_graph->getVertexData(v)->z <= section_a || merged_graph->getVertexData(v)->z == section_a - 1 || merged_graph->getVertexData(v)->z == section_a-2*/) {
-
-              updateAffineTransform(merged_graph->getVertexData(v), /*&best_vertex_data*/warp_mat);
-              continue;
-            }
-          }
+        //      updateAffineTransform(merged_graph->getVertexData(v), /*&best_vertex_data*/warp_mat);
+        //    if (sections_done.find(merged_graph->getVertexData(v)->z) == sections_done.end()) {
+        //      sections_done.insert(merged_graph->getVertexData(v)->z);
+        //      updateAffineSectionTransform(merged_graph->getVertexData(v), warp_mat);
+        //    }
+        //      continue;
+        //    }
+        //  }
       }
 
       //}
