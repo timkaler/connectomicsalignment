@@ -694,6 +694,13 @@ void align_execute(align_data_t *p_align_data) {
     ret = subdiv.locate(cv::Point2f(2.6,2.5), edge, vertex); 
     printf("Edge %d, Vertex %d, Ret %d\n", edge, vertex, ret);
 
+
+//void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
+//   float &u, float &v, float &w)
+    float u,v,w;
+    Barycentric(cv::Point2f(1.0,8.0), cv::Point2f(0.0,0.0), cv::Point2f(10.0,10.0),
+    cv::Point2f(0.0, 10.0), u, v, w);
+    printf("Bary coords are %f %f %f\n", u,v,w);
     exit(0);
 
 

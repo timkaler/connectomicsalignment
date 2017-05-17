@@ -57,6 +57,7 @@ double c_reglen(double vx, double vy, double d_vx_dx, double d_vy_dy,
   return sqrt_len;
 }
 
+
 double crosslink_mesh_derivs(std::vector<cv::Point2f>* mesh1, std::vector<cv::Point2f>* mesh2,
                              cv::Point2f* d_cost_d_mesh1, cv::Point2f* d_cost_d_mesh2,
                              int* indices1, int* indices2, double* barys1, double* barys2,
@@ -211,3 +212,21 @@ double area_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* d_cost_d_me
   return cost;
 }
 
+
+float Dot(cv::Point2f a, cv::Point2f b) {
+  return a.x*b.x + a.y*b.y;
+}
+void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
+   float &u, float &v, float &w)
+{
+    cv::Point2f v0 = b - a, v1 = c - a, v2 = p - a;
+    float d00 = Dot(v0, v0);
+    float d01 = Dot(v0, v1);
+    float d11 = Dot(v1, v1);
+    float d20 = Dot(v2, v0);
+    float d21 = Dot(v2, v1);
+    float denom = d00 * d11 - d01 * d01;
+    v = (d11 * d20 - d01 * d21) / denom;
+    w = (d00 * d21 - d01 * d20) / denom;
+    u = 1.0f - v - w;
+}
