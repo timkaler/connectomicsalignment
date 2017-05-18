@@ -1,5 +1,9 @@
 #!/bin/bash
 
+#/efs/home/tfk/rh_aligner/run_render.sh -s 0.1 --from_x 10000 --to_x 50000 --from_y 10000 --to_y 50000 $PWD/tests/compare_onemfov/W01_Sec001_montaged.json section1 &
+#
+#/efs/home/tfk/rh_aligner/run_render.sh -s 0.1 --from_x 10000 --to_x 50000 --from_y 10000 --to_y 50000 $PWD/tests/compare_onemfov/W01_Sec002_montaged.json section2 &
+#
 
 
 #/efs/home/tfk/rh_aligner/run_render.sh -s 0.1 --from_x 10000 --to_x 30000 --from_y 15000 --to_y 40000 $PWD/temp/W01_Sec001_montaged.json section1 &
@@ -20,8 +24,12 @@
 #/efs/home/tfk/rh_aligner/run_render.sh -s 0.1 --from_x 50000 --to_x 100000 --from_y 50000 --to_y 150000 $PWD/temp/W01_Sec012_montaged.json section12 &
 #/efs/home/tfk/rh_aligner/run_render.sh -s 0.1 --from_x 50000 --to_x 100000 --from_y 50000 --to_y 150000 $PWD/temp/W01_Sec013_montaged.json section13 &
 #/efs/home/tfk/rh_aligner/run_render.sh -s 0.1 --from_x 50000 --to_x 100000 --from_y 50000 --to_y 150000 $PWD/temp/W01_Sec014_montaged.json section14 &
+
 /efs/home/tfk/rh_aligner/run_render.sh -s 0.1 --from_x 50000 --to_x 100000 --from_y 50000 --to_y 150000 $PWD/temp/W01_Sec015_montaged.json section15 &
 /efs/home/tfk/rh_aligner/run_render.sh -s 0.1 --from_x 50000 --to_x 100000 --from_y 50000 --to_y 150000 $PWD/temp/W01_Sec016_montaged.json section16 &
+
+#/efs/home/tfk/rh_aligner/run_render.sh -s 0.1 --from_x 10000 --to_x 50000 --from_y 10000 --to_y 50000 $PWD/temp/W01_Sec015_montaged.json section15 &
+#/efs/home/tfk/rh_aligner/run_render.sh -s 0.1 --from_x 10000 --to_x 50000 --from_y 10000 --to_y 50000 $PWD/temp/W01_Sec016_montaged.json section16 &
 #/efs/home/tfk/rh_aligner/run_render.sh -s 0.1 --from_x 50000 --to_x 100000 --from_y 50000 --to_y 150000 $PWD/temp/W01_Sec017_montaged.json section17 &
 #/efs/home/tfk/rh_aligner/run_render.sh -s 0.1 --from_x 50000 --to_x 100000 --from_y 50000 --to_y 150000 $PWD/temp/W01_Sec018_montaged.json section18 &
 #/efs/home/tfk/rh_aligner/run_render.sh -s 0.1 --from_x 50000 --to_x 100000 --from_y 50000 --to_y 150000 $PWD/temp/W01_Sec019_montaged.json section19 &

@@ -38,12 +38,13 @@ typedef struct {
 
 typedef struct {
   std::vector<cv::Point2f>* mesh_orig;
+  std::vector<cv::Point2f>* mesh_old;
   std::vector<cv::Point2f>* mesh;
   std::vector<std::pair<int,int> >* triangle_edges;
   std::vector<tfkTriangle>* triangles;
   cv::Mat* transform;
   int z;
-  double* gradients;
+  cv::Point2f* gradients;
   double* rest_lengths;
   double* rest_areas;
 } graph_section_data;

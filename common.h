@@ -56,7 +56,7 @@
 #define MAX_INPUT_BUF (2000)
 
 //#define MAX_TILES (1024)
-#define MAX_TILES (1024*1024)
+#define MAX_TILES (2048)
 //#define MAX_SECTIONS (256)
 #define MAX_SECTIONS (64)
 
@@ -72,7 +72,7 @@
 #define ROD (0.92)
 #define MAX_KPS_DIST (3000)
 
-#define SIFT_MAX_SUB_IMAGES (1024)
+#define SIFT_MAX_SUB_IMAGES (32)
 //#define SIFT_D1_SHIFT (4096) //(256)
 //#define SIFT_D2_SHIFT (4096) //(256)
 

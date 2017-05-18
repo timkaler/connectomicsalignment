@@ -15,7 +15,7 @@ export LD_LIBRARY_PATH=/efs/home/tfk/archive-linux/lib/:$LD_LIBRARY_PATH
 export OMP_NUM_THREADS=1
 export EXTRA_CFLAGS="-ftapir -Wall"
 export LD_PRELOAD=/efs/tools/jemalloc/lib/libjemalloc.so
-
+export N_TEMPORARY_BYTES=500000000
 #/efs/home/neboat/tapir-ex/src/build-release/bin
 
 #source /afs/csail.mit.edu/proj/courses/6.172/scripts/.bashrc_silent

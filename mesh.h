@@ -115,21 +115,21 @@ double crosslink_mesh_derivs(std::vector<cv::Point2f>* mesh1, std::vector<cv::Po
   dh_dy *= all_weight;
 
   // update derivs.
-  d_cost_d_mesh1[pidx0].x += pb0 * dh_dx;
-  d_cost_d_mesh1[pidx1].x += pb1 * dh_dx;
-  d_cost_d_mesh1[pidx2].x += pb2 * dh_dx;
+  d_cost_d_mesh1[pidx0].x += (float)1.0*(pb0 * dh_dx);
+  d_cost_d_mesh1[pidx1].x += (float)1.0*(pb1 * dh_dx);
+  d_cost_d_mesh1[pidx2].x += (float)1.0*(pb2 * dh_dx);
 
-  d_cost_d_mesh1[pidx0].y += pb0 * dh_dy;
-  d_cost_d_mesh1[pidx1].y += pb1 * dh_dy;
-  d_cost_d_mesh1[pidx2].y += pb2 * dh_dy;
+  d_cost_d_mesh1[pidx0].y += (float)(pb0 * dh_dy);
+  d_cost_d_mesh1[pidx1].y += (float)(pb1 * dh_dy);
+  d_cost_d_mesh1[pidx2].y += (float)(pb2 * dh_dy);
 
-  d_cost_d_mesh2[qidx0].x -= qb0 * dh_dx;
-  d_cost_d_mesh2[qidx1].x -= qb1 * dh_dx;
-  d_cost_d_mesh2[qidx2].x -= qb2 * dh_dx;
+  d_cost_d_mesh2[qidx0].x -= (float)(qb0 * dh_dx);
+  d_cost_d_mesh2[qidx1].x -= (float)(qb1 * dh_dx);
+  d_cost_d_mesh2[qidx2].x -= (float)(qb2 * dh_dx);
 
-  d_cost_d_mesh2[qidx0].y -= qb0 * dh_dy;
-  d_cost_d_mesh2[qidx1].y -= qb1 * dh_dy;
-  d_cost_d_mesh2[qidx2].y -= qb2 * dh_dy;
+  d_cost_d_mesh2[qidx0].y -= (float)(qb0 * dh_dy);
+  d_cost_d_mesh2[qidx1].y -= (float)(qb1 * dh_dy);
+  d_cost_d_mesh2[qidx2].y -= (float)(qb2 * dh_dy);
 
   return cost;
 }
@@ -306,9 +306,9 @@ void construct_triangles(Graph<vdata,edata>* graph, double hex_spacing) {
     if (!(index1 >= 0 && index2 >= 0 && index3 >=0)) continue;
     printf("Success\n");
     tfkTriangle tri;
-    tri.index1 = index1;
+    tri.index1 = index3;
     tri.index2 = index2;
-    tri.index3 = index3;
+    tri.index3 = index1;
     triangle_list_index.push_back(tri);
   }
 
@@ -381,10 +381,10 @@ void construct_triangles(Graph<vdata,edata>* graph, double hex_spacing) {
   for (int v = 0; v < graph->num_vertices(); v++) {
     graph->getVertexData(v)->section_data = section_data;
 
-    double min_x = graph->getVertexData(v)->start_x - hex_spacing*2;
-    double min_y = graph->getVertexData(v)->start_y - hex_spacing*2;
-    double max_x = graph->getVertexData(v)->end_x + hex_spacing*2;
-    double max_y = graph->getVertexData(v)->end_y + hex_spacing*2;
+    double min_x = graph->getVertexData(v)->start_x +graph->getVertexData(v)->offset_x - hex_spacing*4;
+    double min_y = graph->getVertexData(v)->start_y +graph->getVertexData(v)->offset_y- hex_spacing*4;
+    double max_x = graph->getVertexData(v)->end_x+graph->getVertexData(v)->offset_x + hex_spacing*4;
+    double max_y = graph->getVertexData(v)->end_y+graph->getVertexData(v)->offset_y + hex_spacing*4;
     
     std::vector<int>* my_mesh_points = new std::vector<int>();
     graph->getVertexData(v)->my_mesh_points = my_mesh_points;
@@ -413,22 +413,30 @@ void construct_triangles(Graph<vdata,edata>* graph, double hex_spacing) {
 double computeTriangleArea(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3) {
 
 
-  double dx,dy;
-  dx = p1.x-p2.x;
-  dy = p1.y-p2.y;
-  double p1p2 = std::sqrt(dx*dx+dy*dy);
+  double v01x = p2.x - p1.x;
+  double v01y = p2.y - p1.y;
 
-  dx = p1.x-p3.x;
-  dy = p1.y-p3.y;
-  double p1p3 = std::sqrt(dx*dx+dy*dy);
+  double v02x = p3.x - p1.x;
+  double v02y = p3.y - p1.y;
 
-  dx = p2.x-p3.x;
-  dy = p2.y-p3.y;
-  double p2p3 = std::sqrt(dx*dx+dy*dy);
-
-  double p = (p1p2+p1p3+p2p3)/2;
-  double area = std::sqrt(p*(p-p1p2)*(p-p1p3)*(p-p2p3));
+  double area = 0.5 * (v02x * v01y - v01x * v02y);
   return area;
+  //double dx,dy;
+  //dx = p1.x-p2.x;
+  //dy = p1.y-p2.y;
+  //double p1p2 = std::sqrt(dx*dx+dy*dy);
+
+  //dx = p1.x-p3.x;
+  //dy = p1.y-p3.y;
+  //double p1p3 = std::sqrt(dx*dx+dy*dy);
+
+  //dx = p2.x-p3.x;
+  //dy = p2.y-p3.y;
+  //double p2p3 = std::sqrt(dx*dx+dy*dy);
+
+  //double p = (p1p2+p1p3+p2p3)/2;
+  //double area = std::sqrt(p*(p-p1p2)*(p-p1p3)*(p-p2p3));
+  //return area;
 }
 
 
