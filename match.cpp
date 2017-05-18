@@ -860,7 +860,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     double cross_slice_winsor = 20.0;
     double intra_slice_weight = 1.0;
     double intra_slice_winsor = 200.0;
-    int max_iterations = 5000;
+    int max_iterations = 10000;
     double min_stepsize = 1e-20;
     double stepsize = 0.0001;
     std::map<int, graph_section_data> section_data_map;
