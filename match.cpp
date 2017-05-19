@@ -606,7 +606,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
 
     scheduler->isStatic = false;
     for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      scheduler->add_task_static(i, updateVertex2DAlignFULL);
+      scheduler->add_task_static(i, updateVertex2DAlignFULLFast);
     }
     scheduler->isStatic = true;
 

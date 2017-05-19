@@ -462,6 +462,57 @@ void updateVertex2DAlignMFOV(int vid, void* scheduler_void) {
   }
 }
 
+void updateVertex2DAlignFULLFast(int vid, void* scheduler_void) {
+  Scheduler* scheduler = reinterpret_cast<Scheduler*>(scheduler_void);
+  Graph<vdata, edata>* graph = reinterpret_cast<Graph<vdata,edata>*>(scheduler->graph_void);
+
+  vdata* vertex_data = graph->getVertexData(vid);
+  std::vector<edata>& edges = graph->edgeData[vid];
+
+  if (edges.size() == 0) return;
+
+  double learning_rate = global_learning_rate;//0.4 + 0.6*((rand()%100)*1.0/100);
+  double grad_error_x = 0.0;
+  double grad_error_y = 0.0;
+  double weight_sum = 1.0;
+  double error_sq = 0.0;
+  int added_points = 0;
+  for (int i = 0; i < edges.size(); i++) {
+    std::vector<cv::Point2f>* v_points = edges[i].v_points;
+    std::vector<cv::Point2f>* n_points = edges[i].n_points;
+    vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
+
+    double curr_weight = 1.0/v_points->size();
+
+    for (int j = 0; j < v_points->size(); j++) {
+      cv::Point2f ptx1 = transform_point(vertex_data, (*v_points)[j]);
+      cv::Point2f ptx2 = transform_point(neighbor_vertex, (*n_points)[j]);
+
+      double delta_x = ptx2.x - ptx1.x;
+      double delta_y = ptx2.y - ptx1.y;
+      grad_error_x += 2 * delta_x * curr_weight;
+      grad_error_y += 2 * delta_y * curr_weight;
+      weight_sum += curr_weight;
+    }
+  }
+
+  // update the gradients.
+  vertex_data->offset_x += grad_error_x*learning_rate/(weight_sum);
+  vertex_data->offset_y += grad_error_y*learning_rate/(weight_sum);
+
+  if (vertex_data->iteration_count < 5000) {
+    scheduler->add_task(vid, updateVertex2DAlignFULLFast);
+    //for (int i = 0; i < edges.size(); i++) {
+    //  //int n_conv = edges[i].neighbor_id;
+    //  //if (n_conv == 0 || n_conv <= vertex_data->converged) {
+    //    scheduler->add_task(edges[i].neighbor_id, updateVertex2DAlignFULL);
+    //  //}
+    //}
+  }
+  vertex_data->iteration_count++;
+}
+
+
 void updateVertex2DAlignFULL(int vid, void* scheduler_void) {
   Scheduler* scheduler = reinterpret_cast<Scheduler*>(scheduler_void);
   Graph<vdata, edata>* graph = reinterpret_cast<Graph<vdata,edata>*>(scheduler->graph_void);
@@ -481,24 +532,6 @@ void updateVertex2DAlignFULL(int vid, void* scheduler_void) {
   std::vector<float> weights;
 
   std::vector<vdata*> neighbor_pointers;
-
-  //bool trigger_change = false;
-  //for (int i = 0; i < edges.size(); i++) {
-  //  //if (i != vertex_data->iteration_count%edges.size()) continue;
-  //  vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
-  //  int n_conv = neighbor_vertex->converged;
-  //  if (n_conv == 0) continue;
-  //  if (vertex_data->converged == 0) {
-  //    vertex_data->converged = n_conv;
-  //    trigger_change = true;
-  //  }
-
-  //  if (n_conv > vertex_data->converged) continue;
-  //  if (n_conv + 1< vertex_data->converged) {
-  //    vertex_data->converged = n_conv+1;
-  //    trigger_change = true;
-  //  }
-  //}
 
 
   for (int i = 0; i < edges.size(); i++) {
