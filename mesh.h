@@ -301,10 +301,10 @@ void construct_triangles(Graph<vdata,edata>* graph, double hex_spacing) {
         index3 = j;    
       }
     }
-    printf("triangle is %f %f %f %f %f %f\n", triangle_list[i][0], triangle_list[i][1], triangle_list[i][2], triangle_list[i][3], triangle_list[i][4], triangle_list[i][5]);
-    printf("points are %f %f %f %f %f %f\n", tpt1.x, tpt1.y, tpt2.x, tpt2.y, tpt3.x, tpt3.y);
+    //printf("triangle is %f %f %f %f %f %f\n", triangle_list[i][0], triangle_list[i][1], triangle_list[i][2], triangle_list[i][3], triangle_list[i][4], triangle_list[i][5]);
+    //printf("points are %f %f %f %f %f %f\n", tpt1.x, tpt1.y, tpt2.x, tpt2.y, tpt3.x, tpt3.y);
     if (!(index1 >= 0 && index2 >= 0 && index3 >=0)) continue;
-    printf("Success\n");
+   // printf("Success\n");
     tfkTriangle tri;
     tri.index1 = index3;
     tri.index2 = index2;
@@ -378,8 +378,10 @@ void construct_triangles(Graph<vdata,edata>* graph, double hex_spacing) {
   section_data.transform->at<double>(2,2) = 1.0;
   section_data.z = graph->getVertexData(0)->z;
 
+  graph_section_data* section_data_ptr = new graph_section_data[1];
+  *section_data_ptr = section_data;
   for (int v = 0; v < graph->num_vertices(); v++) {
-    graph->getVertexData(v)->section_data = section_data;
+    graph->getVertexData(v)->section_data = section_data_ptr;
 
     double min_x = graph->getVertexData(v)->start_x +graph->getVertexData(v)->offset_x - hex_spacing*4;
     double min_y = graph->getVertexData(v)->start_y +graph->getVertexData(v)->offset_y- hex_spacing*4;
@@ -395,7 +397,7 @@ void construct_triangles(Graph<vdata,edata>* graph, double hex_spacing) {
       if (pt.y < min_y || pt.y > max_y) continue;
       my_mesh_points->push_back(i);
     }
-    printf("Vertex %d has mesh point count %d\n", v, my_mesh_points->size());
+    //printf("Vertex %d has mesh point count %d\n", v, my_mesh_points->size());
   }
 
   printf("Now done with setup num edges is before dedupe %d, after %d\n", triangle_edges.size(), triangle_edges_dedupe.size());

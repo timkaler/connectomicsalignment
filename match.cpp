@@ -25,13 +25,14 @@
 #include "./mesh.h"
 #include "./simple_mutex.h"
 #include "cilk_tools/engine.h"
-static cv::Point2f invert_transform_point(vdata* vertex, cv::Point2f point_local) {
-  float new_x = point_local.x*vertex->ia00 + point_local.y * vertex->ia01 + vertex->ioffset_x;// + vertex->start_x;
-  float new_y = point_local.x*vertex->ia10 + point_local.y * vertex->ia11 + vertex->ioffset_y;// + vertex->start_y;
-  //float new_x = point_local.x+vertex->offset_x+vertex->start_x;
-  //float new_y = point_local.y+vertex->offset_y+vertex->start_y;
-  return cv::Point2f(new_x, new_y);
-}
+
+//static cv::Point2f invert_transform_point(vdata* vertex, cv::Point2f point_local) {
+//  float new_x = point_local.x*vertex->ia00 + point_local.y * vertex->ia01 + vertex->ioffset_x;// + vertex->start_x;
+//  float new_y = point_local.x*vertex->ia10 + point_local.y * vertex->ia11 + vertex->ioffset_y;// + vertex->start_y;
+//  //float new_x = point_local.x+vertex->offset_x+vertex->start_x;
+//  //float new_y = point_local.y+vertex->offset_y+vertex->start_y;
+//  return cv::Point2f(new_x, new_y);
+//}
 
 
 
@@ -59,8 +60,8 @@ std::string get_point_transform_string(Graph<vdata, edata>* merged_graph, vdata*
   int vid = vd->vertex_id;
   int count = 0;
   for (int i = 0; i < vd->my_mesh_points->size(); i++) {
-      cv::Point2f my_point = (*(vd->section_data.mesh_orig))[(*(vd->my_mesh_points))[i]];
-      cv::Point2f n_point = (*(vd->section_data.mesh))[(*(vd->my_mesh_points))[i]];
+      cv::Point2f my_point = (*(vd->section_data->mesh_orig))[(*(vd->my_mesh_points))[i]];
+      cv::Point2f n_point = (*(vd->section_data->mesh))[(*(vd->my_mesh_points))[i]];
       //cv::Point2f n_point = ;
       if (i == 0) {
       ret += std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
@@ -74,89 +75,7 @@ std::string get_point_transform_string(Graph<vdata, edata>* merged_graph, vdata*
 }
 
 
-std::string get_point_transform_string_dep(Graph<vdata, edata>* merged_graph, vdata* vd) {
 
-  //cv::Point2f center_point = transform_point(vd, vd->original_center_point);
-  //float start_x = center_point.x - 10000.0;
-  //float end_x = center_point.x + 10000.0;
-  //float start_y = center_point.y - 10000.0;
-  //float end_y = center_point.y + 10000.0;
-  //std::string ret = std::to_string(start_x) + " " + std::to_string(start_y) + " " + std::to_string(start_x) + " " + std::to_string(start_y) + " 1.0 ";
-  //ret += std::to_string(end_x) + " " + std::to_string(end_y) + " " + std::to_string(end_x) + " " + std::to_string(end_y) + " 1.0 ";
-  //ret += std::to_string(start_x) + " " + std::to_string(end_y) + " " + std::to_string(start_x) + " " + std::to_string(end_y) + " 1.0 ";
-  //ret += std::to_string(end_x) + " " + std::to_string(start_y) + " " + std::to_string(end_x) + " " + std::to_string(start_y) + " 1.0 ";
-  //ret += std::to_string(center_point.x) + " " + std::to_string(center_point.y) + " " + std::to_string(center_point.x) + " " + std::to_string(center_point.y) + " 1.0";
-  std::string ret = "";  
-  int vid = vd->vertex_id;
-  int count = 0;
-  for (int i = 0; i < 4; i++) {
-      cv::Point2f my_point = vd->corner_points[i];
-      cv::Point2f n_point = transform_point(vd,vd->corner_points[i]);
-      if (i == 0) {
-      ret += std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
-             std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
-      } else {
-      ret += " " + std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
-             std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
-      }
-  }
-  return ret;
-}
-
-
-
-std::string get_point_transform_string_old(Graph<vdata, edata>* merged_graph, vdata* vd) {
-
-  cv::Point2f center_point = transform_point(vd, vd->original_center_point);
-  float start_x = center_point.x - 10000.0;
-  float end_x = center_point.x + 10000.0;
-  float start_y = center_point.y - 10000.0;
-  float end_y = center_point.y + 10000.0;
-  std::string ret = std::to_string(start_x) + " " + std::to_string(start_y) + " " + std::to_string(start_x) + " " + std::to_string(start_y) + " 1.0 ";
-  ret += std::to_string(end_x) + " " + std::to_string(end_y) + " " + std::to_string(end_x) + " " + std::to_string(end_y) + " 1.0 ";
-  ret += std::to_string(start_x) + " " + std::to_string(end_y) + " " + std::to_string(start_x) + " " + std::to_string(end_y) + " 1.0 ";
-  ret += std::to_string(end_x) + " " + std::to_string(start_y) + " " + std::to_string(end_x) + " " + std::to_string(start_y) + " 1.0 ";
-  ret += std::to_string(center_point.x) + " " + std::to_string(center_point.y) + " " + std::to_string(center_point.x) + " " + std::to_string(center_point.y) + " 1.0";
-
-              //ret +="-100000.0 -100000.0 -100000.0 -100000.0 1.0 ";
-              //ret +="100000.0 -100000.0 100000.0 -100000.0 1.0 ";
-              //ret +="-100000.0 100000.0 -100000.0 100000.0 1.0";
-  //std::string ret = "";
-  int vid = vd->vertex_id;
-  int count = 0;
-  for (int i = 0; i < merged_graph->edgeData[vid].size(); i++) {
-    int nid = merged_graph->edgeData[vid][i].neighbor_id;
-    vdata* nvd = merged_graph->getVertexData(nid);
-      float avg_x = 0.0;
-      float avg_y = 0.0;
-      float n_avg_x = 0.0;
-      float n_avg_y = 0.0;
-    for (int j = 0; j < merged_graph->edgeData[vid][i].n_points->size(); j++) {
-      cv::Point2f my_point = transform_point(vd,(*(merged_graph->edgeData[vid][i].v_points))[j]);
-      cv::Point2f pre_n_point = transform_point(nvd,(*(merged_graph->edgeData[vid][i].n_points))[j]);
-      cv::Point2f n_point = cv::Point2f((my_point.x+pre_n_point.x)/2, (my_point.y+pre_n_point.y)/2);
-      avg_x += my_point.x;
-      avg_y += my_point.y;
-      n_avg_x += n_point.x;
-      n_avg_y += n_point.y;
-      //if (count > 0) {
-        ret += " " + std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
-                     std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
-     // } else {
-     //   ret = std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +  
-     //                std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
-     // }
-      count++;
-    }
- //   if (count > 0) {
- //     cv::Point2f my_point = cv::Point2f(avg_x/count, avg_y/count);
- //     cv::Point2f n_point = cv::Point2f(n_avg_x/count, n_avg_y/count);
- //     ret += " " + std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
- //                  std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
- //   }
-  }
-  return ret;
-}
 void concat_two_tiles_all(vdata* vertex_data, tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list) {
 
   for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
@@ -601,7 +520,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       d->offset_x = 0.0;
       d->offset_y = 0.0;
       d->iteration_count = 0;
-      d->last_radius_value = 9.0;
+      //d->last_radius_value = 9.0;
       d->z = sec_id;
       d->a00 = 1.0;
       d->a01 = 0.0;
@@ -656,6 +575,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   scheduler =
       new Scheduler(merged_graph->vertexColors, ncolors+1, merged_graph->num_vertices());
   scheduler->graph_void = (void*) merged_graph;
+  scheduler->roundNum = 0;
   e = new engine<vdata, edata>(merged_graph, scheduler);
 
   for (int trial = 0; trial < 5; trial++) {
@@ -674,19 +594,22 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       //merged_graph->getVertexData(i)->offset_x += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
       //merged_graph->getVertexData(i)->offset_y += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
       int z = merged_graph->getVertexData(i)->z;
-      merged_graph->getVertexData(i)->converged = 0;
+      //merged_graph->getVertexData(i)->converged = 0;
       merged_graph->getVertexData(i)->iteration_count = 0;
       if (section_list.find(z) == section_list.end()) {
         if (merged_graph->edgeData[i].size() > 4) {
           section_list.insert(z);
-          merged_graph->getVertexData(i)->converged = 1;
+          //merged_graph->getVertexData(i)->converged = 1;
         }
       }
     }
 
+    scheduler->isStatic = false;
     for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      scheduler->add_task(i, updateVertex2DAlign);
+      scheduler->add_task_static(i, updateVertex2DAlignFULL);
     }
+    scheduler->isStatic = true;
+
     printf("starting run\n");
     e->run();
     //std::priority_queue<std::pair<double, int> > queue;
@@ -723,14 +646,19 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
 
     printf("ending run\n");
 
-    mfov_alignment_3d(merged_graph, p_align_data);
-
+    //mfov_alignment_3d(merged_graph, p_align_data);
+    //scheduler =
+    //    new Scheduler(merged_graph->vertexColors, ncolors+1, merged_graph->num_vertices());
+    //e = new engine<vdata, edata>(merged_graph, scheduler);
+    //scheduler->graph_void = (void*) merged_graph;
+    //scheduler->roundNum = 0;
+    //scheduler->isStatic = true;
     //for (int i = 0; i < merged_graph->num_vertices(); i++) {
     //  merged_graph->getVertexData(i)->iteration_count = 0;
-    //  scheduler->add_task(i, updateVertex2DAlignFULL);
+    //  scheduler->add_task_static(i, updateVertex2DAlignFULL);
     //}
     //printf("starting run\n");
-    e->run();
+    //e->run();
 
     for (int i = 0; i < merged_graph->num_vertices(); i++) {
       merged_graph->getVertexData(i)->iteration_count = 0;
@@ -784,13 +712,13 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   //  }
   //}
 
-  for (int v = 0; v < merged_graph->num_vertices(); v++) {
-    vdata* vd = merged_graph->getVertexData(v);
-    vd->corner_points[0] = cv::Point2f(0.0, 0.0);
-    vd->corner_points[1] = cv::Point2f(0.0, 2724.0);
-    vd->corner_points[2] = cv::Point2f(3128.0, 0.0);
-    vd->corner_points[3] = cv::Point2f(3128.0, 2724.0);
-  }
+  //for (int v = 0; v < merged_graph->num_vertices(); v++) {
+  //  vdata* vd = merged_graph->getVertexData(v);
+  //  vd->corner_points[0] = cv::Point2f(0.0, 0.0);
+  //  vd->corner_points[1] = cv::Point2f(0.0, 2724.0);
+  //  vd->corner_points[2] = cv::Point2f(3128.0, 0.0);
+  //  vd->corner_points[3] = cv::Point2f(3128.0, 2724.0);
+  //}
 
   // Unpack the graphs within the merged graph.
   vertex_id_offset = 0;
@@ -828,10 +756,10 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     if (sections_done.find(vd->z) == sections_done.end()) {
       printf("Doing an update for section %d\n", vd->z);
       sections_done.insert(vd->z);
-      graph_section_data section_data = vd->section_data;
-      std::vector<cv::Point2f>* mesh = section_data.mesh;
-      std::vector<cv::Point2f>* mesh_orig = section_data.mesh_orig;
-      cv::Mat warp_mat = *(section_data.transform);
+      graph_section_data* section_data = vd->section_data;
+      std::vector<cv::Point2f>* mesh = section_data->mesh;
+      std::vector<cv::Point2f>* mesh_orig = section_data->mesh_orig;
+      cv::Mat warp_mat = *(section_data->transform);
       vdata tmp;
       tmp.a00 = warp_mat.at<double>(0, 0); 
       tmp.a01 = warp_mat.at<double>(0, 1);
@@ -1196,28 +1124,28 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       //vd->a11 = 1.1;
       //}
 
-      cv::Point2f corner_points_transformed[4];
-      for (int t = 0; t < 4; t++) {
-        corner_points_transformed[t] = vd->corner_points[t];//transform_point(vd, vd->corner_points[t]);
-      }
-      double min_x = corner_points_transformed[0].x; 
-      double max_x = corner_points_transformed[0].x; 
-      double min_y = corner_points_transformed[0].y; 
-      double max_y = corner_points_transformed[0].y;
-      for (int t = 1; t < 4; t++) {
-        if (corner_points_transformed[t].x < min_x) {
-          min_x = corner_points_transformed[t].x;
-        }
-        if (corner_points_transformed[t].y < min_y) {
-          min_y = corner_points_transformed[t].y;
-        }
-        if (corner_points_transformed[t].x > max_x) {
-          max_x = corner_points_transformed[t].x;
-        }
-        if (corner_points_transformed[t].y > max_y) {
-          max_y = corner_points_transformed[t].y;
-        }
-      }
+      //cv::Point2f corner_points_transformed[4];
+      //for (int t = 0; t < 4; t++) {
+      //  corner_points_transformed[t] = vd->corner_points[t];//transform_point(vd, vd->corner_points[t]);
+      //}
+      //double min_x = corner_points_transformed[0].x; 
+      //double max_x = corner_points_transformed[0].x; 
+      //double min_y = corner_points_transformed[0].y; 
+      //double max_y = corner_points_transformed[0].y;
+      //for (int t = 1; t < 4; t++) {
+      //  if (corner_points_transformed[t].x < min_x) {
+      //    min_x = corner_points_transformed[t].x;
+      //  }
+      //  if (corner_points_transformed[t].y < min_y) {
+      //    min_y = corner_points_transformed[t].y;
+      //  }
+      //  if (corner_points_transformed[t].x > max_x) {
+      //    max_x = corner_points_transformed[t].x;
+      //  }
+      //  if (corner_points_transformed[t].y > max_y) {
+      //    max_y = corner_points_transformed[t].y;
+      //  }
+      //}
 
       fprintf(wafer_file, "\t{\n");
       fprintf(wafer_file, "\t\t\"bbox\": [\n");

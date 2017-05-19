@@ -73,15 +73,15 @@ void get_mfov_graph(Graph<vdata, edata>* merged_graph, align_data_t* p_align_dat
       d->offset_x = 0.0;
       d->offset_y = 0.0;
       d->iteration_count = 0;
-      d->last_radius_value = 9.0;
+      //d->last_radius_value = 9.0;
       d->z = /*p_align_data->base_section + */mfov_id_to_key[i].first;
       d->a00 = 1.0;
       d->a01 = 0.0;
       d->a10 = 0.0;
       d->a11 = 1.0;
-      d->neighbor_grad_x = 0.0;
-      d->neighbor_grad_y = 0.0;
-      d->converged = 0;
+      //d->neighbor_grad_x = 0.0;
+      //d->neighbor_grad_y = 0.0;
+      //d->converged = 0;
     }
 
     //int ncolors = mfov_graph->compute_trivial_coloring();
@@ -159,6 +159,7 @@ void mfov_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
     for (int i = 0; i < merged_graph->edgeData[v].size(); i++) {
       edata edge = merged_graph->edgeData[v][i];
       vdata* neighbor_data = merged_graph->getVertexData(edge.neighbor_id);
+      if (z != merged_graph->getVertexData(edge.neighbor_id)->z) continue;
       std::pair<int, int> neighbor_key =
           std::make_pair(neighbor_data->z, neighbor_data->mfov_id);
       int neighbor_id = mfov_to_id[neighbor_key];
@@ -187,18 +188,19 @@ void mfov_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
       d->offset_x = 0.0;
       d->offset_y = 0.0;
       d->iteration_count = 0;
-      d->last_radius_value = 9.0;
+      //d->last_radius_value = 9.0;
       d->z = /*p_align_data->base_section + */mfov_id_to_key[i].first;
       d->a00 = 1.0;
       d->a01 = 0.0;
       d->a10 = 0.0;
       d->a11 = 1.0;
-      d->neighbor_grad_x = 0.0;
-      d->neighbor_grad_y = 0.0;
-      d->converged = 0;
+      //d->neighbor_grad_x = 0.0;
+      //d->neighbor_grad_y = 0.0;
+      //d->converged = 0;
     }
 
     int ncolors = mfov_graph->compute_trivial_coloring();
+    printf("Number of colors used to color mfov graph is %d\n", ncolors);
     Scheduler* scheduler;
     engine<vdata, edata>* e;
     scheduler =
@@ -206,9 +208,11 @@ void mfov_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
     scheduler->graph_void = (void*) mfov_graph;
     e = new engine<vdata, edata>(mfov_graph, scheduler);
 
+    scheduler->isStatic = false; 
     for (int i = 0; i < mfov_graph->num_vertices(); i++) {
-      scheduler->add_task(i, updateVertex2DAlignMFOV);
+      scheduler->add_task_static(i, updateVertex2DAlignMFOV);
     }
+    scheduler->isStatic = true; 
     printf("begin mfov run\n");
     e->run();
     printf("end mfov run\n");

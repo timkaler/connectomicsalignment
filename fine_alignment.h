@@ -1,7 +1,6 @@
 
 void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data){
     printf("STARTING THE FINE ALIGNMENT IT SO FINE (I hope)");
-    if (true) {
     //int vertex_id_offset = 0;
 
     for (int v = 0; v < merged_graph->num_vertices(); v++) {
@@ -32,10 +31,8 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
       merged_graph->getVertexData(v)->boundary = false;
     }
 
-
-
-
-    for (int section = 1; section < p_align_data->n_sections; section++) {
+    std::vector<cv::Mat> section_transforms(p_align_data->n_sections);
+    cilk_for (int section = 1; section < p_align_data->n_sections; section++) {
       std::map<int, int> tile_id_to_match_count;
       std::vector< cv::Point2f > filtered_match_points_a(0);
       std::vector< cv::Point2f > filtered_match_points_b(0);
@@ -98,7 +95,7 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
           //if (merged_graph->getVertexData(v)->z == section_b &&
           //    mfov_ids_b.find(merged_graph->getVertexData(v)->mfov_id) == mfov_ids_b.end()) continue; 
 
-          if (merged_graph->getVertexData(v)->z == section_a /*|| merged_graph->getVertexData(v)->z == section_a-1*/) {
+          if (merged_graph->getVertexData(v)->z == section_a) {
             tile_id_set.insert(v);
             int curr_z = merged_graph->getVertexData(v)->z;
             _tile_data tdata_a = p_align_data->sec_data[curr_z].tiles[merged_graph->getVertexData(v)->tile_id];
@@ -212,21 +209,21 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
           free(mask);
 
       }}
-          cv::Mat warp_mat;
-          cv::computeAffineTFK(filtered_match_points_a, filtered_match_points_b, warp_mat);
+          //cv::Mat warp_mat;
+          cv::computeAffineTFK(filtered_match_points_a, filtered_match_points_b, section_transforms[section]);
 
-          std::cout << warp_mat << std::endl; 
-          vdata tmp;
-          tmp.a00 = warp_mat.at<double>(0, 0); 
-          tmp.a01 = warp_mat.at<double>(0, 1);
-          tmp.offset_x = warp_mat.at<double>(0, 2);
-          tmp.a10 = warp_mat.at<double>(1, 0); 
-          tmp.a11 = warp_mat.at<double>(1, 1); 
-          tmp.offset_y = warp_mat.at<double>(1, 2);
-          tmp.start_x = 0.0;
-          tmp.start_y = 0.0;
-          printf("Best values are %f %f %f %f %f %f\n", tmp.a00, tmp.a01, tmp.a10, tmp.a11, tmp.offset_x, tmp.offset_y);
-          vdata best_vertex_data = tmp;
+          //std::cout << warp_mat << std::endl; 
+          //vdata tmp;
+          //tmp.a00 = warp_mat.at<double>(0, 0); 
+          //tmp.a01 = warp_mat.at<double>(0, 1);
+          //tmp.offset_x = warp_mat.at<double>(0, 2);
+          //tmp.a10 = warp_mat.at<double>(1, 0); 
+          //tmp.a11 = warp_mat.at<double>(1, 1); 
+          //tmp.offset_y = warp_mat.at<double>(1, 2);
+          //tmp.start_x = 0.0;
+          //tmp.start_y = 0.0;
+          //printf("Best values are %f %f %f %f %f %f\n", tmp.a00, tmp.a01, tmp.a10, tmp.a11, tmp.offset_x, tmp.offset_y);
+          //vdata best_vertex_data = tmp;
 
         //std::map<int,std::set<int> > mfov_ids_general;
         //for (int v = 0; v < merged_graph->num_vertices(); v++) {
@@ -239,47 +236,45 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
         //  mfov_ids_general[z].insert(mfov_id);
         //}
 
-          std::set<int> sections_done;
-          sections_done.clear();
-          for (int v = 0; v < merged_graph->num_vertices(); v++) {
-            //cv::Point2d center = merged_graph->getVertexData(v)->center_point;//transform_point_double(merged_graph->getVertexData(v), merged_graph->getVertexData(v)->original_center_point);
-            //double vx = 1.0*((double) center.x);//merged_graph->getVertexData(v)->start_x + merged_graph->getVertexData(v)->offset_x;
-            //double vy = 1.0*((double) center.y);//merged_graph->getVertexData(v)->start_y + merged_graph->getVertexData(v)->offset_y;
-            //if (vx < box_min_x-6000.0 || vx > box_max_x+6000.0 || vy < box_min_y -6000.0 || vy > box_max_y+6000.0) continue;
-            //if (vx < box_min_x || vx > box_max_x || vy < box_min_y || vy > box_max_y) continue;
-            
-          //int mfov_id = merged_graph->getVertexData(v)->mfov_id;
-          //int z = merged_graph->getVertexData(v)->z;
-          //if (mfov_ids_general[z].find(mfov_id) == mfov_ids_general[z].end()) continue;
-
-            //if (merged_graph->getVertexData(v)->z <= section_a || merged_graph->getVertexData(v)->z == section_a - 1 || merged_graph->getVertexData(v)->z == section_a-2) {
-            if (merged_graph->getVertexData(v)->z <= section_a/*merged_graph->getVertexData(v)->z <= section_a || merged_graph->getVertexData(v)->z == section_a - 1 || merged_graph->getVertexData(v)->z == section_a-2*/) {
-
-              updateAffineTransform(merged_graph->getVertexData(v), /*&best_vertex_data*/warp_mat);
-            if (sections_done.find(merged_graph->getVertexData(v)->z) == sections_done.end()) {
-              sections_done.insert(merged_graph->getVertexData(v)->z);
-              updateAffineSectionTransform(merged_graph->getVertexData(v), warp_mat);
-            }
-              continue;
-            }
-          }
-          
-          for (std::map<int, int>::iterator iter = tile_id_to_match_count.begin();
-               iter != tile_id_to_match_count.end(); ++iter) {
-            printf("tile id %d, count %d\n", iter->first, iter->second);
-          }
+          //std::set<int> sections_done;
+          //sections_done.clear();
+          //for (int v = 0; v < merged_graph->num_vertices(); v++) {
+          //  if (merged_graph->getVertexData(v)->z <= section_a) {
+          //    updateAffineTransform(merged_graph->getVertexData(v), section_transforms[section]);
+          //  if (sections_done.find(merged_graph->getVertexData(v)->z) == sections_done.end()) {
+          //    sections_done.insert(merged_graph->getVertexData(v)->z);
+          //    updateAffineSectionTransform(merged_graph->getVertexData(v), section_transforms[section]);
+          //  }
+          //    continue;
+          //  }
+          //}
+          //for (std::map<int, int>::iterator iter = tile_id_to_match_count.begin();
+          //     iter != tile_id_to_match_count.end(); ++iter) {
+          //  printf("tile id %d, count %d\n", iter->first, iter->second);
+          //}
       }
 
-      //}
-    //}
-
+    for (int section = 1; section < p_align_data->n_sections; section++) {
+      int section_a = section-1;
+      int section_b = section;
+      std::set<int> sections_done;
+      sections_done.clear();
+      for (int v = 0; v < merged_graph->num_vertices(); v++) {
+        if (merged_graph->getVertexData(v)->z <= section_a) {
+          updateAffineTransform(merged_graph->getVertexData(v), section_transforms[section]);
+        if (sections_done.find(merged_graph->getVertexData(v)->z) == sections_done.end()) {
+          sections_done.insert(merged_graph->getVertexData(v)->z);
+          updateAffineSectionTransform(merged_graph->getVertexData(v), section_transforms[section]);
+        }
+          continue;
+        }
+      }
     }
 }
 
 
 void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data, double ransac_thresh, std::vector<tfkMatch>& mesh_matches){
     printf("STARTING THE FINE ALIGNMENT IT SO FINE (I hope)");
-    if (true) {
     //int vertex_id_offset = 0;
 
     for (int v = 0; v < merged_graph->num_vertices(); v++) {
@@ -296,6 +291,8 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
     double min_y = merged_graph->getVertexData(0)->start_x;
     double max_x = merged_graph->getVertexData(0)->start_y;
     double max_y = merged_graph->getVertexData(0)->start_y;
+
+
     for (int v = 0; v < merged_graph->num_vertices(); v++) {
       double vx = merged_graph->getVertexData(v)->start_x + merged_graph->getVertexData(v)->offset_x;
       double vy = merged_graph->getVertexData(v)->start_y + merged_graph->getVertexData(v)->offset_y;
@@ -313,8 +310,9 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
 
 
 
+    std::vector<std::vector<tfkMatch> > section_mesh_matches(p_align_data->n_sections);
 
-    for (int section = 1; section < p_align_data->n_sections; section++) {
+    cilk_for (int section = 1; section < p_align_data->n_sections; section++) {
       std::vector< cv::Point2f > filtered_match_points_a(0);
       std::vector< cv::Point2f > filtered_match_points_b(0);
         int section_a = section-1;
@@ -490,7 +488,8 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
 
       }}
 
-      graph_section_data section_data_a, section_data_b;
+      graph_section_data* section_data_a;
+      graph_section_data* section_data_b;
 
       for (int v = 0; v < merged_graph->num_vertices(); v++) {
         if (merged_graph->getVertexData(v)->z == section_a) {
@@ -512,11 +511,11 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
 
         tfkMatch match;
         // find the triangle...
-        std::vector<tfkTriangle>* triangles = section_data_a.triangles;
-        std::vector<cv::Point2f>* mesh = section_data_a.mesh;
+        std::vector<tfkTriangle>* triangles = section_data_a->triangles;
+        std::vector<cv::Point2f>* mesh = section_data_a->mesh;
 
-        std::vector<tfkTriangle>* n_triangles = section_data_b.triangles;
-        std::vector<cv::Point2f>* n_mesh = section_data_b.mesh;
+        std::vector<tfkTriangle>* n_triangles = section_data_b->triangles;
+        std::vector<cv::Point2f>* n_mesh = section_data_b->mesh;
 
 
         int my_triangle_index = -1;
@@ -551,67 +550,20 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
           break;
         }
         if (my_triangle_index == -1 || n_triangle_index == -1) continue;
-        match.my_section_data = section_data_a; 
-        match.n_section_data = section_data_b;
-        mesh_matches.push_back(match); 
+        match.my_section_data = *section_data_a; 
+        match.n_section_data = *section_data_b;
+        section_mesh_matches[section].push_back(match); 
+      }
       }
 
-          cv::Mat warp_mat;
-          cv::computeAffineTFK(filtered_match_points_a, filtered_match_points_b, warp_mat);
-
-          std::cout << warp_mat << std::endl; 
-          vdata tmp;
-          tmp.a00 = warp_mat.at<double>(0, 0); 
-          tmp.a01 = warp_mat.at<double>(0, 1);
-          tmp.offset_x = warp_mat.at<double>(0, 2);
-          tmp.a10 = warp_mat.at<double>(1, 0); 
-          tmp.a11 = warp_mat.at<double>(1, 1); 
-          tmp.offset_y = warp_mat.at<double>(1, 2);
-          tmp.start_x = 0.0;
-          tmp.start_y = 0.0;
-          printf("Best values are %f %f %f %f %f %f\n", tmp.a00, tmp.a01, tmp.a10, tmp.a11, tmp.offset_x, tmp.offset_y);
-          vdata best_vertex_data = tmp;
-
-        //std::map<int,std::set<int> > mfov_ids_general;
-        //for (int v = 0; v < merged_graph->num_vertices(); v++) {
-        //  cv::Point2f center = merged_graph->getVertexData(v)->center_point;
-        //  double vx = 1.0*((double) center.x);
-        //  double vy = 1.0*((double) center.y);
-        //  if (vx < box_min_x || vx > box_max_x || vy < box_min_y || vy > box_max_y) continue;
-        //  int mfov_id = merged_graph->getVertexData(v)->mfov_id;
-        //  int z = merged_graph->getVertexData(v)->z;
-        //  mfov_ids_general[z].insert(mfov_id);
-        //}
-        //std::set<int> sections_done;
-        //sections_done.clear();
-        //  for (int v = 0; v < merged_graph->num_vertices(); v++) {
-        //    //cv::Point2d center = merged_graph->getVertexData(v)->center_point;//transform_point_double(merged_graph->getVertexData(v), merged_graph->getVertexData(v)->original_center_point);
-        //    //double vx = 1.0*((double) center.x);//merged_graph->getVertexData(v)->start_x + merged_graph->getVertexData(v)->offset_x;
-        //    //double vy = 1.0*((double) center.y);//merged_graph->getVertexData(v)->start_y + merged_graph->getVertexData(v)->offset_y;
-        //    //if (vx < box_min_x-6000.0 || vx > box_max_x+6000.0 || vy < box_min_y -6000.0 || vy > box_max_y+6000.0) continue;
-        //    //if (vx < box_min_x || vx > box_max_x || vy < box_min_y || vy > box_max_y) continue;
-        //    
-        //  //int mfov_id = merged_graph->getVertexData(v)->mfov_id;
-        //  //int z = merged_graph->getVertexData(v)->z;
-        //  //if (mfov_ids_general[z].find(mfov_id) == mfov_ids_general[z].end()) continue;
-
-        //    //if (merged_graph->getVertexData(v)->z <= section_a || merged_graph->getVertexData(v)->z == section_a - 1 || merged_graph->getVertexData(v)->z == section_a-2) {
-        //    if (merged_graph->getVertexData(v)->z <= section_a/*merged_graph->getVertexData(v)->z <= section_a || merged_graph->getVertexData(v)->z == section_a - 1 || merged_graph->getVertexData(v)->z == section_a-2*/) {
-
-        //      updateAffineTransform(merged_graph->getVertexData(v), /*&best_vertex_data*/warp_mat);
-        //    if (sections_done.find(merged_graph->getVertexData(v)->z) == sections_done.end()) {
-        //      sections_done.insert(merged_graph->getVertexData(v)->z);
-        //      updateAffineSectionTransform(merged_graph->getVertexData(v), warp_mat);
-        //    }
-        //      continue;
-        //    }
-        //  }
-      }
-
-      //}
-    //}
-
+    for (int section = 1; section < p_align_data->n_sections; section++) {
+        //int section_a = section-1;
+        //int section_b = section;
+        for (int m = 0; m < section_mesh_matches[section].size(); m++) {
+          mesh_matches.push_back(section_mesh_matches[section][m]);
+        }
     }
+
 }
 
 

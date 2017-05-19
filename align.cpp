@@ -621,15 +621,15 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       d->offset_x = 0.0;
       d->offset_y = 0.0;
       d->iteration_count = 0;
-      d->last_radius_value = 9.0;
+      //d->last_radius_value = 9.0;
       d->z = /*p_align_data->base_section + */sec_id;
       d->a00 = 1.0;
       d->a01 = 0.0;
       d->a10 = 0.0;
       d->a11 = 1.0;
-      d->neighbor_grad_x = 0.0;
-      d->neighbor_grad_y = 0.0;
-      d->converged = 0;
+      //d->neighbor_grad_x = 0.0;
+      //d->neighbor_grad_y = 0.0;
+      //d->converged = 0;
       d->original_center_point =
         cv::Point2f((tdata.x_finish-tdata.x_start)/2,
                     (tdata.y_finish-tdata.y_start)/2);
@@ -657,6 +657,9 @@ void align_execute(align_data_t *p_align_data) {
     TIMER_VAR(timer);
     START_TIMER(&t_timer);
 
+
+//    printf("size of vdata is %d\n", sizeof(vdata));
+//    exit(0);
 //if (false) {
 //    cv::Rect rect(-20.0,-20.0,170.0,170.0);
 //    cv::Subdiv2D subdiv(rect);

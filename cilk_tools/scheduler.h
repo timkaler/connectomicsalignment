@@ -22,13 +22,16 @@ class Scheduler {
     int colorCount;
     int* vertex_task_added;
     int numVertices;
+    bool keepGoing;
  public:
     Scheduler(int* vertexColors, int colorCount, int vertexCount);
     void add_task(int vid, void (*update_function)(int, void*));
+    void add_task_static(int vid, void (*update_function)(int, void*));
     std::vector<std::vector<update_task>*> get_task_bag();
     void collect_tasks();
     int roundNum;
     void* graph_void;
+    bool isStatic;
 };
 #include "./scheduler.cpp"
 #endif  // SCHEDULER_H_

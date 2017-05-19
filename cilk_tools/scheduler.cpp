@@ -13,7 +13,8 @@ Scheduler::Scheduler(int* vertexColors, int colorCount, int vertexCount) {
   this->numVertices = vertexCount;
   this->currentColor = colorCount;
   this->roundNum=0;
-
+  this->isStatic = false;
+  this->keepGoing = false;
   // Create the multibag
   Q = new Multibag<update_task>(colorCount);
 
@@ -21,6 +22,23 @@ Scheduler::Scheduler(int* vertexColors, int colorCount, int vertexCount) {
 }
 
 void Scheduler::add_task(int vid, void (*the_update_function)(int, void*)) {
+  if (this->isStatic) {
+    if (this->keepGoing == false) {
+      this->keepGoing = true;
+    }
+    return;
+  }
+  if (vertex_task_added[vid] == 0 &&
+      __sync_bool_compare_and_swap(&vertex_task_added[vid], 0, 1)) {
+    update_task t;
+    t.vid = vid;
+    t.update_fun = the_update_function;
+    assert(vertexColors[vid] < colorCount && vertexColors[vid] >= 0);
+    Q->insert(t, vertexColors[vid]);
+  }
+}
+
+void Scheduler::add_task_static(int vid, void (*the_update_function)(int, void*)) {
   if (vertex_task_added[vid] == 0 &&
       __sync_bool_compare_and_swap(&vertex_task_added[vid], 0, 1)) {
     update_task t;
@@ -33,22 +51,33 @@ void Scheduler::add_task(int vid, void (*the_update_function)(int, void*)) {
 
 std::vector<std::vector<Scheduler::update_task>*> Scheduler::get_task_bag() {
   if (currentColor >= colorCount) {
-    Q->collect();
-    roundNum++;
-    bool empty = true;
-    free(vertex_task_added);
-    vertex_task_added =
-        reinterpret_cast<int*>(calloc(numVertices, sizeof(int)));
-    // delete all the current bags
-    for (int i = 0; i < colorCount; i++) {
-      if (Q->get_vector_list(i).size() > 0) {
-        empty = false;
+    if (this->isStatic && this->keepGoing) {
+      if (this->keepGoing) {
+        this->keepGoing = false;
+        if (roundNum == 0) {
+          Q->collect();
+        }
+        currentColor = 0;
+        roundNum++;
       }
+    } else {
+      Q->collect();
+      roundNum++;
+      bool empty = true;
+      free(vertex_task_added);
+      vertex_task_added =
+          reinterpret_cast<int*>(calloc(numVertices, sizeof(int)));
+      // delete all the current bags
+      for (int i = 0; i < colorCount; i++) {
+        if (Q->get_vector_list(i).size() > 0) {
+          empty = false;
+        }
+      }
+      if (empty) {
+        return Q->get_vector_list(0);
+      }
+      currentColor = 0;
     }
-    if (empty) {
-      return Q->get_vector_list(0);
-    }
-    currentColor = 0;
   }
 
   while (Q->get_vector_list(currentColor).size() == 0) {

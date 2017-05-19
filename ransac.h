@@ -4,17 +4,17 @@ static simple_mutex_t mutex = 0;
 
 void updateAffineSectionTransform(vdata* _vertex, cv::Mat& transform) {
   printf("update affine section transform\n");
-  graph_section_data section_data = _vertex->section_data;
+  graph_section_data* section_data = _vertex->section_data;
 
   //cv::Mat A(3, 3, cv::DataType<double>::type);
 
   cv::Mat A(3, 3, cv::DataType<double>::type);
-  A.at<double>(0,0) = section_data.transform->at<double>(0,0);
-  A.at<double>(0,1) = section_data.transform->at<double>(0,1);
-  A.at<double>(0,2) = section_data.transform->at<double>(0,2);
-  A.at<double>(1,0) = section_data.transform->at<double>(1,0);
-  A.at<double>(1,1) = section_data.transform->at<double>(1,1);
-  A.at<double>(1,2) = section_data.transform->at<double>(1,2);
+  A.at<double>(0,0) = section_data->transform->at<double>(0,0);
+  A.at<double>(0,1) = section_data->transform->at<double>(0,1);
+  A.at<double>(0,2) = section_data->transform->at<double>(0,2);
+  A.at<double>(1,0) = section_data->transform->at<double>(1,0);
+  A.at<double>(1,1) = section_data->transform->at<double>(1,1);
+  A.at<double>(1,2) = section_data->transform->at<double>(1,2);
   A.at<double>(2,0) = 0.0;
   A.at<double>(2,1) = 0.0;
   A.at<double>(2,2) = 1.0;
@@ -22,7 +22,7 @@ void updateAffineSectionTransform(vdata* _vertex, cv::Mat& transform) {
   //std::cout << transform << std::endl;
   cv::Mat B = transform*A;
 
-  *(section_data.transform) = B.clone();
+  *(section_data->transform) = B.clone();
 
   //vertex->a00 = B.at<double>(0,0);
   //vertex->a01 = B.at<double>(0,1);
@@ -69,14 +69,14 @@ void updateAffineTransform(vdata* vertex, cv::Mat& transform) {
   vertex->offset_x = B.at<double>(0,2);
   vertex->offset_y = B.at<double>(1,2);
 
-  cv::Mat D;
-  cv::invertAffineTransform(B, D);
-  vertex->ia00 = D.at<double>(0,0);
-  vertex->ia01 = D.at<double>(0,1);
-  vertex->ia10 = D.at<double>(1,0);
-  vertex->ia11 = D.at<double>(1,1);
-  vertex->ioffset_x = D.at<double>(0,2);
-  vertex->ioffset_y = D.at<double>(1,2);
+  //cv::Mat D;
+  //cv::invertAffineTransform(B, D);
+  //vertex->ia00 = D.at<double>(0,0);
+  //vertex->ia01 = D.at<double>(0,1);
+  //vertex->ia10 = D.at<double>(1,0);
+  //vertex->ia11 = D.at<double>(1,1);
+  //vertex->ioffset_x = D.at<double>(0,2);
+  //vertex->ioffset_y = D.at<double>(1,2);
 
 
 
