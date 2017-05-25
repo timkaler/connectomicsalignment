@@ -475,8 +475,7 @@ void updateVertex2DAlignFULLFast(int vid, void* scheduler_void) {
   double grad_error_x = 0.0;
   double grad_error_y = 0.0;
   double weight_sum = 1.0;
-  double error_sq = 0.0;
-  int added_points = 0;
+  //int added_points = 0;
   for (int i = 0; i < edges.size(); i++) {
     std::vector<cv::Point2f>* v_points = edges[i].v_points;
     std::vector<cv::Point2f>* n_points = edges[i].n_points;
@@ -691,7 +690,7 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
 
   std::vector<vdata*> neighbor_pointers;
 
-  bool trigger_change = false;
+  //bool trigger_change = false;
 
   //for (int i = 0; i < edges.size(); i++) {
   //  //if (i != vertex_data->iteration_count%edges.size()) continue;
@@ -852,7 +851,7 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
 }
 
 #include "fine_alignment.h"
-#include "mfov_alignment.h"
+//#include "mfov_alignment.h"
 
 void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data, double distance_thresh){
 
@@ -944,7 +943,7 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
 
     mask = (bool*)calloc(matches.size()+1, 1);
     printf("First pass filter got %d matches\n", num_filtered);
-    vdata best_vertex_data  = tfk_simple_ransac_strict_ret_affine(filtered_match_points_a_pre, filtered_match_points_b_pre, distance_thresh, mask);
+    tfk_simple_ransac_strict_ret_affine(filtered_match_points_a_pre, filtered_match_points_b_pre, distance_thresh, mask);
     std::vector< cv::Point2f > filtered_match_points_a(0);
     std::vector< cv::Point2f > filtered_match_points_b(0);
 
@@ -1011,7 +1010,6 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
   // now apply the transformations.
   for (int section = 1; section < p_align_data->n_sections; section++) {
     int section_a = section-1;
-    int section_b = section;
     std::set<int> sections_done;
     sections_done.clear();
     for (int v = 0; v < merged_graph->num_vertices(); v++) {

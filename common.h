@@ -287,13 +287,6 @@ void log_pts_matches(
 bool is_tiles_overlap(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2);
 bool is_tiles_overlap_slack(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2, double slack);
 
-static std::string matchPadTo(std::string str, const size_t num, const char paddingChar = '0')
-{
-    if(num > str.size())
-        str.insert(0, num - str.size(), paddingChar);
-    return str;
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL MACROS
 /////////////////////////////////////////////////////////////////////////////////////////

@@ -130,7 +130,7 @@
 #include <stdarg.h>
 #include <opencv2/core/hal/hal.hpp>
 
-#include "gaussianPyramid.cpp"
+//#include "gaussianPyramid.cpp"
 
 
 namespace cv

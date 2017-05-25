@@ -32,7 +32,7 @@ float EDGE_THRESH_2D = 5.0;
 #include "cilk_tools/Graph.h"
 #include "serialize.h"
 void SIFT_initialize() {
-  generateBoxBlurExecutionPlan();
+  //generateBoxBlurExecutionPlan();
 }
 
 /*

@@ -274,7 +274,7 @@ void construct_triangles(Graph<vdata,edata>* graph, double hex_spacing) {
   std::vector<cv::Vec6f> triangle_list;
   subdiv.getTriangleList(triangle_list);
 
-  printf("The number of triangles is %d\n", triangle_list.size()); 
+  printf("The number of triangles is %lu\n", triangle_list.size()); 
 
   //cv::Point2f* d_cost_d_mesh = new cv::Point2f[hex_grid->size()];
 
@@ -312,7 +312,7 @@ void construct_triangles(Graph<vdata,edata>* graph, double hex_spacing) {
     triangle_list_index.push_back(tri);
   }
 
-  printf("Triangle_list_index length is %d\n", triangle_list_index.size());
+  printf("Triangle_list_index length is %lu\n", triangle_list_index.size());
 
   std::vector<std::pair<int,int> > triangle_edges;
   for (int i = 0; i < triangle_list_index.size(); i++) {
@@ -400,7 +400,7 @@ void construct_triangles(Graph<vdata,edata>* graph, double hex_spacing) {
     //printf("Vertex %d has mesh point count %d\n", v, my_mesh_points->size());
   }
 
-  printf("Now done with setup num edges is before dedupe %d, after %d\n", triangle_edges.size(), triangle_edges_dedupe.size());
+  printf("Now done with setup num edges is before dedupe %lu, after %lu\n", triangle_edges.size(), triangle_edges_dedupe.size());
 
   
 
