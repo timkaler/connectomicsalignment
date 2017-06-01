@@ -295,7 +295,7 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
         match_features(matches,
                        atile_kps_desc_in_overlap,
                        btile_kps_desc_in_overlap,
-                       0.65);
+                       0.92);
         if (matches.size() == 0) continue;
 
 
@@ -317,7 +317,7 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
         }
         //printf("Second pass filter got %d matches\n", num_filtered);
 
-        if (num_filtered < 12) {
+        if (num_filtered < 120) {
           //printf("Not enough matches %d for section %d with thresh\n", num_filtered, section_a);
           free(mask);
           continue;

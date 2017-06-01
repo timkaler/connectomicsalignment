@@ -45,6 +45,7 @@ typedef struct {
   cv::Mat* transform;
   int z;
   cv::Point2f* gradients;
+  cv::Point2f* gradients_with_momentum;
   double* rest_lengths;
   double* rest_areas;
 } graph_section_data;

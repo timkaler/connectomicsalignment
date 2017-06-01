@@ -38,9 +38,11 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
     double cross_slice_winsor = 20.0;
     double intra_slice_weight = 1.0;
     double intra_slice_winsor = 200.0;
-    int max_iterations = 10000;
+    int max_iterations = 20000;
     //double min_stepsize = 1e-20;
     double stepsize = 0.0001;
+    double momentum = 0.5;
+    std::map<int, double> gradient_momentum;
     std::map<int, graph_section_data> section_data_map;
     section_data_map.clear();
     for (int i = 0; i < mesh_matches.size(); i++) {
@@ -57,6 +59,7 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
       for (std::map<int, graph_section_data>::iterator it = section_data_map.begin();
            it != section_data_map.end(); ++it) {
         it->second.gradients = new cv::Point2f[it->second.mesh->size()];
+        it->second.gradients_with_momentum = new cv::Point2f[it->second.mesh->size()];
         it->second.rest_lengths = new double[it->second.triangle_edges->size()];
         it->second.rest_areas = new double[it->second.triangles->size()];
         it->second.mesh_old = new std::vector<cv::Point2f>();
@@ -68,6 +71,7 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
         // init
         for (int j = 0; j < it->second.mesh->size(); j++) {
           it->second.gradients[j] = cv::Point2f(0.0,0.0);  
+          it->second.gradients_with_momentum[j] = cv::Point2f(0.0,0.0);  
         }
 
         for (int j = 0; j < it->second.triangle_edges->size(); j++) {
@@ -110,6 +114,7 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
         double sigma = intra_slice_winsor; 
         std::vector<cv::Point2f>* mesh = it->second.mesh;
         cv::Point2f* gradients = it->second.gradients;
+
         std::vector<std::pair<int, int> >* triangle_edges = it->second.triangle_edges;
         std::vector<tfkTriangle >* triangles = it->second.triangles;
         double* rest_lengths = it->second.rest_lengths;
@@ -178,12 +183,17 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
           std::vector<cv::Point2f>* mesh = it->second.mesh;
           std::vector<cv::Point2f>* mesh_old = it->second.mesh_old;
           cv::Point2f* gradients = it->second.gradients;
+          cv::Point2f* gradients_with_momentum = it->second.gradients_with_momentum;
+          for (int j = 0; j < mesh->size(); j++) {
+            gradients_with_momentum[j] = gradients[j] + momentum*gradients_with_momentum[j];
+          }
+
           for (int j = 0; j < mesh->size(); j++) {
             (*mesh_old)[j] = ((*mesh)[j]);
           }
           for (int j = 0; j < mesh->size(); j++) {
-            (*mesh)[j].x -= (float)(stepsize * (gradients)[j].x);
-            (*mesh)[j].y -= (float)(stepsize * (gradients)[j].y);
+            (*mesh)[j].x -= (float)(stepsize * (gradients_with_momentum)[j].x);
+            (*mesh)[j].y -= (float)(stepsize * (gradients_with_momentum)[j].y);
           }
         }
         printf("Good step old cost %f, new cost %f, iteration %d\n", prev_cost, cost, iter);
@@ -195,6 +205,11 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
              it != section_data_map.end(); ++it) {
           std::vector<cv::Point2f>* mesh = it->second.mesh;
           std::vector<cv::Point2f>* mesh_old = it->second.mesh_old;
+          cv::Point2f* gradients_with_momentum = it->second.gradients_with_momentum;
+          for (int j = 0; j < mesh->size(); j++) {
+            gradients_with_momentum[j] = cv::Point2f(0.0,0.0);
+          }
+
           //if (mesh_old->size() != mesh->size()) continue;
           for (int j = 0; j < mesh->size(); j++) {
             (*mesh)[j] = (*mesh_old)[j];
@@ -205,3 +220,42 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
     }
   } // END BLOCK.
 }
+
+
+void filter_overlap_points_3d(Graph<vdata, edata>* graph, align_data_t* p_align_data) {
+  for (int v = 0; v < graph->num_vertices(); v++) {
+    int curr_z = graph->getVertexData(v)->z;
+    int tile_id = graph->getVertexData(v)->tile_id;
+    _tile_data& tdata = p_align_data->sec_data[curr_z].tiles[tile_id];
+    printf("curr_z is %d, tile_id is %d\n", curr_z, tile_id);
+    tdata.ignore = (bool*) calloc(tdata.p_kps_3d->size()+1, sizeof(bool));
+
+
+    cv::Point2f offset_pt =
+        cv::Point2f(graph->getVertexData(v)->start_x + graph->getVertexData(v)->offset_x,
+                    graph->getVertexData(v)->start_y + graph->getVertexData(v)->offset_y);
+    if (tdata.p_kps_3d->size() == 0) continue;
+    for (int i = 0; i < tdata.p_kps_3d->size(); i++) {
+      cv::Point2f pt = (*(tdata.p_kps_3d))[i].pt;
+      pt.x += offset_pt.x;
+      pt.y += offset_pt.y;
+      for (int j = 0; j < graph->num_vertices(); j++) {
+        if (j == v) continue;
+        if (j > v) continue;
+        double x_start = graph->getVertexData(j)->start_x + graph->getVertexData(j)->offset_x;
+        double x_end = graph->getVertexData(j)->end_x + graph->getVertexData(j)->offset_x;
+        double y_start = graph->getVertexData(j)->start_y + graph->getVertexData(j)->offset_y;
+        double y_end = graph->getVertexData(j)->end_y + graph->getVertexData(j)->offset_y;
+        if (pt.x > x_start && pt.x < x_end && pt.y > y_start && pt.y < y_end) {
+          tdata.ignore[i] = true;
+        }
+      }
+    }
+    int filter_count = 0;
+    for (int i = 0; i < tdata.p_kps_3d->size(); i++) {
+      if (tdata.ignore[i]) filter_count++; 
+    }
+    printf("Filtered %d out of %d keypoints\n", filter_count, tdata.p_kps_3d->size());
+  }
+}
+

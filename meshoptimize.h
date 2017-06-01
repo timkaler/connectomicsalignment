@@ -883,8 +883,11 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
 
     for (int v = 0; v < merged_graph->num_vertices(); v++) {
       if (merged_graph->edgeData[v].size() == 0) continue;
+      printf("Vertex is %d\n", v);
+      printf("tile_id is is %d\n", merged_graph->getVertexData(v)->vertex_id);
       if (merged_graph->getVertexData(v)->z == section_a /*|| merged_graph->getVertexData(v)->z == section_a-1*/) {
         int curr_z = merged_graph->getVertexData(v)->z;
+        printf("curr_z is %d\n", curr_z);
         _tile_data tdata_a = p_align_data->sec_data[curr_z].tiles[merged_graph->getVertexData(v)->tile_id];
         concat_two_tiles_all(merged_graph->getVertexData(v), &tdata_a, v, atile_kps_in_overlap, atile_kps_desc_in_overlap_list, atile_kps_tile_list);
         

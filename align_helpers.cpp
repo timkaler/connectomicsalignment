@@ -40,7 +40,7 @@ void output_section_image(section_data_t* section, int min_x, int min_y,
 
   for (int i = 0; i < section->n_tiles; i++) {
     tile_data_t tile = section->tiles[i];
-    (*tile.p_image).create(3128, 2724, CV_8UC1);
+    (*tile.p_image).create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
     (*tile.p_image) = cv::imread(
         tile.filepath,
         CV_LOAD_IMAGE_UNCHANGED);
@@ -203,18 +203,18 @@ void read_input(align_data_t *p_align_data) {
  
     for (int i = 0; i < n_tiles; i++) {
         
+        printf("String input %s\n", str_input);
         n_objs_read = fscanf(fp, "%s [%d]\n", str_input, &in_tile_id);
         ASSERT(n_objs_read == 2);
         ASSERT(0 == strcmp(str_input, magic_str_tile_start));
         ASSERT(in_tile_id == i);
-        
         n_objs_read = fscanf(fp, "\t%s %d\n", str_input, &in_section_id);
+        printf("in_section id is %d\n", in_section_id);
         ASSERT(n_objs_read == 2);
         ASSERT(0 == strcmp(str_input, magic_str_tile_section));
         ASSERT(in_section_id >= 1);
         in_section_id--;
-        ASSERT(in_section_id >= 0);
-        ASSERT(in_section_id < MAX_SECTIONS);
+        //ASSERT(in_section_id >= 0);
         
         n_objs_read = fscanf(fp, "\t%s %d\n", str_input, &in_mfov_id);
         ASSERT(n_objs_read == 2);
@@ -262,6 +262,7 @@ void read_input(align_data_t *p_align_data) {
 
         cur_section_idx = in_section_id - p_align_data->base_section;
         
+        ASSERT(cur_section_idx < MAX_SECTIONS);
         //TRACE_2("\nread tile\n");
         //TRACE_2("   section_id : %d\n", in_section_id);
         //TRACE_2("   mfov_id    : %d\n", in_mfov_id);
@@ -271,7 +272,7 @@ void read_input(align_data_t *p_align_data) {
         
         p_sec_data = &(p_align_data->sec_data[cur_section_idx]);
         p_cur_tile = &(p_sec_data->tiles[p_sec_data->n_tiles]);
-        
+        printf("Init tile with sindex %d tindex %d\n", cur_section_idx, p_sec_data->n_tiles); 
         init_tile(
             p_cur_tile,
             cur_section_idx,
@@ -349,7 +350,7 @@ void read_tiles(align_data_t *p_align_data) {
             //TRACE_1("  -- read[%d-%d]: %s\n", sec_id, tile_id, p_tile->filepath);
             
             //(*p_tile->p_image).create(4096, 4096, CV_8UC1);
-            //(*p_tile->p_image).create(3128, 2724, CV_8UC1);
+            //(*p_tile->p_image).create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
             //
             //(*p_tile->p_image) = cv::imread(
             //    p_tile->filepath, 

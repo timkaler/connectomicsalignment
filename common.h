@@ -58,12 +58,12 @@
 //#define MAX_TILES (1024)
 #define MAX_TILES (2048)
 //#define MAX_SECTIONS (256)
-#define MAX_SECTIONS (64)
+#define MAX_SECTIONS (1024)
 
 #define OVERLAP_2D (200)
 
-#define MFOV_BOUNDARY_THRESH 37 // any section with id > 37 is on boundary.
-//#define MFOV_BOUNDARY_THRESH -1 // any section with id > 37 is on boundary.
+//#define MFOV_BOUNDARY_THRESH 37 // any section with id > 37 is on boundary.
+#define MFOV_BOUNDARY_THRESH -1 // any section with id > 37 is on boundary.
 
 
 
@@ -72,17 +72,18 @@
 #define ROD (0.92)
 #define MAX_KPS_DIST (3000)
 
-#define SIFT_MAX_SUB_IMAGES (32)
+//#define SIFT_MAX_SUB_IMAGES (32)
+#define SIFT_MAX_SUB_IMAGES (128)
 //#define SIFT_D1_SHIFT (4096) //(256)
 //#define SIFT_D2_SHIFT (4096) //(256)
 
 //#define SIFT_D1_SHIFT (1024)
 //#define SIFT_D2_SHIFT (1024)
-#define SIFT_D1_SHIFT_3D (681*4)
-#define SIFT_D2_SHIFT_3D (782*4)
+#define SIFT_D1_SHIFT_3D (5120)
+#define SIFT_D2_SHIFT_3D (5120)
 
-#define SIFT_D1_SHIFT (681)
-#define SIFT_D2_SHIFT (782)
+#define SIFT_D1_SHIFT (512)
+#define SIFT_D2_SHIFT (512)
 
 #define OUT_D1_SIZE (20000)
 #define OUT_D2_SIZE (20000)
@@ -208,6 +209,7 @@ typedef struct _tile_data {
 
     std::vector<cv::KeyPoint> *p_kps_3d;
     cv::Mat *p_kps_desc_3d;
+    bool* ignore;
         
 } tile_data_t;
 

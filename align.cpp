@@ -12,7 +12,7 @@
 #include <vector>
 #include <algorithm>
 
-bool STORE_ALIGN_RESULTS = false;
+bool STORE_ALIGN_RESULTS = true;
 
 float CONTRAST_THRESH = 0.04;
 float CONTRAST_THRESH_3D = 0.04;
@@ -34,7 +34,6 @@ float EDGE_THRESH_2D = 5.0;
 void SIFT_initialize() {
   //generateBoxBlurExecutionPlan();
 }
-
 /*
   Get all the neighbors for all of the elements in the active set
 */
@@ -87,7 +86,7 @@ void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set
   int height_of_active_set;
   if (LINE) {
     max_size_of_active_set = total;
-    height_of_active_set = 1;
+    height_of_active_set = 20;
   } else {
     max_size_of_active_set = RECT_HEIGHT;
     height_of_active_set = RECT_HEIGHT;
@@ -274,7 +273,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
           tile_data_t *p_tile_data = &(p_sec_data->tiles[tile_id]);
 
 
-          (*p_tile_data->p_image).create(3128, 2724, CV_8UC1);
+          (*p_tile_data->p_image).create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
           (*p_tile_data->p_image) = cv::imread(
               p_tile_data->filepath,
               CV_LOAD_IMAGE_UNCHANGED);
@@ -314,14 +313,18 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             totalTime += tdiff(tstart, tend);
         // Regardless of whether we were on or off MFOV boundary, we concat
         //   the keypoints and their descriptors here.
+        int point_count_3d = 0;
         for (int _i = 0; _i < n_sub_images; _i++) {
             for (int _j = 0; _j < v_kps[_i].size(); _j++) {
                 (*p_tile_data->p_kps_3d).push_back(v_kps[_i][_j]);
+                point_count_3d++;
             }
         }
-  
+
       //cv::Mat m_kps_desc_filtered = m_kps_desc[0].clone();
       *(p_tile_data)->p_kps_desc_3d = m_kps_desc[0].clone();
+
+      printf("Number of 3d points is %d\n", point_count_3d);
 }
 #endif
 
@@ -406,10 +409,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             {
               // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
               cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
-                  0, 0, 3128, OVERLAP_2D));
+                  0, 0, SIFT_D2_SHIFT_3D, OVERLAP_2D));
 
               // Mask for subimage
-              cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, 3128, CV_8UC1);
+              cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, SIFT_D2_SHIFT_3D, CV_8UC1);
               int sub_im_id = 0;
 
               // Detect the SIFT features within the subimage.
@@ -429,10 +432,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             {
               // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
               cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
-                  0, OVERLAP_2D, OVERLAP_2D, 2724-OVERLAP_2D));
+                  0, OVERLAP_2D, OVERLAP_2D, SIFT_D1_SHIFT_3D-OVERLAP_2D));
 
               // Mask for subimage
-              cv::Mat sum_im_mask = cv::Mat::ones(2724-OVERLAP_2D, OVERLAP_2D,
+              cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT_3D-OVERLAP_2D, OVERLAP_2D,
                   CV_8UC1);
               int sub_im_id = 1;
               // Detect the SIFT features within the subimage.
@@ -452,10 +455,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             {
               // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
               cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
-                  3128-OVERLAP_2D, OVERLAP_2D, OVERLAP_2D, 2724-OVERLAP_2D));
+                  SIFT_D2_SHIFT_3D-OVERLAP_2D, OVERLAP_2D, OVERLAP_2D, SIFT_D1_SHIFT_3D-OVERLAP_2D));
 
               // Mask for subimage
-              cv::Mat sum_im_mask = cv::Mat::ones(2724-OVERLAP_2D, OVERLAP_2D,
+              cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT_3D-OVERLAP_2D, OVERLAP_2D,
                   CV_8UC1);
               int sub_im_id = 2;
               // Detect the SIFT features within the subimage.
@@ -466,7 +469,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
               fasttime_t tend = gettime();
               totalTime += tdiff(tstart, tend);
               for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
-                  v_kps[sub_im_id][i].pt.x += 3128-OVERLAP_2D;  // cur_d2;
+                  v_kps[sub_im_id][i].pt.x += SIFT_D2_SHIFT_3D-OVERLAP_2D;  // cur_d2;
                   v_kps[sub_im_id][i].pt.y += OVERLAP_2D;  // cur_d1;
               }
             }
@@ -476,10 +479,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             {
               // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
               cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
-                  OVERLAP_2D, 2724-OVERLAP_2D, 3128-OVERLAP_2D, OVERLAP_2D));
+                  OVERLAP_2D, SIFT_D1_SHIFT_3D-OVERLAP_2D, SIFT_D2_SHIFT_3D-OVERLAP_2D, OVERLAP_2D));
 
               // Mask for subimage
-              cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, 3128-OVERLAP_2D,
+              cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, SIFT_D2_SHIFT_3D-OVERLAP_2D,
                   CV_8UC1);
               // Compute a subimage ID, refering to a tile within larger
               //   2d image.
@@ -493,7 +496,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
               totalTime += tdiff(tstart, tend);
               for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
                   v_kps[sub_im_id][i].pt.x += OVERLAP_2D;  // cur_d2;
-                  v_kps[sub_im_id][i].pt.y += (2724-OVERLAP_2D);  // cur_d1;
+                  v_kps[sub_im_id][i].pt.y += (SIFT_D1_SHIFT_3D-OVERLAP_2D);  // cur_d1;
               }
             }
             // END BOTTOM SLICE
@@ -509,6 +512,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 
           cv::vconcat(m_kps_desc, n_sub_images, *(p_tile_data->p_kps_desc));
 
+          cilk_sync;
           int NUM_KEYPOINTS = p_tile_data->p_kps->size();
           //printf("The number of keypoints is %d\n", NUM_KEYPOINTS);
           if (NUM_KEYPOINTS > 0) {

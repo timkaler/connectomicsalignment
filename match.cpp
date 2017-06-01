@@ -34,6 +34,9 @@
 //  return cv::Point2f(new_x, new_y);
 //}
 
+
+
+
 static std::string matchPadTo(std::string str, const size_t num, const char paddingChar = '0')
 {
     if(num > str.size())
@@ -83,6 +86,20 @@ std::string get_point_transform_string(Graph<vdata, edata>* merged_graph, vdata*
 
 
 void concat_two_tiles_all(vdata* vertex_data, tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list) {
+  if (a_tile->p_kps_3d->size() <= 0) {
+     printf("Skipping because p_kps_3d is zero.\n");
+     return;
+  }
+
+
+  printf("Vertex curr_z is %d, tile_id %d\n",
+    vertex_data->z, vertex_data->tile_id);
+  printf("Tile has ignore pointer %p\n", a_tile->ignore);
+  printf("Tile has p_kps_3d size %d\n", a_tile->p_kps_3d->size());
+  //std::cout << *(a_tile->p_kps_desc_3d) << std::endl;
+
+
+  printf("size of p_kps_3d is %d, drows %d dcols %d\n", a_tile->p_kps_3d->size(), a_tile->p_kps_desc_3d->rows, a_tile->p_kps_desc_3d->cols);
 
   for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
     //cv::Point2f pt = (*a_tile->p_kps_3d)[pt_idx].pt;
@@ -90,6 +107,7 @@ void concat_two_tiles_all(vdata* vertex_data, tile_data_t* a_tile, int atile_id,
     //if (pt.y < ref_tile->y_start + radius) continue;
     //if (pt.x > ref_tile->x_end - radius) continue;
     //if (pt.y > ref_tile->y_end - radius) continue;
+    if (a_tile->ignore[pt_idx]) continue;
     cv::Point2f pt = transform_point(vertex_data, (*a_tile->p_kps_3d)[pt_idx].pt);
     cv::KeyPoint kpt = (*a_tile->p_kps_3d)[pt_idx];
     kpt.pt = pt;
@@ -102,8 +120,10 @@ void concat_two_tiles_all(vdata* vertex_data, tile_data_t* a_tile, int atile_id,
 void concat_two_tiles_all_filter(vdata* vertex_data, tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list,
 double _min_x, double _min_y, double _max_x, double _max_y) {
 
+  printf("in filter Tile has ignore pointer %p\n", a_tile->ignore);
   //printf("Bounding box is %f %f %f %f\n", _min_x, _min_y, _max_x, _max_y);
   for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
+    if (a_tile->ignore[pt_idx]) continue;
     cv::Point2f pt = transform_point(vertex_data, (*a_tile->p_kps_3d)[pt_idx].pt);
     cv::KeyPoint kpt = (*a_tile->p_kps_3d)[pt_idx];
     kpt.pt = pt;
@@ -585,6 +605,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   e = new engine<vdata, edata>(merged_graph, scheduler);
 
   for (int trial = 0; trial < 5; trial++) {
+    break;
     global_error_sq = 0.0; 
     //global_learning_rate = 0.6/(trial+1);
     global_learning_rate = 0.49;
@@ -721,9 +742,9 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   //for (int v = 0; v < merged_graph->num_vertices(); v++) {
   //  vdata* vd = merged_graph->getVertexData(v);
   //  vd->corner_points[0] = cv::Point2f(0.0, 0.0);
-  //  vd->corner_points[1] = cv::Point2f(0.0, 2724.0);
-  //  vd->corner_points[2] = cv::Point2f(3128.0, 0.0);
-  //  vd->corner_points[3] = cv::Point2f(3128.0, 2724.0);
+  //  vd->corner_points[1] = cv::Point2f(0.0, SIFT_D1_SHIFT_3D.0);
+  //  vd->corner_points[2] = cv::Point2f(SIFT_D2_SHIFT_3D.0, 0.0);
+  //  vd->corner_points[3] = cv::Point2f(SIFT_D2_SHIFT_3D.0, SIFT_D1_SHIFT_3D.0);
   //}
 
   // Unpack the graphs within the merged graph.
@@ -738,6 +759,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   }
   for (int i = 0; i < graph_list.size(); i++) {
     construct_triangles(graph_list[i], 1500.0);
+    filter_overlap_points_3d(graph_list[i], p_align_data);
   }
 
   // repack.
@@ -848,7 +870,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       //    min_x, max_x,
       //    min_y, max_y);
 
-      fprintf(wafer_file, "\t\t\"height\": %d,\n",2724);
+      fprintf(wafer_file, "\t\t\"height\": %d,\n",SIFT_D1_SHIFT_3D);
       fprintf(wafer_file, "\t\t\"layer\": %d,\n",p_align_data->sec_data[sec_id].section_id + p_align_data->base_section+1);
       fprintf(wafer_file, "\t\t\"maxIntensity\": %f,\n",255.0);
       fprintf(wafer_file, "\t\t\"mfov\": %d,\n",
@@ -881,7 +903,11 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       //    "\t\t\t\t\"dataString\": \"%f %f %f\"\n", 0.0,
       //    vd->start_x+vd->offset_x, vd->start_y + vd->offset_y);
       //if (false && (vd->boundary || true)) {
+      #ifdef ALIGN3D
       if (true) {
+      #else
+      if (false) {
+      #endif 
       fprintf(wafer_file,
           "\t\t\t},\n");
 
@@ -906,7 +932,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       fprintf(wafer_file,
           "\t\t],\n");
       fprintf(wafer_file,
-          "\t\t\"width\":%d\n",3128);
+          "\t\t\"width\":%d\n",SIFT_D2_SHIFT_3D);
       if (i != graph->num_vertices()-1) {
         fprintf(wafer_file,
             "\t},\n");
