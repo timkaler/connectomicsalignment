@@ -127,12 +127,12 @@ double _min_x, double _min_y, double _max_x, double _max_y) {
     cv::Point2f pt = transform_point(vertex_data, (*a_tile->p_kps_3d)[pt_idx].pt);
     cv::KeyPoint kpt = (*a_tile->p_kps_3d)[pt_idx];
     kpt.pt = pt;
-    //if (pt.x < _min_x || pt.x > _max_x || pt.y < _min_y || pt.y > _max_y) {
-    //  //printf("Filtered: %f,%f\n", pt.x, pt.y);
-    //  continue;
-    //} else {
-    //  //printf("Unfiltered: %f,%f\n", pt.x, pt.y);
-    //}
+    if (pt.x < _min_x || pt.x > _max_x || pt.y < _min_y || pt.y > _max_y) {
+      //printf("Filtered: %f,%f\n", pt.x, pt.y);
+      continue;
+    } else {
+      //printf("Unfiltered: %f,%f\n", pt.x, pt.y);
+    }
     atile_kps_in_overlap.push_back(kpt);
     atile_kps_desc_in_overlap_list.push_back(a_tile->p_kps_desc_3d->row(pt_idx).clone());
     atile_kps_tile_list.push_back(atile_id);
@@ -605,7 +605,6 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   e = new engine<vdata, edata>(merged_graph, scheduler);
 
   for (int trial = 0; trial < 5; trial++) {
-    break;
     global_error_sq = 0.0; 
     //global_learning_rate = 0.6/(trial+1);
     global_learning_rate = 0.49;
@@ -775,7 +774,6 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
 
   coarse_alignment_3d(merged_graph, p_align_data, 64.0);
   fine_alignment_3d(merged_graph, p_align_data);
-
   elastic_mesh_optimize(merged_graph, p_align_data);
 
   #endif

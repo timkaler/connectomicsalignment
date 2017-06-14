@@ -61,12 +61,14 @@ void read_graph_from_file(Graph<vdata, edata>* graph, int section, align_data_t*
   for (int i = 0; i < graph->num_vertices(); i++) {
     int edge_size;
     fs["num_edges_"+std::to_string(i)] >> edge_size; 
-    std::vector<edata> edge_data; 
+    std::vector<edata> edge_data;
+    std::set<int> n_ids_seen;
+    n_ids_seen.clear();
     for (int j = 0; j < edge_size; j++) {
       edata edge;
+      fs["neighbor_id_"+std::to_string(i) + "_" + std::to_string(j)] >> edge.neighbor_id;
       std::vector<cv::Point2f>* v_points = new std::vector<cv::Point2f>();
       std::vector<cv::Point2f>* n_points = new std::vector<cv::Point2f>();
-      fs["neighbor_id_"+std::to_string(i) + "_" + std::to_string(j)] >> edge.neighbor_id;
       fs["weight_"+std::to_string(i) + "_" + std::to_string(j)] >> edge.weight;
       fs["v_points_"+std::to_string(i) + "_" + std::to_string(j)] >> *v_points;
       fs["n_points_"+std::to_string(i) + "_" + std::to_string(j)] >> *n_points;

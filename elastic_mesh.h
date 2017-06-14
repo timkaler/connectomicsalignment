@@ -38,7 +38,7 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
     double cross_slice_winsor = 20.0;
     double intra_slice_weight = 1.0;
     double intra_slice_winsor = 200.0;
-    int max_iterations = 20000;
+    int max_iterations = 10000;
     //double min_stepsize = 1e-20;
     double stepsize = 0.0001;
     double momentum = 0.5;
@@ -81,7 +81,7 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
           double dy = p1.y-p2.y;
           double len = std::sqrt(dx*dx+dy*dy);
           it->second.rest_lengths[j] = len;
-          printf("Rest length is %f\n", len);
+          //printf("Rest length is %f\n", len);
         }
 
         // now triangle areas.
@@ -91,7 +91,7 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
           cv::Point2f p2 = (*(it->second.mesh))[tri.index2];
           cv::Point2f p3 = (*(it->second.mesh))[tri.index3];
           it->second.rest_areas[j] = computeTriangleArea(p1,p2,p3);
-          printf("Rest area is %f\n", it->second.rest_areas[j]);
+          //printf("Rest area is %f\n", it->second.rest_areas[j]);
         }
       }
     double prev_cost = 0.0; 
@@ -196,7 +196,9 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
             (*mesh)[j].y -= (float)(stepsize * (gradients_with_momentum)[j].y);
           }
         }
-        printf("Good step old cost %f, new cost %f, iteration %d\n", prev_cost, cost, iter);
+        //if (iter%1000 == 0) {
+          printf("Good step old cost %f, new cost %f, iteration %d\n", prev_cost, cost, iter);
+        //}
         prev_cost = cost;
       } else {
         stepsize *= 0.5;
@@ -215,7 +217,9 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
             (*mesh)[j] = (*mesh_old)[j];
           }
         }
-        //printf("Bad step old cost %f, new cost %f\n", prev_cost, cost);
+        if (iter%1000 == 0) {
+          printf("Bad step old cost %f, new cost %f, iteration %d\n", prev_cost, cost, iter);
+        }
       }
     }
   } // END BLOCK.

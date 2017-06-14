@@ -40,15 +40,15 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
       int section_a = section-1;
       int section_b = section;
 
-      for (double box_iter_x = min_x; box_iter_x < max_x+29000; box_iter_x += 24000) {
-      for (double box_iter_y = min_y; box_iter_y < max_y+29000; box_iter_y += 24000) {
+      for (double box_iter_x = min_x; box_iter_x < max_x+48000; box_iter_x += 24000) {
+      for (double box_iter_y = min_y; box_iter_y < max_y+48000; box_iter_y += 24000) {
         // Filter the matches with RANSAC
         int num_filtered = 0;
         std::vector<cv::Point2f> match_points_a, match_points_b;
         double box_min_x = box_iter_x;
-        double box_max_x = box_iter_x+24000;
+        double box_max_x = box_iter_x+48000;
         double box_min_y = box_iter_y;
-        double box_max_y = box_iter_y+24000;
+        double box_max_y = box_iter_y+48000;
 
         std::set<int> mfov_ids_a;
         std::set<int> mfov_ids_b;
@@ -100,9 +100,9 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
             concat_two_tiles_all_filter(merged_graph->getVertexData(v),&tdata_b, v, btile_kps_in_overlap, btile_kps_desc_in_overlap_list, btile_kps_tile_list, box_min_x, box_min_y, box_max_x, box_max_y);
           }
         }
-        //printf("Total size of a tile kps is %lu\n", atile_kps_in_overlap.size());
-        //printf("Total size of b tile kps is %lu\n", btile_kps_in_overlap.size());
-        if (atile_kps_tile_list.size() == 0 || btile_kps_tile_list.size() == 0) continue;
+        printf("Total size of a tile kps is %lu\n", atile_kps_in_overlap.size());
+        printf("Total size of b tile kps is %lu\n", btile_kps_in_overlap.size());
+        if (atile_kps_tile_list.size() < 4 || btile_kps_tile_list.size() < 4) continue;
 
         cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
         cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
@@ -122,7 +122,7 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
         }
 
         bool* mask = (bool*)calloc(match_points_a.size()+1, 1);
-        tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 25.0, mask);
+        tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 64.0, mask);
         for (int c = 0; c < match_points_a.size(); c++) {
           if (mask[c]) {
             num_filtered++;
@@ -212,18 +212,22 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
     cilk_for (int section = 1; section < p_align_data->n_sections; section++) {
       std::vector< cv::Point2f > filtered_match_points_a(0);
       std::vector< cv::Point2f > filtered_match_points_b(0);
-      int section_a = section-1;
-      int section_b = section;
+      int section_a = section;
+      for (int section_b = section-2; section_b < section+1; section_b++) {
+      //int section_b = section;
+      if (section_b < 0 || section_b == section_a ||
+          section_b >= p_align_data->n_sections) continue;
 
-      for (double box_iter_x = min_x; box_iter_x < max_x+15000; box_iter_x += 24000) {
-      for (double box_iter_y = min_y; box_iter_y < max_y+15000; box_iter_y += 24000) {
+
+      for (double box_iter_x = min_x; box_iter_x < max_x+48000; box_iter_x += 24000) {
+      for (double box_iter_y = min_y; box_iter_y < max_y+48000; box_iter_y += 24000) {
         // Filter the matches with RANSAC
         int num_filtered = 0;
         std::vector<cv::Point2f> match_points_a, match_points_b;
         double box_min_x = box_iter_x;
-        double box_max_x = box_iter_x+24000;
+        double box_max_x = box_iter_x+48000;
         double box_min_y = box_iter_y;
-        double box_max_y = box_iter_y+24000;
+        double box_max_y = box_iter_y+48000;
 
         std::set<int> mfov_ids_a;
         std::set<int> mfov_ids_b;
@@ -231,12 +235,12 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
           cv::Point2f center = merged_graph->getVertexData(v)->center_point;
           double vx = 1.0*((double) center.x);
           double vy = 1.0*((double) center.y);
-          if (vx < box_min_x-6000.0 || vx > box_max_x+6000.0 || vy < box_min_y -6000.0 || vy > box_max_y+6000.0) continue;
+          //if (vx < box_min_x-6000.0 || vx > box_max_x+6000.0 || vy < box_min_y -6000.0 || vy > box_max_y+6000.0) continue;
           if (merged_graph->getVertexData(v)->z == section_a) {
 
-            if (vx < box_min_x+6000 || vx > box_max_x-6000.0 || vy < box_min_y +6000.0 || vy > box_max_y-6000.0) {
-             merged_graph->getVertexData(v)->boundary = true;
-           }
+           //if (vx < box_min_x+6000 || vx > box_max_x-6000.0 || vy < box_min_y +6000.0 || vy > box_max_y-6000.0) {
+           //  merged_graph->getVertexData(v)->boundary = true;
+           //}
 
             mfov_ids_a.insert(merged_graph->getVertexData(v)->mfov_id);
           } else if (merged_graph->getVertexData(v)->z == section_b) {
@@ -258,11 +262,11 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
         std::set<int> tile_id_set;
         tile_id_set.clear();
         for (int v = 0; v < merged_graph->num_vertices(); v++) {
-          if (merged_graph->edgeData[v].size() == 0) continue;
+          //if (merged_graph->edgeData[v].size() == 0) continue;
             cv::Point2f center = merged_graph->getVertexData(v)->center_point;
             double vx = 1.0*((double) center.x);
             double vy = 1.0*((double) center.y);
-          if (vx < box_min_x-6000.0 || vx > box_max_x+6000.0 || vy < box_min_y -6000.0 || vy > box_max_y+6000.0) continue;
+          //if (vx < box_min_x-6000.0 || vx > box_max_x+6000.0 || vy < box_min_y -6000.0 || vy > box_max_y+6000.0) continue;
 
           if (merged_graph->getVertexData(v)->z == section_a) {
             tile_id_set.insert(v);
@@ -272,20 +276,26 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
                                         atile_kps_in_overlap, atile_kps_desc_in_overlap_list,
                                         atile_kps_tile_list, box_min_x, box_min_y, box_max_x,
                                         box_max_y);
+            //concat_two_tiles_all(merged_graph->getVertexData(v), &tdata_a, v,
+            //                            atile_kps_in_overlap, atile_kps_desc_in_overlap_list,
+            //                            atile_kps_tile_list);
           } else if (merged_graph->getVertexData(v)->z == section_b) {
             _tile_data tdata_b = p_align_data->sec_data[section_b].tiles[merged_graph->getVertexData(v)->tile_id];
             concat_two_tiles_all_filter(merged_graph->getVertexData(v),&tdata_b, v,
                                         btile_kps_in_overlap, btile_kps_desc_in_overlap_list,
                                         btile_kps_tile_list, box_min_x, box_min_y, box_max_x,
                                         box_max_y);
+            //concat_two_tiles_all(merged_graph->getVertexData(v),&tdata_b, v,
+            //                            btile_kps_in_overlap, btile_kps_desc_in_overlap_list,
+            //                            btile_kps_tile_list);
           }
         }
 
 
 
-        //printf("Total size of a tile kps is %lu\n", atile_kps_in_overlap.size());
-        //printf("Total size of b tile kps is %lu\n", btile_kps_in_overlap.size());
-        if (atile_kps_tile_list.size() == 0 || btile_kps_tile_list.size() == 0) continue;
+        printf("Total size of a tile kps is %lu\n", atile_kps_in_overlap.size());
+        printf("Total size of b tile kps is %lu\n", btile_kps_in_overlap.size());
+        if (atile_kps_tile_list.size() < 4 || btile_kps_tile_list.size() < 4) continue;
 
         cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
         cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
@@ -295,12 +305,13 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
         match_features(matches,
                        atile_kps_desc_in_overlap,
                        btile_kps_desc_in_overlap,
-                       0.92);
+                       0.65);
+        printf("Done with the matching. Num matches is %lu\n", matches.size());
         if (matches.size() == 0) continue;
 
 
 
-        //printf("Done with the matching. Num matches is %lu\n", matches.size());
+        printf("Done with the matching. Num matches is %lu\n", matches.size());
 
 
         for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
@@ -317,7 +328,7 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
         }
         //printf("Second pass filter got %d matches\n", num_filtered);
 
-        if (num_filtered < 120) {
+        if (num_filtered < match_points_a.size()*0.2 || num_filtered < 12) {
           //printf("Not enough matches %d for section %d with thresh\n", num_filtered, section_a);
           free(mask);
           continue;
@@ -335,7 +346,7 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
         }
         free(mask);
       }
-    }
+      }
 
     graph_section_data* section_data_a;
     graph_section_data* section_data_b;
@@ -401,8 +412,9 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
         if (my_triangle_index == -1 || n_triangle_index == -1) continue;
         match.my_section_data = *section_data_a; 
         match.n_section_data = *section_data_b;
-        section_mesh_matches[section].push_back(match); 
+        section_mesh_matches[section_a].push_back(match); 
       }
+    } // end loop over section_b
     }
 
     for (int section = 1; section < p_align_data->n_sections; section++) {

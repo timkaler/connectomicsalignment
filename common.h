@@ -79,11 +79,18 @@
 
 //#define SIFT_D1_SHIFT (1024)
 //#define SIFT_D2_SHIFT (1024)
-#define SIFT_D1_SHIFT_3D (5120)
-#define SIFT_D2_SHIFT_3D (5120)
+//#define SIFT_D1_SHIFT_3D (5120)
+//#define SIFT_D2_SHIFT_3D (5120)
+//
+//#define SIFT_D1_SHIFT (512)
+//#define SIFT_D2_SHIFT (512)
 
-#define SIFT_D1_SHIFT (512)
-#define SIFT_D2_SHIFT (512)
+
+#define SIFT_D1_SHIFT_3D (681*4)
+#define SIFT_D2_SHIFT_3D (782*4)
+
+#define SIFT_D1_SHIFT (681)
+#define SIFT_D2_SHIFT (782)
 
 #define OUT_D1_SIZE (20000)
 #define OUT_D2_SIZE (20000)

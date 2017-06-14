@@ -5,9 +5,10 @@ static simple_mutex_t mutex = 0;
 void updateAffineSectionTransform(vdata* _vertex, cv::Mat& transform) {
   if (transform.cols == 0 || transform.rows == 0) {
     printf("Warning bad section transform!!!");
+    exit(0);
     return;
   }
-  printf("update affine section transform z=%d\n", _vertex->z);
+  //printf("update affine section transform z=%d\n", _vertex->z);
   graph_section_data* section_data = _vertex->section_data;
 
   //cv::Mat A(3, 3, cv::DataType<double>::type);
@@ -22,8 +23,12 @@ void updateAffineSectionTransform(vdata* _vertex, cv::Mat& transform) {
   A.at<double>(2,0) = 0.0;
   A.at<double>(2,1) = 0.0;
   A.at<double>(2,2) = 1.0;
-  std::cout << A << std::endl;
-  std::cout << transform << std::endl;
+  //std::cout << A << std::endl;
+  //std::cout << transform << std::endl;
+  if (std::abs(transform.at<double>(0,0)) < 0.5) {
+    printf("Ignoring bad transform\n");
+    return;
+  }
   cv::Mat B = transform*A;
 
   *(section_data->transform) = B.clone();
@@ -41,9 +46,10 @@ void updateAffineTransform(vdata* vertex, cv::Mat& transform) {
      
   if (transform.cols == 0 || transform.rows == 0) {
     printf("Warning bad section transform!!!");
+    exit(0);
     return;
   }
-  std::cout << transform << std::endl;
+  //std::cout << transform << std::endl;
 
   cv::Mat A(3, 3, cv::DataType<double>::type);
 
@@ -68,6 +74,10 @@ void updateAffineTransform(vdata* vertex, cv::Mat& transform) {
   A.at<double>(2,1) = 0.0;
   A.at<double>(2,2) = 1.0;
 
+  if (std::abs(transform.at<double>(0,0)) < 0.5) {
+    printf("Ignoring bad transform\n");
+    return;
+  }
   cv::Mat B = transform*A;
 
 

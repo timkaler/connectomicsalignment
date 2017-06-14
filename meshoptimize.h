@@ -499,7 +499,7 @@ void updateVertex2DAlignFULLFast(int vid, void* scheduler_void) {
   vertex_data->offset_x += grad_error_x*learning_rate/(weight_sum);
   vertex_data->offset_y += grad_error_y*learning_rate/(weight_sum);
 
-  if (vertex_data->iteration_count < 5000) {
+  if (vertex_data->iteration_count < 2500) {
     scheduler->add_task(vid, updateVertex2DAlignFULLFast);
     //for (int i = 0; i < edges.size(); i++) {
     //  //int n_conv = edges[i].neighbor_id;
@@ -882,12 +882,12 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
     std::vector<double> btile_weights;
 
     for (int v = 0; v < merged_graph->num_vertices(); v++) {
-      if (merged_graph->edgeData[v].size() == 0) continue;
-      printf("Vertex is %d\n", v);
-      printf("tile_id is is %d\n", merged_graph->getVertexData(v)->vertex_id);
+      if (merged_graph->edgeData[v].size() == 0 && false) continue;
+      //printf("Vertex is %d\n", v);
+      //printf("tile_id is is %d\n", merged_graph->getVertexData(v)->vertex_id);
       if (merged_graph->getVertexData(v)->z == section_a /*|| merged_graph->getVertexData(v)->z == section_a-1*/) {
         int curr_z = merged_graph->getVertexData(v)->z;
-        printf("curr_z is %d\n", curr_z);
+        //printf("curr_z is %d\n", curr_z);
         _tile_data tdata_a = p_align_data->sec_data[curr_z].tiles[merged_graph->getVertexData(v)->tile_id];
         concat_two_tiles_all(merged_graph->getVertexData(v), &tdata_a, v, atile_kps_in_overlap, atile_kps_desc_in_overlap_list, atile_kps_tile_list);
         
@@ -928,7 +928,7 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
    std::pair<double,double> offset_pair;
 
    // pre-filter matches with very forgiving ransac threshold.
-   tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 1024.0, mask);
+   tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 1024, mask);
    std::vector< cv::Point2f > filtered_match_points_a_pre(0);
    std::vector< cv::Point2f > filtered_match_points_b_pre(0);
 
@@ -946,7 +946,13 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
 
     mask = (bool*)calloc(matches.size()+1, 1);
     printf("First pass filter got %d matches\n", num_filtered);
+    if (num_filtered < 32) {
+      printf("Not enough matches, skipping section\n");
+      continue;
+    }
+    //tfk_simple_ransac(filtered_match_points_a_pre, filtered_match_points_b_pre, distance_thresh, mask);
     tfk_simple_ransac_strict_ret_affine(filtered_match_points_a_pre, filtered_match_points_b_pre, distance_thresh, mask);
+
     std::vector< cv::Point2f > filtered_match_points_a(0);
     std::vector< cv::Point2f > filtered_match_points_b(0);
 
@@ -973,7 +979,7 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
     //cv::Mat warp_mat;
     cv::computeAffineTFK(filtered_match_points_a, filtered_match_points_b, section_transforms[section]/*warp_mat*/);
 
-    //std::cout << warp_mat << std::endl;
+    std::cout << section_transforms[section] << std::endl;
 
     //vdata tmp;
     //tmp.a00 = warp_mat.at<double>(0, 0); 

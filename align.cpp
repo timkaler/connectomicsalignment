@@ -12,7 +12,7 @@
 #include <vector>
 #include <algorithm>
 
-bool STORE_ALIGN_RESULTS = true;
+bool STORE_ALIGN_RESULTS = false;
 
 float CONTRAST_THRESH = 0.04;
 float CONTRAST_THRESH_3D = 0.04;
