@@ -888,6 +888,12 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       p_align_data->sec_data[sec_id].tiles[vd->tile_id].x_finish = vd->end_x + vd->offset_x;
       p_align_data->sec_data[sec_id].tiles[vd->tile_id].y_start = vd->start_y+vd->offset_y;
       p_align_data->sec_data[sec_id].tiles[vd->tile_id].y_finish = vd->end_y + vd->offset_y;
+      p_align_data->sec_data[sec_id].tiles[vd->tile_id].a00 = vd->a00;
+      p_align_data->sec_data[sec_id].tiles[vd->tile_id].a01 = vd->a01;
+      p_align_data->sec_data[sec_id].tiles[vd->tile_id].a10 = vd->a10;
+      p_align_data->sec_data[sec_id].tiles[vd->tile_id].a11 = vd->a11;
+      p_align_data->sec_data[sec_id].tiles[vd->tile_id].offset_x = vd->offset_x + vd->start_x;
+      p_align_data->sec_data[sec_id].tiles[vd->tile_id].offset_y = vd->offset_y + vd->start_y;
       //if (vd->z == 1) {
       //vd->a00 = 1.1;
       //vd->a01 = 0.0;

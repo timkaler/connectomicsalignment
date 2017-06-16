@@ -29,6 +29,7 @@ float EDGE_THRESH_2D = 5.0;
 
 // Helper functions
 #include "align_helpers.cpp"
+#include "render_tiles.cpp"
 #include "cilk_tools/Graph.h"
 #include "serialize.h"
 
@@ -684,8 +685,19 @@ void align_execute(align_data_t *p_align_data) {
 
     compute_tile_matches(p_align_data, -1);
 
+	output_section_image_bounded(&(p_align_data->sec_data[0]), "aaaaa0.tif", 11000, 12000,11000,12000, false);
+	output_section_image_bounded(&(p_align_data->sec_data[1]), "aaaaa1.tif", 11000, 12000, 11000,12000, false);
+
+	output_section_image_thumbnail(&(p_align_data->sec_data[0]), "ccccc0.tif", 0, 20000, 0, 20000);
+	output_section_image_thumbnail(&(p_align_data->sec_data[1]), "ccccc1.tif", 0, 20000, 0, 20000);
 
 
+
+	output_section_image_affine(&(p_align_data->sec_data[0]), "bbbbb0.tif", 11000, 12000, 11000, 12000, false);
+	output_section_image_affine(&(p_align_data->sec_data[1]), "bbbbb1.tif", 11000, 12000, 11000, 12000, false);
+	output_section_image_affine(&(p_align_data->sec_data[0]), "ddddd0.tif", 0, 20000, 0, 20000, false);
+	output_section_image_affine(&(p_align_data->sec_data[1]), "ddddd1.tif", 0, 20000, 0, 20000, false);
+ 
     //output_section_image(&(p_align_data->sec_data[0]), 0,0,40000,40000, "labeled_image0.tif");
     //output_section_image(&(p_align_data->sec_data[1]), 0,0,40000,40000, "labeled_image1.tif");
 

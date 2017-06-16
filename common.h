@@ -208,6 +208,14 @@ typedef struct _tile_data {
 
     std::vector<cv::KeyPoint> *p_kps_3d;
     cv::Mat *p_kps_desc_3d;
+
+	double a00;
+	double a10;
+	double a11;
+	double a01;
+
+	double offset_x;
+	double offset_y;
         
 } tile_data_t;
 
