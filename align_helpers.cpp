@@ -203,13 +203,13 @@ void read_input(align_data_t *p_align_data) {
  
     for (int i = 0; i < n_tiles; i++) {
         
-        printf("String input %s\n", str_input);
+        //printf("String input %s\n", str_input);
         n_objs_read = fscanf(fp, "%s [%d]\n", str_input, &in_tile_id);
         ASSERT(n_objs_read == 2);
         ASSERT(0 == strcmp(str_input, magic_str_tile_start));
         ASSERT(in_tile_id == i);
         n_objs_read = fscanf(fp, "\t%s %d\n", str_input, &in_section_id);
-        printf("in_section id is %d\n", in_section_id);
+        //printf("in_section id is %d\n", in_section_id);
         ASSERT(n_objs_read == 2);
         ASSERT(0 == strcmp(str_input, magic_str_tile_section));
         ASSERT(in_section_id >= 1);
@@ -272,7 +272,7 @@ void read_input(align_data_t *p_align_data) {
         
         p_sec_data = &(p_align_data->sec_data[cur_section_idx]);
         p_cur_tile = &(p_sec_data->tiles[p_sec_data->n_tiles]);
-        printf("Init tile with sindex %d tindex %d\n", cur_section_idx, p_sec_data->n_tiles); 
+        //printf("Init tile with sindex %d tindex %d\n", cur_section_idx, p_sec_data->n_tiles); 
         init_tile(
             p_cur_tile,
             cur_section_idx,

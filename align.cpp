@@ -223,7 +223,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
   //}
 
   //for (int sec_id = split_start; sec_id < split_end/*p_align_data->n_sections*/; sec_id++) {
-  cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+  for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
     std::set<int> active_set;
     std::set<int> finished_set;
