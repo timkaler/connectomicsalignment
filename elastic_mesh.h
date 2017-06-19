@@ -1,5 +1,9 @@
-
 void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data) {
+
+
+  TFK_TIMER_VAR(elastic_timer);
+
+  TFK_START_TIMER(&elastic_timer);
   std::set<int> sections_done;
   sections_done.clear();
   // now transform the mesh points using section transforms.
@@ -32,13 +36,17 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
   // this is going to give us the matches.
   std::vector<tfkMatch> mesh_matches;
   fine_alignment_3d_2(merged_graph, p_align_data,64.0, mesh_matches);
+
+
+  TFK_STOP_TIMER(&elastic_timer, "After fine_alignment_3d_2");
+
   printf("The number of mesh matches is %lu\n", mesh_matches.size());
   {
     double cross_slice_weight = 1.0;
     double cross_slice_winsor = 20.0;
-    double intra_slice_weight = 1.0;
+    double intra_slice_weight = 0.9;
     double intra_slice_winsor = 200.0;
-    int max_iterations = 10000;
+    int max_iterations = 5000;
     //double min_stepsize = 1e-20;
     double stepsize = 0.0001;
     double momentum = 0.5;
@@ -196,9 +204,9 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
             (*mesh)[j].y -= (float)(stepsize * (gradients_with_momentum)[j].y);
           }
         }
-        //if (iter%1000 == 0) {
+        if (iter%100 == 0) {
           printf("Good step old cost %f, new cost %f, iteration %d\n", prev_cost, cost, iter);
-        //}
+        }
         prev_cost = cost;
       } else {
         stepsize *= 0.5;
@@ -223,6 +231,7 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
       }
     }
   } // END BLOCK.
+  TFK_STOP_TIMER(&elastic_timer, "After elastic");
 }
 
 
@@ -259,7 +268,7 @@ void filter_overlap_points_3d(Graph<vdata, edata>* graph, align_data_t* p_align_
     for (int i = 0; i < tdata.p_kps_3d->size(); i++) {
       if (tdata.ignore[i]) filter_count++; 
     }
-    printf("Filtered %d out of %d keypoints\n", filter_count, tdata.p_kps_3d->size());
+    printf("Filtered %d out of %d keypoints\n", filter_count, (int)tdata.p_kps_3d->size());
   }
 }
 

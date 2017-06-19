@@ -662,6 +662,16 @@ void align_execute(align_data_t *p_align_data) {
     START_TIMER(&t_timer);
 
 
+  //  static char* raw_filepath = "/path/to/file/filename.bmp";
+
+  //  std::string filepath = std::string(raw_filepath);
+
+  //  filepath = filepath.replace(filepath.find(".bmp"), 4, ".jpg");
+  //  filepath = filepath.insert(filepath.find_last_of("/")+1, "thumbnail_");
+
+  //  printf("filepath is %s\n", filepath.c_str());
+  //  exit(0);
+
 //    printf("size of vdata is %d\n", sizeof(vdata));
 //    exit(0);
 //if (false) {

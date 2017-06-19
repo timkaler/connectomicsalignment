@@ -882,7 +882,7 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
     std::vector<double> btile_weights;
 
     for (int v = 0; v < merged_graph->num_vertices(); v++) {
-      if (merged_graph->edgeData[v].size() == 0 && false) continue;
+      if (merged_graph->edgeData[v].size() == 0) continue;
       //printf("Vertex is %d\n", v);
       //printf("tile_id is is %d\n", merged_graph->getVertexData(v)->vertex_id);
       if (merged_graph->getVertexData(v)->z == section_a /*|| merged_graph->getVertexData(v)->z == section_a-1*/) {

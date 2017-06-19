@@ -100,8 +100,8 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
             concat_two_tiles_all_filter(merged_graph->getVertexData(v),&tdata_b, v, btile_kps_in_overlap, btile_kps_desc_in_overlap_list, btile_kps_tile_list, box_min_x, box_min_y, box_max_x, box_max_y);
           }
         }
-        printf("Total size of a tile kps is %lu\n", atile_kps_in_overlap.size());
-        printf("Total size of b tile kps is %lu\n", btile_kps_in_overlap.size());
+        //printf("Total size of a tile kps is %lu\n", atile_kps_in_overlap.size());
+        //printf("Total size of b tile kps is %lu\n", btile_kps_in_overlap.size());
         if (atile_kps_tile_list.size() < 4 || btile_kps_tile_list.size() < 4) continue;
 
         cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
@@ -233,8 +233,8 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
         std::set<int> mfov_ids_b;
         for (int v = 0; v < merged_graph->num_vertices(); v++) {
           cv::Point2f center = merged_graph->getVertexData(v)->center_point;
-          double vx = 1.0*((double) center.x);
-          double vy = 1.0*((double) center.y);
+          //double vx = 1.0*((double) center.x);
+          //double vy = 1.0*((double) center.y);
           //if (vx < box_min_x-6000.0 || vx > box_max_x+6000.0 || vy < box_min_y -6000.0 || vy > box_max_y+6000.0) continue;
           if (merged_graph->getVertexData(v)->z == section_a) {
 
@@ -262,10 +262,10 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
         std::set<int> tile_id_set;
         tile_id_set.clear();
         for (int v = 0; v < merged_graph->num_vertices(); v++) {
-          //if (merged_graph->edgeData[v].size() == 0) continue;
+          if (merged_graph->edgeData[v].size() == 0) continue;
             cv::Point2f center = merged_graph->getVertexData(v)->center_point;
-            double vx = 1.0*((double) center.x);
-            double vy = 1.0*((double) center.y);
+            //double vx = 1.0*((double) center.x);
+            //double vy = 1.0*((double) center.y);
           //if (vx < box_min_x-6000.0 || vx > box_max_x+6000.0 || vy < box_min_y -6000.0 || vy > box_max_y+6000.0) continue;
 
           if (merged_graph->getVertexData(v)->z == section_a) {
@@ -293,8 +293,8 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
 
 
 
-        printf("Total size of a tile kps is %lu\n", atile_kps_in_overlap.size());
-        printf("Total size of b tile kps is %lu\n", btile_kps_in_overlap.size());
+        //printf("Total size of a tile kps is %lu\n", atile_kps_in_overlap.size());
+        //printf("Total size of b tile kps is %lu\n", btile_kps_in_overlap.size());
         if (atile_kps_tile_list.size() < 4 || btile_kps_tile_list.size() < 4) continue;
 
         cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
@@ -306,12 +306,12 @@ void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
                        atile_kps_desc_in_overlap,
                        btile_kps_desc_in_overlap,
                        0.65);
-        printf("Done with the matching. Num matches is %lu\n", matches.size());
+        //printf("Done with the matching. Num matches is %lu\n", matches.size());
         if (matches.size() == 0) continue;
 
 
 
-        printf("Done with the matching. Num matches is %lu\n", matches.size());
+        //printf("Done with the matching. Num matches is %lu\n", matches.size());
 
 
         for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {

@@ -63,6 +63,23 @@ void init_tile(
     p_tile->p_kps_desc_3d = new cv::Mat();
 }
 
+void start_timer(struct timeval *p_timer) {
+    gettimeofday(p_timer, NULL);
+}
+
+void stop_timer(struct timeval *p_timer, const char *msg) {
+    struct timeval timer2;
+    double elapsed_time = 0;
+
+    gettimeofday(&timer2, NULL);
+
+    elapsed_time = (timer2.tv_sec - p_timer->tv_sec) * 1000000.0; // sec to microsecs
+    elapsed_time += (timer2.tv_usec - p_timer->tv_usec); // microsecs
+
+    printf("%s: %f [sec]\n", msg, elapsed_time/1000000.0);
+
+}
+
 void init_section(section_data_t *p_sec_data, int sec_id) {
     p_sec_data->section_id = sec_id;
     p_sec_data->n_tiles = 0;
@@ -87,23 +104,6 @@ void init_align(align_data_t *p_align_data) {
         //p_align_data->p_section_transforms[i] = new cv::Mat();
         init_section(&(p_align_data->sec_data[i]), i);
     }
-}
-
-void start_timer(struct timeval *p_timer) {
-    gettimeofday(p_timer, NULL);
-}
-
-void stop_timer(struct timeval *p_timer, const char *msg) {
-    struct timeval timer2;
-    double elapsed_time = 0;
-
-    gettimeofday(&timer2, NULL);
-
-    elapsed_time = (timer2.tv_sec - p_timer->tv_sec) * 1000000.0; // sec to microsecs
-    elapsed_time += (timer2.tv_usec - p_timer->tv_usec); // microsecs
-
-    printf("%s: %f [microsec]\n", msg, elapsed_time);
-
 }
 
 std::string CVMatType2Str(int type) {

@@ -1,5 +1,7 @@
 
 
+#./gen_result_worm.sh {1..1} &
+#./gen_result_worm.sh {2..2} &
 ./gen_result_worm.sh {1..5} &
 ./gen_result_worm.sh {6..10} &
 ./gen_result_worm.sh {11..15} &

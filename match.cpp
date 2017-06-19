@@ -49,29 +49,22 @@ static std::string matchPadTo(std::string str, const size_t num, const char padd
 static cv::Point2d transform_point_double(vdata* vertex, cv::Point2f point_local) {
   double new_x = point_local.x*vertex->a00 + point_local.y * vertex->a01 + vertex->offset_x + vertex->start_x;
   double new_y = point_local.x*vertex->a10 + point_local.y * vertex->a11 + vertex->offset_y + vertex->start_y;
-  //float new_x = point_local.x+vertex->offset_x+vertex->start_x;
-  //float new_y = point_local.y+vertex->offset_y+vertex->start_y;
   return cv::Point2d(new_x, new_y);
 }
 
 static cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local) {
   float new_x = point_local.x*vertex->a00 + point_local.y * vertex->a01 + vertex->offset_x + vertex->start_x;
   float new_y = point_local.x*vertex->a10 + point_local.y * vertex->a11 + vertex->offset_y + vertex->start_y;
-  //float new_x = point_local.x+vertex->offset_x+vertex->start_x;
-  //float new_y = point_local.y+vertex->offset_y+vertex->start_y;
   return cv::Point2f(new_x, new_y);
 }
 
 
 
 std::string get_point_transform_string(Graph<vdata, edata>* merged_graph, vdata* vd) {
-
   std::string ret = "";
-  //int vid = vd->vertex_id;
   for (int i = 0; i < vd->my_mesh_points->size(); i++) {
       cv::Point2f my_point = (*(vd->section_data->mesh_orig))[(*(vd->my_mesh_points))[i]];
       cv::Point2f n_point = (*(vd->section_data->mesh))[(*(vd->my_mesh_points))[i]];
-      //cv::Point2f n_point = ;
       if (i == 0) {
       ret += std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
              std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
@@ -83,30 +76,13 @@ std::string get_point_transform_string(Graph<vdata, edata>* merged_graph, vdata*
   return ret;
 }
 
-
-
 void concat_two_tiles_all(vdata* vertex_data, tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list) {
   if (a_tile->p_kps_3d->size() <= 0) {
-     printf("Skipping because p_kps_3d is zero.\n");
+     //printf("Skipping because p_kps_3d is zero.\n");
      return;
   }
 
-
-  printf("Vertex curr_z is %d, tile_id %d\n",
-    vertex_data->z, vertex_data->tile_id);
-  printf("Tile has ignore pointer %p\n", a_tile->ignore);
-  printf("Tile has p_kps_3d size %d\n", a_tile->p_kps_3d->size());
-  //std::cout << *(a_tile->p_kps_desc_3d) << std::endl;
-
-
-  printf("size of p_kps_3d is %d, drows %d dcols %d\n", a_tile->p_kps_3d->size(), a_tile->p_kps_desc_3d->rows, a_tile->p_kps_desc_3d->cols);
-
   for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
-    //cv::Point2f pt = (*a_tile->p_kps_3d)[pt_idx].pt;
-    //if (pt.x < ref_tile->x_start + radius) continue;
-    //if (pt.y < ref_tile->y_start + radius) continue;
-    //if (pt.x > ref_tile->x_end - radius) continue;
-    //if (pt.y > ref_tile->y_end - radius) continue;
     if (a_tile->ignore[pt_idx]) continue;
     cv::Point2f pt = transform_point(vertex_data, (*a_tile->p_kps_3d)[pt_idx].pt);
     cv::KeyPoint kpt = (*a_tile->p_kps_3d)[pt_idx];
@@ -119,20 +95,14 @@ void concat_two_tiles_all(vdata* vertex_data, tile_data_t* a_tile, int atile_id,
 
 void concat_two_tiles_all_filter(vdata* vertex_data, tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list,
 double _min_x, double _min_y, double _max_x, double _max_y) {
-
-  printf("in filter Tile has ignore pointer %p\n", a_tile->ignore);
-  //printf("Bounding box is %f %f %f %f\n", _min_x, _min_y, _max_x, _max_y);
   for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
     if (a_tile->ignore[pt_idx]) continue;
     cv::Point2f pt = transform_point(vertex_data, (*a_tile->p_kps_3d)[pt_idx].pt);
     cv::KeyPoint kpt = (*a_tile->p_kps_3d)[pt_idx];
     kpt.pt = pt;
     if (pt.x < _min_x || pt.x > _max_x || pt.y < _min_y || pt.y > _max_y) {
-      //printf("Filtered: %f,%f\n", pt.x, pt.y);
       continue;
-    } else {
-      //printf("Unfiltered: %f,%f\n", pt.x, pt.y);
-    }
+    } 
     atile_kps_in_overlap.push_back(kpt);
     atile_kps_desc_in_overlap_list.push_back(a_tile->p_kps_desc_3d->row(pt_idx).clone());
     atile_kps_tile_list.push_back(atile_id);
@@ -140,18 +110,6 @@ double _min_x, double _min_y, double _max_x, double _max_y) {
 }
 
 void concat_two_tiles(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list, tile_data_t* ref_tile, double radius) {
-  //printf("Comparing the tiles a_tile %d b_tile %d\n", atile_id, btile_id);
-  //std::vector< cv::KeyPoint > atile_kps_in_overlap, btile_kps_in_overlap;
-  //atile_kps_in_overlap.reserve(a_tile->p_kps->size());
-  //btile_kps_in_overlap.reserve(b_tile->p_kps->size());
-  //std::vector< cv::Mat > atile_kps_desc_in_overlap_list;
-  //atile_kps_desc_in_overlap_list.reserve(a_tile->p_kps->size());
-  //std::vector< cv::Mat > btile_kps_desc_in_overlap_list;
-  //btile_kps_desc_in_overlap_list.reserve(b_tile->p_kps->size());
-
-  //cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
-  // Filter the points in a_tile.
-
   for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
     cv::Point2f pt = (*a_tile->p_kps_3d)[pt_idx].pt;
     if (pt.x+a_tile->x_start < ref_tile->x_start + radius) continue;
@@ -162,15 +120,6 @@ void concat_two_tiles(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoi
     atile_kps_desc_in_overlap_list.push_back(a_tile->p_kps_desc_3d->row(pt_idx).clone());
     atile_kps_tile_list.push_back(atile_id);
   }
-/*
-  for (size_t pt_idx = 0; pt_idx < b_tile->p_kps->size(); ++pt_idx) {
-    cv::Point2f pt = (*b_tile->p_kps)[pt_idx].pt;
-    btile_kps_in_overlap.push_back((*b_tile->p_kps)[pt_idx]);
-    btile_kps_desc_in_overlap_list.push_back(b_tile->p_kps_desc->row(pt_idx).clone());
-    btile_kps_tile_list.push_back(btile_id);
-  }
-*/
-  //cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
 }
 
 
@@ -179,8 +128,6 @@ void concat_two_tiles(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoi
 static void match_features(std::vector< cv::DMatch > &matches,
                            cv::Mat &descs1, cv::Mat &descs2,
                            float rod);
-
-
 void updateVertex2DAlign(int vid, void* scheduler_void);
 #include "meshoptimize.h"
 #include "elastic_mesh.h"
@@ -194,7 +141,6 @@ void set_graph_list(std::vector<Graph<vdata,edata>* > _graph_list, bool startEmp
     graph_list.push_back(_graph_list[i]);
   }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // INTERNAL FUNCTIONS
@@ -233,7 +179,6 @@ static void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, 
       }
     }
   } else {
-    //NOTE(TFK): I am not sure if this switching of A->B to B->A is correct.
     //cv::BFMatcher matcher(cv::NORM_L2, false);
     cv::FlannBasedMatcher matcher;
     matcher.knnMatch(descs2, descs1,
@@ -287,8 +232,6 @@ int get_all_close_tiles(int atile_id, section_data_t *p_sec_data, int* indices_t
 void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   TRACE_1("compute_tile_matches: start\n");
 
-  //section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
-
   // Iterate over all pairs of tiles
   //for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
   for (int sec_id = force_section_id; sec_id < force_section_id+1 && force_section_id != -1; sec_id++) {
@@ -304,7 +247,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     simple_mutex_init(&mfovs_lock);
 
 
-    printf("REsizing the graph to be size %d\n", p_sec_data->n_tiles);
+    printf("Resizing the graph to be size %d\n", p_sec_data->n_tiles);
     graph = new Graph<vdata, edata>();
     graph->resize(p_sec_data->n_tiles);
     graph_list.push_back(graph);
@@ -328,20 +271,6 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
 
         // Skip tiles that don't overlap
         if (!is_tiles_overlap(a_tile, b_tile)) continue;  // just in case.
-
-        // Index pair is:
-        // a_tile->mfov_id, a_tile->index
-        // b_tile->mfov_id, b_tile->index
-        //TRACE_1("    -- index_pair [%d_%d, %d_%d]\n",
-        //        a_tile->mfov_id, a_tile->index,
-        //        b_tile->mfov_id, b_tile->index);
-
-        //TRACE_1("    -- %d_%d features_num: %lu\n",
-        //        a_tile->mfov_id, a_tile->index,
-        //        a_tile->p_kps->size());
-        //TRACE_1("    -- %d_%d features_num: %lu\n",
-        //        b_tile->mfov_id, b_tile->index,
-        //        b_tile->p_kps->size());
 
         // Check that both tiles have enough features to match.
         if (a_tile->p_kps->size() < MIN_FEATURES_NUM) {

@@ -320,7 +320,7 @@ vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points
 //    //}
 //  }
 
-  printf("After filtering the number of match points is %lu\n", match_points_a.size());
+  //printf("After filtering the number of match points is %lu\n", match_points_a.size());
 
   double best_dx = 0.0;
   double best_dy = 0.0;
@@ -372,7 +372,7 @@ vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points
     //      }
     for (int _j = 0; _j < the_limit/10000 + 1; _j++) {
     if (maxInliers > 0.1*match_points_a.size() && maxInliers > 12) { 
-      printf("Max inliers is fraction %f breaking\n", maxInliers*1.0/match_points_a.size());
+      //printf("Max inliers is fraction %f breaking\n", maxInliers*1.0/match_points_a.size());
       break;
     }
     if (_j > 3 && maxInliers <= 0.1*match_points_a.size()) break;
@@ -503,8 +503,8 @@ vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points
         }
       }
 
-    printf("Best values are %f %f %f %f %f %f\n", best_vertex_data.a00, best_vertex_data.a01, best_vertex_data.a10, best_vertex_data.a11, best_vertex_data.offset_x, best_vertex_data.offset_y);
-    printf("Number of inliers is %d and best_dx %f best_dy %f\n", maxInliers, best_vertex_data.offset_x, best_vertex_data.offset_y);
+    //printf("Best values are %f %f %f %f %f %f\n", best_vertex_data.a00, best_vertex_data.a01, best_vertex_data.a10, best_vertex_data.a11, best_vertex_data.offset_x, best_vertex_data.offset_y);
+    //printf("Number of inliers is %d and best_dx %f best_dy %f\n", maxInliers, best_vertex_data.offset_x, best_vertex_data.offset_y);
     return best_vertex_data;
     //return std::pair<double,double>(best_vertex_data.offset_x,best_vertex_data.offset_y);
 }
@@ -583,7 +583,7 @@ std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& 
 
     
 
-    printf("Number of inliers is %d and best_dx %f best_dy %f error is %f\n", maxInliers, best_dx, best_dy, error);
+    //printf("Number of inliers is %d and best_dx %f best_dy %f error is %f\n", maxInliers, best_dx, best_dy, error);
     return std::pair<double,double>(best_dx,best_dy);
   }
 
@@ -598,7 +598,7 @@ std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& 
           test_count++; 
         }
       }
-  printf("The test count is %d\n", test_count);
+  //printf("The test count is %d\n", test_count);
   return std::pair<double,double>(0,0);
 }
 
@@ -671,7 +671,7 @@ void tfk_simple_ransac_strict(std::vector<cv::Point2f>& match_points_a,
           test_count++; 
         }
       }
-  printf("The test count is %d\n", test_count);
+  //printf("The test count is %d\n", test_count);
 }
 
 

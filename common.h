@@ -139,6 +139,20 @@
         abort(); \
     }
 
+
+#define TFK_ENABLE_TRACE_TIMER
+
+#ifdef TFK_ENABLE_TRACE_TIMER
+#define TFK_TIMER_VAR(timer_name) struct timeval timer_name;
+#define TFK_START_TIMER(timer) start_timer((timer))
+#define TFK_STOP_TIMER(timer, msg) stop_timer((timer), msg)
+#else
+#define TFK_TIMER_VAR(timer_name)
+#define TFK_START_TIMER(timer)
+#define TFK_STOP_TIMER(timer, msg)
+#endif
+
+
 #ifdef ENABLE_TRACE_TIMER
 #define TIMER_VAR(timer_name) struct timeval timer_name;
 #define START_TIMER(timer) start_timer((timer))
