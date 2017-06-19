@@ -32,11 +32,9 @@ float EDGE_THRESH_2D = 5.0;
 #include "render_tiles.cpp"
 #include "cilk_tools/Graph.h"
 #include "serialize.h"
-
 void SIFT_initialize() {
-  generateBoxBlurExecutionPlan();
+  //generateBoxBlurExecutionPlan();
 }
-
 /*
   Get all the neighbors for all of the elements in the active set
 */
@@ -89,7 +87,7 @@ void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set
   int height_of_active_set;
   if (LINE) {
     max_size_of_active_set = total;
-    height_of_active_set = 1;
+    height_of_active_set = 20;
   } else {
     max_size_of_active_set = RECT_HEIGHT;
     height_of_active_set = RECT_HEIGHT;
@@ -276,7 +274,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
           tile_data_t *p_tile_data = &(p_sec_data->tiles[tile_id]);
 
 
-          (*p_tile_data->p_image).create(3128, 2724, CV_8UC1);
+          (*p_tile_data->p_image).create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
           (*p_tile_data->p_image) = cv::imread(
               p_tile_data->filepath,
               CV_LOAD_IMAGE_UNCHANGED);
@@ -295,11 +293,11 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 
       // NOTE(TFK): I need to check these parameters against the prefix_ cached ones.
       p_sift = new cv::xfeatures2d::SIFT_Impl(
-                16,  // num_features --- unsupported.
-                12,  // number of octaves
+                32,  // num_features --- unsupported.
+                6,  // number of octaves
                 CONTRAST_THRESH_3D,  // contrast threshold.
                 EDGE_THRESH_3D,  // edge threshold.
-                1.6);  // sigma.
+                1.6*2);  // sigma.
 
         int max_rows = rows / SIFT_D1_SHIFT_3D;
         int max_cols = cols / SIFT_D2_SHIFT_3D;
@@ -316,14 +314,18 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             totalTime += tdiff(tstart, tend);
         // Regardless of whether we were on or off MFOV boundary, we concat
         //   the keypoints and their descriptors here.
+        int point_count_3d = 0;
         for (int _i = 0; _i < n_sub_images; _i++) {
             for (int _j = 0; _j < v_kps[_i].size(); _j++) {
                 (*p_tile_data->p_kps_3d).push_back(v_kps[_i][_j]);
+                point_count_3d++;
             }
         }
-  
+
       //cv::Mat m_kps_desc_filtered = m_kps_desc[0].clone();
       *(p_tile_data)->p_kps_desc_3d = m_kps_desc[0].clone();
+
+      printf("Number of 3d points is %d\n", point_count_3d);
 }
 #endif
 
@@ -408,10 +410,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             {
               // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
               cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
-                  0, 0, 3128, OVERLAP_2D));
+                  0, 0, SIFT_D2_SHIFT_3D, OVERLAP_2D));
 
               // Mask for subimage
-              cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, 3128, CV_8UC1);
+              cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, SIFT_D2_SHIFT_3D, CV_8UC1);
               int sub_im_id = 0;
 
               // Detect the SIFT features within the subimage.
@@ -431,10 +433,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             {
               // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
               cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
-                  0, OVERLAP_2D, OVERLAP_2D, 2724-OVERLAP_2D));
+                  0, OVERLAP_2D, OVERLAP_2D, SIFT_D1_SHIFT_3D-OVERLAP_2D));
 
               // Mask for subimage
-              cv::Mat sum_im_mask = cv::Mat::ones(2724-OVERLAP_2D, OVERLAP_2D,
+              cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT_3D-OVERLAP_2D, OVERLAP_2D,
                   CV_8UC1);
               int sub_im_id = 1;
               // Detect the SIFT features within the subimage.
@@ -454,10 +456,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             {
               // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
               cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
-                  3128-OVERLAP_2D, OVERLAP_2D, OVERLAP_2D, 2724-OVERLAP_2D));
+                  SIFT_D2_SHIFT_3D-OVERLAP_2D, OVERLAP_2D, OVERLAP_2D, SIFT_D1_SHIFT_3D-OVERLAP_2D));
 
               // Mask for subimage
-              cv::Mat sum_im_mask = cv::Mat::ones(2724-OVERLAP_2D, OVERLAP_2D,
+              cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT_3D-OVERLAP_2D, OVERLAP_2D,
                   CV_8UC1);
               int sub_im_id = 2;
               // Detect the SIFT features within the subimage.
@@ -468,7 +470,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
               fasttime_t tend = gettime();
               totalTime += tdiff(tstart, tend);
               for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
-                  v_kps[sub_im_id][i].pt.x += 3128-OVERLAP_2D;  // cur_d2;
+                  v_kps[sub_im_id][i].pt.x += SIFT_D2_SHIFT_3D-OVERLAP_2D;  // cur_d2;
                   v_kps[sub_im_id][i].pt.y += OVERLAP_2D;  // cur_d1;
               }
             }
@@ -478,10 +480,10 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
             {
               // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
               cv::Mat sub_im = (*p_tile_data->p_image)(cv::Rect(
-                  OVERLAP_2D, 2724-OVERLAP_2D, 3128-OVERLAP_2D, OVERLAP_2D));
+                  OVERLAP_2D, SIFT_D1_SHIFT_3D-OVERLAP_2D, SIFT_D2_SHIFT_3D-OVERLAP_2D, OVERLAP_2D));
 
               // Mask for subimage
-              cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, 3128-OVERLAP_2D,
+              cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, SIFT_D2_SHIFT_3D-OVERLAP_2D,
                   CV_8UC1);
               // Compute a subimage ID, refering to a tile within larger
               //   2d image.
@@ -495,7 +497,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
               totalTime += tdiff(tstart, tend);
               for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
                   v_kps[sub_im_id][i].pt.x += OVERLAP_2D;  // cur_d2;
-                  v_kps[sub_im_id][i].pt.y += (2724-OVERLAP_2D);  // cur_d1;
+                  v_kps[sub_im_id][i].pt.y += (SIFT_D1_SHIFT_3D-OVERLAP_2D);  // cur_d1;
               }
             }
             // END BOTTOM SLICE
@@ -511,6 +513,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 
           cv::vconcat(m_kps_desc, n_sub_images, *(p_tile_data->p_kps_desc));
 
+          cilk_sync;
           int NUM_KEYPOINTS = p_tile_data->p_kps->size();
           //printf("The number of keypoints is %d\n", NUM_KEYPOINTS);
           if (NUM_KEYPOINTS > 0) {
@@ -623,15 +626,15 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       d->offset_x = 0.0;
       d->offset_y = 0.0;
       d->iteration_count = 0;
-      d->last_radius_value = 9.0;
+      //d->last_radius_value = 9.0;
       d->z = /*p_align_data->base_section + */sec_id;
       d->a00 = 1.0;
       d->a01 = 0.0;
       d->a10 = 0.0;
       d->a11 = 1.0;
-      d->neighbor_grad_x = 0.0;
-      d->neighbor_grad_y = 0.0;
-      d->converged = 0;
+      //d->neighbor_grad_x = 0.0;
+      //d->neighbor_grad_y = 0.0;
+      //d->converged = 0;
       d->original_center_point =
         cv::Point2f((tdata.x_finish-tdata.x_start)/2,
                     (tdata.y_finish-tdata.y_start)/2);
@@ -658,7 +661,78 @@ void align_execute(align_data_t *p_align_data) {
     TIMER_VAR(t_timer);
     TIMER_VAR(timer);
     START_TIMER(&t_timer);
+
+
+  //  static char* raw_filepath = "/path/to/file/filename.bmp";
+
+  //  std::string filepath = std::string(raw_filepath);
+
+  //  filepath = filepath.replace(filepath.find(".bmp"), 4, ".jpg");
+  //  filepath = filepath.insert(filepath.find_last_of("/")+1, "thumbnail_");
+
+  //  printf("filepath is %s\n", filepath.c_str());
+  //  exit(0);
+
+//    printf("size of vdata is %d\n", sizeof(vdata));
+//    exit(0);
+//if (false) {
+//    cv::Rect rect(-20.0,-20.0,170.0,170.0);
+//    cv::Subdiv2D subdiv(rect);
+//
+// 
+////std::vector<cv::Point2f>* generate_hex_grid(double* bounding_box, double spacing) {
+//
+//    double bounding_box[4];
+//    bounding_box[0] = 0.0;
+//    bounding_box[1] = 100.0;
+//    bounding_box[2] = 0.0;
+//    bounding_box[3] = 100.0;
+//    double spacing = 10.0;
+//    std::vector<cv::Point2f>* hex_grid = generate_hex_grid(bounding_box, spacing);
+//    for (int i = 0; i < hex_grid->size(); i++) {
+//      cv::Point2f pt = (*hex_grid)[i];
+//      printf("hex grid %f, %f\n", pt.x, pt.y);
+//      subdiv.insert(pt);
+//    }
+//    //for (int i = 0; i < 10; i++) {
+//    //  for (int j = 0; j < 10; j++) {
+//    //    cv::Point2f pt = cv::Point2f(1.0*i,1.0*j);
+//    //    subdiv.insert(pt);
+//    //  }
+//    //}
+//    printf("The subdiv has been created.\n");
+//    std::vector<cv::Vec6f> triangle_list;
+//    subdiv.getTriangleList(triangle_list);
+//    printf("The triangle list length is %lu\n", triangle_list.size());
+//
+//    int edge=0;
+//    int vertex=0;
+//    int ret = 0;
+//    ret = subdiv.locate(cv::Point2f(2.6,2.5), edge, vertex); 
+//    printf("Edge %d, Vertex %d, Ret %d\n", edge, vertex, ret);
+//
+//    //void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
+//    //   float &u, float &v, float &w)
+//    float u,v,w;
+//    Barycentric(cv::Point2f(1.0,8.0), cv::Point2f(0.0,0.0), cv::Point2f(10.0,10.0),
+//    cv::Point2f(0.0, 10.0), u, v, w);
+//    printf("Bary coords are %f %f %f\n", u,v,w);
+//
+//    cv::Point2f test_mutable(1.0,2.0);
+//    printf("point is %f, %f\n", test_mutable.x, test_mutable.y);
+//    test_mutable.x += 0.5;
+//    test_mutable.y += 1.0;
+//    printf("point is %f, %f\n", test_mutable.x, test_mutable.y);
+//    test_mutable.x += 0.5;
+//    test_mutable.y += 1.0;
+//    printf("point is %f, %f\n", test_mutable.x, test_mutable.y);
+//    exit(0);
+//}
+
+
+
     read_input(p_align_data);
+
 
     if (p_align_data->mode == MODE_COMPUTE_KPS_AND_MATCH) {
         START_TIMER(&timer);
@@ -673,7 +747,6 @@ void align_execute(align_data_t *p_align_data) {
     }
         free_tiles(p_align_data);
     START_TIMER(&timer);
-
     
 
     // Before running the graph optimize code, set the graph_list by calling:

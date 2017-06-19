@@ -22,15 +22,26 @@
 #include "./common.h"
 #include "./align.h"
 #include "./fasttime.h"
+#include "./mesh.h"
 #include "./simple_mutex.h"
 #include "cilk_tools/engine.h"
 
-static cv::Point2f invert_transform_point(vdata* vertex, cv::Point2f point_local) {
-  float new_x = point_local.x*vertex->ia00 + point_local.y * vertex->ia01 + vertex->ioffset_x;// + vertex->start_x;
-  float new_y = point_local.x*vertex->ia10 + point_local.y * vertex->ia11 + vertex->ioffset_y;// + vertex->start_y;
-  //float new_x = point_local.x+vertex->offset_x+vertex->start_x;
-  //float new_y = point_local.y+vertex->offset_y+vertex->start_y;
-  return cv::Point2f(new_x, new_y);
+//static cv::Point2f invert_transform_point(vdata* vertex, cv::Point2f point_local) {
+//  float new_x = point_local.x*vertex->ia00 + point_local.y * vertex->ia01 + vertex->ioffset_x;// + vertex->start_x;
+//  float new_y = point_local.x*vertex->ia10 + point_local.y * vertex->ia11 + vertex->ioffset_y;// + vertex->start_y;
+//  //float new_x = point_local.x+vertex->offset_x+vertex->start_x;
+//  //float new_y = point_local.y+vertex->offset_y+vertex->start_y;
+//  return cv::Point2f(new_x, new_y);
+//}
+
+
+
+
+static std::string matchPadTo(std::string str, const size_t num, const char paddingChar = '0')
+{
+    if(num > str.size())
+        str.insert(0, num - str.size(), paddingChar);
+    return str;
 }
 
 
@@ -38,79 +49,41 @@ static cv::Point2f invert_transform_point(vdata* vertex, cv::Point2f point_local
 static cv::Point2d transform_point_double(vdata* vertex, cv::Point2f point_local) {
   double new_x = point_local.x*vertex->a00 + point_local.y * vertex->a01 + vertex->offset_x + vertex->start_x;
   double new_y = point_local.x*vertex->a10 + point_local.y * vertex->a11 + vertex->offset_y + vertex->start_y;
-  //float new_x = point_local.x+vertex->offset_x+vertex->start_x;
-  //float new_y = point_local.y+vertex->offset_y+vertex->start_y;
   return cv::Point2d(new_x, new_y);
 }
 
 static cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local) {
   float new_x = point_local.x*vertex->a00 + point_local.y * vertex->a01 + vertex->offset_x + vertex->start_x;
   float new_y = point_local.x*vertex->a10 + point_local.y * vertex->a11 + vertex->offset_y + vertex->start_y;
-  //float new_x = point_local.x+vertex->offset_x+vertex->start_x;
-  //float new_y = point_local.y+vertex->offset_y+vertex->start_y;
   return cv::Point2f(new_x, new_y);
 }
 
+
+
 std::string get_point_transform_string(Graph<vdata, edata>* merged_graph, vdata* vd) {
-
-  cv::Point2f center_point = transform_point(vd, vd->original_center_point);
-  float start_x = center_point.x - 10000.0;
-  float end_x = center_point.x + 10000.0;
-  float start_y = center_point.y - 10000.0;
-  float end_y = center_point.y + 10000.0;
-  std::string ret = std::to_string(start_x) + " " + std::to_string(start_y) + " " + std::to_string(start_x) + " " + std::to_string(start_y) + " 1.0 ";
-  ret += std::to_string(end_x) + " " + std::to_string(end_y) + " " + std::to_string(end_x) + " " + std::to_string(end_y) + " 1.0 ";
-  ret += std::to_string(start_x) + " " + std::to_string(end_y) + " " + std::to_string(start_x) + " " + std::to_string(end_y) + " 1.0 ";
-  ret += std::to_string(end_x) + " " + std::to_string(start_y) + " " + std::to_string(end_x) + " " + std::to_string(start_y) + " 1.0 ";
-  ret += std::to_string(center_point.x) + " " + std::to_string(center_point.y) + " " + std::to_string(center_point.x) + " " + std::to_string(center_point.y) + " 1.0";
-
-              //ret +="-100000.0 -100000.0 -100000.0 -100000.0 1.0 ";
-              //ret +="100000.0 -100000.0 100000.0 -100000.0 1.0 ";
-              //ret +="-100000.0 100000.0 -100000.0 100000.0 1.0";
-  //std::string ret = "";
-  int vid = vd->vertex_id;
-  int count = 0;
-  for (int i = 0; i < merged_graph->edgeData[vid].size(); i++) {
-    int nid = merged_graph->edgeData[vid][i].neighbor_id;
-    vdata* nvd = merged_graph->getVertexData(nid);
-      float avg_x = 0.0;
-      float avg_y = 0.0;
-      float n_avg_x = 0.0;
-      float n_avg_y = 0.0;
-    for (int j = 0; j < merged_graph->edgeData[vid][i].n_points->size(); j++) {
-      cv::Point2f my_point = transform_point(vd,(*(merged_graph->edgeData[vid][i].v_points))[j]);
-      cv::Point2f pre_n_point = transform_point(nvd,(*(merged_graph->edgeData[vid][i].n_points))[j]);
-      cv::Point2f n_point = cv::Point2f((my_point.x+pre_n_point.x)/2, (my_point.y+pre_n_point.y)/2);
-      avg_x += my_point.x;
-      avg_y += my_point.y;
-      n_avg_x += n_point.x;
-      n_avg_y += n_point.y;
-      //if (count > 0) {
-        ret += " " + std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
-                     std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
-     // } else {
-     //   ret = std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +  
-     //                std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
-     // }
-      count++;
-    }
- //   if (count > 0) {
- //     cv::Point2f my_point = cv::Point2f(avg_x/count, avg_y/count);
- //     cv::Point2f n_point = cv::Point2f(n_avg_x/count, n_avg_y/count);
- //     ret += " " + std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
- //                  std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
- //   }
+  std::string ret = "";
+  for (int i = 0; i < vd->my_mesh_points->size(); i++) {
+      cv::Point2f my_point = (*(vd->section_data->mesh_orig))[(*(vd->my_mesh_points))[i]];
+      cv::Point2f n_point = (*(vd->section_data->mesh))[(*(vd->my_mesh_points))[i]];
+      if (i == 0) {
+      ret += std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
+             std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
+      } else {
+      ret += " " + std::to_string(my_point.x) + " " + std::to_string(my_point.y) + " " +
+             std::to_string(n_point.x) + " " + std::to_string(n_point.y) + " " + std::to_string(1.0);
+      }
   }
   return ret;
 }
+
 void concat_two_tiles_all(vdata* vertex_data, tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list) {
+  if (a_tile->p_kps_3d->size() <= 0) {
+     //printf("Skipping because p_kps_3d is zero.\n");
+     return;
+  }
 
   for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
-    //cv::Point2f pt = (*a_tile->p_kps_3d)[pt_idx].pt;
-    //if (pt.x < ref_tile->x_start + radius) continue;
-    //if (pt.y < ref_tile->y_start + radius) continue;
-    //if (pt.x > ref_tile->x_end - radius) continue;
-    //if (pt.y > ref_tile->y_end - radius) continue;
+    if (a_tile->ignore[pt_idx]) continue;
     cv::Point2f pt = transform_point(vertex_data, (*a_tile->p_kps_3d)[pt_idx].pt);
     cv::KeyPoint kpt = (*a_tile->p_kps_3d)[pt_idx];
     kpt.pt = pt;
@@ -122,18 +95,14 @@ void concat_two_tiles_all(vdata* vertex_data, tile_data_t* a_tile, int atile_id,
 
 void concat_two_tiles_all_filter(vdata* vertex_data, tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list,
 double _min_x, double _min_y, double _max_x, double _max_y) {
-
-  //printf("Bounding box is %f %f %f %f\n", _min_x, _min_y, _max_x, _max_y);
   for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
+    if (a_tile->ignore[pt_idx]) continue;
     cv::Point2f pt = transform_point(vertex_data, (*a_tile->p_kps_3d)[pt_idx].pt);
     cv::KeyPoint kpt = (*a_tile->p_kps_3d)[pt_idx];
     kpt.pt = pt;
-    //if (pt.x < _min_x || pt.x > _max_x || pt.y < _min_y || pt.y > _max_y) {
-    //  //printf("Filtered: %f,%f\n", pt.x, pt.y);
-    //  continue;
-    //} else {
-    //  //printf("Unfiltered: %f,%f\n", pt.x, pt.y);
-    //}
+    if (pt.x < _min_x || pt.x > _max_x || pt.y < _min_y || pt.y > _max_y) {
+      continue;
+    } 
     atile_kps_in_overlap.push_back(kpt);
     atile_kps_desc_in_overlap_list.push_back(a_tile->p_kps_desc_3d->row(pt_idx).clone());
     atile_kps_tile_list.push_back(atile_id);
@@ -141,18 +110,6 @@ double _min_x, double _min_y, double _max_x, double _max_y) {
 }
 
 void concat_two_tiles(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoint >& atile_kps_in_overlap, std::vector < cv::Mat >& atile_kps_desc_in_overlap_list, std::vector<int>& atile_kps_tile_list, tile_data_t* ref_tile, double radius) {
-  //printf("Comparing the tiles a_tile %d b_tile %d\n", atile_id, btile_id);
-  //std::vector< cv::KeyPoint > atile_kps_in_overlap, btile_kps_in_overlap;
-  //atile_kps_in_overlap.reserve(a_tile->p_kps->size());
-  //btile_kps_in_overlap.reserve(b_tile->p_kps->size());
-  //std::vector< cv::Mat > atile_kps_desc_in_overlap_list;
-  //atile_kps_desc_in_overlap_list.reserve(a_tile->p_kps->size());
-  //std::vector< cv::Mat > btile_kps_desc_in_overlap_list;
-  //btile_kps_desc_in_overlap_list.reserve(b_tile->p_kps->size());
-
-  //cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
-  // Filter the points in a_tile.
-
   for (size_t pt_idx = 0; pt_idx < a_tile->p_kps_3d->size(); ++pt_idx) {
     cv::Point2f pt = (*a_tile->p_kps_3d)[pt_idx].pt;
     if (pt.x+a_tile->x_start < ref_tile->x_start + radius) continue;
@@ -163,15 +120,6 @@ void concat_two_tiles(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoi
     atile_kps_desc_in_overlap_list.push_back(a_tile->p_kps_desc_3d->row(pt_idx).clone());
     atile_kps_tile_list.push_back(atile_id);
   }
-/*
-  for (size_t pt_idx = 0; pt_idx < b_tile->p_kps->size(); ++pt_idx) {
-    cv::Point2f pt = (*b_tile->p_kps)[pt_idx].pt;
-    btile_kps_in_overlap.push_back((*b_tile->p_kps)[pt_idx]);
-    btile_kps_desc_in_overlap_list.push_back(b_tile->p_kps_desc->row(pt_idx).clone());
-    btile_kps_tile_list.push_back(btile_id);
-  }
-*/
-  //cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
 }
 
 
@@ -180,10 +128,9 @@ void concat_two_tiles(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoi
 static void match_features(std::vector< cv::DMatch > &matches,
                            cv::Mat &descs1, cv::Mat &descs2,
                            float rod);
-
-
 void updateVertex2DAlign(int vid, void* scheduler_void);
 #include "meshoptimize.h"
+#include "elastic_mesh.h"
 
 std::vector<Graph<vdata, edata>* > graph_list;
 
@@ -194,7 +141,6 @@ void set_graph_list(std::vector<Graph<vdata,edata>* > _graph_list, bool startEmp
     graph_list.push_back(_graph_list[i]);
   }
 }
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // INTERNAL FUNCTIONS
@@ -233,7 +179,6 @@ static void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, 
       }
     }
   } else {
-    //NOTE(TFK): I am not sure if this switching of A->B to B->A is correct.
     //cv::BFMatcher matcher(cv::NORM_L2, false);
     cv::FlannBasedMatcher matcher;
     matcher.knnMatch(descs2, descs1,
@@ -252,14 +197,13 @@ static void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, 
   } 
 }
 
-__attribute__((const))
-static double dist(const cv::Point2f a_pt, const cv::Point2f b_pt) {
-  double x_delta = a_pt.x - b_pt.x;
-  double y_delta = a_pt.y - b_pt.y;
-  return std::sqrt((x_delta * x_delta) + (y_delta * y_delta));
-}
+//__attribute__((const))
+//static double dist(const cv::Point2f a_pt, const cv::Point2f b_pt) {
+//  double x_delta = a_pt.x - b_pt.x;
+//  double y_delta = a_pt.y - b_pt.y;
+//  return std::sqrt((x_delta * x_delta) + (y_delta * y_delta));
+//}
 
-#include "match_output.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL FUNCTIONS
@@ -288,8 +232,6 @@ int get_all_close_tiles(int atile_id, section_data_t *p_sec_data, int* indices_t
 void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   TRACE_1("compute_tile_matches: start\n");
 
-  //section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
-
   // Iterate over all pairs of tiles
   //for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
   for (int sec_id = force_section_id; sec_id < force_section_id+1 && force_section_id != -1; sec_id++) {
@@ -305,7 +247,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     simple_mutex_init(&mfovs_lock);
 
 
-    printf("REsizing the graph to be size %d\n", p_sec_data->n_tiles);
+    printf("Resizing the graph to be size %d\n", p_sec_data->n_tiles);
     graph = new Graph<vdata, edata>();
     graph->resize(p_sec_data->n_tiles);
     graph_list.push_back(graph);
@@ -329,20 +271,6 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
 
         // Skip tiles that don't overlap
         if (!is_tiles_overlap(a_tile, b_tile)) continue;  // just in case.
-
-        // Index pair is:
-        // a_tile->mfov_id, a_tile->index
-        // b_tile->mfov_id, b_tile->index
-        //TRACE_1("    -- index_pair [%d_%d, %d_%d]\n",
-        //        a_tile->mfov_id, a_tile->index,
-        //        b_tile->mfov_id, b_tile->index);
-
-        //TRACE_1("    -- %d_%d features_num: %lu\n",
-        //        a_tile->mfov_id, a_tile->index,
-        //        a_tile->p_kps->size());
-        //TRACE_1("    -- %d_%d features_num: %lu\n",
-        //        b_tile->mfov_id, b_tile->index,
-        //        b_tile->p_kps->size());
 
         // Check that both tiles have enough features to match.
         if (a_tile->p_kps->size() < MIN_FEATURES_NUM) {
@@ -547,7 +475,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       d->offset_x = 0.0;
       d->offset_y = 0.0;
       d->iteration_count = 0;
-      d->last_radius_value = 9.0;
+      //d->last_radius_value = 9.0;
       d->z = sec_id;
       d->a00 = 1.0;
       d->a01 = 0.0;
@@ -602,6 +530,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   scheduler =
       new Scheduler(merged_graph->vertexColors, ncolors+1, merged_graph->num_vertices());
   scheduler->graph_void = (void*) merged_graph;
+  scheduler->roundNum = 0;
   e = new engine<vdata, edata>(merged_graph, scheduler);
 
   for (int trial = 0; trial < 5; trial++) {
@@ -620,19 +549,22 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       //merged_graph->getVertexData(i)->offset_x += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
       //merged_graph->getVertexData(i)->offset_y += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
       int z = merged_graph->getVertexData(i)->z;
-      merged_graph->getVertexData(i)->converged = 0;
+      //merged_graph->getVertexData(i)->converged = 0;
       merged_graph->getVertexData(i)->iteration_count = 0;
       if (section_list.find(z) == section_list.end()) {
         if (merged_graph->edgeData[i].size() > 4) {
           section_list.insert(z);
-          merged_graph->getVertexData(i)->converged = 1;
+          //merged_graph->getVertexData(i)->converged = 1;
         }
       }
     }
 
+    scheduler->isStatic = false;
     for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      scheduler->add_task(i, updateVertex2DAlign);
+      scheduler->add_task_static(i, updateVertex2DAlignFULLFast);
     }
+    scheduler->isStatic = true;
+
     printf("starting run\n");
     e->run();
     //std::priority_queue<std::pair<double, int> > queue;
@@ -669,14 +601,19 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
 
     printf("ending run\n");
 
-    mfov_alignment_3d(merged_graph, p_align_data);
-
-    for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      merged_graph->getVertexData(i)->iteration_count = 0;
-      scheduler->add_task(i, updateVertex2DAlignFULL);
-    }
-    printf("starting run\n");
-    e->run();
+    //mfov_alignment_3d(merged_graph, p_align_data);
+    //scheduler =
+    //    new Scheduler(merged_graph->vertexColors, ncolors+1, merged_graph->num_vertices());
+    //e = new engine<vdata, edata>(merged_graph, scheduler);
+    //scheduler->graph_void = (void*) merged_graph;
+    //scheduler->roundNum = 0;
+    //scheduler->isStatic = true;
+    //for (int i = 0; i < merged_graph->num_vertices(); i++) {
+    //  merged_graph->getVertexData(i)->iteration_count = 0;
+    //  scheduler->add_task_static(i, updateVertex2DAlignFULL);
+    //}
+    //printf("starting run\n");
+    //e->run();
 
     for (int i = 0; i < merged_graph->num_vertices(); i++) {
       merged_graph->getVertexData(i)->iteration_count = 0;
@@ -691,153 +628,83 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
   #ifdef ALIGN3D
 
 
-  for (int i = 0; i < merged_graph->num_vertices(); i++) {
-    merged_graph->edgeData[i].clear();
+  //for (int i = 0; i < merged_graph->num_vertices(); i++) {
+  //  merged_graph->edgeData[i].clear();
+  //}
+  //// before we align lets compute overlap correctly.
+  //cilk_for (int i = 0; i < merged_graph->num_vertices(); i++) {
+  //  vdata* vd = merged_graph->getVertexData(i);
+  //  double start_x = vd->start_x+vd->offset_x;
+  //  double start_y = vd->start_y+vd->offset_y;
+  //  double end_x = vd->end_x+vd->offset_x;
+  //  double end_y = vd->end_y+vd->offset_y;
+  //  for (int j = i+1; j < merged_graph->num_vertices(); j++) {
+  //  vdata* vd2 = merged_graph->getVertexData(j);
+  //  double start_x2 = vd2->start_x+vd2->offset_x;
+  //  double start_y2 = vd2->start_y+vd2->offset_y;
+  //  double end_x2 = vd2->end_x+vd2->offset_x;
+  //  double end_y2 = vd2->end_y+vd2->offset_y;
+
+  //  double overlap_x_start = std::max(start_x, start_x2);
+  //  double overlap_x_end = std::min(end_x, end_x2);
+  //  double overlap_y_start = std::max(start_y, start_y2);
+  //  double overlap_y_end = std::min(end_y, end_y2);
+
+  //  if (overlap_y_start >= overlap_y_end || overlap_x_start >= overlap_x_end) continue;
+  //  if (vd->z != vd2->z) continue;
+  //  // otherwise add evenly spaced matches.
+  //  std::vector<cv::Point2f> points_a(0), points_b(0);
+  //  for (int k = 0; k < 5; k += 1) {
+  //    for (int m = 0; m < 5; m += 1) {
+  //      float fake_x = overlap_x_start + (overlap_x_end-overlap_x_start)*(k*1.0/5.0 + m*1.0/25.0);
+  //      float fake_y = overlap_y_start + (overlap_y_end-overlap_y_start)*(m*1.0/5.0 + k*1.0/25.0);
+  //      points_a.push_back(cv::Point2f(fake_x - start_x, fake_y - start_y)); 
+  //      points_b.push_back(cv::Point2f(fake_x - start_x2, fake_y - start_y2));
+  //      assert(fake_x-start_x>=0 && fake_y-start_y >=0 && fake_x - start_x2 >=0 && fake_y - start_y2 >= 0);
+  //    }
+  //  }
+  //  merged_graph->insert_matches(i,j,points_a, points_b, 1.0);
+  //  }
+  //}
+
+  //for (int v = 0; v < merged_graph->num_vertices(); v++) {
+  //  vdata* vd = merged_graph->getVertexData(v);
+  //  vd->corner_points[0] = cv::Point2f(0.0, 0.0);
+  //  vd->corner_points[1] = cv::Point2f(0.0, SIFT_D1_SHIFT_3D.0);
+  //  vd->corner_points[2] = cv::Point2f(SIFT_D2_SHIFT_3D.0, 0.0);
+  //  vd->corner_points[3] = cv::Point2f(SIFT_D2_SHIFT_3D.0, SIFT_D1_SHIFT_3D.0);
+  //}
+
+  // Unpack the graphs within the merged graph.
+  vertex_id_offset = 0;
+  for (int i = 0; i < graph_list.size(); i++) {
+    for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
+      vdata* d = merged_graph->getVertexData(j+vertex_id_offset);
+      *(graph_list[i]->getVertexData(j)) = *d;
+      (graph_list[i]->getVertexData(j))->vertex_id -= vertex_id_offset;
+    }
+    vertex_id_offset += graph_list[i]->num_vertices();
   }
-  // before we align lets compute overlap correctly.
-  cilk_for (int i = 0; i < merged_graph->num_vertices(); i++) {
-    vdata* vd = merged_graph->getVertexData(i);
-    double start_x = vd->start_x+vd->offset_x;
-    double start_y = vd->start_y+vd->offset_y;
-    double end_x = vd->end_x+vd->offset_x;
-    double end_y = vd->end_y+vd->offset_y;
-    for (int j = i+1; j < merged_graph->num_vertices(); j++) {
-    vdata* vd2 = merged_graph->getVertexData(j);
-    double start_x2 = vd2->start_x+vd2->offset_x;
-    double start_y2 = vd2->start_y+vd2->offset_y;
-    double end_x2 = vd2->end_x+vd2->offset_x;
-    double end_y2 = vd2->end_y+vd2->offset_y;
+  for (int i = 0; i < graph_list.size(); i++) {
+    construct_triangles(graph_list[i], 1500.0);
+    filter_overlap_points_3d(graph_list[i], p_align_data);
+  }
 
-    double overlap_x_start = std::max(start_x, start_x2);
-    double overlap_x_end = std::min(end_x, end_x2);
-    double overlap_y_start = std::max(start_y, start_y2);
-    double overlap_y_end = std::min(end_y, end_y2);
-
-    if (overlap_y_start >= overlap_y_end || overlap_x_start >= overlap_x_end) continue;
-    if (vd->z != vd2->z) continue;
-    // otherwise add evenly spaced matches.
-    std::vector<cv::Point2f> points_a(0), points_b(0);
-    for (int k = 0; k < 5; k += 1) {
-      for (int m = 0; m < 5; m += 1) {
-        float fake_x = overlap_x_start + (overlap_x_end-overlap_x_start)*(k*1.0/5.0 + m*1.0/25.0);
-        float fake_y = overlap_y_start + (overlap_y_end-overlap_y_start)*(m*1.0/5.0 + k*1.0/25.0);
-        points_a.push_back(cv::Point2f(fake_x - start_x, fake_y - start_y)); 
-        points_b.push_back(cv::Point2f(fake_x - start_x2, fake_y - start_y2));
-        assert(fake_x-start_x>=0 && fake_y-start_y >=0 && fake_x - start_x2 >=0 && fake_y - start_y2 >= 0);
-      }
+  // repack.
+  vertex_id_offset = 0;
+  for (int i = 0; i < graph_list.size(); i++) {
+    for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
+      vdata* d = merged_graph->getVertexData(j+vertex_id_offset);
+      *d = *(graph_list[i]->getVertexData(j));
+      d->vertex_id += vertex_id_offset;
     }
-    merged_graph->insert_matches(i,j,points_a, points_b, 1.0);
-    }
+    vertex_id_offset += graph_list[i]->num_vertices();
   }
 
   coarse_alignment_3d(merged_graph, p_align_data, 64.0);
-  //fine_alignment_3d_mfov(merged_graph, p_align_data);
-//  better_mfov_align(merged_graph, p_align_data);
-
-  //fine_alignment_3d_mfov(merged_graph, p_align_data);
-  //fine_alignment_3d_mfov(merged_graph, p_align_data);
-  //fine_alignment_3d_mfov(merged_graph, p_align_data);
-  //fine_alignment_3d_mfov(merged_graph, p_align_data);
-  //mfov_alignment_3d(merged_graph, p_align_data);
-  //mfov_alignment_3d(merged_graph, p_align_data);
-  //coarse_alignment_3d(merged_graph, p_align_data, 64.0);
-  //fine_alignment_3d_mfov(merged_graph, p_align_data);
-
   fine_alignment_3d(merged_graph, p_align_data);
+  elastic_mesh_optimize(merged_graph, p_align_data);
 
-  // add matches above and below.
-  cilk_for (int va = 0; va < merged_graph->num_vertices(); va++) {
-    vdata* vda = merged_graph->getVertexData(va);
-    cv::Point2f centera = transform_point(vda, vda->original_center_point);
-
-
-    for (int vb = va+1; vb < merged_graph->num_vertices(); vb++) {
-      vdata* vdb = merged_graph->getVertexData(vb);
-      if (vdb->z != vda->z-1 && vdb->z != vda->z+1) {
-        continue; 
-      }
-      cv::Point2f centerb = transform_point(vdb, vdb->original_center_point);
-      std::vector<cv::Point2f> points_b(0);
-      std::vector<cv::Point2f> points_a(0);
-
-      // center of point a relative to the btile.
-      cv::Point2f centera_rb = invert_transform_point(vdb, centera);
-      cv::Point2f centerb_ra = invert_transform_point(vda, centerb);
-
-      float dx = (centera_rb.x - vdb->original_center_point.x);
-      float dy = (centera_rb.y - vdb->original_center_point.y);
-      float dist = dx*dx+dy*dy;
-      if (dist > 1500.0*1500.0) continue;
-      dx = (centerb_ra.x - vda->original_center_point.x);
-      dy = (centerb_ra.y - vda->original_center_point.y);
-      dist = dx*dx+dy*dy;
-      if (dist > 1500.0*1500.0) continue;
-
-      //if (isnan(centera_rb.x) || isnan(centera_rb.y)) continue;
-      //if (isnan(centerb_ra.x) || isnan(centerb_ra.y)) continue;
-
-      //if ((centera_rb.x >0 && centera_rb.x < 2700) &&
-      //     (centera_rb.y>0 && centera_rb.y < 00)) {
-      //   points_a.push_back(vda->original_center_point);
-      //   points_b.push_back(centera_rb);
-      //}
-
-      points_a.push_back(centerb_ra);
-      points_b.push_back(vdb->original_center_point);
-
-      merged_graph->insert_matches(va,vb,points_a,points_b, 1.0);
-    }
-  }
-
-  ncolors = merged_graph->compute_trivial_coloring();
-  scheduler =
-      new Scheduler(merged_graph->vertexColors, ncolors+1, merged_graph->num_vertices());
-  scheduler->graph_void = (void*) merged_graph;
-  e = new engine<vdata, edata>(merged_graph, scheduler);
-  for (int trial = 0; trial < 2; trial++) {
-    global_error_sq = 0.0; 
-    //global_learning_rate = 0.6/(trial+1);
-    global_learning_rate = 0.9;
-    std::vector<int> vertex_ids;
-    for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      vertex_ids.push_back(i);
-    } 
-    std::random_shuffle(vertex_ids.begin(), vertex_ids.end());
-    // pick one section to be "converged"
-    std::set<int> section_list;
-    for (int _i = 0; _i < merged_graph->num_vertices(); _i++) {
-      int i = _i;//vertex_ids[_i];
-      //merged_graph->getVertexData(i)->offset_x += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
-      //merged_graph->getVertexData(i)->offset_y += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
-      int z = merged_graph->getVertexData(i)->z;
-      merged_graph->getVertexData(i)->converged = 0;
-      merged_graph->getVertexData(i)->iteration_count = 0;
-      if (section_list.find(z) == section_list.end()) {
-        if (merged_graph->edgeData[i].size() > 4) {
-          section_list.insert(z);
-          merged_graph->getVertexData(i)->converged = 1;
-        }
-      }
-    }
-    for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      scheduler->add_task(i, updateVertex2DAlignFULL);
-    }
-    printf("starting run\n");
-    e->run();
-    printf("ending run\n");
-
-    for (int i = 0; i < merged_graph->num_vertices(); i++) {
-      merged_graph->getVertexData(i)->iteration_count = 0;
-      computeError2DAlign(i, (void*) scheduler);
-      //scheduler->add_task(i, computeError2DAlign);
-    }
-    printf("Global error sq2 on iter %d is %f\n", trial, global_error_sq);
-    if (global_error_sq < 2.0*p_align_data->n_sections) break;
-  //  fine_alignment_3d(merged_graph, p_align_data);
-  }
-  //coarse_alignment_3d(merged_graph, p_align_data, 64.0);
-  //fine_alignment_3d(merged_graph, p_align_data);
-  //fine_alignment_3d_dampen(merged_graph, p_align_data);
   #endif
 
 
@@ -900,13 +767,43 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       //vd->a10 = 0.0;
       //vd->a11 = 1.1;
       //}
+
+      //cv::Point2f corner_points_transformed[4];
+      //for (int t = 0; t < 4; t++) {
+      //  corner_points_transformed[t] = vd->corner_points[t];//transform_point(vd, vd->corner_points[t]);
+      //}
+      //double min_x = corner_points_transformed[0].x; 
+      //double max_x = corner_points_transformed[0].x; 
+      //double min_y = corner_points_transformed[0].y; 
+      //double max_y = corner_points_transformed[0].y;
+      //for (int t = 1; t < 4; t++) {
+      //  if (corner_points_transformed[t].x < min_x) {
+      //    min_x = corner_points_transformed[t].x;
+      //  }
+      //  if (corner_points_transformed[t].y < min_y) {
+      //    min_y = corner_points_transformed[t].y;
+      //  }
+      //  if (corner_points_transformed[t].x > max_x) {
+      //    max_x = corner_points_transformed[t].x;
+      //  }
+      //  if (corner_points_transformed[t].y > max_y) {
+      //    max_y = corner_points_transformed[t].y;
+      //  }
+      //}
+
       fprintf(wafer_file, "\t{\n");
       fprintf(wafer_file, "\t\t\"bbox\": [\n");
+
       fprintf(wafer_file,
           "\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f\n],",
           vd->start_x+vd->offset_x, (vd->end_x+vd->offset_x),
           vd->start_y+vd->offset_y, (vd->end_y+vd->offset_y));
-      fprintf(wafer_file, "\t\t\"height\": %d,\n",2724);
+      //fprintf(wafer_file,
+      //    "\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f\n],",
+      //    min_x, max_x,
+      //    min_y, max_y);
+
+      fprintf(wafer_file, "\t\t\"height\": %d,\n",SIFT_D1_SHIFT_3D);
       fprintf(wafer_file, "\t\t\"layer\": %d,\n",p_align_data->sec_data[sec_id].section_id + p_align_data->base_section+1);
       fprintf(wafer_file, "\t\t\"maxIntensity\": %f,\n",255.0);
       fprintf(wafer_file, "\t\t\"mfov\": %d,\n",
@@ -929,13 +826,21 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       fprintf(wafer_file,
           "\t\t\t\t\"dataString\": \"%f %f %f %f %f %f\"\n", vd->a00,
           vd->a10, vd->a01, vd->a11, vd->start_x+vd->offset_x, vd->start_y+vd->offset_y);
+      //fprintf(wafer_file,
+      //    "\t\t\t\t\"dataString\": \"%f %f %f %f %f %f\"\n", 1.0,
+      //    0.0, 0.0, 1.0, 0.0, 0.0);
 
       //fprintf(wafer_file,
       //    "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.RigidModel2D\",\n");
       //fprintf(wafer_file,
       //    "\t\t\t\t\"dataString\": \"%f %f %f\"\n", 0.0,
       //    vd->start_x+vd->offset_x, vd->start_y + vd->offset_y);
-      if (false && (vd->boundary || true)) {
+      //if (false && (vd->boundary || true)) {
+      #ifdef ALIGN3D
+      if (true) {
+      #else
+      if (false) {
+      #endif 
       fprintf(wafer_file,
           "\t\t\t},\n");
 
@@ -960,7 +865,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       fprintf(wafer_file,
           "\t\t],\n");
       fprintf(wafer_file,
-          "\t\t\"width\":%d\n",3128);
+          "\t\t\"width\":%d\n",SIFT_D2_SHIFT_3D);
       if (i != graph->num_vertices()-1) {
         fprintf(wafer_file,
             "\t},\n");

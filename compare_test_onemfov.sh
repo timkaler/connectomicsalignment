@@ -1,5 +1,5 @@
 #!/bin/bash
-export CILK_NWORKERS=16
+export CILK_NWORKERS=1
 NUMANODE=0
 SECTION=0
 WORKINGDIR=$PWD
@@ -11,6 +11,6 @@ OUTPUTDIR=$PWD/tests/compare_onemfov/
     $OUTPUTDIR \
     $OUTPUTDIR
 
-cd tilespec_comparison
-./run_test.sh python compare.py --old ../tests/compare_onemfov_gt/ --new ../tests/compare_onemfov/
+#cd tilespec_comparison
+#./run_test.sh python compare.py --old ../tests/compare_onemfov_gt/ --new ../tests/compare_onemfov/
 

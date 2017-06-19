@@ -56,14 +56,14 @@
 #define MAX_INPUT_BUF (2000)
 
 //#define MAX_TILES (1024)
-#define MAX_TILES (1024*1024)
+#define MAX_TILES (2048)
 //#define MAX_SECTIONS (256)
-#define MAX_SECTIONS (64)
+#define MAX_SECTIONS (1024)
 
 #define OVERLAP_2D (200)
 
-#define MFOV_BOUNDARY_THRESH 37 // any section with id > 37 is on boundary.
-//#define MFOV_BOUNDARY_THRESH -1 // any section with id > 37 is on boundary.
+//#define MFOV_BOUNDARY_THRESH 37 // any section with id > 37 is on boundary.
+#define MFOV_BOUNDARY_THRESH -1 // any section with id > 37 is on boundary.
 
 
 
@@ -72,12 +72,20 @@
 #define ROD (0.92)
 #define MAX_KPS_DIST (3000)
 
-#define SIFT_MAX_SUB_IMAGES (1024)
+//#define SIFT_MAX_SUB_IMAGES (32)
+#define SIFT_MAX_SUB_IMAGES (128)
 //#define SIFT_D1_SHIFT (4096) //(256)
 //#define SIFT_D2_SHIFT (4096) //(256)
 
 //#define SIFT_D1_SHIFT (1024)
 //#define SIFT_D2_SHIFT (1024)
+//#define SIFT_D1_SHIFT_3D (5120)
+//#define SIFT_D2_SHIFT_3D (5120)
+//
+//#define SIFT_D1_SHIFT (512)
+//#define SIFT_D2_SHIFT (512)
+
+
 #define SIFT_D1_SHIFT_3D (681*4)
 #define SIFT_D2_SHIFT_3D (782*4)
 
@@ -130,6 +138,20 @@
         TRACE(fmt, ##__VA_ARGS__); \
         abort(); \
     }
+
+
+#define TFK_ENABLE_TRACE_TIMER
+
+#ifdef TFK_ENABLE_TRACE_TIMER
+#define TFK_TIMER_VAR(timer_name) struct timeval timer_name;
+#define TFK_START_TIMER(timer) start_timer((timer))
+#define TFK_STOP_TIMER(timer, msg) stop_timer((timer), msg)
+#else
+#define TFK_TIMER_VAR(timer_name)
+#define TFK_START_TIMER(timer)
+#define TFK_STOP_TIMER(timer, msg)
+#endif
+
 
 #ifdef ENABLE_TRACE_TIMER
 #define TIMER_VAR(timer_name) struct timeval timer_name;
@@ -216,6 +238,7 @@ typedef struct _tile_data {
 
 	double offset_x;
 	double offset_y;
+    bool* ignore;
         
 } tile_data_t;
 
@@ -294,13 +317,6 @@ void log_pts_matches(
 
 bool is_tiles_overlap(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2);
 bool is_tiles_overlap_slack(tile_data_t *p_tile_data_1, tile_data_t *p_tile_data_2, double slack);
-
-static std::string matchPadTo(std::string str, const size_t num, const char paddingChar = '0')
-{
-    if(num > str.size())
-        str.insert(0, num - str.size(), paddingChar);
-    return str;
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL MACROS
