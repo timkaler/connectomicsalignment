@@ -761,6 +761,50 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
       p_align_data->sec_data[sec_id].tiles[vd->tile_id].a11 = vd->a11;
       p_align_data->sec_data[sec_id].tiles[vd->tile_id].offset_x = vd->offset_x + vd->start_x;
       p_align_data->sec_data[sec_id].tiles[vd->tile_id].offset_y = vd->offset_y + vd->start_y;
+
+
+      // find all the mesh triangles that overlap with this tile.
+      std::set<int> mesh_point_set;
+      for (int j = 0; j < vd->my_mesh_points->size(); j++) {
+        int pt_index = (*(vd->my_mesh_points))[j];
+        //cv::Point2f pt = (*vd->section_data->mesh_orig)[pt_index];
+        mesh_point_set.insert(pt_index);
+      }
+
+      std::set<int> tri_added_set; 
+      std::vector<renderTriangle>* mesh_triangles = new std::vector<renderTriangle>(); 
+      for (int j = 0; j < vd->section_data->triangles->size(); j++) {
+        tfkTriangle tri = (*vd->section_data->triangles)[j];
+        int points[3];
+        points[0] = tri.index1;
+        points[1] = tri.index2;
+        points[2] = tri.index3;
+        for (int k = 0; k < 3; k++) {
+          if (mesh_point_set.find(points[k]) != mesh_point_set.end()) {
+            renderTriangle r_tri;
+            r_tri.p[0] = (*vd->section_data->mesh_orig)[tri.index1]; 
+            r_tri.p[1] = (*vd->section_data->mesh_orig)[tri.index2]; 
+            r_tri.p[2] = (*vd->section_data->mesh_orig)[tri.index3];
+            r_tri.q[0] = (*vd->section_data->mesh)[tri.index1]; 
+            r_tri.q[1] = (*vd->section_data->mesh)[tri.index2]; 
+            r_tri.q[2] = (*vd->section_data->mesh)[tri.index3];
+            if (tri_added_set.find(j) == tri_added_set.end()) {
+              tri_added_set.insert(j);
+              mesh_triangles->push_back(r_tri);
+            }
+          }
+        }
+      }
+      
+      p_align_data->sec_data[sec_id].tiles[vd->tile_id].mesh_triangles = mesh_triangles;
+
+      //printf("tile id %d\n", vd->tile_id);
+      //for (int j = 0; j < mesh_triangles->size(); j++) {
+      //  std::cout << (*mesh_triangles)[j].p[0] << "," << (*mesh_triangles)[j].p[1] << "," << (*mesh_triangles)[j].p[2] << std::endl;
+      //  std::cout << (*mesh_triangles)[j].q[0] << "," << (*mesh_triangles)[j].q[1] << "," << (*mesh_triangles)[j].q[2] << std::endl;
+      //} 
+
+
       //if (vd->z == 1) {
       //vd->a00 = 1.1;
       //vd->a01 = 0.0;

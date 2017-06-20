@@ -26,6 +26,10 @@
 //#define FILE "dset.h5"
 
 
+typedef struct {
+  cv::Point2f p[3];
+  cv::Point2f q[3];
+} renderTriangle;
 /////////////////////////////////////////////////////////////////////////////////////////
 // DEFINES 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -239,7 +243,7 @@ typedef struct _tile_data {
 	double offset_x;
 	double offset_y;
     bool* ignore;
-        
+    std::vector<renderTriangle>* mesh_triangles;      
 } tile_data_t;
 
 typedef struct _section_data {
