@@ -768,7 +768,11 @@ void align_execute(align_data_t *p_align_data) {
 
 	output_section_image_affine(&(p_align_data->sec_data[0]), "affine0.tif", 0, 20000, 0, 20000, false);
 	output_section_image_affine(&(p_align_data->sec_data[1]), "affine1.tif", 0, 20000, 0, 20000, false);
+ 	output_section_image_affine_elastic(&(p_align_data->sec_data[0]), "elastic0.tif", 0, 20000, 0, 20000, false);
+
+	output_section_image_affine_elastic(&(p_align_data->sec_data[1]), "elastic1.tif", 0, 20000, 0, 20000, false);
  
+
     //output_section_image(&(p_align_data->sec_data[0]), 0,0,40000,40000, "labeled_image0.tif");
     //output_section_image(&(p_align_data->sec_data[1]), 0,0,40000,40000, "labeled_image1.tif");
 
