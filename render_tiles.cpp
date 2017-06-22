@@ -1,3 +1,25 @@
+
+//#include "mesh.h"
+
+static float Dot(cv::Point2f a, cv::Point2f b) {
+  return a.x*b.x + a.y*b.y;
+}
+
+static void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
+   float &u, float &v, float &w)
+{
+    cv::Point2f v0 = b - a, v1 = c - a, v2 = p - a;
+    float d00 = Dot(v0, v0);
+    float d01 = Dot(v0, v1);
+    float d11 = Dot(v1, v1);
+    float d20 = Dot(v2, v0);
+    float d21 = Dot(v2, v1);
+    float denom = d00 * d11 - d01 * d01;
+    v = (d11 * d20 - d01 * d21) / denom;
+    w = (d00 * d21 - d01 * d20) / denom;
+    u = 1.0f - v - w;
+}
+
 /* resizing using remap */
 cv::Mat resize(float scale, cv::Mat img) {
 	int new_width = scale*img.size().width;
@@ -26,33 +48,115 @@ bool inTriangle(cv::Point2f p, cv::Point2f triangle[3]) {
 	bool b1 = sign(p, triangle[0], triangle[1]) < 0;
 	bool b2 = sign(p, triangle[0], triangle[2]) < 0;
 	bool b3 = sign(p, triangle[1], triangle[2]) < 0;
-	return ((b1 == b2) && (b2 == b3));
+	//return ((b1 == b2) && (b2 == b3));
+	return !(b1 || b2 || b3);
+}
+
+
+void reorder(std::vector<renderTriangle>*mesh_triangles, int lower_x, int upper_x, int lower_y, int upper_y) {
+	int next_index = 0;
+	for(int i = 0; i < mesh_triangles->size(); i ++) {
+		if ((*mesh_triangles)[i].p[0].x >= lower_x && (*mesh_triangles)[i].p[0].x <= upper_x &&
+			(*mesh_triangles)[i].p[1].x >= lower_x && (*mesh_triangles)[i].p[1].x <= upper_x &&
+			(*mesh_triangles)[i].p[2].x >= lower_x && (*mesh_triangles)[i].p[2].x <= upper_x &&	
+			(*mesh_triangles)[i].p[0].y >= lower_y && (*mesh_triangles)[i].p[0].y <= upper_y &&			
+            (*mesh_triangles)[i].p[1].y >= lower_y && (*mesh_triangles)[i].p[1].y <= upper_y &&
+            (*mesh_triangles)[i].p[2].y >= lower_y && (*mesh_triangles)[i].p[2].y <= upper_y) {
+			int j = i;
+			while(j > next_index) {
+				renderTriangle * temp = &(*mesh_triangles)[j - 1];
+				(*mesh_triangles)[j - 1] = (*mesh_triangles)[j];
+				(*mesh_triangles)[j] = *temp;
+				j --;
+			}
+			next_index = i + 1;
+		}
+	}
+}
+
+int triangleIndex(cv::Point2f point, std::vector<renderTriangle>*mesh_triangles, int lower_x, int upper_x, int lower_y, int upper_y) {
+	int new_upper_x, new_lower_x, new_lower_y, new_upper_y;
+	if(point.x < (upper_x + lower_x)/2) {
+		new_upper_x = (upper_x + lower_x)/2;
+		new_lower_x = lower_x;
+	} else {
+		new_upper_x = upper_x;
+		new_lower_x = (upper_x + lower_x)/2;
+	}
+	if(point.y < (upper_y + lower_y)/2) {
+		new_upper_y = (upper_y + lower_y)/2;
+		new_lower_y = lower_y;
+	} else {
+		new_upper_y = upper_y;
+		new_lower_y = (upper_y + lower_y)/2;
+	}
+	
+	if(upper_x - lower_x <= 100 && upper_y - lower_y <= 100) {	
+		reorder(mesh_triangles, new_lower_x, new_upper_x, new_lower_y, new_upper_y);
+		return triangleIndex(point, mesh_triangles, new_lower_x, new_upper_x, new_lower_y, new_upper_x);
+	} else if(upper_x - lower_x <= 100) {
+		reorder(mesh_triangles, new_lower_x, new_upper_x, lower_y, upper_y);
+		return triangleIndex(point, mesh_triangles, new_lower_x, new_upper_x, lower_y, upper_y);
+	} else if(upper_y - lower_y <= 100) {
+		reorder(mesh_triangles, lower_x, upper_x, new_lower_y, new_upper_y);
+		return triangleIndex(point, mesh_triangles, lower_x, upper_x, new_lower_y, new_upper_y);
+	}
+
+	for(int i = 0; i < mesh_triangles->size(); i ++) {
+		if(inTriangle(point, (*mesh_triangles)[i].p)) {
+			return i;
+			//re-order some more?
+		}
+	}
+
+	std::cout << "TRIANGLE FINDING FAILED" << std::endl;
+	return -1;
 }
 
 cv::Point2f elastic_transform(tile_data_t *t, cv::Point2f point) {
 	std::vector<renderTriangle>*mesh_triangles = t->mesh_triangles;
 	int index = -1;
 	for(int i = 0; i < mesh_triangles->size(); i ++) {
-		if(inTriangle(point, (*mesh_triangles)[i].p)) {
-			index = i;
+	  float u,v,w;
+      cv::Point2f a = (*mesh_triangles)[i].p[0];
+      cv::Point2f b = (*mesh_triangles)[i].p[1];
+      cv::Point2f c = (*mesh_triangles)[i].p[2];
+      Barycentric(point, a,b,c,u,v,w);
+      if (u >= 0 && v >= 0 && w >= 0) {
+		//if(inTriangle(point, (*mesh_triangles)[i].p)) {
+			index = 0;
 			int j = i;
 			while(j > 0) {
-				renderTriangle * temp = &(*mesh_triangles)[j - 1];
+				renderTriangle temp = (*mesh_triangles)[j - 1];
 				(*mesh_triangles)[j - 1] = (*mesh_triangles)[j];
-				(*mesh_triangles)[j] = *temp;
+				(*mesh_triangles)[j] = temp;
 				j --;
 			} 
-			//swap first 
-			//bubble sort up 
-//divide and conquer 
-//100x100 boxes
 			break;
 		}
 	}
-
+	//int index = triangleIndex(point, mesh_triangles, t->x_start, t->x_finish, t->y_start, t->y_finish);
 	if(index < 0) {
 		std::cout << " TRIANGLE NOT FOUND " << std::endl;
+		return point;
+	//	exit(0);
 	}
+
+      float u,v,w;
+      cv::Point2f a = (*mesh_triangles)[index].p[0];
+      cv::Point2f b = (*mesh_triangles)[index].p[1];
+      cv::Point2f c = (*mesh_triangles)[index].p[2];
+   
+      Barycentric(point, a,b,c,u,v,w);
+      if (u < 0 || v < 0 || w < 0) {
+        printf("Error point wasn't in triangle we found\n");
+        printf("Error u %f v %f w %f index %d \n", u,v,w, index);
+        exit(1);
+      } else {
+		//printf("index %d", index);
+		} 
+
+	
 	float p_y0 = (*mesh_triangles)[index].p[0].y;
     float p_y1 = (*mesh_triangles)[index].p[1].y;
 	float p_y2 = (*mesh_triangles)[index].p[2].y;
@@ -66,7 +170,7 @@ cv::Point2f elastic_transform(tile_data_t *t, cv::Point2f point) {
 	float q_x1 = (*mesh_triangles)[index].q[1].x;
 	float q_x2 = (*mesh_triangles)[index].q[2].x;
 	
-	cv::Mat P = cv::Mat(3, 3, cv::DataType<float>::type);
+	/* cv::Mat P = cv::Mat(3, 3, cv::DataType<float>::type);
 	cv::Mat Q = cv::Mat(3,3, cv::DataType<float>::type);
 	P.at<float>(0,0) = p_x0;
 	P.at<float>(1,0) = p_y0;
@@ -87,13 +191,28 @@ cv::Point2f elastic_transform(tile_data_t *t, cv::Point2f point) {
 	Q.at<float>(1,2) = q_y2;
 	Q.at<float>(2,2) = 1; 
 
-	//Barycentric in mesh.h
 
 	cv::Mat T = P*Q.inv();
 
 	float new_x = point.x*T.at<float>(0,0) + point.y*T.at<float>(0,1) + T.at<float>(0,2);
 	float new_y = point.x*T.at<float>(1,0) + point.y*T.at<float>(1,1) + T.at<float>(1,2);
+*/
+	//Barycentric in mesh.h
+//	float lam1 = ((p_y1 - p_y2)*(point.x - p_x2) + (p_x2 - p_x1)*(point.y - p_x2))/((p_y1-p_y2)*(p_x0-p_x2)+(p_x2-p_x1)*(p_y0-p_y2));
+//	float lam2 = ((p_y2 - p_y0)*(point.x - p_x2) + (p_x0 - p_x2)*(point.y - p_x2))/((p_y1-p_y2)*(p_x0-p_x2)+(p_x2-p_x1)*(p_y0-p_y2));
+//	float lam3 = 1 - lam1 - lam2;
 
+	float lam1 = u;
+	float lam2 = v;
+	float lam3 = w;	
+	float new_x = lam1*q_x0 + lam2*q_x1+lam3*q_x2;
+	float new_y = lam1*q_y0 + lam2*q_y1 + lam3*q_y2;
+
+	if(std::abs(new_x-point.x) > 0.1 /*|| std::abs(new_y - point.y) > 0.1*/) {
+		std::cout << "off by too much " << new_x << " " << point.x << std::endl;
+		 std::cout << "off by too much " << new_y << " " << point.y << std::endl;
+		exit(0);
+	}
 	return cv::Point2f(new_x, new_y);
 }
 
@@ -162,7 +281,6 @@ scale_x = scale_y;
 				if(x-lower_x> max_x) max_x = x-lower_x;
 	    	}	
 	  	}
-		std::cout << "MAX X: " << max_x << " , width " << img.size().width << std::endl;
 	  	tile.p_image->release();
 	}
 	cv::imwrite(filename, (*section->p_out));
@@ -218,7 +336,7 @@ void output_section_image_affine_elastic(section_data_t* section, std::string fi
         	section->p_out->at<unsigned char>(y,x) = 0;
       	}
     }
- 
+	//apply transform for the coners of the tile - check to see if its actually worth rendering (overallaping with the region)  
 	//loop through tiles
 	for (int i = 0; i < section->n_tiles; i++) {
 	  	tile_data_t tile = section->tiles[i];
@@ -230,9 +348,16 @@ void output_section_image_affine_elastic(section_data_t* section, std::string fi
 		for (int _x = 0; _x < 3128; _x++) {
 	    	for (int _y = 0; _y < 2724; _y++) {
 				cv::Point2f p = cv::Point2f(_x, _y);
-				//cv::Point2f transformed_p = affine_transform(&tile, p);
+				cv::Point2f transformed_p = affine_transform(&tile, p);
+				{
+					int x = transformed_p.x;
+					int y = transformed_p.y;
+					if(y >= upper_y + 1000.0 || y < lower_y - 1000.0 || x >= upper_x +1000.0 || x < lower_x - 1000.0) {
+						continue;
+					}
+				}
 				//std::cout << "calling elastic... " << std::endl;
-				cv::Point2f	transformed_p = elastic_transform(&tile, p);
+				transformed_p = elastic_transform(&tile, transformed_p);
 				int x = transformed_p.x;
 				int y = transformed_p.y;
 				if(y >= upper_y || y < lower_y || x >= upper_x || x < lower_x) {

@@ -1,6 +1,6 @@
 
 bool section_data_exists(int section, align_data_t* p_align_data) {
-  return false;
+  //return false;
   std::string filename = std::string("cached_data/prefix_")+std::to_string(section+p_align_data->base_section+1);
   cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"), cv::FileStorage::READ);
   if (!fs.isOpened()) {

@@ -1,3 +1,5 @@
+#ifndef MESH_H
+#define MESH_H
 
 std::vector<cv::Point2f>* generate_hex_grid(double* bounding_box, double spacing) {
   double hexheight = spacing;
@@ -215,11 +217,11 @@ double area_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* d_cost_d_me
 }
 
 
-float Dot(cv::Point2f a, cv::Point2f b) {
+static float Dot(cv::Point2f a, cv::Point2f b) {
   return a.x*b.x + a.y*b.y;
 }
 
-void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
+static void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
    float &u, float &v, float &w)
 {
     cv::Point2f v0 = b - a, v1 = c - a, v2 = p - a;
@@ -442,4 +444,4 @@ double computeTriangleArea(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3) {
 }
 
 
-
+#endif // MESH_H

@@ -39,7 +39,7 @@ OUTPUTDIR=$PWD/temp/
     0 2\
     $PWD/data/txtspecs_iarpa_full.txt \
     $OUTPUTDIR \
-    $OUTPUTDIR 0 0 20000 20000
+    $OUTPUTDIR 
 
 #./gen_results.sh
 #./setup.sh /usr/bin/time -v ./run_align 1 \
