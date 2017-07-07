@@ -758,19 +758,33 @@ void align_execute(align_data_t *p_align_data) {
 
     compute_tile_matches(p_align_data, -1);
 
-	output_section_image_bounded(&(p_align_data->sec_data[0]), "bounded0.tif", 11000, 12000,11000,12000, false);
-	output_section_image_bounded(&(p_align_data->sec_data[1]), "bounded1.tif", 11000, 12000, 11000,12000, false);
+	/*for(int i = 0; i < p_align_data->n_sections; i ++) {
+		std::string ss = "";
+        ss += std::string("thumb-elastic-") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+		output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[i]), ss, 50000, 51000, 50000, 51000);
+ 		std::string qq ="";	
+		qq += std::string("thumb-elastic-thumb") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 51000, 50000, 51000);
+	}*/
+	std::string qq ="";	
+	qq += std::string("thumb-elastic-thumb") + std::to_string(p_align_data->base_section+1) + std::string(".tif");
+	cv::Mat im2 = output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[0]), qq, 50000, 51000, 50000, 51000);
+	qq = "";
+	qq += std::string("thumb-elastic-thumb") + std::to_string(1+p_align_data->base_section+1) + std::string(".tif");
+	cv::Mat im1 = output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[1]), qq, 50000, 51000, 50000, 51000);
+	
+	cross_correlation(im2, im1, 100, 100);
+	matchTemplate(im2, im1);
+//	output_section_image_thumbnail(&(p_align_data->sec_data[0]), "thumb0.tif", 0, 20000, 0, 20000);
+//	output_section_image_thumbnail(&(p_align_data->sec_data[1]), "thumb1.tif", 0, 20000, 0, 20000);
 
-	output_section_image_thumbnail(&(p_align_data->sec_data[0]), "thumb0.tif", 0, 20000, 0, 20000);
-	output_section_image_thumbnail(&(p_align_data->sec_data[1]), "thumb1.tif", 0, 20000, 0, 20000);
 
 
+	//output_section_image_affine(&(p_align_data->sec_data[0]), "affine0.tif", 0, 20000, 0, 20000, false);
+	//output_section_image_affine(&(p_align_data->sec_data[1]), "affine1.tif", 0, 20000, 0, 20000, false);
+ 	//output_section_image_affine_elastic(&(p_align_data->sec_data[0]), "elastic0.tif", 0, 20000, 0, 20000, false);
 
-	output_section_image_affine(&(p_align_data->sec_data[0]), "affine0.tif", 0, 20000, 0, 20000, false);
-	output_section_image_affine(&(p_align_data->sec_data[1]), "affine1.tif", 0, 20000, 0, 20000, false);
- 	output_section_image_affine_elastic(&(p_align_data->sec_data[0]), "elastic0.tif", 0, 20000, 0, 20000, false);
-
-	output_section_image_affine_elastic(&(p_align_data->sec_data[1]), "elastic1.tif", 0, 20000, 0, 20000, false);
+	//output_section_image_affine_elastic(&(p_align_data->sec_data[1]), "elastic1.tif", 0, 20000, 0, 20000, false);
  
 
     //output_section_image(&(p_align_data->sec_data[0]), 0,0,40000,40000, "labeled_image0.tif");
