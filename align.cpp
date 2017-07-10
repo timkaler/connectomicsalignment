@@ -773,7 +773,7 @@ void align_execute(align_data_t *p_align_data) {
 	qq += std::string("thumb-elastic-thumb") + std::to_string(1+p_align_data->base_section+1) + std::string(".tif");
 	cv::Mat im1 = output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[1]), qq, 50000, 51000, 50000, 51000);
 	
-	cross_correlation(im2, im1, 100, 100);
+	cross_correlation_simple(im2, im1, 100, 100);
 	matchTemplate(im2, im1);
 //	output_section_image_thumbnail(&(p_align_data->sec_data[0]), "thumb0.tif", 0, 20000, 0, 20000);
 //	output_section_image_thumbnail(&(p_align_data->sec_data[1]), "thumb1.tif", 0, 20000, 0, 20000);

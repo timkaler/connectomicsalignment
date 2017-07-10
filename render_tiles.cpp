@@ -1,4 +1,5 @@
-
+#include <iostream>
+#include <fstream>
 //#include "mesh.h"
 
 static float Dot(cv::Point2f a, cv::Point2f b) {
@@ -572,7 +573,7 @@ cv::Mat output_section_image_affine_elastic_thumbnail(section_data_t* section, s
 				//std::cout << "tile t (" << tile.x_start << "," << tile.y_start << ") (" << tile.x_start << "," <<  tile.y_finish << ") (" <<  tile.x_finish << "," << tile.y_start << ") (" << tile.x_finish << "," << tile.y_finish << ")" << std::endl;
 				unsigned char val =
 	        		tile.p_image->at<unsigned char>((int)(_y/scale_y), (int)(_x/scale_x));
-				std::cout << "value : " << val << ", ";
+				//std::cout << "value : " << val << ", ";
 				section->p_out->at<unsigned char>(y-lower_y, x-lower_x) = val;
 	    	}	
 	  	}
@@ -609,10 +610,10 @@ cv::Mat output_section_image_affine_elastic_thumbnail_to_thumbnail(section_data_
 	for (int i = section->n_tiles; --i>=0;/*i < section->n_tiles; i++*/) {
 	  	tile_data_t tile = section->tiles[i];
 		if(!tile_in_bounds(tile, lower_x, upper_x, lower_y, upper_y)) {
-			std::cout << "tile not in bounds" << std::endl;
+			//std::cout << "tile not in bounds" << std::endl;
 			continue;
 		} else {
-			std::cout << "in bounds" << std::endl;
+			//std::cout << "in bounds" << std::endl;
 		}
 	
     	std::string path = std::string(tile.filepath);
@@ -674,7 +675,16 @@ void matchTemplate(cv::Mat img1, cv::Mat img2) {
     std::cout << "       CCOEFF: " <<        result_CCOEFF.at<float>(0,0) << std::endl;
     std::cout << "CCOEFF_NORMED: " << result_CCOEFF_NORMED.at<float>(0,0) << std::endl;
 
-    
+    std::ofstream myfile;
+    myfile.open ("output.csv", std::ios_base::app);
+	myfile <<        result_SQDIFF.at<float>(0,0) << ","; 
+	myfile << result_SQDIFF_NORMED.at<float>(0,0) << ","; 
+	myfile <<         result_CCORR.at<float>(0,0) << ","; 
+	myfile <<  result_CCORR_NORMED.at<float>(0,0) << ","; 
+	myfile <<        result_CCOEFF.at<float>(0,0) << ","; 
+	myfile << result_CCOEFF_NORMED.at<float>(0,0) << "\n"; 
+	
+    myfile.close();
 }
 
 /*void cross_correlation(std::string filepath1, std::string filepath2, int box_width, int box_height) { */
@@ -816,5 +826,30 @@ void cross_correlation(cv::Mat img1, cv::Mat img2, int box_width, int box_height
 //take a region in global space and a pair of section (for every pair) - require all callers to define coordinaes in global space for overlap
 //check correlation code first (instead of rectangle code)
 //quering patches (tree)
-void cross_correlate_simple(cv::Mat img1, cv::Mat img2, int box_height, int box_width) {
+void cross_correlation_simple(cv::Mat img1, cv::Mat img2, int box_height, int box_width) {
+	cv::Mat box1, box2;	
+	box1.create(box_height, box_width, CV_8UC1);//CV_8UC1
+	box2.create(box_height, box_width, CV_8UC1);
+	int count = 0;
+	for(int i = 0; i <= img1.size().height; i ++) {
+		for(int j = 0; j <= img1.size().width; j ++) {
+            int row = i%box_height;
+            int col = j%box_width;
+            if(i != 0 && j != 0 && row == 0 && col == 0) {
+                /* boxes are filled in and ready to be compared */
+ 
+               matchTemplate(box1, box2);
+				std::string fp1 = "box1-";
+				std::string fp2 = "box2-";
+				fp1 += count;
+				fp2 += count;
+				//cv::imwrite(fp1, box1);
+				//cv::imwrite(fp2, box2);
+				count ++;
+            }
+			box1.at<float>(j%box_height, i%box_width) = img1.at<float>(j, i);
+            box2.at<float>(j%box_height, i%box_width) = img2.at<float>(j, i);
+        }
+    }
+	
 }	

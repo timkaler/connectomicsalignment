@@ -32,7 +32,7 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
       }
     }
   }
-  return;
+  //return;
   // this is going to give us the matches.
   std::vector<tfkMatch> mesh_matches;
   fine_alignment_3d_2(merged_graph, p_align_data,64.0, mesh_matches);
