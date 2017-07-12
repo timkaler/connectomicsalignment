@@ -208,112 +208,6 @@ scale_x = scale_y;
 	}
 	cv::imwrite(filename, (*section->p_out));
 }
-void output_section_image_affine(section_data_t* section, std::string filename, int lower_x, int upper_x, int lower_y, int upper_y, bool thumbnail) {
-    //create new matrix
-	int nrows = upper_y-lower_y; 
-    int ncols = upper_x-lower_x; 
-	section->p_out = new cv::Mat();
-	(*section->p_out).create(nrows, ncols, CV_8UC1);
-    for (int y = 0; y < nrows; y++) {
-      	for (int x = 0; x < ncols; x++) {
-        	section->p_out->at<unsigned char>(y,x) = 0;
-      	}
-    }
- 
-	//loop through tiles
-	for (int i = 0; i < section->n_tiles; i++) {
-	  	tile_data_t tile = section->tiles[i];
-	  	(*tile.p_image) = cv::imread(
-	    tile.filepath,
-	    CV_LOAD_IMAGE_UNCHANGED);
-		
-	
-		for (int _x = 0; _x < 3128; _x++) {
-	    	for (int _y = 0; _y < 2724; _y++) {
-				cv::Point2f p = cv::Point2f(_x, _y);
-				cv::Point2f transformed_p = affine_transform(&tile, p);
-				int x = transformed_p.x;
-				int y = transformed_p.y;
-				if(y >= upper_y || y < lower_y || x >= upper_x || x < lower_x) {
-					continue;
-				}
-				unsigned char val =
-	        		tile.p_image->at<unsigned char>(_y, _x);
-				section->p_out->at<unsigned char>(y-lower_y, x-lower_x) = val;
-	    	}	
-	  	}
-	  	tile.p_image->release();
-	}
-	cv::Mat outImage2 = resize(0.5, *section->p_out);
-	cv::imwrite(filename, outImage2);
-}
-
-void output_section_image_affine_elastic(section_data_t* section, std::string filename, int lower_x, int upper_x, int lower_y, int upper_y, bool thumbnail) {
-    //create new matrix
-	int nrows = upper_y-lower_y; 
-    int ncols = upper_x-lower_x; 
-	section->p_out = new cv::Mat();
-	(*section->p_out).create(nrows, ncols, CV_8UC1);
-    for (int y = 0; y < nrows; y++) {
-      	for (int x = 0; x < ncols; x++) {
-        	section->p_out->at<unsigned char>(y,x) = 0;
-      	}
-    }
-	//apply transform for the coners of the tile - check to see if its actually worth rendering (overallaping with the region)  
-	//loop through tiles
-	for (int i = 0; i < section->n_tiles; i++) {
-	  	tile_data_t tile = section->tiles[i];
-		cv::Point2f c1 = cv::Point2f(tile.x_start, tile.y_start);
-		cv::Point2f c2 = cv::Point2f(tile.x_start, tile.y_finish);
-		cv::Point2f c3 = cv::Point2f(tile.x_finish, tile.y_start);
-		cv::Point2f c4 = cv::Point2f(tile.x_finish, tile.y_finish);
-		c1 = affine_transform(&tile, c1);		
-		c2 = affine_transform(&tile, c2);
-		c3 = affine_transform(&tile, c3);
-		c4 = affine_transform(&tile, c4);
-		if((c1.y >= upper_y || c1.y < lower_y || c1.x >= upper_x || c1.x < lower_x) &&
-			(c2.y >= upper_y || c2.y < lower_y || c2.x >= upper_x || c2.x < lower_x) &&
-			(c3.y >= upper_y || c3.y < lower_y || c3.x >= upper_x || c3.x < lower_x) &&
-			(c4.y >= upper_y || c4.y < lower_y || c4.x >= upper_x || c4.x < lower_x)) {	
-			//printf("tile v (%f, %f)  (%f, %f)  (%f, %f)  (%f, %f) \n", c1.x, c1.y, c2.x, c2.y, c3.x, c3.y, c4.x, c4.y);
-			//continue;
-		} else {
-			printf("tile v (%f, %f)  (%f, %f)  (%f, %f)  (%f, %f) \n", c1.x, c1.y, c2.x, c2.y, c3.x, c3.y, c4.x, c4    .y);
-		}
-	  	(*tile.p_image) = cv::imread(
-	    tile.filepath,
-	    CV_LOAD_IMAGE_UNCHANGED);
-		
-	
-		for (int _x = 0; _x < 3128; _x++) {
-	    	for (int _y = 0; _y < 2724; _y++) {
-				cv::Point2f p = cv::Point2f(_x, _y);
-				cv::Point2f transformed_p = affine_transform(&tile, p);
-				{
-					int x = transformed_p.x;
-					int y = transformed_p.y;
-					if(y >= upper_y + 1000.0 || y < lower_y - 1000.0 || x >= upper_x +1000.0 || x < lower_x - 1000.0) {
-						continue;
-					}
-				}
-				//std::cout << "calling elastic... " << std::endl;
-				transformed_p = elastic_transform(&tile, transformed_p);
-				int x = transformed_p.x;
-				int y = transformed_p.y;
-				if(y >= upper_y || y < lower_y || x >= upper_x || x < lower_x) {
-					continue;
-				}
-				unsigned char val =
-	        		tile.p_image->at<unsigned char>(_y, _x);
-				section->p_out->at<unsigned char>(y-lower_y, x-lower_x) = val;
-	    	}	
-	  	}
-	  	tile.p_image->release();
-	}
-			
-	cv::Mat outImage2 = resize(0.5, *section->p_out);
-	cv::imwrite(filename, outImage2);
-}
 
 float max(float a, float b) {
 	if(a > b) return a;
@@ -345,70 +239,6 @@ float min(float a, float b, float c, float d){
 	} else {
 		return d;
 	}
-}
-struct Point
-{
-    int x;
-    int y;
-};
- 
-// Given three colinear points p, q, r, the function checks if
-// point q lies on line segment 'pr'
-bool onSegment(Point p, Point q, Point r)
-{
-    if (q.x <= max(p.x, r.x) && q.x >= min(p.x, r.x) &&
-        q.y <= max(p.y, r.y) && q.y >= min(p.y, r.y))
-       return true;
- 
-    return false;
-}
- 
-// To find orientation of ordered triplet (p, q, r).
-// The function returns following values
-// 0 --> p, q and r are colinear
-// 1 --> Clockwise
-// 2 --> Counterclockwise
-int orientation(Point p, Point q, Point r)
-{
-    // See http://www.geeksforgeeks.org/orientation-3-ordered-points/
-    // for details of below formula.
-    int val = (q.y - p.y) * (r.x - q.x) -
-              (q.x - p.x) * (r.y - q.y);
- 
-    if (val == 0) return 0;  // colinear
- 
-    return (val > 0)? 1: 2; // clock or counterclock wise
-}
- 
-// The main function that returns true if line segment 'p1q1'
-// and 'p2q2' intersect.
-bool doIntersect(Point p1, Point q1, Point p2, Point q2)
-{
-    // Find the four orientations needed for general and
-    // special cases
-    int o1 = orientation(p1, q1, p2);
-    int o2 = orientation(p1, q1, q2);
-    int o3 = orientation(p2, q2, p1);
-    int o4 = orientation(p2, q2, q1);
- 
-    // General case
-    if (o1 != o2 && o3 != o4)
-        return true;
- 
-    // Special Cases
-    // p1, q1 and p2 are colinear and p2 lies on segment p1q1
-    if (o1 == 0 && onSegment(p1, p2, q1)) return true;
- 
-    // p1, q1 and p2 are colinear and q2 lies on segment p1q1
-    if (o2 == 0 && onSegment(p1, q2, q1)) return true;
- 
-    // p2, q2 and p1 are colinear and p1 lies on segment p2q2
-    if (o3 == 0 && onSegment(p2, p1, q2)) return true;
- 
-     // p2, q2 and q1 are colinear and q1 lies on segment p2q2
-    if (o4 == 0 && onSegment(p2, q1, q2)) return true;
- 
-    return false; // Doesn't fall in any of the above cases
 }
 
 bool tile_in_bounds(tile_data_t tile, int lower_x, int upper_x, int lower_y, int upper_y) {
@@ -448,67 +278,61 @@ bool tile_in_bounds(tile_data_t tile, int lower_x, int upper_x, int lower_y, int
 			return true;
 		}
 		return false; 
-		std::vector<cv::Point2i> a;
-		std::vector<cv::Point2i> b;
-		a.push_back(c1);
-		a.push_back(c2);
-		a.push_back(c3);
-		a.push_back(c4);
-		b.push_back(cv::Point2f(lower_x, lower_y));
-		b.push_back(cv::Point2f(lower_x, upper_y));
-		b.push_back(cv::Point2f(upper_x, lower_y));
-		b.push_back(cv::Point2f(upper_x, upper_y));
+}
 
-		for(int a_i = 0; a_i < 4; a_i ++) {
-			for(int a_j = 0; a_j < 4; a_j ++) {
-				if(a_i == a_j) continue;
-				for(int b_i = 0; b_i < 4; b_i ++) {
-					for(int b_j = 0; b_j < 4; b_j ++) {
-						if(b_j == b_i) continue;
-
-						struct Point p1 = {a[a_i].x, a[a_i].y}, q1 = {a[a_j].x, a[a_j].y};
-						struct Point p2 = {b[b_i].x, a[b_i].y}, q2 = {b[b_j].x, b[b_j].y}; 
-						if(doIntersect(p1, q1, p2, q2)) return true;
-						float x, y;	
-						if(a[a_i].x-a[a_j].x == 0 && b[b_i].x-b[b_j].x == 0) {
-							continue; //(I think) 
-						} else if(a[a_i].x-a[a_j].x == 0) {
-							x = a[a_i].x;
-							float slope_b = (b[b_i].y-b[b_j].y)/(b[b_i].x-b[b_j].x);
-							float intercept_b = b[b_i].y - slope_b*b[b_i].x;
-							y = slope_b*x + intercept_b;
-						} else if(b[b_i].x-b[b_j].x == 0) {
-							x = b[b_i].x;
-							float slope_a = (float)(a[a_i].y-a[a_j].y)/(a[a_i].x-a[a_j].x);
-							float intercept_a = a[a_i].y - slope_a*a[a_i].x;
-							y = slope_a*x + intercept_a;
-						} else {
-							float slope_a = (float)(a[a_i].y-a[a_j].y)/(a[a_i].x-a[a_j].x);
-							float intercept_a = a[a_i].y - slope_a*a[a_i].x;
-							float slope_b = (float)(b[b_i].y-b[b_j].y)/(b[b_i].x-b[b_j].x);
-							float intercept_b = b[b_i].y - slope_b*b[b_i].x;
-							if(slope_a == slope_b) continue;
-							x = (intercept_b - intercept_a)/(slope_a - slope_b);
-							y = slope_a * x + intercept_a;
-							if(y != slope_b * x + intercept_b) {
-	//							std::cout << "ERROR IN SLOPE" << slope_a << " " << intercept_a << " " << slope_b << " " << intercept_b << " " << x << " " << y << std::endl;
-								//exit(0);
-							}
-						}
+cv::Mat output_section_image_affine_elastic(section_data_t* section, std::string filename, int lower_x, int upper_x, int lower_y, int upper_y) {
+    //create new matrix
+	int nrows = upper_y-lower_y; 
+    int ncols = upper_x-lower_x; 
+	section->p_out = new cv::Mat();
+	(*section->p_out).create(nrows, ncols, CV_8UC1);
+    for (int y = 0; y < nrows; y++) {
+      	for (int x = 0; x < ncols; x++) {
+        	section->p_out->at<unsigned char>(y,x) = 0;
+      	}
+    }
+	//apply transform for the coners of the tile - check to see if its actually worth rendering (overallaping with the region)  
+	//loop through tiles
+	for (int i = 0; i < section->n_tiles; i++) {
+	  	tile_data_t tile = section->tiles[i];
+		if(!tile_in_bounds(tile, lower_x, upper_x, lower_y, upper_y)) {
+			//printf("tile v (%f, %f)  (%f, %f)  (%f, %f)  (%f, %f) \n", c1.x, c1.y, c2.x, c2.y, c3.x, c3.y, c4.x, c4.y);
+			continue;
+	  	}
+		(*tile.p_image) = cv::imread(
+	    tile.filepath,
+	    CV_LOAD_IMAGE_UNCHANGED);
+		
 	
-						if((x >= min( a[a_j].x, a[a_i].x) && x <= max(a[a_i].x, a[a_j].x)) &&
-							(y >= min(a[a_j].y, a[a_i].y) && y <= max(a[a_i].y, a[a_j].y)) &&
-							(x >= min(b[b_j].x, b[b_i].x) && x <= max(b[b_i].x, b[b_j].x)) &&
-							(y >= min(b[b_j].y, b[b_i].y) && y <= max(b[b_i].y, b[b_j].y))) {
-							return true;
-						} else {
-	//						std::cout << "not on segment (" << a[a_i].x << "," << a[a_i].y << ") (" << a[a_j].x << "," << a[a_j].y << ")          (" <<  b[b_i].x << "," << b[b_i].y << ") (" << b[b_j].x << "    ," << b[b_j].y << ")" << std::endl;
-						}
+		for (int _x = 0; _x < 3128; _x++) {
+	    	for (int _y = 0; _y < 2724; _y++) {
+				cv::Point2f p = cv::Point2f(_x, _y);
+				cv::Point2f transformed_p = affine_transform(&tile, p);
+				{
+					int x = transformed_p.x;
+					int y = transformed_p.y;
+					if(y >= upper_y + 1000.0 || y < lower_y - 1000.0 || x >= upper_x +1000.0 || x < lower_x - 1000.0) {
+						continue;
 					}
 				}
-			}
-		}
-		return false;
+				//std::cout << "calling elastic... " << std::endl;
+				transformed_p = elastic_transform(&tile, transformed_p);
+				int x = transformed_p.x;
+				int y = transformed_p.y;
+				if(y >= upper_y || y < lower_y || x >= upper_x || x < lower_x) {
+					continue;
+				}
+				unsigned char val =
+	        		tile.p_image->at<unsigned char>(_y, _x);
+				section->p_out->at<unsigned char>(y-lower_y, x-lower_x) = val;
+	    	}	
+	  	}
+	  	tile.p_image->release();
+	}
+			
+	cv::Mat outImage2 = resize(0.1, *section->p_out);
+	cv::imwrite(filename, outImage2);
+	return (*section->p_out);
 }
 
 cv::Mat output_section_image_affine_elastic_thumbnail(section_data_t* section, std::string filename, int lower_x, int upper_x, int lower_y, int upper_y) {
@@ -826,7 +650,14 @@ void cross_correlation(cv::Mat img1, cv::Mat img2, int box_width, int box_height
 //take a region in global space and a pair of section (for every pair) - require all callers to define coordinaes in global space for overlap
 //check correlation code first (instead of rectangle code)
 //quering patches (tree)
+
+//render just the bounding box later 
 void cross_correlation_simple(cv::Mat img1, cv::Mat img2, int box_height, int box_width) {
+    cv::imwrite("img1-test.tif", img1);
+    cv::imwrite("img2-test.tif", img2);
+    return;
+
+
 	cv::Mat box1, box2;	
 	box1.create(box_height, box_width, CV_8UC1);//CV_8UC1
 	box2.create(box_height, box_width, CV_8UC1);
@@ -843,13 +674,19 @@ void cross_correlation_simple(cv::Mat img1, cv::Mat img2, int box_height, int bo
 				std::string fp2 = "box2-";
 				fp1 += count;
 				fp2 += count;
+				fp1 += ".tif";
+				fp2 += ".tif";
 				//cv::imwrite(fp1, box1);
 				//cv::imwrite(fp2, box2);
 				count ++;
             }
-			box1.at<float>(j%box_height, i%box_width) = img1.at<float>(j, i);
-            box2.at<float>(j%box_height, i%box_width) = img2.at<float>(j, i);
+			box1.at<unsigned char>(j%box_height, i%box_width) = img1.at<unsigned char>(j, i);
+            box2.at<unsigned char>(j%box_height, i%box_width) = img2.at<unsigned char>(j, i);
         }
     }
 	
 }	
+//run with downsized (0.1) may increase seperatiojn
+//fit artifcct of thumbnail
+//make grid, if center of grid is in some triangle of elastic mesh, calculate number of pixel boxes that pass the check inside the triangle. mark triangle as good orbad. donn't rember the bad triangles, so we can see the problematic areas in the entire picture. 
+//associate each patch with a single triangle. 

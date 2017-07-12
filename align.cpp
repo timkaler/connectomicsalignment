@@ -766,15 +766,32 @@ void align_execute(align_data_t *p_align_data) {
 		qq += std::string("thumb-elastic-thumb") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
 		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 51000, 50000, 51000);
 	}*/
+	int start_x = 52000;
+	int start_y = 50000;
 	std::string qq ="";	
 	qq += std::string("thumb-elastic-thumb") + std::to_string(p_align_data->base_section+1) + std::string(".tif");
-	cv::Mat im2 = output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[0]), qq, 50000, 51000, 50000, 51000);
+	cv::Mat im2 = output_section_image_affine_elastic(&(p_align_data->sec_data[0]), qq, start_x, start_x + 1000, start_y, start_y + 1000);
 	qq = "";
 	qq += std::string("thumb-elastic-thumb") + std::to_string(1+p_align_data->base_section+1) + std::string(".tif");
-	cv::Mat im1 = output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[1]), qq, 50000, 51000, 50000, 51000);
-	
-	cross_correlation_simple(im2, im1, 100, 100);
-	matchTemplate(im2, im1);
+	cv::Mat im1 = output_section_image_affine_elastic(&(p_align_data->sec_data[1]), qq, start_x, start_x + 1000, start_y, start_y + 1000);
+
+	matchTemplate(im2, im1);	
+	int count = 0;
+	for(int i = 0; i < 10; i ++) {
+		for(int j = 0; j < 10; j ++) {
+			std::string f1 = "";
+			int new_start_x = start_x + i*100;
+			int new_start_y = start_y + j*100;
+			f1 += std::string("1box") + std::to_string(count) + std::string(".tif");
+			im1 = output_section_image_affine_elastic(&(p_align_data->sec_data[0]), f1, new_start_x, new_start_x + 100, new_start_y, new_start_y+100);
+			std::string f2 = "";
+			f2 += std::string("2box") + std::to_string(count) + std::string(".tif");
+			im2 = output_section_image_affine_elastic(&(p_align_data->sec_data[1]), f2, new_start_x, new_start_x+100, new_start_y, new_start_y+100);
+			matchTemplate(im2, im1);
+			count ++;
+		}
+	}
+	//cross_correlation_simple(im2, im1, 100, 100);
 //	output_section_image_thumbnail(&(p_align_data->sec_data[0]), "thumb0.tif", 0, 20000, 0, 20000);
 //	output_section_image_thumbnail(&(p_align_data->sec_data[1]), "thumb1.tif", 0, 20000, 0, 20000);
 
