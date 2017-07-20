@@ -30,7 +30,15 @@ typedef struct {
   cv::Point2f p[3];
   cv::Point2f q[3];
   int id;
+  int numValid;
+  int numInvalid;
 } renderTriangle;
+
+inline bool operator<(const renderTriangle& a, const renderTriangle& b)
+{
+  return a.id < b.id;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 // DEFINES 
 /////////////////////////////////////////////////////////////////////////////////////////

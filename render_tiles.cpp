@@ -203,8 +203,8 @@ cv::Mat output_section_image_affine_elastic(section_data_t* section, std::string
 	  	tile.p_image->release();
 	}
 			
-	cv::Mat outImage2 = resize(0.1, *section->p_out);
-	cv::imwrite(filename, outImage2);
+//	cv::Mat outImage2 = resize(0.1, *section->p_out);
+//	cv::imwrite(filename, outImage2);
 	return (*section->p_out);
 }
 
@@ -275,7 +275,7 @@ cv::Mat output_section_image_affine_elastic_thumbnail(section_data_t* section, s
 	  	}
 	  	tile.p_image->release();
 	}
-	cv::imwrite(filename, (*section->p_out));
+	//cv::imwrite(filename, (*section->p_out));
 	return (*section->p_out);
 }
 
@@ -507,35 +507,49 @@ call find bad triangles:
 
 */
 
-std::set<int> find_bad_triangles(std::vector<renderTriangle> * triangles, cv::Mat * prev_section, int lower_x, int upper_x, int lower_y, int upper_y, int box_width, int box_height) {
-	std::set<int> bad_triangles;
+std::set<renderTriangle> find_bad_triangles(std::vector<renderTriangle> * triangles, section_data_t* prev_section, section_data_t* section, int lower_x, int upper_x, int lower_y, int upper_y, int box_width, int box_height) {
+	std::set<renderTriangle> bad_triangles;
 	int count = 0;
-	for(int i = lower_y; i < upper_y, i += box_height) {
-		for(int j = lower_x; j < upper_x, j += box_width) {
+	for(int i = lower_y; i < upper_y - box_height; i += box_height) {
+		for(int j = lower_x; j < upper_x - box_width; j += box_width) {
 			std::string file1 = std::string("1box") + std::to_string(count) + std::string(".tif");
-			cv::Mat im1 = output_section_image_affine_elastic(section,file, j, j + box_width, i, i + box_height); 
+			cv::Mat im1 = output_section_image_affine_elastic(section,file1, j, j + box_width, i, i + box_height); 
 			std::string file2 = std::string("2box") + std::to_string(count) + std::string(".tif");
-			cv::Mat im2 = output_section_image_affine_elastic(prev_section,file, j, j + box_width, i, i + box_height); 
-			float corr = matchTemaplte(im1, im2);
+			cv::Mat im2 = output_section_image_affine_elastic(prev_section,file2, j, j + box_width, i, i + box_height); 
+			count ++;
+
+			float corr = matchTemplate(im1, im2);
 			cv::Point2f middle((j-box_width)/2, (i-box_height)/2);
-			auto tri = findTriangle(triangles, middle);
-			if(corr < 0.1) {
-				triangles[0].numValid ++;
+			auto tri = findTriangle(triangles, middle); //this is super slow prob
+			std::cout << "triangle ID " << (*triangles)[0].id << " points " << (*triangles)[0].p[0] 
+				<< " " << (*triangles)[0].p[1] << " " << (*triangles)[0].p[2] << std::endl;
+			std::cout << "mid " << middle.x << " " << middle.y << std::endl;
+			if(!std::get<0>(tri)) {
+				std::cout << "TRIANGLE NOT FOUND " << middle.x << " " << middle.y << std::endl;
+				exit(0);
+			}
+			if(corr > 0.1) {
+				(*triangles)[0].numValid ++;
 			} else {
-				triangles[0].numInvalid ++;
+				(*triangles)[0].numInvalid ++;
 			}
 		}
 	}
 	for(int i = 0; i < triangles->size(); i ++) {
+		if((*triangles)[i].numValid > 0 || (*triangles)[i].numInvalid > 0) {
+			std::cout << "triangle valid " << (*triangles)[i].numValid << " invalid " << (*triangles)[i].numInvalid << std::endl;
+		}
 		if((*triangles)[i].numValid < (*triangles)[i].numInvalid) {
-			bad_triangles.insert((*triangles)[i].id);
+			renderTriangle t = (*triangles)[i];
+			bad_triangles.insert(t);
 		}
 	}
+	std::cout << " completed find bad triangles method" << std::endl;
 	return bad_triangles;
-
 }
 
-cv::Mat output_section_image_affine_elastic_error(cv::Mat * prev_section, section_data_t* section, std::string filename, int lower_x, int upper_x, int lower_y, int upper_y, int box_height, int box_width, float threshold) {
+	
+cv::Mat output_section_image_affine_elastic_error(section_data_t* prev_section, section_data_t* section, std::string filename, int lower_x, int upper_x, int lower_y, int upper_y, int box_height, int box_width, float threshold) {
     //create new matrix
 	std::cout << "called error method " << std::endl;
 	int nrows = upper_y-lower_y; 
@@ -551,17 +565,24 @@ cv::Mat output_section_image_affine_elastic_error(cv::Mat * prev_section, sectio
 //	rendered_point points[nrows][ncols];
 	//apply transform for the coners of the tile - check to see if its actually worth rendering (overallaping with the region)  
 	//loop through tiles
-	int num_triangles = 0;
 	std::cout << "here1" << std::endl;
-	std::vector<std::vector<renderTriangle> > triangles;
-
-	std::set<int> bad_triangles = find_bad_triangles(triangles, prev_section, section, lower_x, upper_x, lower_y, upper_y, box_height, box_width);	
+	std::vector<renderTriangle> triangles;
 	for (int i = 0; i < section->n_tiles; i++) {
 	  	tile_data_t tile = section->tiles[i];
-		triangles.push_back((*tile.mesh_triangles));		
-		num_triangles += tile.mesh_triangles->size();
+		std::cout << "num mesh triangles " << tile.mesh_triangles->size() << std::endl;
+		for(int j = 0; j < tile.mesh_triangles->size(); j ++) {
+			(*tile.mesh_triangles)[j].id = triangles.size();
+			(*tile.mesh_triangles)[j].numValid = 0;
+			(*tile.mesh_triangles)[j].numInvalid = 0;
+			triangles.push_back((*tile.mesh_triangles)[j]);
+		}
+	}	
+	std::set<renderTriangle> bad_triangles = find_bad_triangles(&triangles, prev_section, section, lower_x, upper_x, lower_y, upper_y, box_height, box_width);	
+
+	/* do the actual rendering */
+	for (int i = 0; i < section->n_tiles; i++) {
+	  	tile_data_t tile = section->tiles[i];
 		if(!tile_in_bounds(tile, lower_x, upper_x, lower_y, upper_y)) {
-			//printf("tile v (%f, %f)  (%f, %f)  (%f, %f)  (%f, %f) \n", c1.x, c1.y, c2.x, c2.y, c3.x, c3.y, c4.x, c4.y);
 			continue;
 	  	}
 
@@ -581,10 +602,9 @@ cv::Mat output_section_image_affine_elastic_error(cv::Mat * prev_section, sectio
 						continue;
 					}
 				}
-				//std::cout << "calling elastic... " << std::endl;
-
-
-                bool bad_triangle = is_bad_triangle(); // TODO
+				findTriangle(tile.mesh_triangles, p);
+				renderTriangle tri = (*tile.mesh_triangles)[0];
+                bool bad_triangle = bad_triangles.find(tri) != bad_triangles.end(); // TODO
 				transformed_p = elastic_transform(&tile, transformed_p);
 				int x = transformed_p.x;
 				int y = transformed_p.y;
@@ -597,71 +617,13 @@ cv::Mat output_section_image_affine_elastic_error(cv::Mat * prev_section, sectio
                   val = 255;
                 }
 				section->p_out->at<unsigned char>(y-lower_y, x-lower_x) = val;
-				std::cout << ncols << " " << y-lower_y << " " << x-lower_x << std::endl;
+//				std::cout << ncols << " " << y-lower_y << " " << x-lower_x << std::endl;
 				point_to_tile[y-lower_y][x-lower_x] = i;
 	    	}	
 	  	}
 		std::cout << " tile " << i << std::endl;
 	  	tile.p_image->release();
 	}
-	std::cout << "end of that thing" << std::endl;	
-	int num_valid[num_triangles];
-	for(int i = 0; i < num_triangles; i ++) {
-		num_valid[i] = 0;
-	}
-	std::cout << "here here here" << std::endl;	
-    printf("Trying to allocate %d integers\n", nrows*ncols);
-	int** point_to_triangle = (int**) malloc(ncols);
-    for (int i = 0; i < ncols; i++) {
-	  point_to_triangle[i] = (int*) malloc(nrows);
-    }
-	std::cout << "here here here" << std::endl;
-	cv::Mat box1, box2;	
-	box1.create(box_height, box_width, CV_8UC1);
-	std::cout << "here here here" << std::endl;
-	box2.create(box_height, box_width, CV_8UC1);
-	int num_boxes = 0;
-	std::cout << "here here here" << std::endl;
-	for(int x = 0; x < nrows; x ++){
-		for(int y = 0; y < ncols; y ++) {
-			std::cout << "HELLO " << x << " " << y << std::endl;
-            int row = x%box_height;
-            int col = y%box_width;
-            if(y != 0 && x != 0 && row == 0 && col == 0) {
-                /* boxes are filled in and ready to be compared */
-                float corr =  matchTemplate(box1, box2);
-				std::cout << "ITERATION " << y << " , " << x << std::endl;
-				cv::imwrite("img1-test.tif", box1);
-				cv::imwrite("img2-test.tif", box2);
-				if(corr > threshold) {
-					cv::Point2f middle((y-box_width)/2, (x-box_height)/2);
-					int tile_index = point_to_tile[y][x];
-					std::cout << "tile index: " << tile_index << " " << triangles.size() << std::endl;
-					auto find_triangle = findTriangle(&(triangles[tile_index]), middle); //should move its triangle to the front
-					std::cout << "size: " << triangles[tile_index].size() << std::endl;
-					num_valid[triangles[tile_index][0].id] = num_valid[triangles[tile_index][0].id] + 1;
-					point_to_triangle[y][x] = triangles[tile_index][0].id;
-				}
-				num_boxes ++;
-			}
-			std::cout << "width " << section->p_out->size().width << " height " << section->p_out->size().height << " " << y << " " << x << std::endl;
-			box1.at<unsigned char>(y%box_width, x%box_height) = section->p_out->at<unsigned char>(y, x);
-            box2.at<unsigned char>(y%box_width, x%box_height) = prev_section->at<unsigned char>(y, x);
-        }
-    }		
-	for(int y = 0; y < nrows; y ++) {
-		for(int x = 0; x < ncols; x ++) {
-			cv::Point2f p(y,x);
-			std::cout << " TRIANGLE ITERATION " << y << " " << x << std::endl;
-			int triangle_index = point_to_triangle[x][y];
-			if(num_valid[triangle_index] > num_boxes/(num_triangles*2)) {
-				int hhhh = num_boxes/(num_triangles* 2);
-				std::cout << "invalid point1 " << num_valid[triangle_index]  << " " << hhhh << std::endl;
-				section->p_out->at<unsigned char>(x,y) = 0;
-			}
-		}
-	}
-	cv::Mat outImage2 = resize(1, *section->p_out);
-	cv::imwrite(filename, outImage2);
+	cv::imwrite(filename, (*section->p_out));
 	return (*section->p_out);
 }

@@ -768,50 +768,19 @@ void align_execute(align_data_t *p_align_data) {
 	}*/
 	int start_x = 52000;
 	int start_y = 50000;
+	int dimention = 10000;
 	std::string qq ="";	
 	qq += std::string("thumb-elastic-thumb") + std::to_string(p_align_data->base_section+1) + std::string(".tif");
-	cv::Mat im2 = output_section_image_affine_elastic(&(p_align_data->sec_data[0]), qq, start_x, start_x + 1000, start_y, start_y + 1000);
+	cv::Mat im2 = output_section_image_affine_elastic(&(p_align_data->sec_data[0]), qq, start_x, start_x + dimention, start_y, start_y + dimention);
 	qq = "";
 	qq += std::string("thumb-elastic-thumb") + std::to_string(1+p_align_data->base_section+1) + std::string(".tif");
-	cv::Mat im1 = output_section_image_affine_elastic(&(p_align_data->sec_data[1]), qq, start_x, start_x + 1000, start_y, start_y + 1000);
+	cv::Mat im1 = output_section_image_affine_elastic(&(p_align_data->sec_data[1]), qq, start_x, start_x + dimention, start_y, start_y + dimention);
 	matchTemplate(im2, im1);	
 
 	qq = "";	
 	qq += std::string("error-thumb-elastic-thumb") + std::to_string(1+p_align_data->base_section+1) + std::string(".tif");
-	output_section_image_affine_elastic_error(&im2, &(p_align_data->sec_data[1]), qq, start_x, start_x + 1000, start_y, start_y + 1000, 100, 100, 0.1);
+	output_section_image_affine_elastic_error(&(p_align_data->sec_data[0]), &(p_align_data->sec_data[1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 100, 100, 0.1);
 	
-
-/*
-	int count = 0;
-	for(int i = 0; i < 10; i ++) {
-		for(int j = 0; j < 10; j ++) {
-			std::string f1 = "";
-			int new_start_x = start_x + i*100;
-			int new_start_y = start_y + j*100;
-			f1 += std::string("1box") + std::to_string(count) + std::string(".tif");
-			im1 = output_section_image_affine_elastic(&(p_align_data->sec_data[0]), f1, new_start_x, new_start_x + 100, new_start_y, new_start_y+100);
-			std::string f2 = "";
-			f2 += std::string("2box") + std::to_string(count) + std::string(".tif");
-			im2 = output_section_image_affine_elastic(&(p_align_data->sec_data[1]), f2, new_start_x, new_start_x+100, new_start_y, new_start_y+100);
-			matchTemplate(im2, im1);
-			count ++;
-		}
-	}*/
-	//cross_correlation_simple(im2, im1, 100, 100);
-//	output_section_image_thumbnail(&(p_align_data->sec_data[0]), "thumb0.tif", 0, 20000, 0, 20000);
-//	output_section_image_thumbnail(&(p_align_data->sec_data[1]), "thumb1.tif", 0, 20000, 0, 20000);
-
-
-
-	//output_section_image_affine(&(p_align_data->sec_data[0]), "affine0.tif", 0, 20000, 0, 20000, false);
-	//output_section_image_affine(&(p_align_data->sec_data[1]), "affine1.tif", 0, 20000, 0, 20000, false);
- 	//output_section_image_affine_elastic(&(p_align_data->sec_data[0]), "elastic0.tif", 0, 20000, 0, 20000, false);
-
-	//output_section_image_affine_elastic(&(p_align_data->sec_data[1]), "elastic1.tif", 0, 20000, 0, 20000, false);
- 
-
-    //output_section_image(&(p_align_data->sec_data[0]), 0,0,40000,40000, "labeled_image0.tif");
-    //output_section_image(&(p_align_data->sec_data[1]), 0,0,40000,40000, "labeled_image1.tif");
 
     STOP_TIMER(&timer, "compute_tile_matches time:");
     STOP_TIMER(&t_timer, "t_total-time:");
