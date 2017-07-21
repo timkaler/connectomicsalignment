@@ -768,7 +768,7 @@ void align_execute(align_data_t *p_align_data) {
 	}*/
 	int start_x = 52000;
 	int start_y = 50000;
-	int dimention = 10000;
+	int dimention = 1000;
 	std::string qq ="";	
 	qq += std::string("thumb-elastic-thumb") + std::to_string(p_align_data->base_section+1) + std::string(".tif");
 	cv::Mat im2 = output_section_image_affine_elastic(&(p_align_data->sec_data[0]), qq, start_x, start_x + dimention, start_y, start_y + dimention);
@@ -791,4 +791,4 @@ void align_execute(align_data_t *p_align_data) {
 // void testcv()
 // {
 //   //test_minfilter();
-// }
+}

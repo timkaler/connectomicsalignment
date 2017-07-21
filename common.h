@@ -29,14 +29,12 @@
 typedef struct {
   cv::Point2f p[3];
   cv::Point2f q[3];
-  int id;
-  int numValid;
-  int numInvalid;
+  std::pair<int, int> key;
 } renderTriangle;
 
 inline bool operator<(const renderTriangle& a, const renderTriangle& b)
 {
-  return a.id < b.id;
+  return a.key.second < b.key.second;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////

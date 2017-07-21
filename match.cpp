@@ -788,6 +788,7 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
             r_tri.q[0] = (*vd->section_data->mesh)[tri.index1]; 
             r_tri.q[1] = (*vd->section_data->mesh)[tri.index2]; 
             r_tri.q[2] = (*vd->section_data->mesh)[tri.index3];
+			r_tri.key = std::make_pair(vd->z, j);
             if (tri_added_set.find(j) == tri_added_set.end()) {
               tri_added_set.insert(j);
               mesh_triangles->push_back(r_tri);

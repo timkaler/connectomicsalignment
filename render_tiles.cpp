@@ -66,7 +66,7 @@ cv::Point2f elastic_transform(tile_data_t *t, cv::Point2f point) {
 	std::vector<renderTriangle>*mesh_triangles = t->mesh_triangles;
 	auto  foundTriangle = findTriangle(mesh_triangles, point);
 	if(!std::get<0>(foundTriangle)) {
-		std::cout << " TRIANGLE NOT FOUND " << std::endl;
+		std::cout << " elastic TRIANGLE NOT FOUND " << std::endl;
 		return point;
 	}
 	renderTriangle tri = (*mesh_triangles)[0];	
@@ -507,9 +507,11 @@ call find bad triangles:
 
 */
 
-std::set<renderTriangle> find_bad_triangles(std::vector<renderTriangle> * triangles, section_data_t* prev_section, section_data_t* section, int lower_x, int upper_x, int lower_y, int upper_y, int box_width, int box_height) {
-	std::set<renderTriangle> bad_triangles;
+std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * triangles, section_data_t* prev_section, section_data_t* section, int lower_x, int upper_x, int lower_y, int upper_y, int box_width, int box_height) {
+	std::set<std::pair<int, int> > bad_triangles;
 	int count = 0;
+	std::map<std::pair<int, int>, int>  num_valid;
+	std::map<std::pair<int, int>, int>  num_invalid;
 	for(int i = lower_y; i < upper_y - box_height; i += box_height) {
 		for(int j = lower_x; j < upper_x - box_width; j += box_width) {
 			std::string file1 = std::string("1box") + std::to_string(count) + std::string(".tif");
@@ -519,29 +521,33 @@ std::set<renderTriangle> find_bad_triangles(std::vector<renderTriangle> * triang
 			count ++;
 
 			float corr = matchTemplate(im1, im2);
-			cv::Point2f middle((j-box_width)/2, (i-box_height)/2);
+	
+			cv::Point2f middle(j-box_width/2, i-box_height/2);
 			auto tri = findTriangle(triangles, middle); //this is super slow prob
-			std::cout << "triangle ID " << (*triangles)[0].id << " points " << (*triangles)[0].p[0] 
-				<< " " << (*triangles)[0].p[1] << " " << (*triangles)[0].p[2] << std::endl;
-			std::cout << "mid " << middle.x << " " << middle.y << std::endl;
 			if(!std::get<0>(tri)) {
 				std::cout << "TRIANGLE NOT FOUND " << middle.x << " " << middle.y << std::endl;
-				exit(0);
+				//exit(0);
 			}
-			if(corr > 0.1) {
-				(*triangles)[0].numValid ++;
+			std::pair<int, int> key = (*triangles)[0].key;
+			if(num_valid.find(key) == num_valid.end()) {
+				num_valid[key] = 0;
+				num_invalid[key] = 0;
+			}
+			if(corr > 0.5) {
+				num_valid[key] = num_valid[key] + 1; 
 			} else {
-				(*triangles)[0].numInvalid ++;
+				num_invalid[key] = num_invalid[key] + 1;
 			}
 		}
 	}
 	for(int i = 0; i < triangles->size(); i ++) {
-		if((*triangles)[i].numValid > 0 || (*triangles)[i].numInvalid > 0) {
-			std::cout << "triangle valid " << (*triangles)[i].numValid << " invalid " << (*triangles)[i].numInvalid << std::endl;
+		std::pair<int, int> key = (*triangles)[i].key;
+		if(num_invalid[key] > 0 || num_valid[key] > 0) {
+			std::cout << "triangle valid " << num_valid[key] << " invalid " << num_invalid[key] << std::endl;
 		}
-		if((*triangles)[i].numValid < (*triangles)[i].numInvalid) {
+		if(num_valid[key] < num_invalid[key]) {
 			renderTriangle t = (*triangles)[i];
-			bad_triangles.insert(t);
+			bad_triangles.insert(t.key);
 		}
 	}
 	std::cout << " completed find bad triangles method" << std::endl;
@@ -567,24 +573,28 @@ cv::Mat output_section_image_affine_elastic_error(section_data_t* prev_section, 
 	//loop through tiles
 	std::cout << "here1" << std::endl;
 	std::vector<renderTriangle> triangles;
-	for (int i = 0; i < section->n_tiles; i++) {
-	  	tile_data_t tile = section->tiles[i];
-		std::cout << "num mesh triangles " << tile.mesh_triangles->size() << std::endl;
-		for(int j = 0; j < tile.mesh_triangles->size(); j ++) {
-			(*tile.mesh_triangles)[j].id = triangles.size();
-			(*tile.mesh_triangles)[j].numValid = 0;
-			(*tile.mesh_triangles)[j].numInvalid = 0;
-			triangles.push_back((*tile.mesh_triangles)[j]);
-		}
-	}	
-	std::set<renderTriangle> bad_triangles = find_bad_triangles(&triangles, prev_section, section, lower_x, upper_x, lower_y, upper_y, box_height, box_width);	
-
-	/* do the actual rendering */
+	std::set<std::pair<int,int> > added_triangles;
 	for (int i = 0; i < section->n_tiles; i++) {
 	  	tile_data_t tile = section->tiles[i];
 		if(!tile_in_bounds(tile, lower_x, upper_x, lower_y, upper_y)) {
 			continue;
 	  	}
+		std::cout << "num mesh triangles " << tile.mesh_triangles->size() << std::endl;
+		for(int j = 0; j < tile.mesh_triangles->size(); j ++) {
+			if(added_triangles.find((*tile.mesh_triangles)[j].key) == added_triangles.end()) {
+				triangles.push_back((*tile.mesh_triangles)[j]);
+				added_triangles.insert((*tile.mesh_triangles)[j].key);
+			}
+		}
+	}	
+	std::cout << "Number of triangles: " << triangles.size() << std::endl;
+
+	std::set<std::pair<int, int> > bad_triangles = find_bad_triangles(&triangles, prev_section, section, lower_x, upper_x, lower_y, upper_y, box_height, box_width);	
+
+	/* do the actual rendering */
+	for (int i = 0; i < section->n_tiles; i++) {
+	  	tile_data_t tile = section->tiles[i];
+		if(!tile_in_bounds(tile, lower_x, upper_x, lower_y, upper_y)) {
 
 		(*tile.p_image) = cv::imread(
 	    tile.filepath,
@@ -604,7 +614,7 @@ cv::Mat output_section_image_affine_elastic_error(section_data_t* prev_section, 
 				}
 				findTriangle(tile.mesh_triangles, p);
 				renderTriangle tri = (*tile.mesh_triangles)[0];
-                bool bad_triangle = bad_triangles.find(tri) != bad_triangles.end(); // TODO
+                bool bad_triangle = bad_triangles.find(tri.key) != bad_triangles.end(); // TODO
 				transformed_p = elastic_transform(&tile, transformed_p);
 				int x = transformed_p.x;
 				int y = transformed_p.y;
@@ -627,3 +637,7 @@ cv::Mat output_section_image_affine_elastic_error(section_data_t* prev_section, 
 	cv::imwrite(filename, (*section->p_out));
 	return (*section->p_out);
 }
+//disable elastic transform (and check how it looks)
+//try switching to thumbnails (don't overcomplicate debugging) 
+//just make filter really strict 
+
