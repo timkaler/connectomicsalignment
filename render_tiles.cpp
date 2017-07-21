@@ -595,7 +595,8 @@ cv::Mat output_section_image_affine_elastic_error(section_data_t* prev_section, 
 	for (int i = 0; i < section->n_tiles; i++) {
 	  	tile_data_t tile = section->tiles[i];
 		if(!tile_in_bounds(tile, lower_x, upper_x, lower_y, upper_y)) {
-
+			continue;
+		}
 		(*tile.p_image) = cv::imread(
 	    tile.filepath,
 	    CV_LOAD_IMAGE_UNCHANGED);
