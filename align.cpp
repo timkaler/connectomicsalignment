@@ -771,15 +771,20 @@ void align_execute(align_data_t *p_align_data) {
 	int dimention = 2000;
 	std::string qq ="";	
 	qq += std::string("thumb-elastic-thumb") + std::to_string(p_align_data->base_section+1) + std::string(".tif");
-	cv::Mat im2 = output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[0]), qq, start_x, start_x + dimention, start_y, start_y + dimention);
+	cv::Mat im2 = render(&(p_align_data->sec_data[0]), qq, start_x, start_x + dimention, start_y, start_y + dimention, THUMBNAIL, true);
 	qq = "";
 	qq += std::string("thumb-elastic-thumb") + std::to_string(1+p_align_data->base_section+1) + std::string(".tif");
-	cv::Mat im1 = output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[1]), qq, start_x, start_x + dimention, start_y, start_y + dimention);
+	cv::Mat im1 = render(&(p_align_data->sec_data[1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, THUMBNAIL, true);
+
+	qq = "";
+	qq += std::string("new-elastic-thumb") + std::to_string(1+p_align_data->base_section+1) + std::string(".tif");
+	cv::Mat im3 = render(&(p_align_data->sec_data[1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, FULL, true);
+	
 	//matchTemplate(im2, im1);	
 
 	qq = "";	
 	qq += std::string("error-thumb-elastic-thumb") + std::to_string(1+p_align_data->base_section+1) + std::string(".tif");
-	//output_section_image_affine_elastic_error(&(p_align_data->sec_data[0]), &(p_align_data->sec_data[1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 100, 100);
+	render_error(&(p_align_data->sec_data[0]), &(p_align_data->sec_data[1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 100, 100, FULL);
 	
 
     STOP_TIMER(&timer, "compute_tile_matches time:");
