@@ -1,4 +1,5 @@
 #include <iostream>
+
 #include <fstream>
 //#include "mesh.h"
 
@@ -506,7 +507,7 @@ std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * 
 				num_valid[key] = 0;
 				num_invalid[key] = 0;
 			}
-			if(corr > 0.5) {
+			if(corr > 0.1) {
 				num_valid[key] = num_valid[key] + 1; 
 			} else {
 				num_invalid[key] = num_invalid[key] + 1;
@@ -587,7 +588,7 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 	bad_triangles = find_bad_triangles(&triangles, prev_section, section, input_lower_x, input_upper_x, input_lower_y, input_upper_y, box_height, box_width, res);	
 	
 	std::cout << "fhidjfaiosd Number of triangles: " << triangles.size() << std::endl;
-
+	
 	section->p_out = new cv::Mat();
 	(*section->p_out).create(nrows, ncols, CV_8UC1);
     for (int y = 0; y < nrows; y++) {
@@ -595,7 +596,7 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
         	section->p_out->at<unsigned char>(y,x) = -1;
       	}
     }
-		
+	std::cout << nrows << " " << ncols << std::endl;		
 	for (int i = section->n_tiles; --i>=0;/*i < section->n_tiles; i++*/) {
 	  	tile_data_t tile = section->tiles[i];
 
@@ -621,7 +622,7 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 	    	for (int _y = 0; _y < (*tile.p_image).size().height; _y++) {
 				cv::Point2f p = cv::Point2f(_x*scale_x, _y*scale_y);
 				cv::Point2f transformed_p = affine_transform(&tile, p);
-				//std::cout << "calling elastic... " << std::endl;
+				std::cout << "calling elastic... " << std::endl;
 				transformed_p = elastic_transform(&tile, transformed_p);
 				
 				renderTriangle tri = (*tile.mesh_triangles)[0]; //should have the triangle its in be correct
@@ -631,7 +632,7 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 				int y = (int)(transformed_p.y/scale_y + 0.5);
 				unsigned char val = tile.p_image->at<unsigned char>(_y, _x);
 				if(bad_triangle) {
-					val = 0;
+					val = 255;
 				}				
 				if(y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
 					section->p_out->at<unsigned char>(y-lower_y, x-lower_x) = val;
@@ -647,6 +648,7 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 			}
       	}
     }
+	std::cout << "finished " << std::endl;
 	cv::imwrite(filename, (*section->p_out));
 	return (*section->p_out);
 }
