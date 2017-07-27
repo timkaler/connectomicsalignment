@@ -4,6 +4,7 @@
 //#include "mesh.h"
 
 enum Resolution {THUMBNAIL, FULL};
+enum Averaging {VOTING, GEOMETRIC};
 
 static float Dot(cv::Point2f a, cv::Point2f b) {
   return a.x*b.x + a.y*b.y;
@@ -170,7 +171,6 @@ cv::Mat render(section_data_t* section, std::string filename, int input_lower_x,
 		scale_x = (double)(img.size().width)/thumbnail_img.size().width;
     	scale_y = (double)(img.size().height)/thumbnail_img.size().height;
 
-    	std::cout << " render SCALE OF THUMBNAIL: " << scale_x << " " << scale_y  << std::endl;
 
 		//create new matrix
 		lower_y = (int)(input_lower_y/scale_y + 0.5);
@@ -224,7 +224,6 @@ cv::Mat render(section_data_t* section, std::string filename, int input_lower_x,
 	    	for (int _y = 0; _y < (*tile.p_image).size().height; _y++) {
 				cv::Point2f p = cv::Point2f(_x*scale_x, _y*scale_y);
 				cv::Point2f transformed_p = affine_transform(&tile, p);
-				//std::cout << "calling elastic... " << std::endl;
 				transformed_p = elastic_transform(&tile, transformed_p);
 				int x = (int)(transformed_p.x/scale_x + 0.5);
 				int y = (int)(transformed_p.y/scale_y + 0.5);
@@ -255,7 +254,6 @@ cv::Mat render(section_data_t* section, std::string filename, int input_lower_x,
 float matchTemplate(cv::Mat img1, cv::Mat img2) {
     cv::Mat result_SQDIFF, result_SQDIFF_NORMED, result_CCORR, result_CCORR_NORMED,
         result_CCOEFF, result_CCOEFF_NORMED;
-    std::cout << "called match template" << std::endl; 
     cv::matchTemplate(img1, img2, result_SQDIFF, CV_TM_SQDIFF);
     cv::matchTemplate(img1, img2, result_SQDIFF_NORMED, CV_TM_SQDIFF_NORMED);
     cv::matchTemplate(img1, img2, result_CCORR, CV_TM_CCORR);
@@ -263,14 +261,14 @@ float matchTemplate(cv::Mat img1, cv::Mat img2) {
     cv::matchTemplate(img1, img2, result_CCOEFF, CV_TM_CCOEFF);
     cv::matchTemplate(img1, img2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
    
-    std::cout << "---------- MATCH TEMPLATE RESULTS (image size: " << img1.size().width << " " <<
-        img1.size().height << " " << img2.size().width << " " << img2.size().height << ") -----------" << std::endl;
-    std::cout << "       SQDIFF: " <<        result_SQDIFF.at<float>(0,0) << std::endl;
-    std::cout << "SQDIFF_NORMED: " << result_SQDIFF_NORMED.at<float>(0,0) << std::endl;
-    std::cout << "        CCORR: " <<         result_CCORR.at<float>(0,0) << std::endl;
-    std::cout << " CCORR_NORMED: " <<  result_CCORR_NORMED.at<float>(0,0) << std::endl;
-    std::cout << "       CCOEFF: " <<        result_CCOEFF.at<float>(0,0) << std::endl;
-    std::cout << "CCOEFF_NORMED: " << result_CCOEFF_NORMED.at<float>(0,0) << std::endl;
+    //std::cout << "---------- MATCH TEMPLATE RESULTS (image size: " << img1.size().width << " " <<
+    //    img1.size().height << " " << img2.size().width << " " << img2.size().height << ") -----------" << std::endl;
+    //std::cout << "       SQDIFF: " <<        result_SQDIFF.at<float>(0,0) << std::endl;
+    //std::cout << "SQDIFF_NORMED: " << result_SQDIFF_NORMED.at<float>(0,0) << std::endl;
+    //std::cout << "        CCORR: " <<         result_CCORR.at<float>(0,0) << std::endl;
+    //std::cout << " CCORR_NORMED: " <<  result_CCORR_NORMED.at<float>(0,0) << std::endl;
+    //std::cout << "       CCOEFF: " <<        result_CCOEFF.at<float>(0,0) << std::endl;
+    //std::cout << "CCOEFF_NORMED: " << result_CCOEFF_NORMED.at<float>(0,0) << std::endl;
 
     /*std::ofstream myfile;
     myfile.open ("output.csv", std::ios_base::app);
@@ -281,188 +279,11 @@ float matchTemplate(cv::Mat img1, cv::Mat img2) {
 	myfile <<        result_CCOEFF.at<float>(0,0) << ","; 
 	myfile << result_CCOEFF_NORMED.at<float>(0,0) << "\n"; 	
     myfile.close(); */
-	std::cout << "end of match template " << std::endl;
 	return result_CCOEFF_NORMED.at<float>(0,0);
 }
 
-/*void cross_correlation(std::string filepath1, std::string filepath2, int box_width, int box_height) { */
-
-void cross_correlation(cv::Mat img1, cv::Mat img2, int box_width, int box_height) {
-	//cv::Mat img1 = cv::imread(filepath1,CV_LOAD_IMAGE_UNCHANGED);
-    //cv::Mat img2 = cv::imread(filepath2,CV_LOAD_IMAGE_UNCHANGED);
-	
-	int upper_row1 = -1;
-	int lower_row1 = -1;
-	int upper_col1 = -1;
-	int lower_col1 = -1;
-    int upper_row2= -1;
-    int lower_row2= -1;
-    int upper_col2 = -1;
-    int lower_col2 = -1;
-	
-    /* lower bound row for image 1*/
-	for(int i = 0; i < img1.size().height; i ++) {
-		bool blank = false;
-		for(int j = 0; j < img1.size().width; j ++) {
-			if(img1.at<float>(i, j) < 0) blank = true;
-		}
-        if(!blank) {
-            lower_row1 = i;
-            break;
-        }
-	}
-    /* upper bound row for image 1*/
-    for(int i = img1.size().height; i >= 0; i --) {
-        bool blank = false;
-        for(int j = 0; j < img1.size().width; j ++) {
-            if(img1.at<float>(i, j) < 0) blank = true;
-        }
-        if(!blank) {
-            upper_row1 = i;
-            break;
-        }
-    }
-    /* lower bound col for image 1*/
-    for(int i = 0; i < img1.size().width; i ++) {
-        bool blank = false;
-        for(int j = 0; j < img1.size().height; j ++) {
-            if(img1.at<float>(j, i) < 0) blank = true;
-        }
-        if(!blank) {
-            lower_col1 = i;
-            break;
-        }
-    }
-    /* upper bound col for image 1*/
-    for(int i = img1.size().width; i >= 0; i --) {
-        bool blank = false;
-        for(int j = 0; j < img1.size().height; j ++) {
-            if(img1.at<float>(j, i) < 0) blank = true;
-        }
-        if(!blank) {
-            upper_col1 = i;
-            break;
-        }
-    }
-    /* lower bound row for image 2*/
-    for(int i = 0; i < img2.size().height; i ++) {
-        bool blank = false;
-        for(int j = 0; j < img2.size().width; j ++) {
-            if(img2.at<float>(i, j) < 0) blank = true;
-        }
-        if(!blank) {
-            lower_row2 = i;
-            break;
-        }
-    }
-    /* upper bound row for image 2*/
-    for(int i = img2.size().height; i >= 0; i --) {
-        bool blank = false;
-        for(int j = 0; j < img2.size().width; j ++) {
-            if(img2.at<float>(i, j) < 0) blank = true;
-        }
-        if(!blank) {
-            upper_row2 = i;
-            break;
-        }
-    }
-    /* lower bound col for image 2*/
-    for(int i = 0; i < img2.size().width; i ++) {
-        bool blank = false;
-        for(int j = 0; j < img2.size().height; j ++) {
-            if(img2.at<float>(j, i) < 0) blank = true;
-        }
-        if(!blank) {
-            lower_col2 = i;
-            break;
-        }
-    }
-    /* upper bound col for image 2*/
-    for(int i = img2.size().width; i >= 0; i --) {
-        bool blank = false;
-        for(int j = 0; j < img2.size().height; j ++) {
-            if(img2.at<float>(j, i) < 0) blank = true;
-        }
-        if(!blank) {
-            upper_col2 = i;
-            break;
-        }
-    }
-    if(upper_row1 < 0 || lower_row1 < 0 || upper_col1 < 0 || lower_col1 < 0 ||
-       upper_row2 < 0 || lower_row2 < 0 || upper_col2 < 0 || lower_col2 < 0) {
-        std::cout << "Invalid bounds " << upper_row1 << " " << lower_row1 << "  "
-		<< upper_col1 << " " << lower_col1 << " " << upper_row2 << " " << lower_row2 << " " << upper_col2 << " " << lower_col2 << std::endl;
-    }
-	std::cout << "bounds " << upper_row1 << " " << lower_row1 << "  "
-		<< upper_col1 << " " << lower_col1 << " " << upper_row2 << " " << lower_row2 << " " << upper_col2 << " " << lower_col2 << std::endl;
- 
-	int upper_row = min(upper_row1, upper_row2);
-	int lower_row = max(lower_row1, lower_row2);
-	int upper_col = min(upper_col1, upper_col2);
-	int lower_col = max(lower_col1, lower_col2);
-
-	cv::Mat box1, box2;	
-	box1.create(box_height, box_width, CV_8UC1);
-	box2.create(box_height, box_width, CV_8UC1);
-	for(int i = lower_row; i <= upper_row; i ++) {
-		for(int j = lower_col; j <= upper_col; j ++) {
-            int row = (i - lower_row)%box_height;
-            int col = (j - lower_col)%box_width;
-            if(i != lower_row && j != lower_col && row == 0 && col == 0) {
-                /* boxes are filled in and ready to be compared */
-                matchTemplate(box1, box2);
-            }
-			box1.at<float>(j%box_height, i%box_width) = img1.at<float>(j, i);
-            box2.at<float>(j%box_height, i%box_width) = img2.at<float>(j, i);
-        }
-    }
-	std::cout << "method finished" << std::endl;	
-	cv::Mat result;
-	//cv::matchTemplate	
-}
-//fucntion for same matrix size (to test correlation code)
-//take a region in global space and a pair of section (for every pair) - require all callers to define coordinaes in global space for overlap
-//check correlation code first (instead of rectangle code)
-//quering patches (tree)
-
-//render just the bounding box later 
-void cross_correlation_simple(cv::Mat img1, cv::Mat img2, int box_height, int box_width) {
 
 
-	cv::Mat box1, box2;	
-	box1.create(box_height, box_width, CV_8UC1);//CV_8UC1
-	box2.create(box_height, box_width, CV_8UC1);
-	int count = 0;
-	for(int i = 0; i <= img1.size().height; i ++) {
-		for(int j = 0; j <= img1.size().width; j ++) {
-            int row = i%box_height;
-            int col = j%box_width;
-            if(i != 0 && j != 0 && row == 0 && col == 0) {
-                /* boxes are filled in and ready to be compared */
- 
-               matchTemplate(box1, box2);
-				std::string fp1 = "box1-";
-				std::string fp2 = "box2-";
-				fp1 += count;
-				fp2 += count;
-				fp1 += ".tif";
-				fp2 += ".tif";
-				//cv::imwrite(fp1, box1);
-				//cv::imwrite(fp2, box2);
-				count ++;
-            }
-			box1.at<unsigned char>(j%box_height, i%box_width) = img1.at<unsigned char>(j, i);
-            box2.at<unsigned char>(j%box_height, i%box_width) = img2.at<unsigned char>(j, i);
-        }
-    }
-}
-
-
-
-//run with downsized (0.1) may increase seperatiojn
-//fit artifcct of thumbnail
-//make grid, if center of grid is in some triangle of elastic mesh, calculate number of pixel boxes that pass the check inside the triangle. mark triangle as good orbad. donn't rember the bad triangles, so we can see the problematic areas in the entire picture. 
-//associate each patch with a single triangle. 
 
 
 /*
@@ -477,19 +298,61 @@ call find bad triangles:
 
 */
 
-std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * triangles, section_data_t* prev_section, section_data_t* section, int lower_x, int upper_x, int lower_y, int upper_y, int box_width, int box_height, Resolution res) {
+std::set<std::pair<int, int> > find_bad_triangles_geometric(std::vector<renderTriangle> * triangles, section_data_t* prev_section, section_data_t* section, int lower_x, int upper_x, int lower_y, int upper_y, int box_width, int box_height, Resolution res) {
 	std::set<std::pair<int, int> > bad_triangles;
 	int count = 0;
-	std::map<std::pair<int, int>, int>  num_valid;
-	std::map<std::pair<int, int>, int>  num_invalid;
+	std::map<std::pair<int, int>, float> total_corr;
+	std::map<std::pair<int, int>, int>  total_boxes;
 	std::cout << "called find bad triangles " << std::endl;
 	for(int i = lower_y; i < upper_y - box_height; i += box_height) {
 		for(int j = lower_x; j < upper_x - box_width; j += box_width) {
 			std::string file1 = std::string("1box") + std::to_string(count) + std::string(".tif");
 			std::string file2 = std::string("2box") + std::to_string(count) + std::string(".tif");
 
-			std::cout << "dimentions 1 " << j << " " << (j+box_width) << " " << i << " " << (i+box_height) << std::endl;
-			std::cout << "dimentions 2 " << i << " " << (i+box_width) << " " << i << " " << (i+box_height) << std::endl;
+			cv::Mat im1 = render(section, file1, j, j + box_width, i, i + box_height, res, false);
+			count ++;
+			cv::Mat im2 = render(prev_section, file2, j, j + box_width, i, i + box_height, res, false);
+
+			float corr = matchTemplate(im1, im2);
+	
+			cv::Point2f middle(j-box_width/2, i-box_height/2);
+			auto tri = findTriangle(triangles, middle); //this is super slow prob
+			if(!std::get<0>(tri)) {
+				std::cout << "TRIANGLE NOT FOUND " << middle.x << " " << middle.y << std::endl;
+				//exit(0);
+			}
+			std::pair<int, int> key = (*triangles)[0].key;
+			if(total_corr.find(key) == total_corr.end()) {
+				total_corr[key] = 0;
+				total_boxes[key] = 0;
+			}
+			total_corr[key] += corr;
+			total_boxes[key] ++;
+		}
+	}
+	for(int i = 0; i < triangles->size(); i ++) {
+		std::pair<int, int> key = (*triangles)[i].key;
+		float avg = total_corr[key]/total_boxes[key];
+		if(avg > 0.1) {
+			bad_triangles.insert(key);
+		}
+	}
+	
+	return bad_triangles;
+}
+
+
+
+std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * triangles, section_data_t* prev_section, section_data_t* section, int lower_x, int upper_x, int lower_y, int upper_y, int box_width, int box_height, Resolution res) {
+	std::set<std::pair<int, int> > bad_triangles;
+	int count = 0;
+	std::map<std::pair<int, int>, int>  num_valid;
+	std::map<std::pair<int, int>, int>  num_invalid;
+	for(int i = lower_y; i < upper_y - box_height; i += box_height) {
+		for(int j = lower_x; j < upper_x - box_width; j += box_width) {
+			std::string file1 = std::string("1box") + std::to_string(count) + std::string(".tif");
+			std::string file2 = std::string("2box") + std::to_string(count) + std::string(".tif");
+
 			cv::Mat im1 = render(section, file1, j, j + box_width, i, i + box_height, res, false);
 			count ++;
 			cv::Mat im2 = render(prev_section, file2, j, j + box_width, i, i + box_height, res, false);
@@ -521,16 +384,13 @@ std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * 
 		}
 		if(num_valid[key] < num_invalid[key]) {
 			bad_triangles.insert(key);
-			std::cout << "Inserting bad triangle " << key.first << " " << key.second  << std::endl;
-			std::cout << "       point: " << (*triangles)[i].p[0] << " " << (*triangles)[i].p[1] << " " << (*triangles)[i].p[2] << std::endl;
 		}
 	}
 	
-	std::cout << " completed find bad triangles method" << std::endl;
 	return bad_triangles;
 }
 
-cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, int box_width, int box_height, Resolution res) {
+cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, int box_width, int box_height, Resolution res, Averaging avg_method) {
 
 	std::vector<renderTriangle> triangles;
 	std::set<std::pair<int,int> > added_triangles;
@@ -539,7 +399,6 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 		if(!tile_in_bounds(tile, input_lower_x, input_upper_x, input_lower_y, input_upper_y)) {
 			continue;
 	  	}
-		std::cout << "num mesh triangles " << tile.mesh_triangles->size() << std::endl;
 		for(int j = 0; j < tile.mesh_triangles->size(); j ++) {
 			if(added_triangles.find((*tile.mesh_triangles)[j].key) == added_triangles.end()) {
 				triangles.push_back((*tile.mesh_triangles)[j]);
@@ -562,7 +421,6 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 		scale_x = (double)(img.size().width)/thumbnail_img.size().width;
     	scale_y = (double)(img.size().height)/thumbnail_img.size().height;
 
-    	std::cout << "SCALE OF THUMBNAIL: " << scale_x << " " << scale_y  << std::endl;
 
 		//create new matrix
 		lower_y = (int)(input_lower_y/scale_y + 0.5);
@@ -585,9 +443,13 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 		scale_y = 1;
 	}
 	
-	bad_triangles = find_bad_triangles(&triangles, prev_section, section, input_lower_x, input_upper_x, input_lower_y, input_upper_y, box_height, box_width, res);	
+	if(avg_method == VOTING) {
+		bad_triangles = find_bad_triangles(&triangles, prev_section, section, input_lower_x, input_upper_x, input_lower_y, input_upper_y, box_height, box_width, res);	
+	}
+	if(avg_method == GEOMETRIC) {
+		bad_triangles = find_bad_triangles_geometric(&triangles, prev_section, section, input_lower_x, input_upper_x, input_lower_y, input_upper_y, box_height, box_width, res);
+	}
 	
-	std::cout << "fhidjfaiosd Number of triangles: " << triangles.size() << std::endl;
 	
 	section->p_out = new cv::Mat();
 	(*section->p_out).create(nrows, ncols, CV_8UC1);
@@ -596,7 +458,6 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
         	section->p_out->at<unsigned char>(y,x) = -1;
       	}
     }
-	std::cout << nrows << " " << ncols << std::endl;		
 	for (int i = section->n_tiles; --i>=0;/*i < section->n_tiles; i++*/) {
 	  	tile_data_t tile = section->tiles[i];
 
@@ -622,7 +483,6 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 	    	for (int _y = 0; _y < (*tile.p_image).size().height; _y++) {
 				cv::Point2f p = cv::Point2f(_x*scale_x, _y*scale_y);
 				cv::Point2f transformed_p = affine_transform(&tile, p);
-				std::cout << "calling elastic... " << std::endl;
 				transformed_p = elastic_transform(&tile, transformed_p);
 				
 				renderTriangle tri = (*tile.mesh_triangles)[0]; //should have the triangle its in be correct
@@ -648,7 +508,6 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 			}
       	}
     }
-	std::cout << "finished " << std::endl;
 	cv::imwrite(filename, (*section->p_out));
 	return (*section->p_out);
 }

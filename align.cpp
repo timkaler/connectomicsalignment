@@ -776,7 +776,11 @@ void align_execute(align_data_t *p_align_data) {
 	for(int i = 0; i < 9; i ++) { 
 		qq = "";	
 		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 100, 100, THUMBNAIL);
+		render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 100, 100, THUMBNAIL, VOTING);
+
+		qq = "";	
+		qq += std::string("error-average") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+		render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 100, 100, THUMBNAIL, GEOMETRIC);
 	
 		qq = "";
 		qq += std::string("actual") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
