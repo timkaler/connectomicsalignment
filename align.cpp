@@ -223,7 +223,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
   //}
 
   //for (int sec_id = split_start; sec_id < split_end/*p_align_data->n_sections*/; sec_id++) {
-  for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+  cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
     std::set<int> active_set;
     std::set<int> finished_set;
@@ -660,6 +660,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
 void align_execute(align_data_t *p_align_data) {
     TIMER_VAR(t_timer);
     TIMER_VAR(timer);
+    TFK_TIMER_VAR(timer_render);
     START_TIMER(&t_timer);
 
 
@@ -758,6 +759,11 @@ void align_execute(align_data_t *p_align_data) {
 
     compute_tile_matches(p_align_data, -1);
 
+    
+
+    printf("Starting to do the rendering\n");
+    STOP_TIMER(&timer, "compute_tile_matches time:");
+    TFK_START_TIMER(&timer_render);
 	/*for(int i = 0; i < p_align_data->n_sections; i ++) {
 		std::string ss = "";
         ss += std::string("thumb-elastic-") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
@@ -766,25 +772,32 @@ void align_execute(align_data_t *p_align_data) {
 		qq += std::string("thumb-elastic-thumb") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
 		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 51000, 50000, 51000);
 	}*/
-	int start_x = 52000;
+	int start_x = 50000;
 	int start_y = 50000;
-	int dimention = 4000;
-	std::string qq ="";	
+	//int dimention = 50000;
+        int size_x = 50000;
+        int size_y = 5000;
 
-	
-	//matchTemplate(im2, im1);	
-	for(int i = 0; i < 9; i ++) { 
-		qq = "";	
-		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 100, 100, THUMBNAIL);
-	
+
+	//matchTemplate(im2, im1);
+	for(int i = 0; i < p_align_data->n_sections-1; i ++) {
+	        std::string qq ="";
 		qq = "";
-		qq += std::string("actual") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		render( &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, THUMBNAIL, true);
-	}	
+		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+		cilk_spawn render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
+                             start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, VOTING);
 
-    STOP_TIMER(&timer, "compute_tile_matches time:");
+		//qq = "";
+		//qq += std::string("error-average") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+		//render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 100, 100, THUMBNAIL, GEOMETRIC);
+		std::string qq2 = "";
+		qq2 += std::string("actual") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+		render( &(p_align_data->sec_data[i+1]), qq2, start_x, start_x + size_x, start_y, start_y + size_y, THUMBNAIL, true);
+	}
+        cilk_sync;
+    TFK_STOP_TIMER(&timer_render, "rendering time");
     STOP_TIMER(&t_timer, "t_total-time:");
+    printf("Got to the end of the function\n");
 }
 
 // function for debug purpose only
