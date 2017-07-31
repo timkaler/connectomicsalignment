@@ -304,6 +304,7 @@ std::set<std::pair<int, int> > find_bad_triangles_geometric(std::vector<renderTr
 	std::map<std::pair<int, int>, float> total_corr;
 	std::map<std::pair<int, int>, int>  total_boxes;
 	std::cout << "called find bad triangles " << std::endl;
+	std::cout << "box dimentions: " << box_width << " " << box_height << std::endl;
 	for(int i = lower_y; i < upper_y - box_height; i += box_height) {
 		for(int j = lower_x; j < upper_x - box_width; j += box_width) {
 			std::string file1 = std::string("1box") + std::to_string(count) + std::string(".tif");
