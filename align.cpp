@@ -768,7 +768,8 @@ void align_execute(align_data_t *p_align_data) {
 	}*/
 	int start_x = 52000;
 	int start_y = 50000;
-	int dimention = 4000;
+	int dimention_x = 2000;
+	int dimention_y = 3000;
 	std::string qq ="";	
 
 	
@@ -776,7 +777,7 @@ void align_execute(align_data_t *p_align_data) {
 	for(int i = 0; i < 9; i ++) { 
 		qq = "";	
 		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 300, 300, THUMBNAIL, VOTING);
+		render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention_x, start_y, start_y + dimention_y, 300, 300, THUMBNAIL, VOTING);
 
 //		qq = "";	
 //		qq += std::string("error-average") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
@@ -784,7 +785,7 @@ void align_execute(align_data_t *p_align_data) {
 	
 		qq = "";
 		qq += std::string("actual") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		render( &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, THUMBNAIL, true);
+		render( &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention_x, start_y, start_y + dimention_y, THUMBNAIL, true);
 	}	
 
     STOP_TIMER(&timer, "compute_tile_matches time:");

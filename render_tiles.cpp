@@ -371,7 +371,7 @@ std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * 
 				num_valid[key] = 0;
 				num_invalid[key] = 0;
 			}
-			if(corr > 0.1) {
+			if(corr > 10000) {
 				num_valid[key] = num_valid[key] + 1; 
 			} else {
 				num_invalid[key] = num_invalid[key] + 1;
@@ -445,10 +445,10 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 	}
 	
 	if(avg_method == VOTING) {
-		bad_triangles = find_bad_triangles(&triangles, prev_section, section, input_lower_x, input_upper_x, input_lower_y, input_upper_y, box_height, box_width, res);	
+		bad_triangles = find_bad_triangles(&triangles, prev_section, section, input_lower_x, input_upper_x, input_lower_y, input_upper_y, box_width, box_height, res);	
 	}
 	if(avg_method == GEOMETRIC) {
-		bad_triangles = find_bad_triangles_geometric(&triangles, prev_section, section, input_lower_x, input_upper_x, input_lower_y, input_upper_y, box_height, box_width, res);
+		bad_triangles = find_bad_triangles_geometric(&triangles, prev_section, section, input_lower_x, input_upper_x, input_lower_y, input_upper_y, box_width, box_height, res);
 	}
 	
 	
@@ -487,6 +487,7 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 				transformed_p = elastic_transform(&tile, transformed_p);
 				
 				renderTriangle tri = (*tile.mesh_triangles)[0]; //should have the triangle its in be correct
+				
                 bool bad_triangle = bad_triangles.find(tri.key) != bad_triangles.end(); // TODO
 
 				int x = (int)(transformed_p.x/scale_x + 0.5);
@@ -494,7 +495,9 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 				unsigned char val = tile.p_image->at<unsigned char>(_y, _x);
 				if(bad_triangle) {
 					val = 255;
-				}				
+				} else {
+					std::cout << "point was in triangle " << tri.key.first << " " << tri.key.second << std::endl;
+				}
 				if(y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
 					section->p_out->at<unsigned char>(y-lower_y, x-lower_x) = val;
 				}
