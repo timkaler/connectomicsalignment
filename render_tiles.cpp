@@ -462,6 +462,7 @@ std::set<std::pair<int, int> > find_bad_triangles_geometric(std::vector<renderTr
 	std::map<std::pair<int, int>, float> total_corr;
 	std::map<std::pair<int, int>, int>  total_boxes;
 	std::cout << "called find bad triangles " << std::endl;
+
 	for(int i = lower_y; i < upper_y - box_height; i += box_height) {
 		for(int j = lower_x; j < upper_x - box_width; j += box_width) {
 			std::string file1 = std::string("1box") + std::to_string(count) + std::string(".tif");
@@ -532,7 +533,7 @@ std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * 
 				num_valid[key] = 0;
 				num_invalid[key] = 0;
 			}
-			if(corr > 0.1) {
+			if(corr > 10000) {
 				num_valid[key] = num_valid[key] + 1; 
 			} else {
 				num_invalid[key] = num_invalid[key] + 1;
@@ -602,7 +603,6 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 	  nrows = (input_upper_y-input_lower_y)/scale_y;
     	  ncols = (input_upper_x-input_lower_x)/scale_x; 
 	}
- 
 	if(res == FULL) {
 	  lower_y = input_lower_y;
 	  lower_x = input_lower_x;
@@ -643,7 +643,6 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
         cv::Mat* section_p_out_ncount = new cv::Mat();
         //section->p_out = new cv::Mat();
         (*section_p_out_ncount).create(nrows, ncols, CV_16UC1);
-
     for (int y = 0; y < nrows; y++) {
       for (int x = 0; x < ncols; x++) {
         section_p_out_mask->at<float>(y,x) = 0.0;
@@ -712,7 +711,6 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
           //  section_p_out->at<unsigned char>(y-lower_y, x-lower_x) =
           //      section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) / section_p_out_ncount->at<unsigned short>(y-lower_y,x-lower_x);
           //}
-
 	}
       }
 
@@ -738,10 +736,6 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
       }
     }
 
-
-
-
-     
      cv::Mat heatmap_image = apply_heatmap_to_grayscale(section_p_out, section_p_out_mask, nrows, ncols); 
 
 	bool ret = cv::imwrite(filename, (*section_p_out));

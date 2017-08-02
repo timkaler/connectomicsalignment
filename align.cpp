@@ -778,7 +778,6 @@ void align_execute(align_data_t *p_align_data) {
         int size_x = 50000;
         int size_y = 50000;
 
-
 	//matchTemplate(im2, im1);
 	for(int i = 0; i < p_align_data->n_sections-1; i ++) {
 	        std::string qq ="";
@@ -806,3 +805,4 @@ void align_execute(align_data_t *p_align_data) {
 // {
 //   //test_minfilter();
 //}
+
