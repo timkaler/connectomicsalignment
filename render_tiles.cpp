@@ -10,6 +10,41 @@ static float Dot(cv::Point2f a, cv::Point2f b) {
   return a.x*b.x + a.y*b.y;
 }
 
+static cv::Mat colorize(cv::Mat c1, cv::Mat c2, cv::Mat c3, unsigned int channel = 0) {
+    std::vector<cv::Mat> channels;
+    channels.push_back(c1);
+    channels.push_back(c2);
+    channels.push_back(c3);
+    cv::Mat color;
+    cv::merge(channels, color);
+    return color;
+}
+
+static cv::Mat apply_heatmap_to_grayscale(cv::Mat* gray, cv::Mat* heat_floats, int nrows, int ncols) {
+  cv::Mat c1,c2,c3;
+  c1.create(nrows, ncols, CV_8UC1);
+  c2.create(nrows, ncols, CV_8UC1);
+  c3.create(nrows, ncols, CV_8UC1);
+
+  for (int x = 0; x < gray->size().width; x++) {
+    for (int y = 0; y < gray->size().height; y++) {
+       float g = (1.0*gray->at<unsigned char>(y,x))/255;
+       float h = 0.5 + 0.5*(heat_floats->at<float>(y,x)*heat_floats->at<float>(y,x));
+
+
+       c1.at<unsigned char>(y,x) = (unsigned char) (g*255*(1-h));
+       c2.at<unsigned char>(y,x) = (unsigned char) (g*255*(1-h));
+       c3.at<unsigned char>(y,x) = (unsigned char) (g*255*((h)));
+
+       
+
+    }
+  }
+  return colorize(c1,c2,c3);
+}
+
+
+
 static void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
    float &u, float &v, float &w)
 {
@@ -45,12 +80,19 @@ cv::Mat resize(float scale, cv::Mat img) {
 	return new_img;
 }
 
-std::tuple<bool, float, float, float> findTriangle(std::vector<renderTriangle>*mesh_triangles, cv::Point2f point) {
+std::tuple<bool, float, float, float> findTriangle(std::vector<renderTriangle>*mesh_triangles, cv::Point2f point, bool useQValues = false) {
 	for(int i = 0; i < mesh_triangles->size(); i ++) {
-      float u, v, w;	  
-	  cv::Point2f a = (*mesh_triangles)[i].p[0];
-      cv::Point2f b = (*mesh_triangles)[i].p[1];
-      cv::Point2f c = (*mesh_triangles)[i].p[2];
+      float u, v, w;	
+      cv::Point2f a,b,c; 
+      if (!useQValues) {
+      a = (*mesh_triangles)[i].p[0];
+      b = (*mesh_triangles)[i].p[1];
+      c = (*mesh_triangles)[i].p[2];
+      } else {
+      a = (*mesh_triangles)[i].q[0];
+      b = (*mesh_triangles)[i].q[1];
+      c = (*mesh_triangles)[i].q[2];
+      }
       Barycentric(point, a,b,c,u,v,w);
       if (u >= 0 && v >= 0 && w >= 0) {
 			int j = i;
@@ -122,11 +164,11 @@ float min(float a, float b, float c, float d){
 }
 
 bool tile_in_bounds(tile_data_t tile, int lower_x, int upper_x, int lower_y, int upper_y) {
-                static int slack_value = 100.0;
-                lower_x -= slack_value;
-                lower_y -= slack_value;
-                upper_x += slack_value;
-                upper_y += slack_value;
+                //static int slack_value = 100.0;
+                //lower_x -= slack_value;
+                //lower_y -= slack_value;
+                //upper_x += slack_value;
+                //upper_y += slack_value;
 
 		int width = SIFT_D2_SHIFT_3D;
 		int height = SIFT_D1_SHIFT_3D; //MIGHT BE OTHER WAY AROUND
@@ -461,7 +503,7 @@ std::set<std::pair<int, int> > find_bad_triangles_geometric(std::vector<renderTr
 
 
 
-std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * triangles, section_data_t* prev_section, section_data_t* section, int lower_x, int upper_x, int lower_y, int upper_y, int box_width, int box_height, Resolution res) {
+std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * triangles, section_data_t* prev_section, section_data_t* section, int lower_x, int upper_x, int lower_y, int upper_y, int box_width, int box_height, Resolution res, std::map<std::pair<int, int>, float>& score_map) {
 	std::set<std::pair<int, int> > bad_triangles;
 	int count = 0;
 	std::map<std::pair<int, int>, int>  num_valid;
@@ -480,7 +522,7 @@ std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * 
 			float corr = matchTemplate(im1, im2);
 	
 			cv::Point2f middle(j-box_width/2, i-box_height/2);
-			auto tri = findTriangle(triangles, middle); //this is super slow prob
+			auto tri = findTriangle(triangles, middle, true); //this is super slow prob
 			if(!std::get<0>(tri)) {
 				std::cout << "TRIANGLE NOT FOUND " << middle.x << " " << middle.y << std::endl;
 				//exit(0);
@@ -490,7 +532,7 @@ std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * 
 				num_valid[key] = 0;
 				num_invalid[key] = 0;
 			}
-			if(corr > 100.0) {
+			if(corr > 0.1) {
 				num_valid[key] = num_valid[key] + 1; 
 			} else {
 				num_invalid[key] = num_invalid[key] + 1;
@@ -505,6 +547,7 @@ std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * 
 		if(num_valid[key] < num_invalid[key]) {
 			bad_triangles.insert(key);
 		}
+                score_map[key] = num_invalid[key] / (num_valid[key]+num_invalid[key]+1.0);
 	}
 	
 	return bad_triangles;
@@ -526,6 +569,15 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 			}
 		}
 	}
+
+
+        //printf("Begin printing triangles that we're adding\n");
+        //for (int i = 0; i < triangles.size(); i++) {
+        //  renderTriangle tri = triangles[i];
+        //  printf("(%f,%f) (%f, %f) (%f, %f) key: (%d, %d)\n", tri.p[0].x, tri.p[0].y, tri.p[1].x, tri.p[1].y, tri.p[2].x, tri.p[2].y, tri.key.first, tri.key.second);
+        //}
+        //exit(0);
+
 
 	int lower_y, lower_x, upper_y, upper_x;
 	int nrows, ncols;
@@ -561,12 +613,12 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 	  scale_x = 1;
 	  scale_y = 1;
 	}
-	
+        std::map<std::pair<int, int>, float> score_map;	
 	if(avg_method == VOTING) {
           TFK_TIMER_VAR(timer_find_badt);
           TFK_START_TIMER(&timer_find_badt);
 	  bad_triangles = find_bad_triangles(&triangles, prev_section, section, input_lower_x, input_upper_x,
-                                             input_lower_y, input_upper_y, box_height, box_width, res);	
+                                             input_lower_y, input_upper_y, box_height, box_width, res, score_map);	
           TFK_STOP_TIMER(&timer_find_badt, "Time to find bad triangles");
 	}
 
@@ -578,8 +630,10 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 	}
 	
 	cv::Mat* section_p_out = new cv::Mat();
+	cv::Mat* section_p_out_mask = new cv::Mat();
 	cv::Mat* tile_p_image = new cv::Mat();
 	(*section_p_out).create(nrows, ncols, CV_8UC1);
+	(*section_p_out_mask).create(nrows, ncols, CV_32F);
         // temporary matrix for the section.
         cv::Mat* section_p_out_sum = new cv::Mat();
         //section->p_out = new cv::Mat();
@@ -592,6 +646,7 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 
     for (int y = 0; y < nrows; y++) {
       for (int x = 0; x < ncols; x++) {
+        section_p_out_mask->at<float>(y,x) = 0.0;
         section_p_out->at<unsigned char>(y,x) = 0;
         section_p_out_sum->at<unsigned short>(y,x) = 0;
         section_p_out_ncount->at<unsigned short>(y,x) = 0;
@@ -624,17 +679,17 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
           cv::Point2f p = cv::Point2f(_x*scale_x, _y*scale_y);
           cv::Point2f transformed_p = affine_transform(&tile, p);
           transformed_p = elastic_transform(&tile, &triangles, transformed_p);
-          renderTriangle tri = (*tile.mesh_triangles)[0]; //should have the triangle its in be correct
+          //renderTriangle tri = (*tile.mesh_triangles)[0]; //should have the triangle its in be correct
+          renderTriangle tri = triangles[0]; //should have the triangle its in be correct
 
           bool bad_triangle = bad_triangles.find(tri.key) != bad_triangles.end();
 
           int x_c = (int)(transformed_p.x/scale_x + 0.5);
           int y_c = (int)(transformed_p.y/scale_y + 0.5);
           unsigned char val = tile_p_image->at<unsigned char>(_y, _x);
-          if (bad_triangle) {
-            val = 255;
-          }
-
+          //if (bad_triangle) {
+          //  val = 255;
+          //}
 				
           for (int k = -1; k < 2; k++) {
             for (int m = -1; m < 2; m++) {
@@ -642,6 +697,9 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
               int y = y_c+m;
 
               if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
+                //if (bad_triangle) {
+                section_p_out_mask->at<float>(y-lower_y, x-lower_x) += score_map[tri.key];
+                //}
                 //section_p_out->at<unsigned char>(y-lower_y, x-lower_x) = val;
                 section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) += val;
                 section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) += 1;
@@ -674,13 +732,25 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 
         if (section_p_out_ncount->at<unsigned short>(y,x) == 0) continue;
 
+        section_p_out_mask->at<float>(y, x) /= section_p_out_ncount->at<unsigned short>(y,x);
         section_p_out->at<unsigned char>(y, x) =
             section_p_out_sum->at<unsigned short>(y, x) / section_p_out_ncount->at<unsigned short>(y,x);
       }
     }
 
 
-	cv::imwrite(filename, (*section_p_out));
+
+
+     
+     cv::Mat heatmap_image = apply_heatmap_to_grayscale(section_p_out, section_p_out_mask, nrows, ncols); 
+
+	bool ret = cv::imwrite(filename, (*section_p_out));
+        printf("success of first write is %d\n", ret);
+        std::string filename_mask = filename.replace(filename.find(".tif"),4,".png");
+        printf("Writing filename %s\n", filename_mask.c_str());
+	ret = cv::imwrite(filename_mask, heatmap_image);
+        printf("success of second write is %d\n", ret);
+        printf("after imwrite\n");
 	return (*section_p_out);
 }
 

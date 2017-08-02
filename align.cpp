@@ -776,7 +776,7 @@ void align_execute(align_data_t *p_align_data) {
 	int start_y = 50000;
 	//int dimention = 50000;
         int size_x = 50000;
-        int size_y = 5000;
+        int size_y = 50000;
 
 
 	//matchTemplate(im2, im1);
@@ -792,7 +792,7 @@ void align_execute(align_data_t *p_align_data) {
 		//render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 100, 100, THUMBNAIL, GEOMETRIC);
 		std::string qq2 = "";
 		qq2 += std::string("actual") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		render( &(p_align_data->sec_data[i+1]), qq2, start_x, start_x + size_x, start_y, start_y + size_y, THUMBNAIL, true);
+		cilk_spawn render( &(p_align_data->sec_data[i+1]), qq2, start_x, start_x + size_x, start_y, start_y + size_y, THUMBNAIL, true);
 	}
         cilk_sync;
     TFK_STOP_TIMER(&timer_render, "rendering time");
