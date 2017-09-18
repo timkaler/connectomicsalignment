@@ -772,11 +772,9 @@ void align_execute(align_data_t *p_align_data) {
 		qq += std::string("thumb-elastic-thumb") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
 		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 51000, 50000, 51000);
 	}*/
-	int start_x = 50000;
-	int start_y = 50000;
 	//int dimention = 50000;
-        int size_x = 50000;
-        int size_y = 50000;
+        int size_x = 5000;
+        int size_y = 5000;
 
 	//matchTemplate(im2, im1);
 	for(int i = 0; i < p_align_data->n_sections-1; i ++) {
