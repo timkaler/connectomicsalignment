@@ -748,7 +748,7 @@ void align_execute(align_data_t *p_align_data) {
     }
         free_tiles(p_align_data);
     START_TIMER(&timer);
-    
+
 
     // Before running the graph optimize code, set the graph_list by calling:
     // set_graph_list(graph_list, true) (from match.h) 
@@ -757,9 +757,25 @@ void align_execute(align_data_t *p_align_data) {
     //  store_3d_matches(i, p_align_data);
     //}
 
-    compute_tile_matches(p_align_data, -1);
+    Graph<vdata, edata>* merged_graph;
 
-    
+
+    merged_graph = pack_graph();
+    compute_alignment_2d(p_align_data, merged_graph);
+    compute_alignment_3d(p_align_data, merged_graph);
+    unpack_graph(p_align_data, merged_graph);
+
+
+
+
+    //printf("Now we're going to run again!\n");
+    //merged_graph = pack_graph();
+    //compute_alignment_2d(p_align_data, merged_graph);
+    //compute_alignment_3d(p_align_data, merged_graph);
+    //unpack_graph(p_align_data, merged_graph);
+
+
+
 
     printf("Starting to do the rendering\n");
     STOP_TIMER(&timer, "compute_tile_matches time:");
