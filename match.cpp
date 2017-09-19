@@ -232,40 +232,40 @@ int get_all_close_tiles(int atile_id, section_data_t *p_sec_data, int* indices_t
 
 
 void compute_alignment_3d(align_data_t *p_align_data,
-    Graph<vdata, edata>* merged_graph) {
+    Graph<vdata, edata>* merged_graph, bool construct_tri) {
 
 
   // NOTE(TFK): These transformations are kind-of silly, but are an artifact of
   //   a past implementation in which we relied on unpacked representation more.
   // Unpack the graphs within the merged graph.
-  int vertex_id_offset = 0;
-  for (int i = 0; i < graph_list.size(); i++) {
-    for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
-      vdata* d = merged_graph->getVertexData(j+vertex_id_offset);
-      *(graph_list[i]->getVertexData(j)) = *d;
-      (graph_list[i]->getVertexData(j))->vertex_id -= vertex_id_offset;
+  if (construct_tri) {
+    int vertex_id_offset = 0;
+    for (int i = 0; i < graph_list.size(); i++) {
+      for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
+        vdata* d = merged_graph->getVertexData(j+vertex_id_offset);
+        *(graph_list[i]->getVertexData(j)) = *d;
+        (graph_list[i]->getVertexData(j))->vertex_id -= vertex_id_offset;
+      }
+      vertex_id_offset += graph_list[i]->num_vertices();
     }
-    vertex_id_offset += graph_list[i]->num_vertices();
-  }
 
-  // These functions, for some reason, still require that we operate on a per-section graph.
-  //   that's why we did the unpack and repack.
-  for (int i = 0; i < graph_list.size(); i++) {
-    construct_triangles(graph_list[i], 1500.0);
-    filter_overlap_points_3d(graph_list[i], p_align_data);
-  }
-
-  // repack.
-  vertex_id_offset = 0;
-  for (int i = 0; i < graph_list.size(); i++) {
-    for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
-      vdata* d = merged_graph->getVertexData(j+vertex_id_offset);
-      *d = *(graph_list[i]->getVertexData(j));
-      d->vertex_id += vertex_id_offset;
+    // These functions, for some reason, still require that we operate on a per-section graph.
+    //   that's why we did the unpack and repack.
+    for (int i = 0; i < graph_list.size(); i++) {
+      construct_triangles(graph_list[i], 1500.0);
+      filter_overlap_points_3d(graph_list[i], p_align_data);
     }
-    vertex_id_offset += graph_list[i]->num_vertices();
-  }
 
+    // repack.
+    vertex_id_offset = 0;
+    for (int i = 0; i < graph_list.size(); i++) {
+      for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
+        vdata* d = merged_graph->getVertexData(j+vertex_id_offset);
+        *d = *(graph_list[i]->getVertexData(j));
+        d->vertex_id += vertex_id_offset;
+      }
+      vertex_id_offset += graph_list[i]->num_vertices();
+    }
 
   // Now we do the actual 3d alignment stuff.
 
@@ -282,6 +282,7 @@ void compute_alignment_3d(align_data_t *p_align_data,
 
   // Elastic mesh optimize.
   elastic_mesh_optimize(merged_graph, p_align_data);
+  }
 }
 
 

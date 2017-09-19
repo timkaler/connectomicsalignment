@@ -762,16 +762,18 @@ void align_execute(align_data_t *p_align_data) {
 
     merged_graph = pack_graph();
     compute_alignment_2d(p_align_data, merged_graph);
-    compute_alignment_3d(p_align_data, merged_graph);
+    compute_alignment_3d(p_align_data, merged_graph, true);
     unpack_graph(p_align_data, merged_graph);
 
+    merged_graph = pack_graph();
+    compute_alignment_2d(p_align_data, merged_graph);
+    compute_alignment_3d(p_align_data, merged_graph, false);
+    unpack_graph(p_align_data, merged_graph);
 
 
 
     //printf("Now we're going to run again!\n");
     //merged_graph = pack_graph();
-    //compute_alignment_2d(p_align_data, merged_graph);
-    //compute_alignment_3d(p_align_data, merged_graph);
     //unpack_graph(p_align_data, merged_graph);
 
 
@@ -789,6 +791,8 @@ void align_execute(align_data_t *p_align_data) {
 		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 51000, 50000, 51000);
 	}*/
 	//int dimention = 50000;
+	int start_x = 50000;
+	int start_y = 50000;
         int size_x = 5000;
         int size_y = 5000;
 

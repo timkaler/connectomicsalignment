@@ -27,7 +27,7 @@ const int MAX_EPSILON = 10;
 /////////////////////////////////////////////////////////////////////////////////////////
 //void compute_tile_matches(align_data_t *p_align_data);
 void compute_alignment_2d(align_data_t *p_align_data, Graph<vdata, edata>* merged_graph);
-void compute_alignment_3d(align_data_t *p_align_data, Graph<vdata, edata>* merged_graph);
+void compute_alignment_3d(align_data_t *p_align_data, Graph<vdata, edata>* merged_graph, bool construct_tri);
 
 void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std::set<int> active_set, Graph<vdata, edata>* graph);
 
