@@ -238,7 +238,7 @@ void compute_alignment_3d(align_data_t *p_align_data,
   // NOTE(TFK): These transformations are kind-of silly, but are an artifact of
   //   a past implementation in which we relied on unpacked representation more.
   // Unpack the graphs within the merged graph.
-  if (construct_tri) {
+  //if (construct_tri) {
     int vertex_id_offset = 0;
     for (int i = 0; i < graph_list.size(); i++) {
       for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
@@ -282,7 +282,7 @@ void compute_alignment_3d(align_data_t *p_align_data,
 
   // Elastic mesh optimize.
   elastic_mesh_optimize(merged_graph, p_align_data);
-  }
+  //}
 }
 
 
