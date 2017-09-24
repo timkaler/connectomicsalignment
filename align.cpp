@@ -128,8 +128,8 @@ void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set
   if (ORIG_IMPL) {
     for (int i = 0; i < total; i++) {
       if (finished_set.find(i) == finished_set.end()) {
-	      if (active_set.size() >= total) {
-	        break;
+        if (active_set.size() >= total) {
+          break;
         }
         active_set.insert(i);
       }
@@ -772,7 +772,7 @@ void align_execute(align_data_t *p_align_data) {
     }
         free_tiles(p_align_data);
     START_TIMER(&timer);
-    
+
 
     // Before running the graph optimize code, set the graph_list by calling:
     // set_graph_list(graph_list, true) (from match.h) 
@@ -781,15 +781,30 @@ void align_execute(align_data_t *p_align_data) {
     //  store_3d_matches(i, p_align_data);
     //}
 
-    compute_tile_matches(p_align_data, -1);
+    Graph<vdata, edata>* merged_graph;
 
-    
+
+    merged_graph = pack_graph();
+    compute_alignment_2d(p_align_data, merged_graph);
+    compute_alignment_3d(p_align_data, merged_graph, true);
+    unpack_graph(p_align_data, merged_graph);
+
+    //merged_graph = pack_graph();
+    //compute_alignment_3d(p_align_data, merged_graph, false);
+    //unpack_graph(p_align_data, merged_graph);
+
+    //printf("Now we're going to run again!\n");
+    //merged_graph = pack_graph();
+    //unpack_graph(p_align_data, merged_graph);
+
+
+
 
     printf("Starting to do the rendering\n");
     STOP_TIMER(&timer, "compute_tile_matches time:");
     TFK_START_TIMER(&timer_render);
-	/*for(int i = 0; i < p_align_data->n_sections; i ++) {
-		std::string ss = "";
+  /*for(int i = 0; i < p_align_data->n_sections; i ++) {
+    std::string ss = "";
         ss += std::string("thumb-elastic-") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
 		output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[i]), ss, 50000, 51000, 50000, 51000);
  		std::string qq ="";	
@@ -819,7 +834,6 @@ void align_execute(align_data_t *p_align_data) {
 //		cilk_spawn render( &(p_align_data->sec_data[i+1]), qq2, start_x, start_x + size_x, start_y, start_y + size_y, THUMBNAIL, true);
 //	}
 //        cilk_sync;
-    TFK_STOP_TIMER(&timer_render, "rendering time");
     STOP_TIMER(&t_timer, "t_total-time:");
     printf("Got to the end of the function\n");
 }
