@@ -700,15 +700,12 @@ void compute_tile_matches(align_data_t *p_align_data, int force_section_id) {
     }
     vertex_id_offset += graph_list[i]->num_vertices();
   }
-
+  //THINGS GET CALLED HERE
   coarse_alignment_3d(merged_graph, p_align_data, 64.0);
   fine_alignment_3d(merged_graph, p_align_data);
   elastic_mesh_optimize(merged_graph, p_align_data);
 
   #endif
-
-
-
 
 
 

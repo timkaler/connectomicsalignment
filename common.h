@@ -270,9 +270,7 @@ typedef struct _section_data {
 } section_data_t;
 
 typedef struct _align_data {
-    
     int mode;
-    
     char *input_filepath;
     char *work_dirpath;
     char *output_dirpath;

@@ -654,6 +654,30 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
   //TRACE_1("compute_SIFT_parallel: finish\n");
 }
 
+
+
+std::vector<int> bad_sections_index(align_data_t *p_align_data) {
+	 int size_x = 5000;
+     int size_y = 5000;
+	int start_x = 5000;
+	int start_y = 5000;
+
+	std::vector<int> bad_sections;
+	std::cout << "num sections " << p_align_data->n_sections-1 << std::endl;
+	for(int i = 0; i < p_align_data->n_sections-1; i ++) {
+	    std::string qq ="";
+		qq = "";
+		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+		std::set<std::pair<int,int> > bad_triangles = find_section_bad_triangles(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
+                             start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL);
+		std::cout << " section bad triangles size " << bad_triangles.size() << std::endl;	
+		
+	}
+	return bad_sections;
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////
@@ -773,25 +797,28 @@ void align_execute(align_data_t *p_align_data) {
 		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 51000, 50000, 51000);
 	}*/
 	//int dimention = 50000;
-        int size_x = 5000;
-        int size_y = 5000;
+        //int size_x = 5000;
+        //int size_y = 5000;
+	bad_sections_index(p_align_data);
 
 	//matchTemplate(im2, im1);
-	for(int i = 0; i < p_align_data->n_sections-1; i ++) {
-	        std::string qq ="";
-		qq = "";
-		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		cilk_spawn render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
-                             start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, VOTING);
 
-		//qq = "";
-		//qq += std::string("error-average") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		//render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 100, 100, THUMBNAIL, GEOMETRIC);
-		std::string qq2 = "";
-		qq2 += std::string("actual") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		cilk_spawn render( &(p_align_data->sec_data[i+1]), qq2, start_x, start_x + size_x, start_y, start_y + size_y, THUMBNAIL, true);
-	}
-        cilk_sync;
+	
+//	for(int i = 0; i < p_align_data->n_sections-1; i ++) {
+//	        std::string qq ="";
+//		qq = "";
+//		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+//		cilk_spawn render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
+//                             start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, VOTING);
+//
+//		//qq = "";
+//		//qq += std::string("error-average") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+//		//render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 100, 100, THUMBNAIL, GEOMETRIC);
+//		std::string qq2 = "";
+//		qq2 += std::string("actual") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+//		cilk_spawn render( &(p_align_data->sec_data[i+1]), qq2, start_x, start_x + size_x, start_y, start_y + size_y, THUMBNAIL, true);
+//	}
+//        cilk_sync;
     TFK_STOP_TIMER(&timer_render, "rendering time");
     STOP_TIMER(&t_timer, "t_total-time:");
     printf("Got to the end of the function\n");
