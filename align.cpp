@@ -87,7 +87,7 @@ void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set
   int height_of_active_set;
   if (LINE) {
     max_size_of_active_set = total;
-    height_of_active_set = 1;
+    height_of_active_set = 20;
   } else {
     max_size_of_active_set = RECT_HEIGHT;
     height_of_active_set = RECT_HEIGHT;
@@ -223,7 +223,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
   //}
 
   //for (int sec_id = split_start; sec_id < split_end/*p_align_data->n_sections*/; sec_id++) {
-  for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+  cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
     std::set<int> active_set;
     std::set<int> finished_set;
@@ -253,7 +253,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     graph_list[sec_id] = (graph);
     int work_count_total = 0;
     if (section_data_exists(sec_id, p_align_data)) {
-      //goto read_graph_from_file;
+      goto read_graph_from_file;
     }
     while (active_set.size() > 0) {
       std::set<int> active_and_neighbors;
@@ -325,7 +325,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       //cv::Mat m_kps_desc_filtered = m_kps_desc[0].clone();
       *(p_tile_data)->p_kps_desc_3d = m_kps_desc[0].clone();
 
-      // printf("Number of 3d points is %d\n", point_count_3d);
+      printf("Number of 3d points is %d\n", point_count_3d);
 }
 #endif
 
@@ -616,8 +616,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
       vdata* d = graph->getVertexData(i);
       _tile_data tdata = p_sec_data->tiles[i];
       d->vertex_id = i;
-      d->mfov_id = (tdata.vars->find("mfov_id") == tdata.vars->end()) ? (*tdata.vars)["mfov_id"] : 0;
-      d->tile_index = (tdata.vars->find("index") == tdata.vars->end()) ? (*tdata.vars)["index"] : 0;
+      d->mfov_id = tdata.mfov_id;
+      d->tile_index = tdata.index;
       d->tile_id = i;
       d->start_x = tdata.x_start;
       d->end_x = tdata.x_finish;

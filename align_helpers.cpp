@@ -1,4 +1,3 @@
-#include <sstream>
 
 std::string padTo(std::string str, const size_t num, const char paddingChar = '0')
 {
@@ -160,7 +159,6 @@ void create_sift_hdf5(const char* filename, int num_points, std::vector<float> s
 /////////////////////////////////////////////////////////////////////////////////////////
 // INTERNAL FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////////////////
-
 void read_input(align_data_t *p_align_data) {
     FILE *fp;
     int n_tiles;
@@ -170,143 +168,78 @@ void read_input(align_data_t *p_align_data) {
     
     section_data_t *p_sec_data;
     tile_data_t *p_cur_tile;
-
-    std::map <std::string, int> int_vars;
-    std::map <std::string, std::string> string_vars;
-
+    int in_tile_id;
+    int in_section_id;
+    int in_mfov_id;
+    int in_index;
+    int in_x_start;
+    int in_x_finish;
+    int in_y_start;
+    int in_y_finish;
+    char in_filepath[MAX_FILEPATH];
+    
+    char magic_str_total_tiles[] = "total-tiles:";
+    char magic_str_tile_start[] = "tile-start:";
+    char magic_str_tile_end[] = "tile-end:";
+    
+    char magic_str_tile_section[] = "tile-section:";
+    char magic_str_tile_mfov[] = "tile-mfov:";
+    char magic_str_tile_index[] = "tile-index:";
+    char magic_str_tile_filepath[] = "tile-filepath:";
+    char magic_str_tile_bbox[] = "tile-bbox:";
+    
     ////TRACE_1("start\n");
     
     ASSERT(p_align_data->input_filepath != NULL);
-    /*
-    input file is of the form
-    tilespec location
-    string variables as a comma separated list
-    integer variables as a comma separate list
-    format string
-    variables in order of format string
-    */
-    /*
-    required variables are
-    in_filepath,in_tile_id,in_section_id,in_mfov_id,in_index,in_x_start,in_x_finish,in_y_start,in_y_finish
-    */
+    
     fp = fopen(p_align_data->input_filepath, "rb");
     ASSERT_MSG(fp != NULL, "failed to open %s\n", p_align_data->input_filepath);
-    char line[MAX_INPUT_BUF];
-    fgets(line, MAX_INPUT_BUF, fp);
-    size_t ln = strlen(line) - 1;
-    if (line[ln] == '\n')
-        line[ln] = '\0';
-    std::string data_filepath = line;
-
-
-    std::string string_variables;
-    fgets(line, MAX_INPUT_BUF, fp);
-    std::istringstream ss(line);
-    std::string token;
-    while(std::getline(ss, token, ',')) {
-      if (!token.empty() && token[token.length()-1] == '\n') {
-          token.erase(token.length()-1);
-      }
-
-      string_vars[token] = "";
-    }
-    std::string int_variables;
-    fgets(line, MAX_INPUT_BUF, fp);
-    std::istringstream ss2(line);
-    while(std::getline(ss2, token, ',')) {
-      if (!token.empty() && token[token.length()-1] == '\n') {
-          token.erase(token.length()-1);
-      }
-      int_vars[token] = 0;
-    }
-
-    fgets(line, MAX_INPUT_BUF, fp);
-    std::string format_string = line;
-
-    std::map<std::string, int> variables;
-
-    fgets(line, MAX_INPUT_BUF, fp);
-    std::istringstream ss3(line);
-    int variable_count = 0;
-    while(std::getline(ss3, token, ',')) {
-      if (!token.empty() && token[token.length()-1] == '\n') {
-          token.erase(token.length()-1);
-      }
-      variables[token] = variable_count++;
-    }
-
-
-
-    printf("read in spec, file name = %s\n", data_filepath.c_str());
-    fp = fopen(data_filepath.c_str(), "rb");
-    std::cout << "open metadata file\n";
-    n_objs_read = fscanf(fp, "total-tiles: %d\n", &n_tiles);
-    ASSERT(n_objs_read == 1);
+    
+    n_objs_read = fscanf(fp, "%s %d\n", str_input, &n_tiles);
+    ASSERT(n_objs_read == 2);
+    ASSERT(0 == strcmp(str_input, magic_str_total_tiles));
     
     int cur_section_idx = 0;
-    auto it = format_string.find("\\n");
-    while (it !=std::string::npos) {
-      format_string.replace(it,2,1,'\n');
-      it = format_string.find("\\n");
-    }
-    it = format_string.find("\\t");
-    while (it != std::string::npos) {
-      format_string.replace(it,2,1,'\t');
-      it = format_string.find("\\t");
-    }
-    std::cout << format_string;
-
  
     for (int i = 0; i < n_tiles; i++) {
-      char vars[25][MAX_INPUT_BUF];
         
-        //printf("String input %s\n", str_input);;
-        n_objs_read = fscanf(fp, format_string.c_str(),
-                             vars[0],vars[1],vars[2],vars[3],vars[4],
-                             vars[5],vars[6],vars[7],vars[8],vars[9],
-                             vars[10],vars[11],vars[12],vars[13],vars[14],
-                             vars[15],vars[16],vars[17],vars[18],vars[19],
-                             vars[20],vars[21],vars[22],vars[23],vars[24]);
-
-        ASSERT(n_objs_read == variable_count);
-
-        // first get required variables
-        char in_filepath[MAX_FILEPATH];
-        strcpy(in_filepath, vars[variables["in_filepath"]]);
-
-        int in_section_id;
-        int in_x_start;
-        int in_x_finish;
-        int in_y_start;
-        int in_y_finish;
-        std::map<std::string, int> extra_vars; 
-
-        for (auto it : int_vars) {
-            // first do the required variables
-            if ( it.first.compare("in_section_id") == 0) {
-              in_section_id = atoi(vars[variables["in_section_id"]]);
-            } else if ( it.first.compare("in_x_start")  == 0) {
-              in_x_start = atoi(vars[variables["in_x_start"]]);
-            } else if ( it.first.compare("in_x_finish") == 0 ) {
-              in_x_finish = atoi(vars[variables["in_x_finish"]]);
-            } else if ( it.first.compare("in_y_start") == 0) {
-              in_y_start = atoi(vars[variables["in_y_start"]]);
-            } else if ( it.first.compare("in_y_finish") == 0 ) {
-              in_y_finish = atoi(vars[variables["in_y_finish"]]);
-            } else {
-              extra_vars[it.first] = atoi(vars[variables[it.first]]);
-            }
-        }
-        // printf("%d, %d, %d, %d, %d, %s\n",in_section_id, in_x_start, in_x_finish, in_y_start, in_y_finish, in_filepath);
+        //printf("String input %s\n", str_input);
+        n_objs_read = fscanf(fp, "%s [%d]\n", str_input, &in_tile_id);
+        ASSERT(n_objs_read == 2);
+        ASSERT(0 == strcmp(str_input, magic_str_tile_start));
+        ASSERT(in_tile_id == i);
+        n_objs_read = fscanf(fp, "\t%s %d\n", str_input, &in_section_id);
+        //printf("in_section id is %d\n", in_section_id);
+        ASSERT(n_objs_read == 2);
+        ASSERT(0 == strcmp(str_input, magic_str_tile_section));
+        ASSERT(in_section_id >= 1);
+        in_section_id--;
+        //ASSERT(in_section_id >= 0);
         
-
-        //int in_tile_id = atoi(vars[variables["in_tile_id"]]);
-        //int in_mfov_id = atoi(vars[variables["in_mfov_id"]]);
-        //int in_index = atoi(vars[variables["in_index"]]);
-
-        // this is due to the fact the input data starts its numbering with 1 for sections
-        in_section_id --;
-
+        n_objs_read = fscanf(fp, "\t%s %d\n", str_input, &in_mfov_id);
+        ASSERT(n_objs_read == 2);
+        ASSERT(0 == strcmp(str_input, magic_str_tile_mfov));
+        
+        n_objs_read = fscanf(fp, "\t%s %d\n", str_input, &in_index);
+        ASSERT(n_objs_read == 2);
+        ASSERT(0 == strcmp(str_input, magic_str_tile_index));
+        
+        n_objs_read = fscanf(fp, "\t%s [%d][%d][%d][%d]\n", str_input, 
+            &in_x_start,
+            &in_x_finish,
+            &in_y_start,
+            &in_y_finish);
+        ASSERT(n_objs_read == 5);
+        ASSERT(0 == strcmp(str_input, magic_str_tile_bbox));
+                
+        n_objs_read = fscanf(fp, "\t%s %s\n", str_input, in_filepath);
+        ASSERT(n_objs_read == 2);
+        ASSERT(0 == strcmp(str_input, magic_str_tile_filepath));
+        
+        n_objs_read = fscanf(fp, "%s [%d]\n", str_input, &in_tile_id);
+        ASSERT(n_objs_read == 2);
+        ASSERT(0 == strcmp(str_input, magic_str_tile_end));
+        ASSERT(in_tile_id == i);
         
         if ((in_section_id < p_align_data->base_section) || 
             (in_section_id >= (p_align_data->base_section + p_align_data->n_sections))) {
@@ -339,16 +272,17 @@ void read_input(align_data_t *p_align_data) {
         
         p_sec_data = &(p_align_data->sec_data[cur_section_idx]);
         p_cur_tile = &(p_sec_data->tiles[p_sec_data->n_tiles]);
-        // printf("Init tile with sindex %d tindex %d\n", cur_section_idx, p_sec_data->n_tiles); 
+        //printf("Init tile with sindex %d tindex %d\n", cur_section_idx, p_sec_data->n_tiles); 
         init_tile(
             p_cur_tile,
             cur_section_idx,
+            in_mfov_id,
+            in_index,
             in_x_start,
             in_x_finish,
             in_y_start,
             in_y_finish,
-            in_filepath,
-            extra_vars);
+            in_filepath);
         
         p_sec_data->n_tiles++;
         

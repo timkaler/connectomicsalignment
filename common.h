@@ -226,6 +226,8 @@ inline bool operator<(const renderTriangle& a, const renderTriangle& b)
 typedef struct _tile_data {
     int section_id;
     int tile_id; // index of this tile structure in tiles array of section_data.
+    int mfov_id; // index of the mfov within which this tile resides.
+    int index; // the location 0-61 of tile within the mfov.
     char filepath[MAX_FILEPATH];
     cv::Mat *p_image;
 
@@ -248,12 +250,7 @@ typedef struct _tile_data {
 	double offset_x;
 	double offset_y;
     bool* ignore;
-    std::vector<renderTriangle>* mesh_triangles;  
-
-    std::map<std::string, int>* vars; 
-    // not nessesary now stored in the map of extra variables  
-    //int mfov_id; // index of the mfov within which this tile resides.
-    //int index; // the location 0-61 of tile within the mfov. 
+    std::vector<renderTriangle>* mesh_triangles;      
 } tile_data_t;
 
 typedef struct _section_data {
@@ -303,12 +300,13 @@ void stop_timer(struct timeval *p_timer, const char *msg);
 void init_tile(
     tile_data_t *p_tile,
     int in_section_id,
+    int in_mfov_id,
+    int in_index,
     int in_x_start,
     int in_x_finish,
     int in_y_start,
     int in_y_finish,
-    char *in_filepath,
-    std::map<std::string, int> vars);
+    char *in_filepath);
 
 void init_section(section_data_t *p_sec_data, int sec_id);
 void init_align(align_data_t *p_align_data);
