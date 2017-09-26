@@ -40,16 +40,13 @@
 void init_tile(
     tile_data_t *p_tile,
     int in_section_id,
-    int in_mfov_id,
-    int in_index,
     int in_x_start,
     int in_x_finish,
     int in_y_start,
     int in_y_finish,
-    char *in_filepath) {
+    char *in_filepath,
+    std::map<std::string, int> vars) {
     p_tile->section_id = in_section_id;
-    p_tile->mfov_id = in_mfov_id;
-    p_tile->index = in_index;
     p_tile->x_start = in_x_start;
     p_tile->x_finish = in_x_finish;
     p_tile->y_start = in_y_start;
@@ -61,6 +58,10 @@ void init_tile(
     p_tile->p_kps_3d = new std::vector<cv::KeyPoint>();
     p_tile->ignore = NULL;
     p_tile->p_kps_desc_3d = new cv::Mat();
+    p_tile->vars = new std::map<std::string, int>();
+    for (auto it : vars) {
+        (*p_tile->vars)[it.first] = it.second;
+    }
 }
 
 void start_timer(struct timeval *p_timer) {
@@ -143,8 +144,8 @@ void log_kps(tile_data_t *p_tile_data) {
     sprintf(filepath, "%s/kps_tile_%.4d_%.4d_%.4d.tif", 
         LOG_DIR, 
         p_tile_data->section_id,
-        p_tile_data->mfov_id,
-        p_tile_data->index);
+        (p_tile_data->vars->find("mfov_id") == p_tile_data->vars->end()) ? (*p_tile_data->vars)["mfov_id"] : 0,
+        (p_tile_data->vars->find("index") == p_tile_data->vars->end()) ? (*p_tile_data->vars)["index"] : 0);
     
     cv::imwrite(filepath, outImage);
 }
@@ -169,8 +170,8 @@ void log_kps_matches(
     sprintf(filepath, "%s/kps_matches_tile_%.4d_%.4d_%.4d.tif", 
         LOG_DIR, 
         p_tile_data_src->section_id + p_align_data->base_section,
-        p_tile_data_src->mfov_id,
-        p_tile_data_src->index);
+        (p_tile_data_src->vars->find("mfov_id") == p_tile_data_src->vars->end()) ? (*p_tile_data_src->vars)["mfov_id"] : 0,
+        (p_tile_data_src->vars->find("index") == p_tile_data_src->vars->end()) ? (*p_tile_data_src->vars)["index"] : 0);
     
     cv::imwrite(filepath, outImage);
 }
@@ -245,8 +246,8 @@ void log_pts_matches(
     sprintf(filepath, "%s/pts_matches_tile_%.4d_%.4d_%.4d.tif", 
         LOG_DIR, 
         p_tile_data_src->section_id + p_align_data->base_section,
-        p_tile_data_src->mfov_id,
-        p_tile_data_src->index);
+        (p_tile_data_src->vars->find("mfov_id") == p_tile_data_src->vars->end()) ? (*p_tile_data_src->vars)["mfov_id"] : 0,
+        (p_tile_data_src->vars->find("index") == p_tile_data_src->vars->end()) ? (*p_tile_data_src->vars)["index"] : 0);
     
     cv::imwrite(filepath, outImage);
 }

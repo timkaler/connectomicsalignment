@@ -1,0 +1,6 @@
+data/txtspecs_iarpa.txt
+in_filepath
+tile_id,in_section_id,mfov_id,index,in_x_start,in_x_finish,in_y_start,in_y_finish
+tile-start: [%[0123456789]]\n\ttile-section: %[0123456789]\n\ttile-mfov: %[-0123456789]\n\ttile-index: %[0123456789]\n\ttile-bbox: [%[0123456789]][%[0123456789]][%[0123456789]][%[0123456789]]\n\ttile-filepath: %s\ntile-end: [%[0123456789]]\n
+tile_id,in_section_id,mfov_id,index,in_x_start,in_x_finish,in_y_start,in_y_finish,in_filepath,in_tile_id
+
