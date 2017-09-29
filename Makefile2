@@ -25,6 +25,10 @@ ifdef PROFILE
   LDFLAGS += -lprofiler
 endif
 
+ifdef NOCACHE
+  CFLAGS += -DNOCACHE
+endif
+
 ifdef 3D
   CFLAGS += -DALIGN3D
 endif
@@ -48,6 +52,12 @@ endif
 ifndef INCLUDEJSON
   CFLAGS += -DSKIPJSON
 endif
+
+ifeq ($(CILKSAN),1)
+CFLAGS += -fsanitize=cilk
+#LDFLAGS += -fsanitize=cilk
+endif
+
 
 ifdef ASSEMBLY
 	CFLAGS += -S

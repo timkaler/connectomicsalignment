@@ -87,7 +87,11 @@ void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set
   int height_of_active_set;
   if (LINE) {
     max_size_of_active_set = total;
-    height_of_active_set = 20;
+    #ifdef NOCACHE
+      height_of_active_set = 1;
+    #else
+      height_of_active_set = 20;
+    #endif
   } else {
     max_size_of_active_set = RECT_HEIGHT;
     height_of_active_set = RECT_HEIGHT;
@@ -222,8 +226,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
   //  split_end = split;
   //}
 
-  //for (int sec_id = split_start; sec_id < split_end/*p_align_data->n_sections*/; sec_id++) {
-  cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+  for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+  //cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
     std::set<int> active_set;
     std::set<int> finished_set;
