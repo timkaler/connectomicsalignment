@@ -87,7 +87,11 @@ void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set
   int height_of_active_set;
   if (LINE) {
     max_size_of_active_set = total;
-    height_of_active_set = 20;
+    #ifdef NOCACHE
+      height_of_active_set = 1;
+    #else
+      height_of_active_set = 20;
+    #endif
   } else {
     max_size_of_active_set = RECT_HEIGHT;
     height_of_active_set = RECT_HEIGHT;
@@ -222,8 +226,11 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
   //  split_end = split;
   //}
 
-  //for (int sec_id = split_start; sec_id < split_end/*p_align_data->n_sections*/; sec_id++) {
+  #ifdef NOCACHE
+  for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+  #else
   cilk_for (int sec_id = 0; sec_id < p_align_data->n_sections; sec_id++) {
+  #endif
     section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);
     std::set<int> active_set;
     std::set<int> finished_set;
@@ -654,6 +661,31 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
   //TRACE_1("compute_SIFT_parallel: finish\n");
 }
 
+
+
+std::vector<int> bad_sections_index(align_data_t *p_align_data) {
+	 int size_x = 50000;
+     int size_y = 50000;
+	int start_x = 50000;
+	int start_y = 50000;
+
+	std::vector<int> bad_sections;
+	std::cout << "num sections " << p_align_data->n_sections-1 << std::endl;
+	cilk_for(int i = 0; i < p_align_data->n_sections-1; i ++) {
+	    std::string qq ="";
+		qq = "";
+		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+		std::set<std::pair<int,int> > bad_triangles = find_section_bad_triangles(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
+                             start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL);
+		std::cout << " section bad triangles size " << bad_triangles.size() << std::endl;	
+                printf("section %d: bad triangles size %d\n", i, bad_triangles.size());
+		
+	}
+	return bad_sections;
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////
@@ -782,48 +814,34 @@ void align_execute(align_data_t *p_align_data) {
   /*for(int i = 0; i < p_align_data->n_sections; i ++) {
     std::string ss = "";
         ss += std::string("thumb-elastic-") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-    output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[i]), ss, 50000, 51000, 50000, 51000);
-     std::string qq ="";  
-    qq += std::string("thumb-elastic-thumb") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-    output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 51000, 50000, 51000);
-  }*/
-  //int dimention = 50000;
-  int start_x = 50000;
-  int start_y = 50000;
+		output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[i]), ss, 50000, 51000, 50000, 51000);
+ 		std::string qq ="";	
+		qq += std::string("thumb-elastic-thumb") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 51000, 50000, 51000);
+	}*/
+	//int dimention = 50000;
+        //int size_x = 5000;
+        //int size_y = 5000;
+	bad_sections_index(p_align_data);
 
-  int size_x = 50000;
-  int size_y = 50000;
+	//matchTemplate(im2, im1);
 
-        //matchTemplate(im2, im1);
-  for(int i = 0; i < p_align_data->n_sections; i ++) {
-    std::string qq2 = "";
-    qq2 += std::string("actual") + std::to_string(i+p_align_data->base_section) + std::string(".tif");
-    cilk_spawn render( &(p_align_data->sec_data[i]), qq2, start_x, start_x + size_x, start_y, start_y + size_y, THUMBNAIL, true);
-  }
-
-
-  if (false) {
-
-    //matchTemplate(im2, im1);
-    for(int i = 0; i < p_align_data->n_sections-1; i ++) {
-            std::string qq ="";
-      qq = "";
-      qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-      cilk_spawn render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
-                               start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, VOTING);
-
-      //qq = "";
-      //qq += std::string("error-average") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-      //render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 100, 100, THUMBNAIL, GEOMETRIC);
-      //std::string qq2 = "";
-      //qq2 += std::string("actual") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-      //cilk_spawn render( &(p_align_data->sec_data[i+1]), qq2, start_x, start_x + size_x, start_y, start_y + size_y, THUMBNAIL, true);
-    }
-  }
-
-  cilk_sync;
-
-    TFK_STOP_TIMER(&timer_render, "rendering time");
+	
+//	for(int i = 0; i < p_align_data->n_sections-1; i ++) {
+//	        std::string qq ="";
+//		qq = "";
+//		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+//		cilk_spawn render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
+//                             start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, VOTING);
+//
+//		//qq = "";
+//		//qq += std::string("error-average") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+//		//render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x, start_x + dimention, start_y, start_y + dimention, 100, 100, THUMBNAIL, GEOMETRIC);
+//		std::string qq2 = "";
+//		qq2 += std::string("actual") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+//		cilk_spawn render( &(p_align_data->sec_data[i+1]), qq2, start_x, start_x + size_x, start_y, start_y + size_y, THUMBNAIL, true);
+//	}
+//        cilk_sync;
     STOP_TIMER(&t_timer, "t_total-time:");
     printf("Got to the end of the function\n");
 }
