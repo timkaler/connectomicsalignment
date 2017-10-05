@@ -5,7 +5,7 @@
 export TAPIR_PREFIX=/efs/home/neboat/tapir-ex/src/build-release
 #export TAPIR_PREFIX=/efs/tapir-new-install/tapir-install
 
-export PATH=$TAPIR_PREFIX/bin:$PATH
+export PATH=$TAPIR_PREFIX/bin:/efs/home/wheatman/install_dir/protobufs/bin:$PATH
 export CXX=clang++
 #export OPENCV_ROOT=/home/armafire/tools/opencv-3-install-test/
 export OPENCV_ROOT=/efs/tools/OpenCV3
