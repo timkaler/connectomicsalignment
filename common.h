@@ -261,11 +261,13 @@ typedef struct _section_data {
     
     int out_d1;
     int out_d2;
-    cv::Mat *p_transforms[MAX_TILES];
-    cv::Mat *p_warps[MAX_TILES];
-    std::vector<int> *p_warp_order;
+    //cv::Mat *p_transforms[MAX_TILES];
+    //cv::Mat *p_warps[MAX_TILES];
+    //std::vector<int> *p_warp_order;
     cv::Mat *p_out;
     std::vector<cv::KeyPoint> *p_kps;
+    std::string cached_2d_matches;
+    std::string cached_3d_keypoints;
 
 } section_data_t;
 
@@ -284,7 +286,7 @@ typedef struct _align_data {
     int max_y;
     section_data_t sec_data[MAX_SECTIONS];
     
-    cv::Mat *p_section_transforms[MAX_SECTIONS];
+    //cv::Mat *p_section_transforms[MAX_SECTIONS];
     
     
 } align_data_t;

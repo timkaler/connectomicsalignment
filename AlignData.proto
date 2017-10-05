@@ -1,0 +1,125 @@
+syntax = "proto2";
+
+message Matrix {
+    required uint64 rows = 1;
+    required uint64 cols = 2;
+    repeated uint64 data = 3;
+}
+
+message KeyPoint {
+    required double x = 1;
+    required double y = 2;
+    required double size = 3;
+    required double angle = 4;
+    required double response = 5;
+    required uint64 octave = 6;
+    required uint64 class_id = 7;
+}
+
+message PairInt {
+    required int64 x = 1;
+    required int64 y = 2;
+}
+message PairDouble {
+    required double x = 1;
+    required double y = 2;
+}
+message RenderTriangle {
+    repeated PairDouble p = 1;
+    repeated PairDouble q = 2;
+    required PairInt key = 3;
+}
+
+
+message TileData {
+    required uint64 tile_id = 1; // global tile id
+    optional uint64 tile_mfov = 2; // mfov id
+    optional uint64 tile_index = 3; // id in the mfov
+    optional uint64 section_id = 4; // the section of the tile
+
+    // the bounding box of the tile
+    required uint64 x_start = 5;
+    required uint64 x_finish = 6;
+    required uint64 y_start = 7;
+    required uint64 y_finish = 8;
+
+
+    required string tile_filepath = 9; // where the image data is stored
+
+    // when we want to do more than just use it for input we will also need room for
+    // also n0t sure how to store all of these in proto form
+    // cv::Mat *p_image;
+    optional Matrix p_image = 10;
+
+
+    // std::vector<cv::KeyPoint> *p_kps;
+    repeated KeyPoint p_kps = 11;
+    // cv::Mat *p_kps_desc;
+    optional Matrix p_kps_desc = 12;
+
+    // std::vector<cv::KeyPoint> *p_kps_3d;
+    repeated KeyPoint p_kps_3d = 13;
+    // cv::Mat *p_kps_desc_3d;
+    optional Matrix p_kps_desc_3d = 14;
+
+    optional double a00 = 15;
+    optional double a10 = 16;
+    optional double a11 = 17;
+    optional double a01 = 18;
+
+    optional double offset_x = 19;
+    optional double offset_y = 20;
+    // bool* ignore;
+    optional bool ignore = 21;
+    // std::vector<renderTriangle>* mesh_triangles; 
+    repeated RenderTriangle mesh_triangles = 22;
+
+}
+
+message SectionData {
+    required uint64 section_id = 1;
+    optional uint64 n_tiles = 2;
+    repeated TileData tiles = 3; // the tile data protos
+    optional uint64 out_d1 = 4;
+    optional uint64 out_d2 = 5;
+
+    // still need to be done
+    
+
+    // commented out since it is commented out in the code
+    // cv::Mat *p_transforms[MAX_TILES];
+    //repeated Matrix p_transforms = 6;
+    // cv::Mat *p_warps[MAX_TILES];
+    //repeated Matrix p_warps = 7;
+    // std::vector<int> *p_warp_order;
+    //repeated int64 p_warp_order = 8;
+    // cv::Mat *p_out;
+
+
+    optional Matrix p_out = 9;
+    // std::vector<cv::KeyPoint> *p_kps;
+    repeated KeyPoint p_kps = 10;
+    optional string cached_2d_matches = 11;
+    optional string cached_3d_keypoints = 11;
+}
+
+message AlignData {
+    
+    optional int32 mode = 1;
+    
+    optional string work_dirpath = 3;
+    optional string output_dirpath = 4;
+    
+    optional uint64 base_section = 5;
+    optional uint64 n_sections = 6;
+    optional bool do_subvolume = 7;
+    optional uint64 min_x = 8;
+    optional uint64 min_y = 9;
+    optional uint64 max_x = 10;
+    optional uint64 max_y = 11;
+    repeated SectionData sec_data = 12;
+    
+    // commented out since it is commmented out in the code
+    // cv::Mat *p_section_transforms[MAX_SECTIONS];
+    //repeated Matrix p_section_transforms = 13;
+}

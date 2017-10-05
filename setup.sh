@@ -32,5 +32,5 @@ export N_TEMPORARY_BYTES=500000000
 #export EXTRA_CFLAGS="-fcilkplus"
 #export OMP_NUM_THREADS=1
 #export LD_PRELOAD=/efs/tools/jemalloc/lib/libjemalloc.so
-
+protoc --cpp_out=. --python_out=. AlignData.proto
 $@
