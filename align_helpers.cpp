@@ -1,3 +1,5 @@
+#include "AlignData.pb.cc"
+
 
 std::string padTo(std::string str, const size_t num, const char paddingChar = '0')
 {
@@ -159,6 +161,7 @@ void create_sift_hdf5(const char* filename, int num_points, std::vector<float> s
 /////////////////////////////////////////////////////////////////////////////////////////
 // INTERNAL FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////////////////
+
 void read_input(align_data_t *p_align_data) {
     FILE *fp;
     int n_tiles;
@@ -312,6 +315,184 @@ void read_input(align_data_t *p_align_data) {
     //TRACE_2("-------------------------\n");
     
     //TRACE_1("finish\n");
+}
+
+int protobuf_to_struct(align_data_t *p_tile_data) {
+  //TODO does not implement do subvolume
+  AlignData align_data;
+  // Read the existing address book.
+  std::fstream input(p_tile_data->input_filepath, std::ios::in | std::ios::binary);
+  if (!align_data.ParseFromIstream(&input)) {
+    std::cerr << "Failed to parse protocal buffer." << std::endl;
+    return 0;
+  }
+  // first deeal with AlignData level
+  if (align_data.has_mode()) {
+    p_tile_data->mode = align_data.mode();
+  }
+  if (align_data.has_work_dirpath()) {
+    strcpy(p_tile_data->work_dirpath, align_data.work_dirpath().c_str());
+  }
+  if (align_data.has_output_dirpath()) {
+    strcpy(p_tile_data->output_dirpath , align_data.output_dirpath().c_str());
+  }
+  if (align_data.has_base_section()) {
+    p_tile_data->base_section = align_data.base_section();
+  }
+  if (align_data.has_n_sections()) {
+    p_tile_data->n_sections = align_data.n_sections();
+  }
+  if (align_data.has_do_subvolume()) {
+    p_tile_data->do_subvolume = align_data.do_subvolume();
+    p_tile_data->min_x = align_data.min_x();
+    p_tile_data->min_y = align_data.min_y();
+    p_tile_data->max_x = align_data.max_x();
+    p_tile_data->max_y = align_data.max_y();
+  }
+
+  // then do the section data
+  for (int i = p_tile_data->base_section; i < (p_tile_data->base_section + p_tile_data->n_sections); i++) {
+       
+
+    SectionData section_data = align_data.sec_data(i);
+    section_data_t *p_sec_data = &(p_tile_data->sec_data[i - p_tile_data->base_section]);
+    p_sec_data->section_id = section_data.section_id();
+    p_sec_data->n_tiles = 0;
+    if (section_data.has_out_d1()) {
+      p_sec_data->out_d1 = section_data.out_d1();
+    }
+    if (section_data.has_out_d2()) {
+      p_sec_data->out_d2 = section_data.out_d2();
+    }
+
+    //p_out
+    if (section_data.has_p_out()) {
+      p_sec_data->p_out = new cv::Mat(section_data.p_out().rows(), section_data.p_out().cols(), CV_8UC1);
+      for (int row = 0; row < section_data.p_out().rows(); row++) {
+        for (int col = 0; col < section_data.p_out().cols(); col++) {
+          p_sec_data->p_out->at<int>(row, col) = section_data.p_out().data(row*section_data.p_out().cols() + col);
+        }
+      }
+
+    }
+
+    //p_kps
+    if (section_data.p_kps_size() > 0) {
+      p_sec_data->p_kps = new std::vector<cv::KeyPoint>();
+      for (int kp = 0; kp < section_data.p_kps_size(); kp++) {
+        cv::KeyPoint key_point = cv::KeyPoint(section_data.p_kps(kp).x(), section_data.p_kps(kp).y(),
+                                              section_data.p_kps(kp).size(), section_data.p_kps(kp).angle(),
+                                              section_data.p_kps(kp).response(), section_data.p_kps(kp).octave(),
+                                              section_data.p_kps(kp).class_id());
+         p_sec_data->p_kps->push_back(key_point);
+      }
+
+    }
+
+    for (int j = 0; j < section_data.tiles_size(); j++) {
+      TileData tile_data = section_data.tiles(j);
+      if (p_tile_data->do_subvolume) {
+        float MIN_X =  p_tile_data->min_x;
+        float MIN_Y =  p_tile_data->min_y;
+        float MAX_X =  p_tile_data->max_x;
+        float MAX_Y =  p_tile_data->max_y;
+        if (tile_data.x_start() < MIN_X ||
+          tile_data.y_start() < MIN_Y ||
+          tile_data.x_finish() > MAX_X ||
+          tile_data.y_finish() > MAX_Y) {
+            continue;
+        }
+      }
+
+      tile_data_t *p_cur_tile = &(p_sec_data->tiles[p_sec_data->n_tiles]);
+      p_sec_data->n_tiles++;
+      char in_filepath[MAX_FILEPATH];
+      strcpy(in_filepath, tile_data.tile_filepath().c_str());
+      init_tile(
+            p_cur_tile,
+            tile_data.section_id(),
+            tile_data.tile_mfov(),
+            tile_data.tile_index(),
+            tile_data.x_start(),
+            tile_data.x_finish(),
+            tile_data.y_start(),
+            tile_data.y_finish(),
+            in_filepath);
+
+      if (tile_data.has_p_image()) {
+        p_cur_tile->p_image = new cv::Mat(tile_data.p_image().rows(), tile_data.p_image().cols(), CV_8UC1);
+        for (int row = 0; row < tile_data.p_image().rows(); row++) {
+          for (int col = 0; col < tile_data.p_image().cols(); col++) {
+            p_cur_tile->p_image->at<int>(row, col) = tile_data.p_image().data(row*tile_data.p_image().cols() + col);
+          }
+        }
+
+      }
+      if (tile_data.p_kps_size() > 0) {
+        p_cur_tile->p_kps = new std::vector<cv::KeyPoint>();
+        for (int kp = 0; kp < tile_data.p_kps_size(); kp++) {
+          cv::KeyPoint key_point = cv::KeyPoint(tile_data.p_kps(kp).x(), tile_data.p_kps(kp).y(),
+                                                tile_data.p_kps(kp).size(), tile_data.p_kps(kp).angle(),
+                                                tile_data.p_kps(kp).response(), tile_data.p_kps(kp).octave(),
+                                                tile_data.p_kps(kp).class_id());
+          p_cur_tile->p_kps->push_back(key_point);
+        }
+
+      }
+      if (tile_data.has_p_kps_desc()) {
+        p_cur_tile->p_kps_desc = new cv::Mat(tile_data.p_kps_desc().rows(), tile_data.p_kps_desc().cols(), CV_8UC1);
+        for (int row = 0; row < tile_data.p_kps_desc().rows(); row++) {
+          for (int col = 0; col < tile_data.p_kps_desc().cols(); col++) {
+            p_cur_tile->p_kps_desc->at<int>(row, col) = tile_data.p_kps_desc().data(row*tile_data.p_kps_desc().cols() + col);
+          }
+        }
+
+      }
+      if (tile_data.p_kps_3d_size() > 0) {
+        p_cur_tile->p_kps_3d = new std::vector<cv::KeyPoint>();
+        for (int kp = 0; kp < tile_data.p_kps_3d_size(); kp++) {
+          cv::KeyPoint key_point = cv::KeyPoint(tile_data.p_kps_3d(kp).x(), tile_data.p_kps_3d(kp).y(),
+                                                tile_data.p_kps_3d(kp).size(), tile_data.p_kps_3d(kp).angle(),
+                                                tile_data.p_kps_3d(kp).response(), tile_data.p_kps_3d(kp).octave(),
+                                                tile_data.p_kps_3d(kp).class_id());
+          p_cur_tile->p_kps_3d->push_back(key_point);
+        }
+
+      }
+      if (tile_data.has_p_kps_desc_3d()) {
+        p_cur_tile->p_kps_desc_3d = new cv::Mat(tile_data.p_kps_desc_3d().rows(), tile_data.p_kps_desc_3d().cols(), CV_8UC1);
+        for (int row = 0; row < tile_data.p_kps_desc_3d().rows(); row++) {
+          for (int col = 0; col < tile_data.p_kps_desc_3d().cols(); col++) {
+            p_cur_tile->p_kps_desc_3d->at<int>(row, col) = tile_data.p_kps_desc_3d().data(row*tile_data.p_kps_desc_3d().cols() + col);
+          }
+        }
+
+      }
+      if (tile_data.has_ignore()) {
+        bool *ignore = (bool *) malloc(sizeof(bool));
+        *ignore = tile_data.ignore();
+        p_cur_tile->ignore = ignore;
+      }
+      if (tile_data.has_a00()) {
+        p_cur_tile->a00 = tile_data.a00();
+      }
+      if (tile_data.has_a10()) {
+        p_cur_tile->a10 = tile_data.a10();
+      }
+      if (tile_data.has_a01()) {
+        p_cur_tile->a10 = tile_data.a01();
+      }
+      if (tile_data.has_a11()) {
+        p_cur_tile->a11 = tile_data.a11();
+      }
+    }
+  }
+  return 1;
+
+}
+
+void struct_to_protobuf(align_data_t *p_tile_data) {
+  
 }
 
 void free_tiles(align_data_t *p_align_data) {

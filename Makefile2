@@ -14,11 +14,11 @@ OPENCV_LIB=$(OPENCV_ROOT)/lib
 #>>>>>>> 84dd39cb1a6e33998c46f5e549f732adc98b358f
 
 #CFLAGS += -fcilkplus -m64 -ffast-math -mfma
-CFLAGS += -std=c++11 $(EXTRA_CFLAGS) -m64 -march=native
+CFLAGS += -std=c++11 $(EXTRA_CFLAGS) -m64 -march=native -pthread -I/efs/home/wheatman/install_dir/protobufs/include
 #CFLAGS += -Wall
 #-Winline
 CFLAGS += -I$(OPENCV_INCLUDE)
-LDFLAGS = $(EXTRA_LDFLAGS)
+LDFLAGS = $(EXTRA_LDFLAGS) -L/efs/home/wheatman/install_dir/protobufs/lib -lprotobuf -lpthread
 
 ifdef PROFILE
   CFLAGS += -DPROFILE

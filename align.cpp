@@ -29,6 +29,7 @@ float EDGE_THRESH_2D = 5.0;
 
 // Helper functions
 #include "align_helpers.cpp"
+#include "AlignData.pb.h"
 #include "render_tiles.cpp"
 #include "cilk_tools/Graph.h"
 #include "serialize.h"
@@ -766,7 +767,7 @@ void align_execute(align_data_t *p_align_data) {
 
 
 
-    read_input(p_align_data);
+    protobuf_to_struct(p_align_data);
 
 
     if (p_align_data->mode == MODE_COMPUTE_KPS_AND_MATCH) {
