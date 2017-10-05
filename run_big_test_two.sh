@@ -36,7 +36,7 @@ OUTPUTDIR=$PWD/temp/
 #    $OUTPUTDIR
 
 ./setup.sh ./run_align 1 \
-    0 12\
+    0 50\
     $PWD/data/txtspecs_iarpa_full.txt \
     $OUTPUTDIR \
     $OUTPUTDIR 
