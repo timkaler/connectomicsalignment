@@ -554,7 +554,7 @@ std::set<std::pair<int, int> > find_bad_triangles_tile(std::vector<renderTriangl
 }
 
 /* rendering with error detection */
-cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, int box_width, int box_height, Resolution res) {
+cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, int box_width, int box_height, Resolution res, bool write) {
 
 	std::vector<renderTriangle> triangles;
 	std::set<std::pair<int,int> > added_triangles;
@@ -702,12 +702,10 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
      cv::Mat heatmap_image = apply_heatmap_to_grayscale(section_p_out, section_p_out_mask, nrows, ncols); 
 
 	bool ret = cv::imwrite(filename, (*section_p_out));
-        printf("success of first write is %d\n", ret);
         std::string filename_mask = filename.replace(filename.find(".tif"),4,".png");
-        printf("Writing filename %s\n", filename_mask.c_str());
-	ret = cv::imwrite(filename_mask, heatmap_image);
-        printf("success of second write is %d\n", ret);
-        printf("after imwrite\n");
+	if(write) {
+		ret = cv::imwrite(filename_mask, heatmap_image);
+	}
 	return (*section_p_out);
 }
 
