@@ -100,7 +100,7 @@ message SectionData {
     // std::vector<cv::KeyPoint> *p_kps;
     repeated KeyPoint p_kps = 10;
     optional string cached_2d_matches = 11;
-    optional string cached_3d_keypoints = 11;
+    optional string cached_3d_keypoints = 12;
 }
 
 message AlignData {
