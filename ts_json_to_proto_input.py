@@ -59,8 +59,8 @@ def filter_tilespecs(tilespecs_json_dir, tiles_to_process):
             ts['bbox'][3] -= min_y
             cur_section = ts['layer']
             cur_mfov = ts['mfov']
-            if cur_mfov != 1:
-              continue
+            #if cur_mfov != 1:
+            #  continue
             cur_index = ts['tile_index']
             #if ts['bbox'][0] > 30000 or ts['bbox'][1] > 30000 or ts['bbox'][2] > 30000 or ts['bbox'][3]>30000:
             #  continue
@@ -109,10 +109,14 @@ def write_txt_input(output_filename, tilespecs):
     align_data_proto = AlignData_pb2.AlignData()
 
     sorted_section = sorted(sections.keys())
+    the_count = 0
     for i, sec in enumerate(sorted_section):
+        print sec
+        
         section_proto = align_data_proto.sec_data.add()
         section_proto.section_id = i
         for j, ts in enumerate(sections[sec]):
+            the_count += 1
             tile_proto = section_proto.tiles.add()
             tile_proto.tile_id = ts["id"]
             tile_proto.tile_mfov = ts["mfov"]
@@ -120,6 +124,8 @@ def write_txt_input(output_filename, tilespecs):
             tile_proto.section_id = section_proto.section_id
             tile_proto.x_start,tile_proto.x_finish, tile_proto.y_start, tile_proto.y_finish   = [int(item) for item in ts["bbox"]]
             tile_filepath = ts["mipmapLevels"]["0"]["imageUrl"]
+            if j==0:
+              print tile_filepath
             tile_proto.tile_filepath = tile_filepath.replace('file://', '')
             
         
@@ -129,6 +135,7 @@ def write_txt_input(output_filename, tilespecs):
     f = open(output_filename, 'wb')
     f.write(align_data_proto.SerializeToString())
     f.close()
+    print "The count is " + str(the_count)
     
 def execute(tilespec_json_dir, output_filename):
     

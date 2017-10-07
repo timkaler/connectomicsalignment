@@ -669,20 +669,27 @@ std::vector<int> bad_sections_index(align_data_t *p_align_data, int start_x, int
 	std::vector<int> bad_sections;
 	std::cout << "num sections " << p_align_data->n_sections-1 << std::endl;
 
-	std::ofstream myfile;
-    myfile.open ("badtriangles.txt", std::ios_base::app);
 
-	cilk_for(int i = 0; i < p_align_data->n_sections-1; i ++) {
+    std::vector<std::set<std::pair<int,int> > > bad_triangles_list(p_align_data->n_sections);
+
+	for(int i = 0; i < p_align_data->n_sections-1; i ++) {
 	    std::string qq ="";
 		qq = "";
 		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		std::set<std::pair<int,int> > bad_triangles = find_section_bad_triangles(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
+		//std::set<std::pair<int,int> > bad_triangles = find_section_bad_triangles(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
+		bad_triangles_list[i] = cilk_spawn find_section_bad_triangles(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
                              start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL);
-		myfile << i << " section bad triangles size " << bad_triangles.size() << std::endl;	
-        printf("section %d: bad triangles size %d\n", i, bad_triangles.size());
-		
+		//myfile << i << " section bad triangles size " << bad_triangles.size() << std::endl;	
+        //printf("section %d: bad triangles size %d\n", i, bad_triangles.size());
 	}
+        cilk_sync;
 
+        std::ofstream myfile;
+        myfile.open ("badtriangles.txt", std::ios_base::app);
+	for (int i = 0; i < p_align_data->n_sections-1; i++) {	
+	  myfile << i << " section bad triangles size " << bad_triangles_list[i].size() << std::endl;	
+          printf("section %d: bad triangles size %d\n", i, bad_triangles_list[i].size());
+    	}
 	myfile.close();
 	return bad_sections;
 }
@@ -768,6 +775,11 @@ void align_execute(align_data_t *p_align_data) {
 
 
     protobuf_to_struct(p_align_data);
+
+    for (int i = 0; i < p_align_data->n_sections; i++) {
+      printf("section %d has tiles %d\n", i, p_align_data->sec_data[i].n_tiles);
+    }
+
 
 
     if (p_align_data->mode == MODE_COMPUTE_KPS_AND_MATCH) {
