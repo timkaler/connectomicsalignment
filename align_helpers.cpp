@@ -518,7 +518,7 @@ void struct_to_protobuf_key_point(const cv::KeyPoint kp_struct, KeyPoint *kp_pro
         kp_proto->set_class_id(kp_struct.class_id);
 }
 
-void struct_to_protobuf(align_data_t *p_tile_data) {
+int struct_to_protobuf(align_data_t *p_tile_data) {
   // TODO does not deal with the mesh triangles
   int totel_tile_count = 0;
   AlignData align_data;
@@ -637,12 +637,12 @@ void struct_to_protobuf(align_data_t *p_tile_data) {
     }
   }
   // Write the new address book back to disk.
-  fstream output(p_tile_data->input_filepath, std::ios::out | std::ios::trunc | std::ios::binary);
+  std::fstream output(p_tile_data->input_filepath, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!align_data.SerializeToOstream(&output)) {
-    cerr << "Failed to write align data." << endl;
+    std::cerr << "Failed to write align data." << std::endl;
     return -1;
   }
-  return 1
+  return 1;
   
 }
 
