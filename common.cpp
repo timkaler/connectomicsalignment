@@ -61,6 +61,8 @@ void init_tile(
     p_tile->p_kps_3d = new std::vector<cv::KeyPoint>();
     p_tile->ignore = NULL;
     p_tile->p_kps_desc_3d = new cv::Mat();
+    p_tile->level = 0;
+    p_tile->bad = false;
 }
 
 void start_timer(struct timeval *p_timer) {

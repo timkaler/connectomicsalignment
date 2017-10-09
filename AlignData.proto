@@ -74,6 +74,11 @@ message TileData {
     // std::vector<renderTriangle>* mesh_triangles; 
     repeated RenderTriangle mesh_triangles = 22;
 
+
+
+    optional uint64 level = 23;
+    optional bool bad = 24;
+
 }
 
 message SectionData {
@@ -101,6 +106,7 @@ message SectionData {
     repeated KeyPoint p_kps = 10;
     optional string cached_2d_matches = 11;
     optional string cached_3d_keypoints = 12;
+
 }
 
 message AlignData {
