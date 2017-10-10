@@ -1,5 +1,6 @@
 
 bool section_data_exists(int section, align_data_t* p_align_data) {
+  section = p_align_data->sec_data[section].section_id;
   #ifdef NOCACHE
     return false;
   #endif
@@ -15,6 +16,7 @@ bool section_data_exists(int section, align_data_t* p_align_data) {
 }
 
 void store_3d_matches(int section, align_data_t* p_align_data) {
+  section = p_align_data->sec_data[section].section_id;
   std::string filename = std::string("cached_data/prefix_")+std::to_string(section+p_align_data->base_section+1);
   cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"), cv::FileStorage::WRITE);
   for (int i = 0; i < p_align_data->sec_data[section].n_tiles; i++) {
@@ -24,14 +26,15 @@ void store_3d_matches(int section, align_data_t* p_align_data) {
   fs.release();
 }
 
-void read_3d_matches(int section, align_data_t* p_align_data) {
+void read_3d_matches(int _section, align_data_t* p_align_data) {
+  int section = p_align_data->sec_data[_section].section_id;
   std::string filename = std::string("cached_data/prefix_")+std::to_string(section+p_align_data->base_section+1);
   cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"), cv::FileStorage::READ);
   int count = 0;
-  for (int i = 0; i < p_align_data->sec_data[section].n_tiles; i++) {
-    fs["keypoints_"+std::to_string(i)] >> *(p_align_data->sec_data[section].tiles[i].p_kps_3d);
-    count += p_align_data->sec_data[section].tiles[i].p_kps_3d->size();
-    fs["descriptors_"+std::to_string(i)] >> *(p_align_data->sec_data[section].tiles[i].p_kps_desc_3d);
+  for (int i = 0; i < p_align_data->sec_data[_section].n_tiles; i++) {
+    fs["keypoints_"+std::to_string(i)] >> *(p_align_data->sec_data[_section].tiles[i].p_kps_3d);
+    count += p_align_data->sec_data[_section].tiles[i].p_kps_3d->size();
+    fs["descriptors_"+std::to_string(i)] >> *(p_align_data->sec_data[_section].tiles[i].p_kps_desc_3d);
   }
   fs.release();
   printf("Read %d 3d matches for section %d\n", count, section);
@@ -41,6 +44,7 @@ void read_3d_matches(int section, align_data_t* p_align_data) {
 void store_2d_graph(Graph<vdata, edata>* graph, int section,
     align_data_t* p_align_data) {
 
+  section = p_align_data->sec_data[section].section_id;
   std::string filename = std::string("cached_data/prefix_")+std::to_string(section+p_align_data->base_section+1);
   cv::FileStorage fs(filename+std::string("_2d_matches.yml.gz"), cv::FileStorage::WRITE);
   for (int i = 0; i < graph->num_vertices(); i++) {
@@ -60,6 +64,7 @@ void store_2d_graph(Graph<vdata, edata>* graph, int section,
 }
 
 void read_graph_from_file(Graph<vdata, edata>* graph, int section, align_data_t* p_align_data) {
+  section = p_align_data->sec_data[section].section_id;
   std::string filename = std::string("cached_data/prefix_")+std::to_string(section+p_align_data->base_section+1);
   cv::FileStorage fs(filename+std::string("_2d_matches.yml.gz"), cv::FileStorage::READ);
   for (int i = 0; i < graph->num_vertices(); i++) {

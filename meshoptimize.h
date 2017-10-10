@@ -897,8 +897,8 @@ void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_alig
       }
     }
 
-    printf("Total size of a tile kps is %lu\n", atile_kps_in_overlap.size());
-    printf("Total size of b tile kps is %lu\n", btile_kps_in_overlap.size());
+    printf("Total size of a tile (%d) kps is %lu\n", section_a, atile_kps_in_overlap.size());
+    printf("Total size of b tile (%d) kps is %lu\n", section_b, btile_kps_in_overlap.size());
 
     cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
     cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));

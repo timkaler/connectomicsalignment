@@ -669,20 +669,27 @@ std::vector<int> bad_sections_index(align_data_t *p_align_data, int start_x, int
 	std::vector<int> bad_sections;
 	std::cout << "num sections " << p_align_data->n_sections-1 << std::endl;
 
-	std::ofstream myfile;
-    myfile.open ("badtriangles.txt", std::ios_base::app);
 
-	cilk_for(int i = 0; i < p_align_data->n_sections-1; i ++) {
+    std::vector<std::set<std::pair<int,int> > > bad_triangles_list(p_align_data->n_sections);
+
+	for(int i = 0; i < p_align_data->n_sections-1; i ++) {
 	    std::string qq ="";
 		qq = "";
 		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		std::set<std::pair<int,int> > bad_triangles = find_section_bad_triangles(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
-                             start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL);
-		myfile << i << " section bad triangles size " << bad_triangles.size() << std::endl;	
-        printf("section %d: bad triangles size %d\n", i, bad_triangles.size());
-		
+		//std::set<std::pair<int,int> > bad_triangles = find_section_bad_triangles(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
+		bad_triangles_list[i] = cilk_spawn find_section_bad_triangles(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
+                             start_x + size_x, start_y, start_y + size_y, 250, 250, THUMBNAIL);
+		//myfile << i << " section bad triangles size " << bad_triangles.size() << std::endl;	
+        //printf("section %d: bad triangles size %d\n", i, bad_triangles.size());
 	}
+        cilk_sync;
 
+        std::ofstream myfile;
+        myfile.open ("badtriangles.txt", std::ios_base::app);
+	for (int i = 0; i < p_align_data->n_sections-1; i++) {	
+	  myfile << i << " section bad triangles size " << bad_triangles_list[i].size() << std::endl;	
+          printf("section %d: bad triangles size %d\n", i, bad_triangles_list[i].size());
+    	}
 	myfile.close();
 	return bad_sections;
 }
@@ -720,9 +727,9 @@ void align_execute(align_data_t *p_align_data) {
 //
 //    double bounding_box[4];
 //    bounding_box[0] = 0.0;
-//    bounding_box[1] = 100.0;
+//    bounding_box[1] = 250.0;
 //    bounding_box[2] = 0.0;
-//    bounding_box[3] = 100.0;
+//    bounding_box[3] = 250.0;
 //    double spacing = 10.0;
 //    std::vector<cv::Point2f>* hex_grid = generate_hex_grid(bounding_box, spacing);
 //    for (int i = 0; i < hex_grid->size(); i++) {
@@ -768,6 +775,11 @@ void align_execute(align_data_t *p_align_data) {
 
 
     protobuf_to_struct(p_align_data);
+
+    for (int i = 0; i < p_align_data->n_sections; i++) {
+      printf("section %d has tiles %d\n", i, p_align_data->sec_data[i].n_tiles);
+    }
+
 
 
     if (p_align_data->mode == MODE_COMPUTE_KPS_AND_MATCH) {
@@ -817,10 +829,10 @@ void align_execute(align_data_t *p_align_data) {
   /*for(int i = 0; i < p_align_data->n_sections; i ++) {
     std::string ss = "";
         ss += std::string("thumb-elastic-") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[i]), ss, 50000, 51000, 50000, 51000);
+		output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[i]), ss, 50000, 52500, 50000, 52500);
  		std::string qq ="";	
 		qq += std::string("thumb-elastic-thumb") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 51000, 50000, 51000);
+		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 52500, 50000, 52500);
 	}*/
 	int start_x = 50000;
 	int start_y = 50000;
@@ -835,7 +847,7 @@ void align_execute(align_data_t *p_align_data) {
 		qq = "";
 		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
 		cilk_spawn render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
-                             start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, true);
+                             start_x + size_x, start_y, start_y + size_y, 250, 250, THUMBNAIL, true);
 	}
     cilk_sync;
     STOP_TIMER(&t_timer, "t_total-time:");
