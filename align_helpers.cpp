@@ -318,7 +318,7 @@ void read_input(align_data_t *p_align_data) {
 }
 
 int protobuf_to_struct(align_data_t *p_tile_data) {
-  //TODO does not implement do subvolume
+  // TODO does not deal with the mesh triangles
   AlignData align_data;
   // Read the existing address book.
   std::fstream input(p_tile_data->input_filepath, std::ios::in | std::ios::binary);
@@ -364,6 +364,7 @@ int protobuf_to_struct(align_data_t *p_tile_data) {
     if (section_data.has_out_d2()) {
       p_sec_data->out_d2 = section_data.out_d2();
     }
+
 
     //p_out
     if (section_data.has_p_out()) {
@@ -485,13 +486,163 @@ int protobuf_to_struct(align_data_t *p_tile_data) {
       if (tile_data.has_a11()) {
         p_cur_tile->a11 = tile_data.a11();
       }
+      if (tile_data.has_level()) {
+        p_cur_tile->level = tile_data.level();
+      }
+      if (tile_data.has_bad()) {
+        p_cur_tile->bad = tile_data.bad();
+      }
     }
   }
   return 1;
 
 }
 
-void struct_to_protobuf(align_data_t *p_tile_data) {
+void struct_to_protobuf_matrix(cv::Mat *mat_struct, Matrix *mat_proto) {
+  mat_proto->set_rows(mat_struct->rows);
+  mat_proto->set_cols(mat_struct->cols);
+  for (int row = 0; row < mat_proto->rows(); row++) {
+    for (int col = 0; col < mat_proto->cols(); col++) {
+       mat_proto->add_data(mat_struct->at<int>(row, col));
+    }
+  }
+}
+
+void struct_to_protobuf_key_point(const cv::KeyPoint kp_struct, KeyPoint *kp_proto) {
+        kp_proto->set_x(kp_struct.pt.x);
+        kp_proto->set_y(kp_struct.pt.y);
+        kp_proto->set_size(kp_struct.size);
+        kp_proto->set_angle(kp_struct.angle);
+        kp_proto->set_response(kp_struct.response);
+        kp_proto->set_octave(kp_struct.octave);
+        kp_proto->set_class_id(kp_struct.class_id);
+}
+
+int struct_to_protobuf(align_data_t *p_tile_data) {
+  // TODO does not deal with the mesh triangles
+  int totel_tile_count = 0;
+  AlignData align_data;
+  // Read the existing address book.
+  // first deeal with AlignData level
+  align_data.set_mode(p_tile_data->mode);
+
+  if (p_tile_data->work_dirpath) {
+    align_data.set_work_dirpath(p_tile_data->work_dirpath);
+  }
+  if (p_tile_data->output_dirpath) {
+    align_data.set_output_dirpath(p_tile_data->output_dirpath);
+  }
+  align_data.set_base_section(p_tile_data->base_section);
+  
+  align_data.set_n_sections(p_tile_data->n_sections);
+  
+  if (p_tile_data->do_subvolume) {
+    align_data.set_do_subvolume(p_tile_data->do_subvolume);
+    align_data.set_min_x(p_tile_data->min_x);
+    align_data.set_min_y(p_tile_data->min_y);
+    align_data.set_max_x(p_tile_data->max_x);
+    align_data.set_max_y(p_tile_data->max_y);
+  }
+
+  // then do the section data
+  for (int i = p_tile_data->base_section; i < (p_tile_data->base_section + p_tile_data->n_sections); i++) {
+       
+
+    SectionData *section_data = align_data.add_sec_data();
+    section_data_t *p_sec_data = &(p_tile_data->sec_data[i - p_tile_data->base_section]);
+
+    section_data->set_section_id(p_sec_data->section_id);
+    section_data->set_n_tiles(p_sec_data->n_tiles);
+    section_data->set_out_d1(p_sec_data->out_d1);
+    section_data->set_out_d2(p_sec_data->out_d2);
+    
+
+
+    //p_out
+    if (p_sec_data->p_out) {
+      Matrix matrix;
+      struct_to_protobuf_matrix(p_sec_data->p_out, &matrix);
+      section_data->set_allocated_p_out(&matrix);
+    }
+
+    //p_kps
+    if (p_sec_data->p_kps) {
+      for (auto const& value: *p_sec_data->p_kps) {
+        KeyPoint *key_point = section_data->add_p_kps();
+        struct_to_protobuf_key_point(value, key_point);
+      }
+
+    }
+
+    for (int j = 0; j < section_data->tiles_size(); j++) {
+      TileData *tile_data = section_data->add_tiles();
+
+      tile_data_t *p_cur_tile = &(p_sec_data->tiles[p_sec_data->n_tiles]);
+
+      tile_data->set_section_id(p_cur_tile->section_id);
+      tile_data->set_tile_index(p_cur_tile->index);
+      tile_data->set_tile_mfov(p_cur_tile->mfov_id);
+      tile_data->set_tile_id(totel_tile_count++);
+      tile_data->set_x_start(p_cur_tile->x_start);
+      tile_data->set_x_finish(p_cur_tile->x_finish);
+      tile_data->set_y_start(p_cur_tile->y_start);
+      tile_data->set_y_finish(p_cur_tile->y_finish);
+      tile_data->set_tile_filepath(p_cur_tile->filepath);
+
+      
+      if (p_cur_tile->p_image) {
+        Matrix matrix;
+        struct_to_protobuf_matrix(p_cur_tile->p_image, &matrix);
+        tile_data->set_allocated_p_image(&matrix);
+      }
+
+      if (p_cur_tile->p_kps) {
+        for (auto const& value: *p_cur_tile->p_kps) {
+          KeyPoint *key_point = tile_data->add_p_kps();
+          struct_to_protobuf_key_point(value, key_point);
+        }
+
+      }
+
+      if (p_cur_tile->p_kps_desc) {
+        Matrix matrix;
+        struct_to_protobuf_matrix(p_cur_tile->p_kps_desc, &matrix);
+        tile_data->set_allocated_p_kps_desc(&matrix);
+      }
+
+      if (p_cur_tile->p_kps_3d) {
+        for (auto const& value: *p_cur_tile->p_kps_3d) {
+          KeyPoint *key_point = tile_data->add_p_kps_3d();
+          struct_to_protobuf_key_point(value, key_point);
+        }
+
+      }
+
+      if (p_cur_tile->p_kps_desc_3d) {
+        Matrix matrix;
+        struct_to_protobuf_matrix(p_cur_tile->p_kps_desc_3d, &matrix);
+        tile_data->set_allocated_p_kps_desc_3d(&matrix);
+      }
+      if (p_cur_tile->ignore) {
+        tile_data->set_ignore(p_cur_tile->ignore);
+      }
+
+      tile_data->set_a00(p_cur_tile->a00);
+      tile_data->set_a10(p_cur_tile->a10);
+      tile_data->set_a01(p_cur_tile->a10);
+      tile_data->set_a11(p_cur_tile->a11);
+      tile_data->set_level(p_cur_tile->level);
+      tile_data->set_bad(p_cur_tile->bad);
+
+    }
+  }
+  // Write the new address book back to disk.
+  std::fstream output(p_tile_data->input_filepath, std::ios::out | std::ios::trunc | std::ios::binary);
+  if (!align_data.SerializeToOstream(&output)) {
+    std::cerr << "Failed to write align data." << std::endl;
+    return -1;
+  }
+  return 1;
   
 }
 

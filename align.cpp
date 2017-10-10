@@ -678,7 +678,7 @@ std::vector<int> bad_sections_index(align_data_t *p_align_data, int start_x, int
 		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
 		//std::set<std::pair<int,int> > bad_triangles = find_section_bad_triangles(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
 		bad_triangles_list[i] = cilk_spawn find_section_bad_triangles(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
-                             start_x + size_x, start_y, start_y + size_y, 250, 250, THUMBNAIL);
+                             start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL);
 		//myfile << i << " section bad triangles size " << bad_triangles.size() << std::endl;	
         //printf("section %d: bad triangles size %d\n", i, bad_triangles.size());
 	}
@@ -847,7 +847,7 @@ void align_execute(align_data_t *p_align_data) {
 		qq = "";
 		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
 		cilk_spawn render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
-                             start_x + size_x, start_y, start_y + size_y, 250, 250, THUMBNAIL, true);
+                             start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, true);
 	}
     cilk_sync;
     STOP_TIMER(&t_timer, "t_total-time:");

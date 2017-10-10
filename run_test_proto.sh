@@ -15,5 +15,5 @@ OUTPUTDIR=$PWD/temp/
     0 20\
     $PWD/data/proto_data_delete3\
     $OUTPUTDIR \
-    $OUTPUTDIR 
+    $OUTPUTDIR
 

@@ -250,7 +250,9 @@ typedef struct _tile_data {
 	double offset_x;
 	double offset_y;
     bool* ignore;
-    std::vector<renderTriangle>* mesh_triangles;      
+    std::vector<renderTriangle>* mesh_triangles;
+    int level;
+    bool bad;      
 } tile_data_t;
 
 typedef struct _section_data {
