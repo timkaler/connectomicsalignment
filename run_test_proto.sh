@@ -9,9 +9,9 @@ SECTION=0
 WORKINGDIR=$PWD
 OUTPUTDIR=$PWD/temp/
 
-./setup.sh ./run_align 1 \
-    0 2\
-    $PWD/data/proto_data \
+./setup.sh gdb --args ./run_align 1 \
+    0 4\
+    $PWD/data/proto_data21 \
     $OUTPUTDIR \
     $OUTPUTDIR 
 
