@@ -217,6 +217,27 @@ bool tile_in_bounds(tile_data_t tile, int lower_x, int upper_x, int lower_y, int
 		return area_overlap(c1, c2, c3, c4, d1, d2, d3, d4);	
 }
 
+bool tile_completely_in_bounds(tile_data_t tile, int lower_x, int upper_x, int lower_y, int upper_y) {
+		int width = SIFT_D2_SHIFT_3D;
+		int height = SIFT_D1_SHIFT_3D; //MIGHT BE OTHER WAY AROUND
+		cv::Point2f c1 = cv::Point2f(0.0, 0.0);
+		cv::Point2f c2 = cv::Point2f(1.0f*width, 0.0);
+		cv::Point2f c3 = cv::Point2f(0.0, 1.0f*height);
+		cv::Point2f c4 = cv::Point2f(1.0f*width, 1.0f*height);
+		c1 = affine_transform(&tile, c1);		
+		c2 = affine_transform(&tile, c2);
+		c3 = affine_transform(&tile, c3);
+		c4 = affine_transform(&tile, c4);
+		std::cout << "TILE " << c1.x << " " << c1.y << " "
+					<< c2.x << " " << c2.y << " "
+					<< c3.x << " " << c3.y << " "
+					<< c4.x << " " << c4.y << " " << std::endl;
+		return c1.x >= lower_x && c1.x <= upper_x && c1.y >= lower_y && c1.y <= upper_y &&
+				c2.x >= lower_x && c2.x <= upper_x && c2.y >= lower_y && c2.y <= upper_y &&
+				c3.x >= lower_x && c3.x <= upper_x && c3.y >= lower_y && c3.y <= upper_y &&
+				c4.x >= lower_x && c4.x <= upper_x && c4.y >= lower_y && c4.y <= upper_y;
+}
+
 typedef struct {
   cv::Mat img;
   std::string image_path;
@@ -420,6 +441,72 @@ cv::Mat render(section_data_t* section, std::string filename, int input_lower_x,
   }
   return (*section_p_out);
 }
+
+void  update_tiles(section_data_t* section, cv::Mat * halo, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, Resolution res, bool write) {
+  int lower_y, lower_x, upper_y, upper_x;
+  int nrows, ncols;
+  double scale_x, scale_y;
+
+  printf("halo info is %d,%d,%d,%d\n", input_lower_x, input_lower_y, input_upper_x, input_upper_y);
+
+
+  //set parameteres
+  set_render_parameters(lower_y, lower_x, upper_y, upper_x, ncols, nrows, scale_x, scale_y, section, filename, input_lower_x, input_upper_x, input_lower_y, input_upper_y, res);
+  
+
+  std::vector<renderTriangle> triangles;
+  std::set<std::pair<int,int> > added_triangles;
+  bool empty_image = true;
+	std::cout << "BOUNDS OF UPDATE " << lower_x << " " << lower_y << " " << upper_x << " " << upper_y << " " << std::endl;
+  for (int i = 0; i < section->n_tiles; i++) {
+    tile_data_t tile = section->tiles[i];
+    if (!tile_completely_in_bounds(tile, input_lower_x, input_upper_x, input_lower_y, input_upper_y)) {
+      continue; //FIX THIS LATER (should be copletely) 
+    }
+	std::cout << "TILE IN BOUNDS SKW" << std::endl;
+    empty_image = false;
+    for (int j = 0; j < tile.mesh_triangles->size(); j ++) {
+      if (added_triangles.find((*tile.mesh_triangles)[j].key) == added_triangles.end()) {
+        triangles.push_back((*tile.mesh_triangles)[j]);
+        added_triangles.insert((*tile.mesh_triangles)[j].key);
+      }
+    }
+  }
+
+  for (int i = section->n_tiles; --i>=0;/*i < section->n_tiles; i++*/) {
+    tile_data_t tile = section->tiles[i];
+
+    if(!tile_completely_in_bounds(tile, input_lower_x, input_upper_x, input_lower_y, input_upper_y)) {
+      continue;
+    } 
+	//read in tile file
+    cv::Mat* tile_p_image = read_tile(tile.filepath, res);
+
+   	cv::Mat* new_tile = new cv::Mat();
+  	(*new_tile).create((*tile_p_image).size().width, (*tile_p_image).size().height, CV_8UC1);
+
+	for (int _x = 0; _x < (*tile_p_image).size().width; _x++) {
+      for (int _y = 0; _y < (*tile_p_image).size().height; _y++) {
+        cv::Point2f p = cv::Point2f(_x*scale_x, _y*scale_y);
+        cv::Point2f transformed_p = affine_transform(&tile, p);
+        transformed_p = elastic_transform(&tile, &triangles, transformed_p);
+        int x_c = (int)(transformed_p.x/scale_x + 0.5);
+        int y_c = (int)(transformed_p.y/scale_y + 0.5);
+
+		new_tile->at<unsigned char>(_y, _x) = halo->at<unsigned short>(y_c - lower_y, x_c - lower_y);
+		
+      }	
+    }
+	if(write) {
+		std::string s  = "tile" + std::to_string(i) + filename;
+		cv::imwrite(s, (*new_tile));
+	}
+    tile_p_image->release();
+  }
+}
+
+
+
 
 float matchTemplate(cv::Mat img1, cv::Mat img2) {
     cv::Mat result_SQDIFF, result_SQDIFF_NORMED, result_CCORR, result_CCORR_NORMED,
@@ -989,7 +1076,6 @@ std::set<std::pair<int, int> > find_section_bad_triangles(section_data_t* prev_s
 	bad_triangles = find_bad_triangles(&triangles, prev_section, section, input_lower_x, input_upper_x,
                                              input_lower_y, input_upper_y, box_height, box_width, res, score_map);	
     TFK_STOP_TIMER(&timer_find_badt, "Time to find bad triangles");
-    printf("in methods %d\n", bad_triangles.size());
 	return bad_triangles;
 }
 

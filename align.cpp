@@ -662,7 +662,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
   //TRACE_1("compute_SIFT_parallel: finish\n");
 }
 
-std::pair<int,int> halo_size(std::vector<cv::Point2f> h) {
+std::pair<int,int> get_halo_size(std::vector<cv::Point2f> h) {
 	return std::make_pair(h[2].x - h[1].x, h[1].y - h[0].y);
 }
 
@@ -694,7 +694,6 @@ std::vector<cv::Point2f> combine_halos(std::vector<cv::Point2f> h1, std::vector<
 	int upper_x = max(h1[2].x, h2[2].x);
 	int lower_y = min(h1[0].y, h2[0].y);
 	int upper_y = max(h1[1].y, h2[1].y);	
-	std::cout << "merging halos: " << std::endl;
 	print_halo(h1);
 	print_halo(h2);
 	std::vector<cv::Point2f> halo;
@@ -702,36 +701,36 @@ std::vector<cv::Point2f> combine_halos(std::vector<cv::Point2f> h1, std::vector<
 	halo.push_back(cv::Point2f(lower_x, upper_y));	
 	halo.push_back(cv::Point2f(upper_x, lower_y));	
 	halo.push_back(cv::Point2f(upper_x, upper_y));	
-	std::cout << "merge result ";
 	print_halo(halo);
 	return halo;
 }
 
 std::vector<int> section_bad_triangles(align_data_t *p_align_data, int start_x, int start_y, int size_x, int size_y) {
-
+	int halo_size = 6000; //make it tile size x2
+	int max_halo = 12000;
 	std::vector<int> bad_sections;
 	std::cout << "num sections " << p_align_data->n_sections-1 << std::endl;
 
 
 	    //std::ofstream myfile;
         //myfile.open ("badtriangles.txt", std::ios_base::app);
-	cilk_for(int i = 0; i < p_align_data->n_sections-1; i ++) {
+	cilk_for(int x = 0; x < p_align_data->n_sections-1; x ++) {
 	    std::string qq ="";
 		qq = "";
-		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+		qq += std::string("error") + std::to_string(x+p_align_data->base_section+1) + std::string(".tif");
 
 		/* render the section (debugging) */
-	    render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
+	    render_error(&(p_align_data->sec_data[x]), &(p_align_data->sec_data[x+1]), qq, start_x,
 			          start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, true); 			
 		
-		std::vector<cv::Point2f> bad_triangles = find_section_bad_triangles_midpoints(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
+		std::vector<cv::Point2f> bad_triangles = find_section_bad_triangles_midpoints(&(p_align_data->sec_data[x]), &(p_align_data->sec_data[x+1]), qq, start_x,
                              start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL);
 		std::cout << "bad triangles finished" << std::endl;
 		//myfile << i << " section bad triangles size " << bad_triangles.size() << std::endl;	
-        printf("section %d: bad triangles %d\n", i+p_align_data->base_section+1, bad_triangles.size());
+        printf("section %d: bad triangles %d\n", x+p_align_data->base_section+1, bad_triangles.size());
 		std::vector<std::vector<cv::Point2f>> halos;
 		for(int i = 0; i < bad_triangles.size(); i ++) { 
-			halos.push_back(create_halos(bad_triangles[i], 2000)); //what is the tile size?
+			halos.push_back(create_halos(bad_triangles[i], halo_size)); //what is the tile size?
 		}	
 
 		for(int i = 0; i < halos.size(); i ++) {
@@ -740,12 +739,10 @@ std::vector<int> section_bad_triangles(align_data_t *p_align_data, int start_x, 
 				if(area_overlap(halos[i][0], halos[i][1], halos[i][2], halos[i][3], 
 							halos[j][0], halos[j][1], halos[j][2], halos[j][3])) {
 					std::vector<cv::Point2f> new_halo = combine_halos(halos[i], halos[j]);
-					if(halo_size(new_halo).first > 5000 || halo_size(new_halo).first > 5000) //fix 
+					if(get_halo_size(new_halo).first > max_halo || get_halo_size(new_halo).first > max_halo) //fix 
 					{ 	
 						continue;
 					}
-					//halos.remove(halos[i]);
-					//halos.remove(halos[j]);
 					halos.erase(halos.begin() + max(i,j)); 
 					halos.erase(halos.begin() + min(i,j));
 					halos.push_back(new_halo);
@@ -764,8 +761,10 @@ std::vector<int> section_bad_triangles(align_data_t *p_align_data, int start_x, 
 			int upper_y = halos[i][1].y;	
 			std::string qq ="";
 			qq = "";
-			qq += std::string("halo") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-			render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, lower_x,
+			
+			qq += std::string("halo") + std::to_string(x + p_align_data->base_section+1) + std::string(".tif");
+			std::cout << "writing halo " << qq << std::endl;
+			render_error(&(p_align_data->sec_data[x]), &(p_align_data->sec_data[x+1]), qq, lower_x,
 			          upper_x, lower_y, upper_y, 100, 100, THUMBNAIL, true); 			
 		}
 	}
@@ -835,15 +834,31 @@ void align_execute(align_data_t *p_align_data) {
 	int start_y = 50000;
     int size_x = 7000;
     int size_y = 9000;
-	section_bad_triangles(p_align_data, start_x, start_y, size_x, size_y);
+	//section_bad_triangles(p_align_data, start_x, start_y, size_x, size_y);
 
-	for(int i = 0; i < p_align_data->n_sections-1; i ++) {
-	        std::string qq ="";
-		qq = "";
-		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		cilk_spawn render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
-                             start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, true);
-	}
+
+	std::string qq ="";
+	qq += std::string("pretendHalo")  + std::string(".tif");
+	cv::Mat halo = render(&(p_align_data->sec_data[0]), qq, 51000, 60000, 52000, 58000, THUMBNAIL, false);
+	//set some value to zero to see if it gets copied over
+	//for(int i = 0; i < 50; i ++) {
+	//	for(int j = 0; j < 100; j ++) {
+	//		halo.at<unsigned char>(i, j) = 0;
+	//	}	
+	//}
+	cv::imwrite(qq, halo);
+	qq = "";
+	qq += std::string("new_tiles")  + std::string(".tif");
+	//input location of the halo in global space
+	update_tiles(&(p_align_data->sec_data[1]), &halo, qq, 51000, 60000, 52000, 58000, THUMBNAIL, true);
+
+	//for(int i = 0; i < p_align_data->n_sections-1; i ++) {
+	//        std::string qq ="";
+	//	qq = "";
+	//	qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+	//	cilk_spawn render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
+    //                         start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, true);
+	//}
     cilk_sync;
     STOP_TIMER(&t_timer, "t_total-time:");
     printf("Got to the end of the function\n");
