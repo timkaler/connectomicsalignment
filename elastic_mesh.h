@@ -45,7 +45,7 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
   {
     double cross_slice_weight = 1.0;
     double cross_slice_winsor = 20.0;
-    double intra_slice_weight = 0.9;
+    double intra_slice_weight = 1.0;
     double intra_slice_winsor = 200.0;
     int max_iterations = 5000; //ORIGINALL 5000
     //double min_stepsize = 1e-20;

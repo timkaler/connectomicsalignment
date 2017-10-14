@@ -252,7 +252,7 @@ void compute_alignment_3d(align_data_t *p_align_data,
     // These functions, for some reason, still require that we operate on a per-section graph.
     //   that's why we did the unpack and repack.
     for (int i = 0; i < graph_list.size(); i++) {
-      construct_triangles(graph_list[i], 1500.0);
+      construct_triangles(graph_list[i], 3500.0);
       filter_overlap_points_3d(graph_list[i], p_align_data);
     }
 

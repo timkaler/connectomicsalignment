@@ -727,9 +727,9 @@ void align_execute(align_data_t *p_align_data) {
 //
 //    double bounding_box[4];
 //    bounding_box[0] = 0.0;
-//    bounding_box[1] = 100.0;
+//    bounding_box[1] = 250.0;
 //    bounding_box[2] = 0.0;
-//    bounding_box[3] = 100.0;
+//    bounding_box[3] = 250.0;
 //    double spacing = 10.0;
 //    std::vector<cv::Point2f>* hex_grid = generate_hex_grid(bounding_box, spacing);
 //    for (int i = 0; i < hex_grid->size(); i++) {
@@ -831,10 +831,10 @@ void align_execute(align_data_t *p_align_data) {
   /*for(int i = 0; i < p_align_data->n_sections; i ++) {
     std::string ss = "";
         ss += std::string("thumb-elastic-") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[i]), ss, 50000, 51000, 50000, 51000);
+		output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[i]), ss, 50000, 52500, 50000, 52500);
  		std::string qq ="";	
 		qq += std::string("thumb-elastic-thumb") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 51000, 50000, 51000);
+		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 52500, 50000, 52500);
 	}*/
     int start_x = 50000;
     int start_y = 50000;

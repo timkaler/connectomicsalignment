@@ -300,6 +300,116 @@ cv::Mat* read_tile(std::string filepath, Resolution res) {
 	return tile_p_image;
 } 
 
+cv::Mat render_fast(section_data_t* section, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, Resolution res, bool write,
+  std::vector<renderTriangle>& triangles) {
+  int lower_y, lower_x, upper_y, upper_x;
+  int nrows, ncols;
+  double scale_x, scale_y;
+
+  //set parameteres
+  set_render_parameters(lower_y, lower_x, upper_y, upper_x, ncols, nrows, scale_x, scale_y, section, filename, input_lower_x, input_upper_x, input_lower_y, input_upper_y, res);
+  
+
+//  std::vector<renderTriangle> triangles;
+//  std::set<std::pair<int,int> > added_triangles;
+//  bool empty_image = true;
+//  for (int i = 0; i < section->n_tiles; i++) {
+//    tile_data_t tile = section->tiles[i];
+//    if (!tile_in_bounds(tile, input_lower_x, input_upper_x, input_lower_y, input_upper_y)) {
+//      continue;
+//    }
+//    empty_image = false;
+//    for (int j = 0; j < tile.mesh_triangles->size(); j ++) {
+//      if (added_triangles.find((*tile.mesh_triangles)[j].key) == added_triangles.end()) {
+//        triangles.push_back((*tile.mesh_triangles)[j]);
+//        added_triangles.insert((*tile.mesh_triangles)[j].key);
+//      }
+//    }
+//  }
+//
+//  if (empty_image) {
+//    return cv::Mat();
+//  }
+
+
+
+  // temporary matrix for the section.
+  cv::Mat* section_p_out = new cv::Mat();
+  //section->p_out = new cv::Mat();
+  (*section_p_out).create(nrows, ncols, CV_8UC1);
+
+  // temporary matrix for the section.
+  cv::Mat* section_p_out_sum = new cv::Mat();
+  //section->p_out = new cv::Mat();
+  (*section_p_out_sum).create(nrows, ncols, CV_16UC1);
+
+  // temporary matrix for the section.
+  cv::Mat* section_p_out_ncount = new cv::Mat();
+  //section->p_out = new cv::Mat();
+  (*section_p_out_ncount).create(nrows, ncols, CV_16UC1);
+
+
+  for (int y = 0; y < nrows; y++) {
+    for (int x = 0; x < ncols; x++) {
+      section_p_out->at<unsigned char>(y,x) = 0;
+      section_p_out_sum->at<unsigned short>(y,x) = 0;
+      section_p_out_ncount->at<unsigned short>(y,x) = 0;
+    }
+  }
+		
+  for (int i = section->n_tiles; --i>=0;/*i < section->n_tiles; i++*/) {
+    tile_data_t tile = section->tiles[i];
+
+    if(!tile_in_bounds(tile, input_lower_x, input_upper_x, input_lower_y, input_upper_y)) {
+      continue;
+    } 
+
+	//read in tile file
+    cv::Mat* tile_p_image = read_tile(tile.filepath, res);
+    
+	for (int _x = 0; _x < (*tile_p_image).size().width; _x++) {
+      for (int _y = 0; _y < (*tile_p_image).size().height; _y++) {
+        cv::Point2f p = cv::Point2f(_x*scale_x, _y*scale_y);
+        cv::Point2f transformed_p = affine_transform(&tile, p);
+        transformed_p = elastic_transform(&tile, &triangles, transformed_p);
+        int x_c = (int)(transformed_p.x/scale_x + 0.5);
+        int y_c = (int)(transformed_p.y/scale_y + 0.5);
+        for (int k = -1; k < 2; k++) {
+          for (int m = -1; m < 2; m++) {
+            unsigned char val = tile_p_image->at<unsigned char>(_y, _x);
+            int x = x_c+k;
+            int y = y_c+m;
+            if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
+              section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) += val;
+              section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) += 1;
+            }
+          }
+        }
+      }	
+    }
+    tile_p_image->release();
+  }
+    for (int x = 0; x < section_p_out->size().width; x++) {
+      for (int y = 0; y < section_p_out->size().height; y++) {
+        if (section_p_out_ncount->at<unsigned short>(y,x) == 0) continue;
+        section_p_out->at<unsigned char>(y, x) =
+            section_p_out_sum->at<unsigned short>(y, x) / section_p_out_ncount->at<unsigned short>(y,x);
+      }
+    }
+
+  //for (int y = 0; y < nrows; y++) {
+  //  for (int x = 0; x < ncols; x++) {
+  //    if (section->p_out->at<unsigned char>(y,x) < 0) {
+  //      std::cout << y << " " << x << " unassigned" << std::endl;
+  //    }
+  //  }
+  //}
+  if (write) {
+    cv::imwrite(filename, (*section_p_out));
+  }
+  return (*section_p_out);
+}
+
 cv::Mat render(section_data_t* section, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, Resolution res, bool write) {
   int lower_y, lower_x, upper_y, upper_x;
   int nrows, ncols;
@@ -452,6 +562,47 @@ call find bad triangles:
 
 
 std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * triangles, section_data_t* prev_section, section_data_t* section, int lower_x, int upper_x, int lower_y, int upper_y, int box_width, int box_height, Resolution res, std::map<std::pair<int, int>, float>& score_map) {
+
+
+  std::vector<renderTriangle> triangles_prev;
+  std::set<std::pair<int,int> > added_triangles_prev;
+  std::vector<renderTriangle> triangles_curr;
+  std::set<std::pair<int,int> > added_triangles_curr;
+  bool empty_image = true;
+
+  for (int i = 0; i < section->n_tiles; i++) {
+    tile_data_t tile = section->tiles[i];
+    if (!tile_in_bounds(tile, lower_x, upper_x, lower_y, upper_y)) {
+      continue;
+    }
+    empty_image = false;
+    for (int j = 0; j < tile.mesh_triangles->size(); j ++) {
+      if (added_triangles_curr.find((*tile.mesh_triangles)[j].key) == added_triangles_curr.end()) {
+        triangles_curr.push_back((*tile.mesh_triangles)[j]);
+        added_triangles_curr.insert((*tile.mesh_triangles)[j].key);
+      }
+    }
+  }
+  for (int i = 0; i < prev_section->n_tiles; i++) {
+    tile_data_t tile = prev_section->tiles[i];
+    if (!tile_in_bounds(tile, lower_x, upper_x, lower_y, upper_y)) {
+      continue;
+    }
+    empty_image = false;
+    for (int j = 0; j < tile.mesh_triangles->size(); j ++) {
+      if (added_triangles_prev.find((*tile.mesh_triangles)[j].key) == added_triangles_prev.end()) {
+        triangles_prev.push_back((*tile.mesh_triangles)[j]);
+        added_triangles_prev.insert((*tile.mesh_triangles)[j].key);
+      }
+    }
+  }
+
+//  if (empty_image) {
+//    return cv::Mat();
+//  }
+
+
+
 	std::set<std::pair<int, int> > bad_triangles;
 	int count = 0;
 	std::map<std::pair<int, int>, int>  num_valid;
@@ -461,18 +612,18 @@ std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * 
             std::string file1 = std::string("1box") + std::to_string(count) + std::string(".tif");
             std::string file2 = std::string("2box") + std::to_string(count) + std::string(".tif");
 
-            cv::Mat im1 = render(section, file1, j, j + box_width, i, i + box_height, res, false);
+            cv::Mat im1 = render_fast(section, file1, j, j + box_width, i, i + box_height, res, false, triangles_curr);
             if (im1.empty()) continue;
-	    cv::Mat im2 = render(prev_section, file2, j, j + box_width, i, i + box_height, res, false);
+	    cv::Mat im2 = render_fast(prev_section, file2, j, j + box_width, i, i + box_height, res, false, triangles_prev);
             if (im2.empty()) continue;
             count ++;
 			float corr = matchTemplate(im1, im2);
 			cv::Point2f middle(j-box_width/2, i-box_height/2);
-			auto tri = findTriangle(triangles, middle, true); //this is super slow prob
+			auto tri = findTriangle(&triangles_curr, middle, true); //this is super slow prob
 			if(!std::get<0>(tri)) {
 				//std::cout << "TRIANGLE NOT FOUND " << middle.x << " " << middle.y << std::endl;
 			}
-			std::pair<int, int> key = (*triangles)[0].key;
+			std::pair<int, int> key = triangles_curr[0].key;
 			if(num_valid.find(key) == num_valid.end()) {
 				num_valid[key] = 0;
 				num_invalid[key] = 0;
@@ -484,8 +635,8 @@ std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * 
 			}
 		}
 	}
-	for(int i = 0; i < triangles->size(); i ++) {
-		std::pair<int, int> key = (*triangles)[i].key;
+	for(int i = 0; i < triangles_curr.size(); i ++) {
+		std::pair<int, int> key = (triangles_curr)[i].key;
 		if(num_invalid[key] > 0 || num_valid[key] > 0) {
 			//std::cout << "triangle valid " << num_valid[key] << " invalid " << num_invalid[key] << " key " << key.first << " " << key.second  << std::endl;
 		}
