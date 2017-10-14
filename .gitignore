@@ -11,3 +11,5 @@ AlignData.pb.cc
 AlignData.pb.h
 AlignData_pb2.py
 AlignData_pb2.pyc
+*.tif
+*.png

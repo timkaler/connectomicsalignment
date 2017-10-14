@@ -69,7 +69,6 @@ void unpack_graph(align_data_t* p_align_data, Graph<vdata,edata>* merged_graph) 
     //  }
     //  
     //}
-
     FILE* wafer_file = fopen((std::string(p_align_data->output_dirpath)+std::string("/W01_Sec") +
         matchPadTo(section_id_string, 3)+std::string("_montaged.json")).c_str(), "w+");
     fprintf(wafer_file, "[\n");
@@ -88,7 +87,7 @@ void unpack_graph(align_data_t* p_align_data, Graph<vdata,edata>* merged_graph) 
       p_align_data->sec_data[sec_id].tiles[vd->tile_id].offset_x = vd->offset_x + vd->start_x;
       p_align_data->sec_data[sec_id].tiles[vd->tile_id].offset_y = vd->offset_y + vd->start_y;
 
-
+      #ifdef ALIGN3D
       // find all the mesh triangles that overlap with this tile.
       std::set<int> mesh_point_set;
       for (int j = 0; j < vd->my_mesh_points->size(); j++) {
@@ -122,8 +121,10 @@ void unpack_graph(align_data_t* p_align_data, Graph<vdata,edata>* merged_graph) 
           }
         }
       }
+
       
       p_align_data->sec_data[sec_id].tiles[vd->tile_id].mesh_triangles = mesh_triangles;
+      #endif // ALIGN3D
 
       fprintf(wafer_file, "\t{\n");
       fprintf(wafer_file, "\t\t\"bbox\": [\n");

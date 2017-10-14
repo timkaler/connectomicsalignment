@@ -809,7 +809,9 @@ void align_execute(align_data_t *p_align_data) {
 
     merged_graph = pack_graph();
     compute_alignment_2d(p_align_data, merged_graph);
+    #ifdef ALIGN3D
     compute_alignment_3d(p_align_data, merged_graph, true);
+    #endif
     unpack_graph(p_align_data, merged_graph);
 
     //merged_graph = pack_graph();
@@ -834,13 +836,15 @@ void align_execute(align_data_t *p_align_data) {
 		qq += std::string("thumb-elastic-thumb") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
 		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 51000, 50000, 51000);
 	}*/
-	int start_x = 50000;
-	int start_y = 50000;
+    int start_x = 50000;
+    int start_y = 50000;
     int size_x = 50000;
     int size_y = 50000;
-	bad_sections_index(p_align_data, start_x, start_y, size_x, size_y);
+    #ifdef ALIGN3D
+    bad_sections_index(p_align_data, start_x, start_y, size_x, size_y);
 
 
+    
 	
 	for(int i = 0; i < p_align_data->n_sections-1; i ++) {
 	        std::string qq ="";
@@ -850,7 +854,19 @@ void align_execute(align_data_t *p_align_data) {
                              start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, true);
 	}
     cilk_sync;
+	
     STOP_TIMER(&t_timer, "t_total-time:");
+    
+    #else
+	for(int i = 0; i < p_align_data->n_sections; i ++) {
+	        std::string qq ="";
+		qq = "";
+		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+		cilk_spawn render_2d(&(p_align_data->sec_data[i]), qq, start_x,
+                             start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, true);
+	}
+    cilk_sync;
+    #endif
     printf("Got to the end of the function\n");
 }
 
