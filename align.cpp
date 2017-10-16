@@ -81,18 +81,18 @@ void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set
                                           std::set<int>& /* MODIFIED */ known_set, int *tiles) {
   int total = p_sec_data->n_tiles;
   #define Z_ORDER 0
+  #ifdef NOCACHE
   #define ORIG_IMPL 0
+  #else
+  #define ORIG_IMPL 1
+  #endif
   #define LINE 1
   #define RECT_HEIGHT 50
   int max_size_of_active_set;
   int height_of_active_set;
   if (LINE) {
     max_size_of_active_set = total;
-    #ifdef NOCACHE
-      height_of_active_set = 1;
-    #else
-      height_of_active_set = 20;
-    #endif
+    height_of_active_set = 1;
   } else {
     max_size_of_active_set = RECT_HEIGHT;
     height_of_active_set = RECT_HEIGHT;
@@ -727,9 +727,9 @@ void align_execute(align_data_t *p_align_data) {
 //
 //    double bounding_box[4];
 //    bounding_box[0] = 0.0;
-//    bounding_box[1] = 250.0;
+//    bounding_box[1] = 100.0;
 //    bounding_box[2] = 0.0;
-//    bounding_box[3] = 250.0;
+//    bounding_box[3] = 100.0;
 //    double spacing = 10.0;
 //    std::vector<cv::Point2f>* hex_grid = generate_hex_grid(bounding_box, spacing);
 //    for (int i = 0; i < hex_grid->size(); i++) {
@@ -831,10 +831,10 @@ void align_execute(align_data_t *p_align_data) {
   /*for(int i = 0; i < p_align_data->n_sections; i ++) {
     std::string ss = "";
         ss += std::string("thumb-elastic-") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[i]), ss, 50000, 52500, 50000, 52500);
+		output_section_image_affine_elastic_thumbnail(&(p_align_data->sec_data[i]), ss, 50000, 51000, 50000, 51000);
  		std::string qq ="";	
 		qq += std::string("thumb-elastic-thumb") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 52500, 50000, 52500);
+		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 51000, 50000, 51000);
 	}*/
     int start_x = 50000;
     int start_y = 50000;
@@ -864,6 +864,8 @@ void align_execute(align_data_t *p_align_data) {
 		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
 		cilk_spawn render_2d(&(p_align_data->sec_data[i]), qq, start_x,
                              start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, true);
+    printf("error for each pair\n");
+    cilk_spawn get_all_error_pairs(&(p_align_data->sec_data[i]));
 	}
     cilk_sync;
     #endif

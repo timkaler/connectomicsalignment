@@ -25,8 +25,8 @@ WORKINGDIR=$PWD
 OUTPUTDIR=$PWD/temp
 
 ./setup.sh gdb --args ./run_align 1 \
-    9 1 \
-    $PWD/data/txtspecs.txt \
+    0 2 \
+    $PWD/data/proto_data21 \
     $OUTPUTDIR \
     $OUTPUTDIR
 

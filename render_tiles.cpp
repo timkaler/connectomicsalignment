@@ -1,4 +1,5 @@
 #include <iostream>
+#include "./simple_mutex.h"
 
 #include <fstream>
 //#include "mesh.h"
@@ -203,6 +204,59 @@ bool tile_in_bounds(tile_data_t tile, int lower_x, int upper_x, int lower_y, int
 		}
 		return false; 
 }
+float max_x(tile_data_t *tile) {
+    int width = SIFT_D2_SHIFT_3D;
+    int height = SIFT_D1_SHIFT_3D; //MIGHT BE OTHER WAY AROUND
+    cv::Point2f c1 = cv::Point2f(0.0, 0.0);
+    cv::Point2f c2 = cv::Point2f(width, 0.0);
+    cv::Point2f c3 = cv::Point2f(0.0, height);
+    cv::Point2f c4 = cv::Point2f(width, height);
+    c1 = affine_transform(tile, c1);
+    c2 = affine_transform(tile, c2);
+    c3 = affine_transform(tile, c3);
+    c4 = affine_transform(tile, c4);
+    return max(c1.x, c2.x, c3.x, c4.x);
+}
+float max_y(tile_data_t *tile) {
+    int width = SIFT_D2_SHIFT_3D;
+    int height = SIFT_D1_SHIFT_3D; //MIGHT BE OTHER WAY AROUND
+    cv::Point2f c1 = cv::Point2f(0.0, 0.0);
+    cv::Point2f c2 = cv::Point2f(width, 0.0);
+    cv::Point2f c3 = cv::Point2f(0.0, height);
+    cv::Point2f c4 = cv::Point2f(width, height);
+    c1 = affine_transform(tile, c1);
+    c2 = affine_transform(tile, c2);
+    c3 = affine_transform(tile, c3);
+    c4 = affine_transform(tile, c4);
+    return max(c1.y, c2.y, c3.y, c4.y);
+}
+float min_x(tile_data_t *tile) {
+    int width = SIFT_D2_SHIFT_3D;
+    int height = SIFT_D1_SHIFT_3D; //MIGHT BE OTHER WAY AROUND
+    cv::Point2f c1 = cv::Point2f(0.0, 0.0);
+    cv::Point2f c2 = cv::Point2f(width, 0.0);
+    cv::Point2f c3 = cv::Point2f(0.0, height);
+    cv::Point2f c4 = cv::Point2f(width, height);
+    c1 = affine_transform(tile, c1);
+    c2 = affine_transform(tile, c2);
+    c3 = affine_transform(tile, c3);
+    c4 = affine_transform(tile, c4);
+    return min(c1.x, c2.x, c3.x, c4.x);
+}
+float min_y(tile_data_t *tile) {
+    int width = SIFT_D2_SHIFT_3D;
+    int height = SIFT_D1_SHIFT_3D; //MIGHT BE OTHER WAY AROUND
+    cv::Point2f c1 = cv::Point2f(0.0, 0.0);
+    cv::Point2f c2 = cv::Point2f(width, 0.0);
+    cv::Point2f c3 = cv::Point2f(0.0, height);
+    cv::Point2f c4 = cv::Point2f(width, height);
+    c1 = affine_transform(tile, c1);
+    c2 = affine_transform(tile, c2);
+    c3 = affine_transform(tile, c3);
+    c4 = affine_transform(tile, c4);
+    return min(c1.y, c2.y, c3.y, c4.y);
+}
+
 
 
 typedef struct {
@@ -299,116 +353,6 @@ cv::Mat* read_tile(std::string filepath, Resolution res) {
     }
 	return tile_p_image;
 } 
-
-cv::Mat render_fast(section_data_t* section, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, Resolution res, bool write,
-  std::vector<renderTriangle>& triangles) {
-  int lower_y, lower_x, upper_y, upper_x;
-  int nrows, ncols;
-  double scale_x, scale_y;
-
-  //set parameteres
-  set_render_parameters(lower_y, lower_x, upper_y, upper_x, ncols, nrows, scale_x, scale_y, section, filename, input_lower_x, input_upper_x, input_lower_y, input_upper_y, res);
-  
-
-//  std::vector<renderTriangle> triangles;
-//  std::set<std::pair<int,int> > added_triangles;
-//  bool empty_image = true;
-//  for (int i = 0; i < section->n_tiles; i++) {
-//    tile_data_t tile = section->tiles[i];
-//    if (!tile_in_bounds(tile, input_lower_x, input_upper_x, input_lower_y, input_upper_y)) {
-//      continue;
-//    }
-//    empty_image = false;
-//    for (int j = 0; j < tile.mesh_triangles->size(); j ++) {
-//      if (added_triangles.find((*tile.mesh_triangles)[j].key) == added_triangles.end()) {
-//        triangles.push_back((*tile.mesh_triangles)[j]);
-//        added_triangles.insert((*tile.mesh_triangles)[j].key);
-//      }
-//    }
-//  }
-//
-//  if (empty_image) {
-//    return cv::Mat();
-//  }
-
-
-
-  // temporary matrix for the section.
-  cv::Mat* section_p_out = new cv::Mat();
-  //section->p_out = new cv::Mat();
-  (*section_p_out).create(nrows, ncols, CV_8UC1);
-
-  // temporary matrix for the section.
-  cv::Mat* section_p_out_sum = new cv::Mat();
-  //section->p_out = new cv::Mat();
-  (*section_p_out_sum).create(nrows, ncols, CV_16UC1);
-
-  // temporary matrix for the section.
-  cv::Mat* section_p_out_ncount = new cv::Mat();
-  //section->p_out = new cv::Mat();
-  (*section_p_out_ncount).create(nrows, ncols, CV_16UC1);
-
-
-  for (int y = 0; y < nrows; y++) {
-    for (int x = 0; x < ncols; x++) {
-      section_p_out->at<unsigned char>(y,x) = 0;
-      section_p_out_sum->at<unsigned short>(y,x) = 0;
-      section_p_out_ncount->at<unsigned short>(y,x) = 0;
-    }
-  }
-		
-  for (int i = section->n_tiles; --i>=0;/*i < section->n_tiles; i++*/) {
-    tile_data_t tile = section->tiles[i];
-
-    if(!tile_in_bounds(tile, input_lower_x, input_upper_x, input_lower_y, input_upper_y)) {
-      continue;
-    } 
-
-	//read in tile file
-    cv::Mat* tile_p_image = read_tile(tile.filepath, res);
-    
-	for (int _x = 0; _x < (*tile_p_image).size().width; _x++) {
-      for (int _y = 0; _y < (*tile_p_image).size().height; _y++) {
-        cv::Point2f p = cv::Point2f(_x*scale_x, _y*scale_y);
-        cv::Point2f transformed_p = affine_transform(&tile, p);
-        transformed_p = elastic_transform(&tile, &triangles, transformed_p);
-        int x_c = (int)(transformed_p.x/scale_x + 0.5);
-        int y_c = (int)(transformed_p.y/scale_y + 0.5);
-        for (int k = -1; k < 2; k++) {
-          for (int m = -1; m < 2; m++) {
-            unsigned char val = tile_p_image->at<unsigned char>(_y, _x);
-            int x = x_c+k;
-            int y = y_c+m;
-            if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
-              section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) += val;
-              section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) += 1;
-            }
-          }
-        }
-      }	
-    }
-    tile_p_image->release();
-  }
-    for (int x = 0; x < section_p_out->size().width; x++) {
-      for (int y = 0; y < section_p_out->size().height; y++) {
-        if (section_p_out_ncount->at<unsigned short>(y,x) == 0) continue;
-        section_p_out->at<unsigned char>(y, x) =
-            section_p_out_sum->at<unsigned short>(y, x) / section_p_out_ncount->at<unsigned short>(y,x);
-      }
-    }
-
-  //for (int y = 0; y < nrows; y++) {
-  //  for (int x = 0; x < ncols; x++) {
-  //    if (section->p_out->at<unsigned char>(y,x) < 0) {
-  //      std::cout << y << " " << x << " unassigned" << std::endl;
-  //    }
-  //  }
-  //}
-  if (write) {
-    cv::imwrite(filename, (*section_p_out));
-  }
-  return (*section_p_out);
-}
 
 cv::Mat render(section_data_t* section, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, Resolution res, bool write) {
   int lower_y, lower_x, upper_y, upper_x;
@@ -522,11 +466,11 @@ cv::Mat render(section_data_t* section, std::string filename, int input_lower_x,
 float matchTemplate(cv::Mat img1, cv::Mat img2) {
     cv::Mat result_SQDIFF, result_SQDIFF_NORMED, result_CCORR, result_CCORR_NORMED,
         result_CCOEFF, result_CCOEFF_NORMED;
-    cv::matchTemplate(img1, img2, result_SQDIFF, CV_TM_SQDIFF);
-    cv::matchTemplate(img1, img2, result_SQDIFF_NORMED, CV_TM_SQDIFF_NORMED);
-    cv::matchTemplate(img1, img2, result_CCORR, CV_TM_CCORR);
-    cv::matchTemplate(img1, img2, result_CCORR_NORMED, CV_TM_CCORR_NORMED);
-    cv::matchTemplate(img1, img2, result_CCOEFF, CV_TM_CCOEFF);
+    //cv::matchTemplate(img1, img2, result_SQDIFF, CV_TM_SQDIFF);
+    //cv::matchTemplate(img1, img2, result_SQDIFF_NORMED, CV_TM_SQDIFF_NORMED);
+    //cv::matchTemplate(img1, img2, result_CCORR, CV_TM_CCORR);
+    //cv::matchTemplate(img1, img2, result_CCORR_NORMED, CV_TM_CCORR_NORMED);
+    //cv::matchTemplate(img1, img2, result_CCOEFF, CV_TM_CCOEFF);
     cv::matchTemplate(img1, img2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
    
     //std::cout << "---------- MATCH TEMPLATE RESULTS (image size: " << img1.size().width << " " <<
@@ -562,47 +506,6 @@ call find bad triangles:
 
 
 std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * triangles, section_data_t* prev_section, section_data_t* section, int lower_x, int upper_x, int lower_y, int upper_y, int box_width, int box_height, Resolution res, std::map<std::pair<int, int>, float>& score_map) {
-
-
-  std::vector<renderTriangle> triangles_prev;
-  std::set<std::pair<int,int> > added_triangles_prev;
-  std::vector<renderTriangle> triangles_curr;
-  std::set<std::pair<int,int> > added_triangles_curr;
-  bool empty_image = true;
-
-  for (int i = 0; i < section->n_tiles; i++) {
-    tile_data_t tile = section->tiles[i];
-    if (!tile_in_bounds(tile, lower_x, upper_x, lower_y, upper_y)) {
-      continue;
-    }
-    empty_image = false;
-    for (int j = 0; j < tile.mesh_triangles->size(); j ++) {
-      if (added_triangles_curr.find((*tile.mesh_triangles)[j].key) == added_triangles_curr.end()) {
-        triangles_curr.push_back((*tile.mesh_triangles)[j]);
-        added_triangles_curr.insert((*tile.mesh_triangles)[j].key);
-      }
-    }
-  }
-  for (int i = 0; i < prev_section->n_tiles; i++) {
-    tile_data_t tile = prev_section->tiles[i];
-    if (!tile_in_bounds(tile, lower_x, upper_x, lower_y, upper_y)) {
-      continue;
-    }
-    empty_image = false;
-    for (int j = 0; j < tile.mesh_triangles->size(); j ++) {
-      if (added_triangles_prev.find((*tile.mesh_triangles)[j].key) == added_triangles_prev.end()) {
-        triangles_prev.push_back((*tile.mesh_triangles)[j]);
-        added_triangles_prev.insert((*tile.mesh_triangles)[j].key);
-      }
-    }
-  }
-
-//  if (empty_image) {
-//    return cv::Mat();
-//  }
-
-
-
 	std::set<std::pair<int, int> > bad_triangles;
 	int count = 0;
 	std::map<std::pair<int, int>, int>  num_valid;
@@ -612,18 +515,18 @@ std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * 
             std::string file1 = std::string("1box") + std::to_string(count) + std::string(".tif");
             std::string file2 = std::string("2box") + std::to_string(count) + std::string(".tif");
 
-            cv::Mat im1 = render_fast(section, file1, j, j + box_width, i, i + box_height, res, false, triangles_curr);
+            cv::Mat im1 = render(section, file1, j, j + box_width, i, i + box_height, res, false);
             if (im1.empty()) continue;
-	    cv::Mat im2 = render_fast(prev_section, file2, j, j + box_width, i, i + box_height, res, false, triangles_prev);
+	    cv::Mat im2 = render(prev_section, file2, j, j + box_width, i, i + box_height, res, false);
             if (im2.empty()) continue;
             count ++;
 			float corr = matchTemplate(im1, im2);
 			cv::Point2f middle(j-box_width/2, i-box_height/2);
-			auto tri = findTriangle(&triangles_curr, middle, true); //this is super slow prob
+			auto tri = findTriangle(triangles, middle, true); //this is super slow prob
 			if(!std::get<0>(tri)) {
 				//std::cout << "TRIANGLE NOT FOUND " << middle.x << " " << middle.y << std::endl;
 			}
-			std::pair<int, int> key = triangles_curr[0].key;
+			std::pair<int, int> key = (*triangles)[0].key;
 			if(num_valid.find(key) == num_valid.end()) {
 				num_valid[key] = 0;
 				num_invalid[key] = 0;
@@ -635,8 +538,8 @@ std::set<std::pair<int, int> > find_bad_triangles(std::vector<renderTriangle> * 
 			}
 		}
 	}
-	for(int i = 0; i < triangles_curr.size(); i ++) {
-		std::pair<int, int> key = (triangles_curr)[i].key;
+	for(int i = 0; i < triangles->size(); i ++) {
+		std::pair<int, int> key = (*triangles)[i].key;
 		if(num_invalid[key] > 0 || num_valid[key] > 0) {
 			//std::cout << "triangle valid " << num_valid[key] << " invalid " << num_invalid[key] << " key " << key.first << " " << key.second  << std::endl;
 		}
@@ -860,6 +763,129 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 	return (*section_p_out);
 }
 
+bool tiles_overlap(tile_data_t *tile_1, tile_data_t *tile_2) {
+  if ((max_x(tile_1) < min_x(tile_2)) || (max_x(tile_2) < min_x(tile_1))) {
+    return false;
+  }
+  if ((max_y(tile_1) < min_y(tile_2)) || (max_y(tile_2) < min_y(tile_1))) {
+    return false;
+  }
+  return true;
+}
+
+/* calculate the error between two tiles
+1 is a perect match
+-2 means they do not overlap
+*/
+float error_tile_pair(tile_data_t *tile_1, tile_data_t *tile_2) {
+  if (!(tiles_overlap(tile_1, tile_2))) {
+    return -2;
+  }
+
+
+  cv::Mat tile_p_image_1;
+  cv::Mat tile_p_image_2;
+  tile_p_image_1 = cv::imread(tile_1->filepath, CV_LOAD_IMAGE_UNCHANGED);
+  tile_p_image_2 = cv::imread(tile_2->filepath, CV_LOAD_IMAGE_UNCHANGED);
+
+  int nrows = min(max_y(tile_1), max_y(tile_2)) - max(min_y(tile_1), min_y(tile_2));
+  int ncols = min(max_x(tile_1), max_x(tile_2)) - max(min_x(tile_1), min_x(tile_2));
+  int offset_x = max(min_x(tile_1), min_x(tile_2));
+  int offset_y = max(min_y(tile_1), min_y(tile_2));
+  cv::Mat transform_1 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
+  cv::Mat transform_2 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
+
+  // make the transformed images in the same size with the same cells in the same locations
+  for (int _y = 0; _y < tile_p_image_1.rows; _y++) {
+    unsigned char* row_ptr =  tile_p_image_1.ptr(_y);
+    for (int _x = 0; _x < tile_p_image_2.cols; _x++) {
+      cv::Point2f p = cv::Point2f(_x, _y);
+      cv::Point2f transformed_p = affine_transform(tile_1, p);
+
+      int x_c = (int)(transformed_p.x + 0.5);
+      int y_c = (int)(transformed_p.y + 0.5);
+      
+
+      for (int k = -1; k < 2; k++) {
+        for (int m = -1; m < 2; m++) {
+          int x = x_c+k;
+          int y = y_c+m;
+          if ((y-offset_y > 0) && (y-offset_y < nrows ) && (x-offset_x > 0) && ( x-offset_x  < ncols)) { 
+            unsigned char val = (*row_ptr / 9) + 1;  
+            transform_1.at<unsigned char>(y-offset_y, x-offset_x) += val;
+          }
+        }
+      }
+      row_ptr++;
+    }
+  }
+
+  for (int _y = 0; _y < tile_p_image_2.rows; _y++) {
+    unsigned char* row_ptr =  tile_p_image_2.ptr(_y);
+    for (int _x = 0; _x < tile_p_image_2.cols; _x++) {
+      cv::Point2f p = cv::Point2f(_x, _y);
+      cv::Point2f transformed_p = affine_transform(tile_2, p);
+
+      int x_c = (int)(transformed_p.x + 0.5);
+      int y_c = (int)(transformed_p.y + 0.5);
+
+      for (int k = -1; k < 2; k++) {
+        for (int m = -1; m < 2; m++) {
+          int x = x_c+k;
+          int y = y_c+m;
+          if ((y-offset_y > 0) && (y-offset_y < nrows ) && (x-offset_x > 0) && ( x-offset_x  < ncols)) {  
+            unsigned char val = (*row_ptr / 9) + 1;
+            transform_2.at<unsigned char>(y-offset_y, x-offset_x) += val;
+          }
+        }
+      }
+      row_ptr++;
+    }
+  }
+
+  // clear any location which only has a value for one of them
+  // note that the transforms are the same size
+  for (int _x = 0; _x < transform_1.size().width; _x++) {
+    for (int _y = 0; _y < transform_1.size().height; _y++) {
+      if (transform_2.at<unsigned char>(_y, _x) == 0) {
+       transform_1.at<unsigned char>(_y, _x) = 0;
+      }
+      if (transform_1.at<unsigned char>(_y, _x) == 0) {
+       transform_2.at<unsigned char>(_y, _x) = 0;
+      }
+    }
+  }
+
+  float result = matchTemplate(transform_1 , transform_2 );
+  return result;
+}
+
+double get_all_error_pairs(section_data_t* section) {
+  int non_overlapping = 0;
+  double sum_error = 0;
+  int error_count = 0;
+  simple_mutex_t lock;
+  simple_mutex_init(&lock);
+  cilk_for (int i = 0; i < section->n_tiles; i++) {
+    for (int j = i+1; j < section->n_tiles; j++) {
+      double corr = error_tile_pair(&(section->tiles[i]), &(section->tiles[j]));
+      simple_acquire(&lock);
+      if (corr == -2) {
+        non_overlapping++;
+      } else {
+        error_count++;
+        sum_error+= corr;
+        printf("tile %d and tile %d have a corralation of %f\n", i, j, corr);
+      }
+      simple_release(&lock);
+    }
+  }
+  printf("the number of non overlaping pairs of tiles is %d\n",non_overlapping);
+  return sum_error/ error_count;
+}
+
+
+/* rendering for a 2d section*/
 cv::Mat render_2d(section_data_t* section, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, int box_width, int box_height, Resolution res, bool write) {
 
 
@@ -983,7 +1009,6 @@ cv::Mat render_2d(section_data_t* section, std::string filename, int input_lower
   }
   return (*section_p_out);
 }
-
 
 /* rendering with error detection for TILES*/
 cv::Mat render_error_tiles(section_data_t* section, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, int box_width, int box_height, Resolution res) {
