@@ -785,8 +785,8 @@ float error_tile_pair(tile_data_t *tile_1, tile_data_t *tile_2) {
 
   cv::Mat tile_p_image_1;
   cv::Mat tile_p_image_2;
-  tile_p_image_1 = cv::imread(tile_1->filepath, CV_LOAD_IMAGE_UNCHANGED);
-  tile_p_image_2 = cv::imread(tile_2->filepath, CV_LOAD_IMAGE_UNCHANGED);
+  tile_p_image_1 = imread_with_cache(tile_1->filepath, CV_LOAD_IMAGE_UNCHANGED);
+  tile_p_image_2 = imread_with_cache(tile_2->filepath, CV_LOAD_IMAGE_UNCHANGED);
 
   int nrows = min(max_y(tile_1), max_y(tile_2)) - max(min_y(tile_1), min_y(tile_2));
   int ncols = min(max_x(tile_1), max_x(tile_2)) - max(min_x(tile_1), min_x(tile_2));
@@ -800,60 +800,41 @@ float error_tile_pair(tile_data_t *tile_1, tile_data_t *tile_2) {
 
   // make the transformed images in the same size with the same cells in the same locations
   for (int _y = 0; _y < tile_p_image_1.rows; _y++) {
-    unsigned char* row_ptr =  tile_p_image_1.ptr(_y);
-    for (int _x = 0; _x < tile_p_image_2.cols; _x++) {
+    for (int _x = 0; _x < tile_p_image_1.cols; _x++) {
       cv::Point2f p = cv::Point2f(_x, _y);
       cv::Point2f transformed_p = affine_transform(tile_1, p);
 
-      int x_c = (int)(transformed_p.x + 0.5);
-      int y_c = (int)(transformed_p.y + 0.5);
-      
-
-      for (int k = -1; k < 2; k++) {
-        for (int m = -1; m < 2; m++) {
-          int x = x_c+k;
-          int y = y_c+m;
-          if ((y-offset_y > 0) && (y-offset_y < nrows ) && (x-offset_x > 0) && ( x-offset_x  < ncols)) { 
-            unsigned char val = (*row_ptr / 9) + 1;  
-            transform_1.at<unsigned char>(y-offset_y, x-offset_x) += val;
-          }
-        }
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
+        transform_1.at<unsigned char>(y_c, x_c) +=
+           tile_p_image_1.at<unsigned char>(_y, _x);
       }
-      row_ptr++;
     }
   }
 
   for (int _y = 0; _y < tile_p_image_2.rows; _y++) {
-    unsigned char* row_ptr =  tile_p_image_2.ptr(_y);
     for (int _x = 0; _x < tile_p_image_2.cols; _x++) {
       cv::Point2f p = cv::Point2f(_x, _y);
       cv::Point2f transformed_p = affine_transform(tile_2, p);
-
-      int x_c = (int)(transformed_p.x + 0.5);
-      int y_c = (int)(transformed_p.y + 0.5);
-
-      for (int k = -1; k < 2; k++) {
-        for (int m = -1; m < 2; m++) {
-          int x = x_c+k;
-          int y = y_c+m;
-          if ((y-offset_y > 0) && (y-offset_y < nrows ) && (x-offset_x > 0) && ( x-offset_x  < ncols)) {  
-            unsigned char val = (*row_ptr / 9) + 1;
-            transform_2.at<unsigned char>(y-offset_y, x-offset_x) += val;
-          }
-        }
+      
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
+        transform_2.at<unsigned char>(y_c, x_c) +=
+           tile_p_image_2.at<unsigned char>(_y, _x);
       }
-      row_ptr++;
     }
   }
 
   // clear any location which only has a value for one of them
   // note that the transforms are the same size
-  for (int _x = 0; _x < transform_1.size().width; _x++) {
-    for (int _y = 0; _y < transform_1.size().height; _y++) {
+  for (int _y = 0; _y < transform_1.rows; _y++) {
+    for (int _x = 0; _x < transform_1.cols; _x++) {
       if (transform_2.at<unsigned char>(_y, _x) == 0) {
        transform_1.at<unsigned char>(_y, _x) = 0;
       }
-      if (transform_1.at<unsigned char>(_y, _x) == 0) {
+      else if (transform_1.at<unsigned char>(_y, _x) == 0) {
        transform_2.at<unsigned char>(_y, _x) = 0;
       }
     }
@@ -863,28 +844,29 @@ float error_tile_pair(tile_data_t *tile_1, tile_data_t *tile_2) {
   return result;
 }
 
-double get_all_error_pairs(section_data_t* section) {
-  int non_overlapping = 0;
-  double sum_error = 0;
-  int error_count = 0;
-  simple_mutex_t lock;
-  simple_mutex_init(&lock);
+void get_all_error_pairs(section_data_t* section) {
   cilk_for (int i = 0; i < section->n_tiles; i++) {
     for (int j = i+1; j < section->n_tiles; j++) {
-      double corr = error_tile_pair(&(section->tiles[i]), &(section->tiles[j]));
-      simple_acquire(&lock);
-      if (corr == -2) {
-        non_overlapping++;
-      } else {
-        error_count++;
-        sum_error+= corr;
-        printf("tile %d and tile %d have a corralation of %f\n", i, j, corr);
+      if (!(tiles_overlap(&(section->tiles[i]), &(section->tiles[j])))) {
+        continue;
       }
-      simple_release(&lock);
+      double corr = error_tile_pair(&(section->tiles[i]), &(section->tiles[j]));
+      if (corr >= -1) {
+        __sync_fetch_and_add(&(section->tiles[i].number_overlaps),1);
+        __sync_fetch_and_add(&(section->tiles[j].number_overlaps),1);
+        int corr_slot = (int) (10*(corr+1));
+         __sync_fetch_and_add(&(section->tiles[i].corralation_counts[corr_slot]),1);
+         __sync_fetch_and_add(&(section->tiles[j].corralation_counts[corr_slot]),1);
+      }
     }
   }
-  printf("the number of non overlaping pairs of tiles is %d\n",non_overlapping);
-  return sum_error/ error_count;
+  for (int i = 0; i < section->n_tiles; i++) {
+    printf("Tile %d overlaps %d times, corr counts are ",i, section->tiles[i].number_overlaps);
+    for (int j = 0; j < 20; j++) {
+      printf("%d",section->tiles[i].corralation_counts[j]);
+    }
+    printf("\n");
+  }
 }
 
 

@@ -858,15 +858,15 @@ void align_execute(align_data_t *p_align_data) {
     STOP_TIMER(&t_timer, "t_total-time:");
     
     #else
-	for(int i = 0; i < p_align_data->n_sections; i ++) {
-	        std::string qq ="";
-		qq = "";
-		qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-		cilk_spawn render_2d(&(p_align_data->sec_data[i]), qq, start_x,
+    for(int i = 0; i < p_align_data->n_sections; i ++) {
+      std::string qq ="";
+      qq = "";
+      qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+      cilk_spawn render_2d(&(p_align_data->sec_data[i]), qq, start_x,
                              start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, true);
-    printf("error for each pair\n");
-    cilk_spawn get_all_error_pairs(&(p_align_data->sec_data[i]));
-	}
+      printf("error for each pair\n");
+      get_all_error_pairs(&(p_align_data->sec_data[i]));
+    }
     cilk_sync;
     #endif
     printf("Got to the end of the function\n");

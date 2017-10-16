@@ -63,6 +63,10 @@ void init_tile(
     p_tile->p_kps_desc_3d = new cv::Mat();
     p_tile->level = 0;
     p_tile->bad = false;
+    p_tile->number_overlaps = 0;
+    for (int i = 0; i < 20; i++) {
+        p_tile->corralation_counts[i] = 0;
+    }
 }
 
 void start_timer(struct timeval *p_timer) {
