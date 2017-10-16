@@ -790,6 +790,9 @@ float error_tile_pair(tile_data_t *tile_1, tile_data_t *tile_2) {
 
   int nrows = min(max_y(tile_1), max_y(tile_2)) - max(min_y(tile_1), min_y(tile_2));
   int ncols = min(max_x(tile_1), max_x(tile_2)) - max(min_x(tile_1), min_x(tile_2));
+  if ((nrows <= 0) || (ncols <= 0) ) {
+    return -2;
+  }
   int offset_x = max(min_x(tile_1), min_x(tile_2));
   int offset_y = max(min_y(tile_1), min_y(tile_2));
   cv::Mat transform_1 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
