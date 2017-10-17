@@ -12,7 +12,7 @@ WORKINGDIR=$PWD
 OUTPUTDIR=$PWD/temp/
 
 ./setup.sh ./run_align 1 \
-    0 2\
+    0 1\
     $PWD/data/proto_data21 \
     $OUTPUTDIR \
     $OUTPUTDIR
