@@ -115,6 +115,9 @@ align.S: align.cpp othersift2.cpp
 run.o: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
+stack.o: stack.cpp stack.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
 #engine.o: cilk_tools/engine.cpp cilk_tools/scheduler.cpp cilk_tools/Graph.cpp
 #	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
@@ -130,7 +133,7 @@ run.o: run.cpp
 run.S: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: common.o align.o run.o match.o
+run_align: common.o align.o run.o match.o stack.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:
