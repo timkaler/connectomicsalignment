@@ -449,7 +449,6 @@ void  update_tiles(section_data_t* section, cv::Mat * halo, std::string filename
 
   printf("halo info is %d,%d,%d,%d\n", input_lower_x, input_lower_y, input_upper_x, input_upper_y);
 
-
   //set parameteres
   set_render_parameters(lower_y, lower_x, upper_y, upper_x, ncols, nrows, scale_x, scale_y, section, filename, input_lower_x, input_upper_x, input_lower_y, input_upper_y, res);
   
@@ -493,7 +492,7 @@ void  update_tiles(section_data_t* section, cv::Mat * halo, std::string filename
         int x_c = (int)(transformed_p.x/scale_x + 0.5);
         int y_c = (int)(transformed_p.y/scale_y + 0.5);
 
-		new_tile->at<unsigned char>(_y, _x) = halo->at<unsigned short>(y_c - lower_y, x_c - lower_y);
+		new_tile->at<unsigned char>(_y, _x) = halo->at<unsigned short>(y_c - lower_y, x_c - lower_x);
 		
       }	
     }
