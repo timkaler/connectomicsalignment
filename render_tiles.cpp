@@ -1,4 +1,5 @@
 #include <iostream>
+#include "./simple_mutex.h"
 
 #include <fstream>
 //#include "mesh.h"
@@ -197,6 +198,59 @@ bool area_overlap(cv::Point2f c1, cv::Point2f c2, cv::Point2f c3, cv::Point2f c4
 		}
 		return false; 
 }
+float max_x(tile_data_t *tile) {
+    int width = SIFT_D2_SHIFT_3D;
+    int height = SIFT_D1_SHIFT_3D; //MIGHT BE OTHER WAY AROUND
+    cv::Point2f c1 = cv::Point2f(0.0, 0.0);
+    cv::Point2f c2 = cv::Point2f(width, 0.0);
+    cv::Point2f c3 = cv::Point2f(0.0, height);
+    cv::Point2f c4 = cv::Point2f(width, height);
+    c1 = affine_transform(tile, c1);
+    c2 = affine_transform(tile, c2);
+    c3 = affine_transform(tile, c3);
+    c4 = affine_transform(tile, c4);
+    return max(c1.x, c2.x, c3.x, c4.x);
+}
+float max_y(tile_data_t *tile) {
+    int width = SIFT_D2_SHIFT_3D;
+    int height = SIFT_D1_SHIFT_3D; //MIGHT BE OTHER WAY AROUND
+    cv::Point2f c1 = cv::Point2f(0.0, 0.0);
+    cv::Point2f c2 = cv::Point2f(width, 0.0);
+    cv::Point2f c3 = cv::Point2f(0.0, height);
+    cv::Point2f c4 = cv::Point2f(width, height);
+    c1 = affine_transform(tile, c1);
+    c2 = affine_transform(tile, c2);
+    c3 = affine_transform(tile, c3);
+    c4 = affine_transform(tile, c4);
+    return max(c1.y, c2.y, c3.y, c4.y);
+}
+float min_x(tile_data_t *tile) {
+    int width = SIFT_D2_SHIFT_3D;
+    int height = SIFT_D1_SHIFT_3D; //MIGHT BE OTHER WAY AROUND
+    cv::Point2f c1 = cv::Point2f(0.0, 0.0);
+    cv::Point2f c2 = cv::Point2f(width, 0.0);
+    cv::Point2f c3 = cv::Point2f(0.0, height);
+    cv::Point2f c4 = cv::Point2f(width, height);
+    c1 = affine_transform(tile, c1);
+    c2 = affine_transform(tile, c2);
+    c3 = affine_transform(tile, c3);
+    c4 = affine_transform(tile, c4);
+    return min(c1.x, c2.x, c3.x, c4.x);
+}
+float min_y(tile_data_t *tile) {
+    int width = SIFT_D2_SHIFT_3D;
+    int height = SIFT_D1_SHIFT_3D; //MIGHT BE OTHER WAY AROUND
+    cv::Point2f c1 = cv::Point2f(0.0, 0.0);
+    cv::Point2f c2 = cv::Point2f(width, 0.0);
+    cv::Point2f c3 = cv::Point2f(0.0, height);
+    cv::Point2f c4 = cv::Point2f(width, height);
+    c1 = affine_transform(tile, c1);
+    c2 = affine_transform(tile, c2);
+    c3 = affine_transform(tile, c3);
+    c4 = affine_transform(tile, c4);
+    return min(c1.y, c2.y, c3.y, c4.y);
+}
+
 
 
 bool tile_in_bounds(tile_data_t tile, int lower_x, int upper_x, int lower_y, int upper_y) {
@@ -510,11 +564,11 @@ void  update_tiles(section_data_t* section, cv::Mat * halo, std::string filename
 float matchTemplate(cv::Mat img1, cv::Mat img2) {
     cv::Mat result_SQDIFF, result_SQDIFF_NORMED, result_CCORR, result_CCORR_NORMED,
         result_CCOEFF, result_CCOEFF_NORMED;
-    cv::matchTemplate(img1, img2, result_SQDIFF, CV_TM_SQDIFF);
-    cv::matchTemplate(img1, img2, result_SQDIFF_NORMED, CV_TM_SQDIFF_NORMED);
-    cv::matchTemplate(img1, img2, result_CCORR, CV_TM_CCORR);
-    cv::matchTemplate(img1, img2, result_CCORR_NORMED, CV_TM_CCORR_NORMED);
-    cv::matchTemplate(img1, img2, result_CCOEFF, CV_TM_CCOEFF);
+    //cv::matchTemplate(img1, img2, result_SQDIFF, CV_TM_SQDIFF);
+    //cv::matchTemplate(img1, img2, result_SQDIFF_NORMED, CV_TM_SQDIFF_NORMED);
+    //cv::matchTemplate(img1, img2, result_CCORR, CV_TM_CCORR);
+    //cv::matchTemplate(img1, img2, result_CCORR_NORMED, CV_TM_CCORR_NORMED);
+    //cv::matchTemplate(img1, img2, result_CCOEFF, CV_TM_CCOEFF);
     cv::matchTemplate(img1, img2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
    
     //std::cout << "---------- MATCH TEMPLATE RESULTS (image size: " << img1.size().width << " " <<
@@ -868,7 +922,237 @@ cv::Mat render_error(section_data_t* prev_section, section_data_t* section, std:
 	return (*section_p_out);
 }
 
+bool tiles_overlap(tile_data_t *tile_1, tile_data_t *tile_2) {
+  if ((max_x(tile_1) < min_x(tile_2)) || (max_x(tile_2) < min_x(tile_1))) {
+    return false;
+  }
+  if ((max_y(tile_1) < min_y(tile_2)) || (max_y(tile_2) < min_y(tile_1))) {
+    return false;
+  }
+  return true;
+}
 
+/* calculate the error between two tiles
+1 is a perect match
+-2 means they do not overlap
+*/
+float error_tile_pair(tile_data_t *tile_1, tile_data_t *tile_2) {
+  if (!(tiles_overlap(tile_1, tile_2))) {
+    return -2;
+  }
+
+
+  cv::Mat tile_p_image_1;
+  cv::Mat tile_p_image_2;
+  tile_p_image_1 = imread_with_cache(tile_1->filepath, CV_LOAD_IMAGE_UNCHANGED);
+  tile_p_image_2 = imread_with_cache(tile_2->filepath, CV_LOAD_IMAGE_UNCHANGED);
+
+  int nrows = min(max_y(tile_1), max_y(tile_2)) - max(min_y(tile_1), min_y(tile_2));
+  int ncols = min(max_x(tile_1), max_x(tile_2)) - max(min_x(tile_1), min_x(tile_2));
+  if ((nrows <= 0) || (ncols <= 0) ) {
+    return -2;
+  }
+  int offset_x = max(min_x(tile_1), min_x(tile_2));
+  int offset_y = max(min_y(tile_1), min_y(tile_2));
+  cv::Mat transform_1 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
+  cv::Mat transform_2 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
+
+  // make the transformed images in the same size with the same cells in the same locations
+  for (int _y = 0; _y < tile_p_image_1.rows; _y++) {
+    for (int _x = 0; _x < tile_p_image_1.cols; _x++) {
+      cv::Point2f p = cv::Point2f(_x, _y);
+      cv::Point2f transformed_p = affine_transform(tile_1, p);
+
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
+        transform_1.at<unsigned char>(y_c, x_c) +=
+           tile_p_image_1.at<unsigned char>(_y, _x);
+      }
+    }
+  }
+
+  for (int _y = 0; _y < tile_p_image_2.rows; _y++) {
+    for (int _x = 0; _x < tile_p_image_2.cols; _x++) {
+      cv::Point2f p = cv::Point2f(_x, _y);
+      cv::Point2f transformed_p = affine_transform(tile_2, p);
+      
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
+        transform_2.at<unsigned char>(y_c, x_c) +=
+           tile_p_image_2.at<unsigned char>(_y, _x);
+      }
+    }
+  }
+
+  // clear any location which only has a value for one of them
+  // note that the transforms are the same size
+  for (int _y = 0; _y < transform_1.rows; _y++) {
+    for (int _x = 0; _x < transform_1.cols; _x++) {
+      if (transform_2.at<unsigned char>(_y, _x) == 0) {
+       transform_1.at<unsigned char>(_y, _x) = 0;
+      }
+      else if (transform_1.at<unsigned char>(_y, _x) == 0) {
+       transform_2.at<unsigned char>(_y, _x) = 0;
+      }
+    }
+  }
+
+  float result = matchTemplate(transform_1 , transform_2 );
+  return result;
+}
+
+void get_all_error_pairs(section_data_t* section) {
+  cilk_for (int i = 0; i < section->n_tiles; i++) {
+    for (int j = i+1; j < section->n_tiles; j++) {
+      if (!(tiles_overlap(&(section->tiles[i]), &(section->tiles[j])))) {
+        continue;
+      }
+      double corr = error_tile_pair(&(section->tiles[i]), &(section->tiles[j]));
+      if (corr >= -1) {
+        __sync_fetch_and_add(&(section->tiles[i].number_overlaps),1);
+        __sync_fetch_and_add(&(section->tiles[j].number_overlaps),1);
+        int corr_slot = (int) (10*(corr+1));
+         __sync_fetch_and_add(&(section->tiles[i].corralation_counts[corr_slot]),1);
+         __sync_fetch_and_add(&(section->tiles[j].corralation_counts[corr_slot]),1);
+      }
+    }
+  }
+  for (int i = 0; i < section->n_tiles; i++) {
+    printf("Tile %d overlaps %d times, corr counts are ",i, section->tiles[i].number_overlaps);
+    for (int j = 0; j < 20; j++) {
+      printf("%d",section->tiles[i].corralation_counts[j]);
+    }
+    printf("\n");
+  }
+}
+
+
+/* rendering for a 2d section*/
+cv::Mat render_2d(section_data_t* section, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, int box_width, int box_height, Resolution res, bool write) {
+
+
+  int lower_y, lower_x, upper_y, upper_x;
+  int nrows, ncols;
+  double scale_x, scale_y;
+  //calculate scale
+  if(res == THUMBNAIL) {
+      std::string thumbnailpath = std::string(section->tiles[0].filepath);
+        thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".bmp"), 4,".jpg");
+        thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
+        cv::Mat thumbnail_img = imread_with_cache(thumbnailpath,CV_LOAD_IMAGE_UNCHANGED);
+        cv::Mat img = imread_with_cache(section->tiles[0].filepath,CV_LOAD_IMAGE_UNCHANGED);
+    scale_x = (double)(img.size().width)/thumbnail_img.size().width;
+        scale_y = (double)(img.size().height)/thumbnail_img.size().height;
+
+      //create new matrix
+    lower_y = (int)(input_lower_y/scale_y + 0.5);
+    lower_x = (int)(input_lower_x/scale_x + 0.5);
+    upper_y = (int)(input_upper_y/scale_y + 0.5);
+    upper_x = (int)(input_upper_x/scale_x + 0.5);
+
+    nrows = (input_upper_y-input_lower_y)/scale_y;
+        ncols = (input_upper_x-input_lower_x)/scale_x; 
+  }
+  if(res == FULL) {
+    lower_y = input_lower_y;
+    lower_x = input_lower_x;
+    upper_y = input_upper_y;
+    upper_x = input_upper_x;
+    nrows = upper_y - lower_y;
+    ncols = upper_x - lower_x;
+    scale_x = 1;
+    scale_y = 1;
+  }
+
+  cv::Mat* section_p_out = new cv::Mat();
+  cv::Mat* section_p_out_mask = new cv::Mat();
+  cv::Mat* tile_p_image = new cv::Mat();
+  (*section_p_out).create(nrows, ncols, CV_8UC1);
+  (*section_p_out_mask).create(nrows, ncols, CV_32F);
+        // temporary matrix for the section.
+        cv::Mat* section_p_out_sum = new cv::Mat();
+        //section->p_out = new cv::Mat();
+        (*section_p_out_sum).create(nrows, ncols, CV_16UC1);
+      
+        // temporary matrix for the section.
+        cv::Mat* section_p_out_ncount = new cv::Mat();
+        //section->p_out = new cv::Mat();
+        (*section_p_out_ncount).create(nrows, ncols, CV_16UC1);
+    for (int y = 0; y < nrows; y++) {
+      for (int x = 0; x < ncols; x++) {
+        section_p_out_mask->at<float>(y,x) = 0.0;
+        section_p_out->at<unsigned char>(y,x) = 0;
+        section_p_out_sum->at<unsigned short>(y,x) = 0;
+        section_p_out_ncount->at<unsigned short>(y,x) = 0;
+      }
+    }
+
+    for (int i = section->n_tiles; --i>=0;/*i < section->n_tiles; i++*/) {
+      tile_data_t tile = section->tiles[i];
+
+      if (!tile_in_bounds(tile, input_lower_x, input_upper_x, input_lower_y, input_upper_y)) {
+    continue;
+      } 
+
+      if (res == THUMBNAIL) { 
+        std::string path = std::string(tile.filepath);
+      path = path.replace(path.find(".bmp"), 4,".jpg");                 
+        path = path.insert(path.find_last_of("/") + 1, "thumbnail_");
+    (*tile_p_image) = imread_with_cache(path,CV_LOAD_IMAGE_GRAYSCALE);
+      }
+ 
+      if (res == FULL) {
+        (*tile_p_image) = imread_with_cache(tile.filepath, CV_LOAD_IMAGE_UNCHANGED);
+      }
+
+      for (int _x = 0; _x < (*tile_p_image).size().width; _x++) {
+        for (int _y = 0; _y < (*tile_p_image).size().height; _y++) {
+          cv::Point2f p = cv::Point2f(_x*scale_x, _y*scale_y);
+          cv::Point2f transformed_p = affine_transform(&tile, p);
+
+          int x_c = (int)(transformed_p.x/scale_x + 0.5);
+          int y_c = (int)(transformed_p.y/scale_y + 0.5);
+          unsigned char val = tile_p_image->at<unsigned char>(_y, _x);
+        
+          for (int k = -1; k < 2; k++) {
+            for (int m = -1; m < 2; m++) {
+              int x = x_c+k;
+              int y = y_c+m;
+
+              if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
+                section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) += val;
+                section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) += 1;
+              }
+            }
+          }
+    }
+      }
+
+
+      tile_p_image->release();
+    }
+
+    for (int x = 0; x < section_p_out->size().width; x++) {
+      for (int y = 0; y < section_p_out->size().height; y++) {
+
+        if (section_p_out_ncount->at<unsigned short>(y,x) == 0) continue;
+
+        section_p_out_mask->at<float>(y, x) /= section_p_out_ncount->at<unsigned short>(y,x);
+        section_p_out->at<unsigned char>(y, x) =
+            section_p_out_sum->at<unsigned short>(y, x) / section_p_out_ncount->at<unsigned short>(y,x);
+      }
+    }
+ 
+
+  bool ret = cv::imwrite(filename, (*section_p_out));
+  std::string filename_mask = filename.replace(filename.find(".tif"),4,".png");
+  if(write) {
+    ret = cv::imwrite(filename_mask, (*section_p_out));
+  }
+  return (*section_p_out);
+}
 
 /* rendering with error detection for TILES*/
 cv::Mat render_error_tiles(section_data_t* section, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, int box_width, int box_height, Resolution res) {

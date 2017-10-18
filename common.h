@@ -250,7 +250,12 @@ typedef struct _tile_data {
 	double offset_x;
 	double offset_y;
     bool* ignore;
-    std::vector<renderTriangle>* mesh_triangles;      
+    std::vector<renderTriangle>* mesh_triangles;
+    int level;
+    bool bad;
+    // TODO not in proto yet
+    int number_overlaps; // the number of tiles we overlap with as seen in get_all_error_pairs
+    int corralation_counts[20]; // the count of corralations, mapping -1,1 to 0,20
 } tile_data_t;
 
 typedef struct _section_data {

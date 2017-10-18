@@ -81,18 +81,18 @@ void get_next_active_set_and_neighbor_set(std::set<int>& /* OUTOUT */ active_set
                                           std::set<int>& /* MODIFIED */ known_set, int *tiles) {
   int total = p_sec_data->n_tiles;
   #define Z_ORDER 0
+  #ifdef NOCACHE
   #define ORIG_IMPL 0
+  #else
+  #define ORIG_IMPL 1
+  #endif
   #define LINE 1
   #define RECT_HEIGHT 50
   int max_size_of_active_set;
   int height_of_active_set;
   if (LINE) {
     max_size_of_active_set = total;
-    #ifdef NOCACHE
-      height_of_active_set = 1;
-    #else
-      height_of_active_set = 20;
-    #endif
+    height_of_active_set = 1;
   } else {
     max_size_of_active_set = RECT_HEIGHT;
     height_of_active_set = RECT_HEIGHT;
@@ -768,8 +768,6 @@ std::vector<int> section_bad_triangles(align_data_t *p_align_data, int start_x, 
 			          upper_x, lower_y, upper_y, 100, 100, THUMBNAIL, true); 			
 		}
 	}
-	 
-	//myfile.close();
 	return bad_sections;
 }
 
@@ -785,6 +783,12 @@ void align_execute(align_data_t *p_align_data) {
     START_TIMER(&t_timer);
 
     protobuf_to_struct(p_align_data);
+
+    for (int i = 0; i < p_align_data->n_sections; i++) {
+      printf("section %d has tiles %d\n", i, p_align_data->sec_data[i].n_tiles);
+    }
+
+
 
     if (p_align_data->mode == MODE_COMPUTE_KPS_AND_MATCH) {
         START_TIMER(&timer);
@@ -813,7 +817,9 @@ void align_execute(align_data_t *p_align_data) {
 
     merged_graph = pack_graph();
     compute_alignment_2d(p_align_data, merged_graph);
+    #ifdef ALIGN3D
     compute_alignment_3d(p_align_data, merged_graph, true);
+    #endif
     unpack_graph(p_align_data, merged_graph);
 
     //merged_graph = pack_graph();
@@ -840,18 +846,14 @@ void align_execute(align_data_t *p_align_data) {
 	std::string qq ="";
 	qq += std::string("pretendHalo")  + std::string(".tif");
 	cv::Mat halo = render(&(p_align_data->sec_data[0]), qq, 51000, 60000, 52000, 58000, THUMBNAIL, false);
-	//set some value to zero to see if it gets copied over
-	//for(int i = 0; i < 50; i ++) {
-	//	for(int j = 0; j < 100; j ++) {
-	//		halo.at<unsigned char>(i, j) = 0;
-	//	}	
-	//}
 	cv::imwrite(qq, halo);
 	qq = "";
 	qq += std::string("new_tiles")  + std::string(".tif");
 	//input location of the halo in global space
 	update_tiles(&(p_align_data->sec_data[1]), &halo, qq, 51000, 60000, 52000, 58000, THUMBNAIL, true);
 
+    
+	
 	//for(int i = 0; i < p_align_data->n_sections-1; i ++) {
 	//        std::string qq ="";
 	//	qq = "";
@@ -859,8 +861,22 @@ void align_execute(align_data_t *p_align_data) {
 	//	cilk_spawn render_error(&(p_align_data->sec_data[i]), &(p_align_data->sec_data[i+1]), qq, start_x,
     //                         start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, true);
 	//}
-    cilk_sync;
-    STOP_TIMER(&t_timer, "t_total-time:");
+    //cilk_sync;
+	//
+    //STOP_TIMER(&t_timer, "t_total-time:");
+    //
+    //#else
+    //for(int i = 0; i < p_align_data->n_sections; i ++) {
+    //  std::string qq ="";
+    //  qq = "";
+    //  qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
+    //  cilk_spawn render_2d(&(p_align_data->sec_data[i]), qq, start_x,
+    //                         start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, true);
+    //  printf("error for each pair\n");
+    //  get_all_error_pairs(&(p_align_data->sec_data[i]));
+    //}
+    //cilk_sync;
+    //#endif
     printf("Got to the end of the function\n");
 }
 
