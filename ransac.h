@@ -2,7 +2,7 @@ static simple_mutex_t mutex = 0;
 
 
 
-void updateAffineSectionTransform(vdata* _vertex, cv::Mat& transform) {
+static void updateAffineSectionTransform(vdata* _vertex, cv::Mat& transform) {
   if (transform.cols == 0 || transform.rows == 0) {
     printf("Warning bad section transform!!!");
     exit(0);
@@ -42,7 +42,7 @@ void updateAffineSectionTransform(vdata* _vertex, cv::Mat& transform) {
 }
 
 
-void updateAffineTransform(vdata* vertex, cv::Mat& transform) {
+static void updateAffineTransform(vdata* vertex, cv::Mat& transform) {
      
   if (transform.cols == 0 || transform.rows == 0) {
     printf("Warning bad section transform!!!");
@@ -164,7 +164,7 @@ void updateAffineTransform(vdata* vertex, cv::Mat& transform) {
 
 }
 
-void updateAffineTransformOld(vdata* vertex, vdata* transform) {
+static void updateAffineTransformOld(vdata* vertex, vdata* transform) {
       
   //std::cout << warp_mat << std::endl;
   vdata tmp;
@@ -258,7 +258,7 @@ void updateAffineTransformOld(vdata* vertex, vdata* transform) {
 }
 
 
-vdata getAffineTransform(std::vector<cv::Point2f>& pts1, std::vector<cv::Point2f>& pts2) {
+static vdata getAffineTransform(std::vector<cv::Point2f>& pts1, std::vector<cv::Point2f>& pts2) {
   cv::Mat warp_mat = cv::getAffineTransform(pts1, pts2);
   //std::cout << warp_mat << std::endl;
 
@@ -279,7 +279,7 @@ vdata getAffineTransform(std::vector<cv::Point2f>& pts1, std::vector<cv::Point2f
 }
 
 
-double get_angle(cv::Point2f p1, cv::Point2f p2) {
+static double get_angle(cv::Point2f p1, cv::Point2f p2) {
     double angle = atan2(p2.y - p1.y, p2.x - p1.x) * 180.0 / CV_PI;
 
     if (angle < 0) {
@@ -289,7 +289,7 @@ double get_angle(cv::Point2f p1, cv::Point2f p2) {
     return angle;
 }
 
-vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points_a,
+static vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points_a,
     std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
 
 //
@@ -508,7 +508,8 @@ vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points
     return best_vertex_data;
     //return std::pair<double,double>(best_vertex_data.offset_x,best_vertex_data.offset_y);
 }
-std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& match_points_a,
+
+static std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& match_points_a,
     std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
 
   double best_dx = 0.0;
@@ -603,7 +604,7 @@ std::pair<double,double> tfk_simple_ransac_strict_ret(std::vector<cv::Point2f>& 
 }
 
 
-void tfk_simple_ransac_strict(std::vector<cv::Point2f>& match_points_a,
+static void tfk_simple_ransac_strict(std::vector<cv::Point2f>& match_points_a,
     std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
 
   double best_dx = 0.0;
@@ -675,7 +676,7 @@ void tfk_simple_ransac_strict(std::vector<cv::Point2f>& match_points_a,
 }
 
 
-int tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
+static int tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
     std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
 
   double best_dx = 0.0;
@@ -718,7 +719,7 @@ int tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
       return maxInliers;
 }
 
-void tfk_simple_ransac_old(std::vector<cv::Point2f>& match_points_a,
+static void tfk_simple_ransac_old(std::vector<cv::Point2f>& match_points_a,
     std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
 
   double best_dx = 0.0;

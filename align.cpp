@@ -12,12 +12,12 @@
 #include <vector>
 #include <algorithm>
 
-bool STORE_ALIGN_RESULTS = false;
-
-float CONTRAST_THRESH = 0.04;
-float CONTRAST_THRESH_3D = 0.04;
-float EDGE_THRESH_3D = 5.0;
-float EDGE_THRESH_2D = 5.0;
+//bool STORE_ALIGN_RESULTS = false;
+//
+//float CONTRAST_THRESH = 0.04;
+//float CONTRAST_THRESH_3D = 0.04;
+//float EDGE_THRESH_3D = 5.0;
+//float EDGE_THRESH_2D = 5.0;
 #include "./common.h"
 #include "./align.h"
 #include "./match.h"
@@ -33,6 +33,7 @@ float EDGE_THRESH_2D = 5.0;
 #include "render_tiles.cpp"
 #include "cilk_tools/Graph.h"
 #include "serialize.h"
+#include "stack.hpp"
 
 void SIFT_initialize() {
   //generateBoxBlurExecutionPlan();
@@ -705,6 +706,29 @@ void align_execute(align_data_t *p_align_data) {
     TIMER_VAR(timer);
     TFK_TIMER_VAR(timer_render);
     START_TIMER(&t_timer);
+
+    tfk::Stack* stack = new tfk::Stack(p_align_data->base_section,
+                                       p_align_data->n_sections,
+                                       p_align_data->input_filepath,
+                                       p_align_data->output_dirpath);
+
+
+    stack->mode = p_align_data->mode;
+    stack->output_dirpath = p_align_data->output_dirpath;
+    stack->base_section = p_align_data->base_section;
+    stack->n_sections = p_align_data->n_sections;
+    stack->do_subvolume = p_align_data->do_subvolume;
+    stack->input_filepath = p_align_data->input_filepath;
+    stack->min_x = p_align_data->min_x;
+    stack->min_y = p_align_data->min_y;
+    stack->max_x = p_align_data->max_x;
+    stack->max_y = p_align_data->max_y;
+    stack->init();
+    printf("Got past the init\n");
+    printf("stack has sections %d\n", stack->sections.size()); 
+    stack->align_2d();
+    printf("Got to the end.\n");
+    return;
 
     protobuf_to_struct(p_align_data);
 

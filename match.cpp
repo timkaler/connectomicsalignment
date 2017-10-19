@@ -51,7 +51,7 @@ static cv::Point2d transform_point_double(vdata* vertex, cv::Point2f point_local
   return cv::Point2d(new_x, new_y);
 }
 
-static cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local) {
+cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local) {
   float new_x = point_local.x*vertex->a00 + point_local.y * vertex->a01 + vertex->offset_x + vertex->start_x;
   float new_y = point_local.x*vertex->a10 + point_local.y * vertex->a11 + vertex->offset_y + vertex->start_y;
   return cv::Point2f(new_x, new_y);
@@ -125,7 +125,7 @@ void concat_two_tiles(tile_data_t* a_tile, int atile_id, std::vector< cv::KeyPoi
 
 #include "ransac.h"
 
-static void match_features(std::vector< cv::DMatch > &matches,
+void match_features(std::vector< cv::DMatch > &matches,
                            cv::Mat &descs1, cv::Mat &descs2,
                            float rod);
 void updateVertex2DAlign(int vid, void* scheduler_void);
@@ -162,7 +162,7 @@ static bool bbox_contains(float pt_x, float pt_y,
 }
 
 // Helper method to match the features of two tiles.
-static void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, cv::Mat &descs2, float rod) {
+void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, cv::Mat &descs2, float rod) {
   std::vector< std::vector < cv::DMatch > > raw_matches;
   if (true || descs1.rows + descs1.cols > descs2.rows + descs2.cols) {
     //cv::BFMatcher matcher(cv::NORM_L2, false);

@@ -1,6 +1,7 @@
 static int global_iteration_count = 0;
 static double global_error_sq = 0;
-static double global_learning_rate = 0.1;
+static double global_learning_rate = 0.49;
+
 namespace cv {
 
   static bool computeAffineTFK(const std::vector<cv::Point2f> &srcPoints, const std::vector<cv::Point2f> &dstPoints, Mat &transf)

@@ -326,6 +326,8 @@ int protobuf_to_struct(align_data_t *p_tile_data) {
     std::cerr << "Failed to parse protocal buffer." << std::endl;
     return 0;
   }
+  
+
   // first deeal with AlignData level
   if (align_data.has_mode()) {
     p_tile_data->mode = align_data.mode();
