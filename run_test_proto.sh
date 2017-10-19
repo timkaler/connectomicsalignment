@@ -11,13 +11,8 @@ SECTION=0
 WORKINGDIR=$PWD
 OUTPUTDIR=$PWD/temp/
 
-<<<<<<< HEAD
-./setup.sh gdb --args ./run_align 1 \
-    0 4\
-=======
 ./setup.sh ./run_align 1 \
-    0 1\
->>>>>>> d0927bd94baab91f7763fda47842283486ebc1bd
+    0 4\
     $PWD/data/proto_data21 \
     $OUTPUTDIR \
     $OUTPUTDIR

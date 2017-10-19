@@ -536,7 +536,9 @@ void  update_tiles(section_data_t* section, cv::Mat * halo, std::string filename
     cv::Mat* tile_p_image = read_tile(tile.filepath, res);
 
    	cv::Mat* new_tile = new cv::Mat();
-  	(*new_tile).create((*tile_p_image).size().width, (*tile_p_image).size().height, CV_8UC1);
+	
+	//initialize to all zero 
+  	(*new_tile).create((*tile_p_image).size().height, (*tile_p_image).size().width, CV_8UC1);
 
 	for (int _x = 0; _x < (*tile_p_image).size().width; _x++) {
       for (int _y = 0; _y < (*tile_p_image).size().height; _y++) {
@@ -546,7 +548,8 @@ void  update_tiles(section_data_t* section, cv::Mat * halo, std::string filename
         int x_c = (int)(transformed_p.x/scale_x + 0.5);
         int y_c = (int)(transformed_p.y/scale_y + 0.5);
 
-		new_tile->at<unsigned char>(_y, _x) = halo->at<unsigned short>(y_c - lower_y, x_c - lower_x);
+		new_tile->at<unsigned char>(_y, _x) = halo->at<unsigned char>(y_c - lower_y, x_c - lower_x);
+		//assert always positive, print min and max 
 		
       }	
     }
