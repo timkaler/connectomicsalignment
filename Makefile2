@@ -119,9 +119,14 @@ stack.o: stack.cpp stack.hpp stack_section.cpp stack_tile.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 
-#engine.o: cilk_tools/engine.cpp cilk_tools/scheduler.cpp cilk_tools/Graph.cpp
-#	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+engine.o: cilk_tools/engine.cpp cilk_tools/scheduler.cpp cilk_tools/Graph.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
+scheduler.o: cilk_tools/scheduler.cpp cilk_tools/Graph.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+Graph.o: cilk_tools/Graph.cpp cilk_tools/scheduler.cpp cilk_tools/Graph.cpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 #engine.o: cilk_tools/Graph.cpp cilk_tools/engine.cpp cilk_tools/scheduler.cpp
 #	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
@@ -134,7 +139,7 @@ stack.o: stack.cpp stack.hpp stack_section.cpp stack_tile.cpp
 run.S: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: common.o align.o run.o match.o stack.o
+run_align: Graph.o scheduler.o engine.o common.o align.o run.o match.o stack.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:

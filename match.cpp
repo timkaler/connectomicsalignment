@@ -36,13 +36,6 @@
 
 
 
-static std::string matchPadTo(std::string str, const size_t num, const char paddingChar = '0')
-{
-    if(num > str.size())
-        str.insert(0, num - str.size(), paddingChar);
-    return str;
-}
-
 
 
 static cv::Point2d transform_point_double(vdata* vertex, cv::Point2f point_local) {
@@ -292,12 +285,12 @@ void compute_alignment_2d(align_data_t *p_align_data,
 
   int ncolors = merged_graph->compute_trivial_coloring();
   Scheduler* scheduler;
-  engine<vdata, edata>* e;
+  engine* e;
   scheduler =
       new Scheduler(merged_graph->vertexColors, ncolors+1, merged_graph->num_vertices());
   scheduler->graph_void = (void*) merged_graph;
   scheduler->roundNum = 0;
-  e = new engine<vdata, edata>(merged_graph, scheduler);
+  e = new engine(merged_graph, scheduler);
 
   for (int trial = 0; trial < 5; trial++) {
     global_error_sq = 0.0;

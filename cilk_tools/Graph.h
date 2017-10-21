@@ -143,5 +143,6 @@ class Graph {
     void insertEdge(int vid, EdgeType edge);
 };
 
-#include "./Graph.cpp"
+static Graph<vdata, edata> tmp_graph;
+
 #endif  // GRAPH_H_

@@ -4,6 +4,7 @@
 #include <vector>
 #include <list>
 #include <map>
+
 #include "./multibag.h"
 
 #ifndef SCHEDULER_H_
@@ -33,5 +34,4 @@ class Scheduler {
     void* graph_void;
     bool isStatic;
 };
-#include "./scheduler.cpp"
 #endif  // SCHEDULER_H_

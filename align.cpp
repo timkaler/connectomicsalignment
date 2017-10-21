@@ -727,6 +727,7 @@ void align_execute(align_data_t *p_align_data) {
     printf("Got past the init\n");
     printf("stack has sections %d\n", stack->sections.size()); 
     stack->align_2d();
+    stack->unpack_graph();
     printf("Got to the end.\n");
     return;
 

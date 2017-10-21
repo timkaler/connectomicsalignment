@@ -46,45 +46,14 @@ cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local);
 void updateVertex2DAlignFULLFast(int vid, void* scheduler_void);
 void computeError2DAlign(int vid, void* scheduler_void);
 
+std::string get_point_transform_string(Graph<vdata, edata>* merged_graph, vdata* vd);
 
-template<typename VertexType, typename EdgeType>
-class engine {
- private:
-  Graph<VertexType, EdgeType>* graph;
-  Scheduler* scheduler;
- public:
-  engine(Graph<VertexType, EdgeType>* graph, Scheduler* scheduler);
-  void run();
-  void process_update_task(Scheduler::update_task task);
-  void parallel_process(
-      std::vector<std::vector<Scheduler::update_task>*> subbags);
-};
-
-class Scheduler {
- public:
-    struct update_task{
-      int vid;
-      void (*update_fun)(int, void*);
-    };
- private:
-    Multibag<update_task>* Q;
-    int currentColor;
-    int* vertexColors;
-    int colorCount;
-    int* vertex_task_added;
-    int numVertices;
-    bool keepGoing;
- public:
-    Scheduler(int* vertexColors, int colorCount, int vertexCount);
-    void add_task(int vid, void (*update_function)(int, void*));
-    void add_task_static(int vid, void (*update_function)(int, void*));
-    std::vector<std::vector<update_task>*> get_task_bag();
-    void collect_tasks();
-    int roundNum;
-    void* graph_void;
-    bool isStatic;
-};
-
+static std::string matchPadTo(std::string str, const size_t num, const char paddingChar = '0')
+{
+    if(num > str.size())
+        str.insert(0, num - str.size(), paddingChar);
+    return str;
+}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL MACROS
