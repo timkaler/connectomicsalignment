@@ -1,10 +1,10 @@
-Graph<vdata, edata>* pack_graph() {//std::vector<Graph<vdata, edata>* >& graph_list) {
+Graph* pack_graph() {
   // Merging the graphs in graph_list into a single merged graph.
   int total_size = 0;
   for (int i = 0; i < graph_list.size(); i++) {
     total_size += graph_list[i]->num_vertices();
   }
-  Graph<vdata, edata>* merged_graph = new Graph<vdata, edata>();
+  Graph* merged_graph = new Graph();
   merged_graph->resize(total_size);
 
   int vertex_id_offset = 0;
@@ -39,7 +39,7 @@ Graph<vdata, edata>* pack_graph() {//std::vector<Graph<vdata, edata>* >& graph_l
 // Takes the merged graph (with all sections in one graph) and unpacks it into the
 //   already correctly-sized graphs in the graph_list --- where graph_list has
 //   one graph per-section.
-void unpack_graph(align_data_t* p_align_data, Graph<vdata,edata>* merged_graph) {
+void unpack_graph(align_data_t* p_align_data, Graph* merged_graph) {
   int vertex_id_offset = 0;
   // Unpack the graphs within the merged graph.
   vertex_id_offset = 0;
@@ -53,7 +53,7 @@ void unpack_graph(align_data_t* p_align_data, Graph<vdata,edata>* merged_graph) 
   }
 
   for (int _i = 0; _i < graph_list.size(); _i++) {
-    Graph<vdata, edata>* graph = graph_list[_i];
+    Graph* graph = graph_list[_i];
     int sec_id = graph->section_id;
     std::string section_id_string =
         std::to_string(p_align_data->sec_data[sec_id].section_id +

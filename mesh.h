@@ -238,7 +238,7 @@ static void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f
 
 
 
-void construct_triangles(Graph<vdata,edata>* graph, double hex_spacing) {
+void construct_triangles(Graph* graph, double hex_spacing) {
   double min_x, max_x, min_y, max_y;
   for (int v = 0; v < graph->num_vertices(); v++) {
      vdata* vd = graph->getVertexData(v);

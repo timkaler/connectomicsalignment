@@ -122,10 +122,9 @@ typedef struct {
 
 
 
-template<typename VertexType, typename EdgeType>
 class Graph {
  private:
-    VertexType* vertexData;
+    vdata* vertexData;
  public:
     Graph();
     int* vertexColors;
@@ -134,15 +133,15 @@ class Graph {
     int section_id;
     int num_vertices();
     int compute_trivial_coloring();
-    std::vector<std::vector<EdgeType> > edgeData;
+    std::vector<std::vector<edata> > edgeData;
     void resize(int size);
-    VertexType* getVertexData(int vid);
+    vdata* getVertexData(int vid);
     void insert_matches(int atile_id, int btile_id,
         std::vector<cv::Point2f>& filtered_match_points_a,
         std::vector<cv::Point2f>& filtered_match_points_b, double weight);
-    void insertEdge(int vid, EdgeType edge);
+    void insertEdge(int vid, edata edge);
 };
 
-static Graph<vdata, edata> tmp_graph;
+//static Graph<vdata, edata> tmp_graph;
 
 #endif  // GRAPH_H_

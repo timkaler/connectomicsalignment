@@ -59,12 +59,12 @@ void tfk::Stack::init() {
 
 
 void tfk::Stack::pack_graph() {
-  std::vector<Graph<vdata, edata>* > graph_list;
+  std::vector<Graph* > graph_list;
   for (int i = 0; i < graph_list.size(); i++) {
     graph_list.push_back(this->sections[i]->graph);
   }
 
-  this->merged_graph = new Graph<vdata, edata>();
+  this->merged_graph = new Graph();
   // Merging the graphs in graph_list into a single merged graph.
   int total_size = 0;
   for (int i = 0; i < graph_list.size(); i++) {
@@ -98,26 +98,25 @@ void tfk::Stack::pack_graph() {
 
 void tfk::Stack::unpack_graph() {
 
-
-  std::vector<Graph<vdata, edata>*> graph_list;
+  std::vector<Graph*> graph_list;
   for (int i = 0; i < this->sections.size(); i++) {
     graph_list.push_back(this->sections[i]->graph);
   }
 
-  int vertex_id_offset = 0;
-  // Unpack the graphs within the merged graph.
-  vertex_id_offset = 0;
-  for (int i = 0; i < graph_list.size(); i++) {
-    for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
-      vdata* d = this->merged_graph->getVertexData(j+vertex_id_offset);
-      *(graph_list[i]->getVertexData(j)) = *d;
-      (graph_list[i]->getVertexData(j))->vertex_id -= vertex_id_offset;
-    }
-    vertex_id_offset += graph_list[i]->num_vertices();
-  }
+  //int vertex_id_offset = 0;
+  //// Unpack the graphs within the merged graph.
+  //vertex_id_offset = 0;
+  //for (int i = 0; i < graph_list.size(); i++) {
+  //  for (int j = 0; j < graph_list[i]->num_vertices(); j++) {
+  //    vdata* d = this->merged_graph->getVertexData(j+vertex_id_offset);
+  //    *(graph_list[i]->getVertexData(j)) = *d;
+  //    (graph_list[i]->getVertexData(j))->vertex_id -= vertex_id_offset;
+  //  }
+  //  vertex_id_offset += graph_list[i]->num_vertices();
+  //}
 
   for (int _i = 0; _i < graph_list.size(); _i++) {
-    Graph<vdata, edata>* graph = graph_list[_i];
+    Graph* graph = graph_list[_i];
     int sec_id = _i;//graph->section_id;
     std::string section_id_string =
         std::to_string(this->sections[sec_id]->section_id +
@@ -265,58 +264,62 @@ void tfk::Stack::align_2d() {
     this->sections[i]->compute_keypoints_and_matches();
   }
 
-  this->pack_graph();
-  int ncolors = this->merged_graph->compute_trivial_coloring();
-  Scheduler* scheduler;
-  engine* e;
-  scheduler =
-      new Scheduler(this->merged_graph->vertexColors, ncolors+1, this->merged_graph->num_vertices());
-  scheduler->graph_void = (void*) this->merged_graph;
-  scheduler->roundNum = 0;
-  e = new engine(this->merged_graph, scheduler);
+  //this->pack_graph();
 
-  for (int trial = 0; trial < 5; trial++) {
-    //global_learning_rate = 0.49;
-    std::vector<int> vertex_ids;
-    for (int i = 0; i < this->merged_graph->num_vertices(); i++) {
-      vertex_ids.push_back(i);
-    } 
-    std::random_shuffle(vertex_ids.begin(), vertex_ids.end());
-    // pick one section to be "converged"
-    std::set<int> section_list;
-    for (int _i = 0; _i < this->merged_graph->num_vertices(); _i++) {
-      int i = _i;//vertex_ids[_i];
-      //merged_graph->getVertexData(i)->offset_x += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
-      //merged_graph->getVertexData(i)->offset_y += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
-      int z = this->merged_graph->getVertexData(i)->z;
-      //merged_graph->getVertexData(i)->converged = 0;
-      this->merged_graph->getVertexData(i)->iteration_count = 0;
-      if (section_list.find(z) == section_list.end()) {
-        if (this->merged_graph->edgeData[i].size() > 4) {
-          section_list.insert(z);
-          //merged_graph->getVertexData(i)->converged = 1;
+  cilk_for (int section_index = 0; section_index < this->sections.size(); section_index++) {
+    
+    int ncolors = this->sections[section_index]->graph->compute_trivial_coloring();
+    Scheduler* scheduler;
+    engine* e;
+    scheduler =
+        new Scheduler(this->sections[section_index]->graph->vertexColors, ncolors+1, this->sections[section_index]->graph->num_vertices());
+    scheduler->graph_void = (void*) this->sections[section_index]->graph;
+    scheduler->roundNum = 0;
+    e = new engine(this->sections[section_index]->graph, scheduler);
+
+    for (int trial = 0; trial < 5; trial++) {
+      //global_learning_rate = 0.49;
+      std::vector<int> vertex_ids;
+      for (int i = 0; i < this->sections[section_index]->graph->num_vertices(); i++) {
+        vertex_ids.push_back(i);
+      } 
+      //std::srand(trial);
+      //std::random_shuffle(vertex_ids.begin(), vertex_ids.end());
+      // pick one section to be "converged"
+      std::set<int> section_list;
+      for (int _i = 0; _i < this->sections[section_index]->graph->num_vertices(); _i++) {
+        int i = _i;//vertex_ids[_i];
+        //merged_graph->getVertexData(i)->offset_x += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
+        //merged_graph->getVertexData(i)->offset_y += (20.0-20.0*(1.0*(rand()%256)/256))/(trial*trial+1);
+        int z = this->sections[section_index]->graph->getVertexData(i)->z;
+        //merged_graph->getVertexData(i)->converged = 0;
+        this->sections[section_index]->graph->getVertexData(i)->iteration_count = 0;
+        if (section_list.find(z) == section_list.end()) {
+          if (this->sections[section_index]->graph->edgeData[i].size() > 4) {
+            section_list.insert(z);
+            //merged_graph->getVertexData(i)->converged = 1;
+          }
         }
       }
+
+      scheduler->isStatic = false;
+      for (int i = 0; i < this->sections[section_index]->graph->num_vertices(); i++) {
+        scheduler->add_task_static(i, updateVertex2DAlignFULLFast);
+      }
+      scheduler->isStatic = true;
+
+      printf("starting run\n");
+      e->run();
+
+      printf("ending run\n");
+
+      for (int i = 0; i < this->sections[section_index]->graph->num_vertices(); i++) {
+        this->sections[section_index]->graph->getVertexData(i)->iteration_count = 0;
+        computeError2DAlign(i, (void*) scheduler);
+      }
+      break;
     }
-
-    scheduler->isStatic = false;
-    for (int i = 0; i < this->merged_graph->num_vertices(); i++) {
-      scheduler->add_task_static(i, updateVertex2DAlignFULLFast);
-    }
-    scheduler->isStatic = true;
-
-    printf("starting run\n");
-    e->run();
-
-    printf("ending run\n");
-
-    for (int i = 0; i < this->merged_graph->num_vertices(); i++) {
-      this->merged_graph->getVertexData(i)->iteration_count = 0;
-      computeError2DAlign(i, (void*) scheduler);
-    }
-    break;
   }
-
 
 
 }

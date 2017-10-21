@@ -106,13 +106,13 @@ class Section {
     std::string cached_3d_keypoints;
 
     std::vector<Tile*> tiles;
-    Graph<vdata, edata>* graph;
+    Graph* graph;
 
     Section(int section_id);
     Section(SectionData& section_data);
     std::vector<int> get_all_close_tiles(int atile_id);
     void compute_keypoints_and_matches();
-    void compute_tile_matches(int tile_id, Graph<vdata, edata>* graph);
+    void compute_tile_matches(int tile_id, Graph* graph);
 };
 
 
@@ -134,7 +134,7 @@ class Stack {
     // list of sections
     std::vector<Section*> sections;
 
-    Graph<vdata, edata>* merged_graph;
+    Graph* merged_graph;
 
     Stack(int base_section, int n_sections, std::string input_filepath,
                std::string output_dirpath);

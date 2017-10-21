@@ -20,10 +20,10 @@
 #define ENGINE_H_
 class engine {
  private:
-  Graph<vdata, edata>* graph;
+  Graph* graph;
   Scheduler* scheduler;
  public:
-  engine(Graph<vdata, edata>* graph, Scheduler* scheduler);
+  engine(Graph* graph, Scheduler* scheduler);
   engine();
   void run();
   void process_update_task(Scheduler::update_task task);

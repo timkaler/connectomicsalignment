@@ -52,7 +52,7 @@ cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local) {
 
 
 
-std::string get_point_transform_string(Graph<vdata, edata>* merged_graph, vdata* vd) {
+std::string get_point_transform_string(Graph* merged_graph, vdata* vd) {
   std::string ret = "";
   for (int i = 0; i < vd->my_mesh_points->size(); i++) {
       cv::Point2f my_point = (*(vd->section_data->mesh_orig))[(*(vd->my_mesh_points))[i]];
@@ -125,10 +125,10 @@ void updateVertex2DAlign(int vid, void* scheduler_void);
 #include "meshoptimize.h"
 #include "elastic_mesh.h"
 
-std::vector<Graph<vdata, edata>* > graph_list;
+std::vector<Graph* > graph_list;
 
 #include "./match_helpers.h"
-void set_graph_list(std::vector<Graph<vdata,edata>* > _graph_list, bool startEmpty) {
+void set_graph_list(std::vector<Graph* > _graph_list, bool startEmpty) {
   if (startEmpty) graph_list.clear();
 
   for (int i = 0; i < _graph_list.size(); i++) {
@@ -225,7 +225,7 @@ int get_all_close_tiles(int atile_id, section_data_t *p_sec_data, int* indices_t
 
 
 void compute_alignment_3d(align_data_t *p_align_data,
-    Graph<vdata, edata>* merged_graph, bool construct_tri) {
+    Graph* merged_graph, bool construct_tri) {
 
 
   // NOTE(TFK): These transformations are kind-of silly, but are an artifact of
@@ -280,7 +280,7 @@ void compute_alignment_3d(align_data_t *p_align_data,
 
 
 void compute_alignment_2d(align_data_t *p_align_data,
-    Graph<vdata, edata>* merged_graph) {
+    Graph* merged_graph) {
   TRACE_1("compute_alignment_2d: start\n");
 
   int ncolors = merged_graph->compute_trivial_coloring();
@@ -338,7 +338,7 @@ void compute_alignment_2d(align_data_t *p_align_data,
   }
 }
 
-void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std::set<int> active_set, Graph<vdata, edata>* graph) {
+void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std::set<int> active_set, Graph* graph) {
   TRACE_1("compute_tile_matches: start\n");
 
   //section_data_t *p_sec_data = &(p_align_data->sec_data[sec_id]);

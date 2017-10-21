@@ -8,7 +8,7 @@ engine::engine() {
 }
 
 engine::engine(
-    Graph<vdata, edata>* graph, Scheduler* scheduler) {
+    Graph* graph, Scheduler* scheduler) {
   this->graph = graph;
   this->scheduler = scheduler;
 }

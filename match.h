@@ -26,16 +26,16 @@ const int MAX_EPSILON = 10;
 // EXTERNAL FUNCTIONS
 /////////////////////////////////////////////////////////////////////////////////////////
 //void compute_tile_matches(align_data_t *p_align_data);
-void compute_alignment_2d(align_data_t *p_align_data, Graph<vdata, edata>* merged_graph);
-void compute_alignment_3d(align_data_t *p_align_data, Graph<vdata, edata>* merged_graph, bool construct_tri);
+void compute_alignment_2d(align_data_t *p_align_data, Graph* merged_graph);
+void compute_alignment_3d(align_data_t *p_align_data, Graph* merged_graph, bool construct_tri);
 
-void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std::set<int> active_set, Graph<vdata, edata>* graph);
+void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std::set<int> active_set, Graph* graph);
 
-void set_graph_list(std::vector<Graph<vdata,edata>* > graph_list, bool startEmpty);
+void set_graph_list(std::vector<Graph* > graph_list, bool startEmpty);
 
-void unpack_graph(align_data_t* p_align_data, Graph<vdata,edata>* merged_graph);
+void unpack_graph(align_data_t* p_align_data, Graph* merged_graph);
 
-Graph<vdata, edata>* pack_graph();
+Graph* pack_graph();
 
 int get_all_close_tiles(int atile_id, section_data_t *p_sec_data, int* indices_to_check);
 
@@ -46,7 +46,7 @@ cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local);
 void updateVertex2DAlignFULLFast(int vid, void* scheduler_void);
 void computeError2DAlign(int vid, void* scheduler_void);
 
-std::string get_point_transform_string(Graph<vdata, edata>* merged_graph, vdata* vd);
+std::string get_point_transform_string(Graph* merged_graph, vdata* vd);
 
 static std::string matchPadTo(std::string str, const size_t num, const char paddingChar = '0')
 {

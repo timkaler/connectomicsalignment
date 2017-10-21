@@ -44,7 +44,7 @@ namespace cv {
 
 void computeError2DAlign(int vid, void* scheduler_void) {
   Scheduler* scheduler = reinterpret_cast<Scheduler*>(scheduler_void);
-  Graph<vdata, edata>* graph = reinterpret_cast<Graph<vdata,edata>*>(scheduler->graph_void);
+  Graph* graph = reinterpret_cast<Graph*>(scheduler->graph_void);
 
   //printf("starting vertex %d\n", vid);
   vdata* vertex_data = graph->getVertexData(vid);
@@ -137,191 +137,9 @@ void computeError2DAlign(int vid, void* scheduler_void) {
   vertex_data->iteration_count++;
 }
 
-//void serialUpdateValues(int vid, void* scheduler_void,
-//                               std::priority_queue<std::pair<double, int> >* queue) {
-//  Scheduler* scheduler = reinterpret_cast<Scheduler*>(scheduler_void);
-//  Graph<vdata, edata>* graph = reinterpret_cast<Graph<vdata,edata>*>(scheduler->graph_void);
-//  //printf("starting vertex %d\n", vid);
-//  vdata* vertex_data = graph->getVertexData(vid);
-//  std::vector<edata> edges = graph->edgeData[vid];
-//
-//  //double original_offset_x = vertex_data->offset_x;
-//  //double original_offset_y = vertex_data->offset_y;
-//
-//  std::vector<cv::Point2d> source_points(0), dest_points(0);
-//
-//  if (edges.size() == 0) return;
-//
-//  std::vector<cv::Point2d> original_points;
-//  std::vector<cv::Point2d> original_points2;
-//  std::vector<double> weights;
-//
-//  std::vector<vdata*> neighbor_pointers;
-//
-//  //bool trigger_change = false;
-//
-//  for (int i = 0; i < edges.size(); i++) {
-//    //if (i != vertex_data->iteration_count%edges.size()) continue;
-//    std::vector<cv::Point2f>* v_points = edges[i].v_points;
-//    std::vector<cv::Point2f>* n_points = edges[i].n_points;
-//    vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
-//    //int n_conv = neighbor_vertex->converged;
-//    //if (n_conv == 0) continue;
-//    //if (n_conv > vertex_data->converged) continue;
-//
-//    //if (!neighbor_vertex->converged) continue;
-//    double curr_weight = 1.0/v_points->size();
-//
-//    if (graph->getVertexData(edges[i].neighbor_id)->z != graph->getVertexData(vid)->z) {
-//      //printf("Danger mesh optimize code has edges across sections!\n");
-//    }
-//
-//    for (int j = 0; j < v_points->size(); j++) {
-//      cv::Point2d ptx1 = transform_point_double(vertex_data, (*v_points)[j]);
-//      cv::Point2d ptx2 = transform_point_double(neighbor_vertex, (*n_points)[j]);
-//      neighbor_pointers.push_back(neighbor_vertex); 
-//      source_points.push_back(ptx1);
-//      dest_points.push_back(ptx2);
-//      original_points.push_back((*v_points)[j]);
-//      original_points2.push_back((*n_points)[j]);
-//      weights.push_back(curr_weight);
-//    }
-//  }
-//  
-//  std::vector<cv::Point2d>& filtered_match_points_a = source_points;
-//  std::vector<cv::Point2d>& filtered_match_points_b = dest_points;
-//
-//  std::vector<cv::Point2d> match_points_a_fixed(0);
-//  if (filtered_match_points_a.size() > 0) {
-//    //double learning_rate = global_learning_rate;//0.4 + 0.6*((rand()%100)*1.0/100);
-//    while (true) {
-//    double grad_error_x = 0.0;
-//    double grad_error_y = 0.0;
-//    double weight_sum = 1.0;
-//    double error_sq = 0.0;
-//    std::map<int, double> neighbor_errors_x;
-//    std::map<int, double> neighbor_errors_y;
-//
-//    for (int iter = 0; iter < filtered_match_points_a.size(); iter++) {
-//       double delta_x = filtered_match_points_b[iter].x - filtered_match_points_a[iter].x;
-//       double delta_y = filtered_match_points_b[iter].y - filtered_match_points_a[iter].y;
-//       error_sq += (delta_x*delta_x + delta_y*delta_y)*weights[iter];
-//       grad_error_x += 2*(delta_x)*weights[iter];
-//       grad_error_y += 2*(delta_y)*weights[iter];
-//       //neighbor_pointers[iter]->neighbor_grad_x -= 2*delta_x*weights[iter];
-//       //neighbor_pointers[iter]->neighbor_grad_y -= 2*delta_y*weights[iter];
-//       //neighbor_errors_x[neighbor_pointers[iter]->vertex_id] += delta_x*weights[iter];
-//       //neighbor_errors_y[neighbor_pointers[iter]->vertex_id] += delta_y*weights[iter];
-//       weight_sum += weights[iter];
-//    }
-//
-//    grad_error_x /= weight_sum;
-//    grad_error_y /= weight_sum;
-//    double total_error = std::sqrt(grad_error_x*grad_error_x + grad_error_y*grad_error_y);
-//    //vertex_data->last_error_value = total_error;
-//    queue->push(std::make_pair(total_error, vid));
-//    break;
-//  }
-//  vertex_data->iteration_count++;
-//  }
-//}
-//
-//void serialUpdateVertex2DAlign(int vid, double check_value, void* scheduler_void,
-//                               std::priority_queue<std::pair<double, int> >* queue) {
-//  Scheduler* scheduler = reinterpret_cast<Scheduler*>(scheduler_void);
-//  Graph<vdata, edata>* graph = reinterpret_cast<Graph<vdata,edata>*>(scheduler->graph_void);
-//  //printf("starting vertex %d\n", vid);
-//  vdata* vertex_data = graph->getVertexData(vid);
-//  std::vector<edata> edges = graph->edgeData[vid];
-//
-//  if (check_value > 0.0 && vertex_data->last_error_value != check_value) return; // stale.
-//
-//  //double original_offset_x = vertex_data->offset_x;
-//  //double original_offset_y = vertex_data->offset_y;
-//
-//  std::vector<cv::Point2d> source_points(0), dest_points(0);
-//
-//  if (edges.size() == 0) return;
-//
-//  std::vector<cv::Point2d> original_points;
-//  std::vector<cv::Point2d> original_points2;
-//  std::vector<double> weights;
-//
-//  std::vector<vdata*> neighbor_pointers;
-//
-//  //bool trigger_change = false;
-//
-//  for (int i = 0; i < edges.size(); i++) {
-//    //if (i != vertex_data->iteration_count%edges.size()) continue;
-//    std::vector<cv::Point2f>* v_points = edges[i].v_points;
-//    std::vector<cv::Point2f>* n_points = edges[i].n_points;
-//    vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
-//    //int n_conv = neighbor_vertex->converged;
-//    //if (n_conv == 0) continue;
-//    //if (n_conv > vertex_data->converged) continue;
-//
-//    //if (!neighbor_vertex->converged) continue;
-//    double curr_weight = 1.0/v_points->size();
-//
-//    if (graph->getVertexData(edges[i].neighbor_id)->z != graph->getVertexData(vid)->z) {
-//      //printf("Danger mesh optimize code has edges across sections!\n");
-//    }
-//
-//    for (int j = 0; j < v_points->size(); j++) {
-//      cv::Point2f ptx1 = transform_point_double(vertex_data, (*v_points)[j]);
-//      cv::Point2f ptx2 = transform_point_double(neighbor_vertex, (*n_points)[j]);
-//      neighbor_pointers.push_back(neighbor_vertex); 
-//      source_points.push_back(ptx1);
-//      dest_points.push_back(ptx2);
-//      original_points.push_back((*v_points)[j]);
-//      original_points2.push_back((*n_points)[j]);
-//      weights.push_back(curr_weight);
-//    }
-//  }
-//  
-//  std::vector<cv::Point2d>& filtered_match_points_a = source_points;
-//  std::vector<cv::Point2d>& filtered_match_points_b = dest_points;
-//
-//  std::vector<cv::Point2d> match_points_a_fixed(0);
-//  if (filtered_match_points_a.size() > 0) {
-//    double learning_rate = global_learning_rate;//0.4 + 0.6*((rand()%100)*1.0/100);
-//    while (true) {
-//    double grad_error_x = 0.0;
-//    double grad_error_y = 0.0;
-//    double weight_sum = 1.0;
-//    double error_sq = 0.0;
-//    std::map<int, double> neighbor_errors_x;
-//    std::map<int, double> neighbor_errors_y;
-//
-//    for (int iter = 0; iter < filtered_match_points_a.size(); iter++) {
-//       double delta_x = filtered_match_points_b[iter].x - filtered_match_points_a[iter].x;
-//       double delta_y = filtered_match_points_b[iter].y - filtered_match_points_a[iter].y;
-//       error_sq += (delta_x*delta_x + delta_y*delta_y)*weights[iter];
-//       grad_error_x += 2*(delta_x)*weights[iter];
-//       grad_error_y += 2*(delta_y)*weights[iter];
-//       //neighbor_pointers[iter]->neighbor_grad_x -= 2*delta_x*weights[iter];
-//       //neighbor_pointers[iter]->neighbor_grad_y -= 2*delta_y*weights[iter];
-//       //neighbor_errors_x[neighbor_pointers[iter]->vertex_id] += delta_x*weights[iter];
-//       //neighbor_errors_y[neighbor_pointers[iter]->vertex_id] += delta_y*weights[iter];
-//       weight_sum += weights[iter];
-//    }
-//
-//    vertex_data->offset_x += /*(1.0-2*4.0/30.0)*/grad_error_x*learning_rate/(weight_sum);
-//    vertex_data->offset_y += /*(1.0-2*4.0/30.0)*/grad_error_y*learning_rate/(weight_sum);
-//
-//    serialUpdateValues(vid, scheduler_void, queue);
-//    for (int i = 0; i < edges.size(); i++) {
-//      serialUpdateValues(edges[i].neighbor_id, scheduler_void, queue);
-//    }
-//    break;
-//  }
-//  vertex_data->iteration_count++;
-//  }
-//}
-
 void updateVertex2DAlignMFOV(int vid, void* scheduler_void) {
   Scheduler* scheduler = reinterpret_cast<Scheduler*>(scheduler_void);
-  Graph<vdata, edata>* graph = reinterpret_cast<Graph<vdata,edata>*>(scheduler->graph_void);
+  Graph* graph = reinterpret_cast<Graph*>(scheduler->graph_void);
   //printf("starting vertex %d\n", vid);
   vdata* vertex_data = graph->getVertexData(vid);
   std::vector<edata> edges = graph->edgeData[vid];
@@ -465,7 +283,7 @@ void updateVertex2DAlignMFOV(int vid, void* scheduler_void) {
 
 void updateVertex2DAlignFULLFast(int vid, void* scheduler_void) {
   Scheduler* scheduler = reinterpret_cast<Scheduler*>(scheduler_void);
-  Graph<vdata, edata>* graph = reinterpret_cast<Graph<vdata,edata>*>(scheduler->graph_void);
+  Graph* graph = reinterpret_cast<Graph*>(scheduler->graph_void);
 
   vdata* vertex_data = graph->getVertexData(vid);
   std::vector<edata>& edges = graph->edgeData[vid];
@@ -515,7 +333,7 @@ void updateVertex2DAlignFULLFast(int vid, void* scheduler_void) {
 
 void updateVertex2DAlignFULL(int vid, void* scheduler_void) {
   Scheduler* scheduler = reinterpret_cast<Scheduler*>(scheduler_void);
-  Graph<vdata, edata>* graph = reinterpret_cast<Graph<vdata,edata>*>(scheduler->graph_void);
+  Graph* graph = reinterpret_cast<Graph*>(scheduler->graph_void);
   //printf("starting vertex %d\n", vid);
   vdata* vertex_data = graph->getVertexData(vid);
   std::vector<edata> edges = graph->edgeData[vid];
@@ -673,7 +491,7 @@ void updateVertex2DAlignFULL(int vid, void* scheduler_void) {
 
 void updateVertex2DAlign(int vid, void* scheduler_void) {
   Scheduler* scheduler = reinterpret_cast<Scheduler*>(scheduler_void);
-  Graph<vdata, edata>* graph = reinterpret_cast<Graph<vdata,edata>*>(scheduler->graph_void);
+  Graph* graph = reinterpret_cast<Graph*>(scheduler->graph_void);
   //printf("starting vertex %d\n", vid);
   vdata* vertex_data = graph->getVertexData(vid);
   std::vector<edata> edges = graph->edgeData[vid];
@@ -854,7 +672,7 @@ void updateVertex2DAlign(int vid, void* scheduler_void) {
 #include "fine_alignment.h"
 //#include "mfov_alignment.h"
 
-void coarse_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data, double distance_thresh){
+void coarse_alignment_3d(Graph* merged_graph, align_data_t* p_align_data, double distance_thresh){
 
   for (int v = 0; v < merged_graph->num_vertices(); v++) {
     merged_graph->getVertexData(v)->offset_x += merged_graph->getVertexData(v)->start_x;

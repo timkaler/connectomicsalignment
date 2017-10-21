@@ -1,4 +1,4 @@
-void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data) {
+void elastic_mesh_optimize(Graph* merged_graph, align_data_t* p_align_data) {
 
 
   TFK_TIMER_VAR(elastic_timer);
@@ -236,7 +236,7 @@ void elastic_mesh_optimize(Graph<vdata, edata>* merged_graph, align_data_t* p_al
 }
 
 
-void filter_overlap_points_3d(Graph<vdata, edata>* graph, align_data_t* p_align_data) {
+void filter_overlap_points_3d(Graph* graph, align_data_t* p_align_data) {
   for (int v = 0; v < graph->num_vertices(); v++) {
     int curr_z = graph->getVertexData(v)->z;
     int tile_id = graph->getVertexData(v)->tile_id;

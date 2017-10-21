@@ -1,5 +1,5 @@
 
-void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data){
+void fine_alignment_3d(Graph* merged_graph, align_data_t* p_align_data){
     printf("STARTING THE FINE ALIGNMENT IT SO FINE (I hope)\n");
 
     for (int v = 0; v < merged_graph->num_vertices(); v++) {
@@ -174,7 +174,7 @@ void fine_alignment_3d(Graph<vdata, edata>* merged_graph, align_data_t* p_align_
 }
 
 
-void fine_alignment_3d_2(Graph<vdata, edata>* merged_graph, align_data_t* p_align_data, double ransac_thresh, std::vector<tfkMatch>& mesh_matches){
+void fine_alignment_3d_2(Graph* merged_graph, align_data_t* p_align_data, double ransac_thresh, std::vector<tfkMatch>& mesh_matches){
     printf("STARTING THE FINE ALIGNMENT IT SO FINE (I hope)\n");
 
     for (int v = 0; v < merged_graph->num_vertices(); v++) {

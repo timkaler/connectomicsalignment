@@ -209,7 +209,7 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
   SIFT_initialize();
 
   // the graph_list
-  std::vector<Graph<vdata, edata>* > graph_list;
+  std::vector<Graph* > graph_list;
   graph_list.resize(p_align_data->n_sections);
 
   std::set<std::string> created_paths;
@@ -255,8 +255,8 @@ void compute_SIFT_parallel(align_data_t *p_align_data) {
     get_next_active_set_and_neighbor_set(active_set, neighbor_set, finished_set, p_sec_data, known_set, tiles);
 
     // each section has its own graph
-    Graph<vdata, edata>* graph;
-    graph = new Graph<vdata, edata>();
+    Graph* graph;
+    graph = new Graph();
     printf("Resizing the graph to be size %d\n", p_sec_data->n_tiles);
     graph->resize(p_sec_data->n_tiles);
     //graph_list.push_back(graph);
@@ -759,7 +759,7 @@ void align_execute(align_data_t *p_align_data) {
     //  store_3d_matches(i, p_align_data);
     //}
 
-    Graph<vdata, edata>* merged_graph;
+    Graph* merged_graph;
 
 
     merged_graph = pack_graph();

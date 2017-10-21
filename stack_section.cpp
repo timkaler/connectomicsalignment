@@ -6,7 +6,7 @@ tfk::Section::Section(int section_id) {
 
 
 
-void tfk::Section::compute_tile_matches(int tile_id, Graph<vdata, edata>* graph) {
+void tfk::Section::compute_tile_matches(int tile_id, Graph* graph) {
 
   std::vector<int> neighbors = get_all_close_tiles(tile_id);
 
@@ -150,7 +150,7 @@ void tfk::Section::compute_keypoints_and_matches() {
     tile->compute_sift_keypoints3d();
   }
 
-  graph = new Graph<vdata, edata>();
+  this->graph = new Graph();
   graph->resize(this->tiles.size());
 
   cilk_for (int i = 0; i < this->tiles.size(); i++) {
@@ -186,6 +186,11 @@ void tfk::Section::compute_keypoints_and_matches() {
                     (tile->y_finish-tile->y_start)/2);
     }
 
+    printf("Num vertices is %d\n", graph->num_vertices());
+    for (int i = 0; i < graph->num_vertices(); i++) {
+      printf("The graph vertex id is %d\n",graph->getVertexData(i)->vertex_id);
+    } 
+    printf("Num vertices is %d\n", graph->num_vertices());
     graph->section_id = this->section_id;
 
   // now compute keypoint matches

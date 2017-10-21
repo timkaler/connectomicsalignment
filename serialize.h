@@ -41,7 +41,7 @@ void read_3d_matches(int _section, align_data_t* p_align_data) {
 }
 
 
-void store_2d_graph(Graph<vdata, edata>* graph, int section,
+void store_2d_graph(Graph* graph, int section,
     align_data_t* p_align_data) {
 
   section = p_align_data->sec_data[section].section_id;
@@ -63,7 +63,7 @@ void store_2d_graph(Graph<vdata, edata>* graph, int section,
   fs.release();
 }
 
-void read_graph_from_file(Graph<vdata, edata>* graph, int section, align_data_t* p_align_data) {
+void read_graph_from_file(Graph* graph, int section, align_data_t* p_align_data) {
   section = p_align_data->sec_data[section].section_id;
   std::string filename = std::string("cached_data/prefix_")+std::to_string(section+p_align_data->base_section+1);
   cv::FileStorage fs(filename+std::string("_2d_matches.yml.gz"), cv::FileStorage::READ);
