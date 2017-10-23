@@ -29,6 +29,7 @@
 #ifndef GRAPH_H_
 #define GRAPH_H_
 
+//#include "../stack.hpp"
 
 
 
@@ -67,6 +68,8 @@ typedef struct {
   int mfov_id; // mfov identifier.
   int tile_index; // index within mfov
   int tile_id; // index in code.
+
+  void* tile;
 
   // Data for ORIGINAL bounding box.
   double start_x;
@@ -115,6 +118,7 @@ typedef struct {
 
 typedef struct {
   int neighbor_id;
+  void* neighbor_tile;
   double weight;
   std::vector<cv::Point2f>* v_points;
   std::vector<cv::Point2f>* n_points;

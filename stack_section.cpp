@@ -4,7 +4,28 @@ tfk::Section::Section(int section_id) {
 }
 
 
+cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
+  float new_x = pt.x*this->a00 + pt.y * this->a01 + this->offset_x;
+  float new_y = pt.x*this->a10 + pt.y * this->a11 + this->offset_y;
+  return cv::Point2f(new_x, new_y);
+}
 
+
+void tfk::Section::write_wafer(FILE* wafer_file, int base_section) {
+  fprintf(wafer_file, "[\n");
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* tile = this->tiles[i];
+    // Begin tile.
+    fprintf(wafer_file, "\t{\n");
+    tile->write_wafer(wafer_file, this->section_id, base_section);
+    // End tile.
+    if (i != graph->num_vertices()-1) {
+      fprintf(wafer_file,"\t},\n");
+    } else {
+      fprintf(wafer_file,"\t}\n]");
+    }
+  }
+}
 
 void tfk::Section::compute_tile_matches(int tile_id, Graph* graph) {
 
@@ -130,19 +151,17 @@ void tfk::Section::compute_tile_matches(int tile_id, Graph* graph) {
       }
       free(mask);
       if (num_matches_filtered > 12) {
-        graph->insert_matches(atile_id, btile_id,
-            filtered_match_points_a, filtered_match_points_b, 1.0);
+        a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
+        //graph->insert_matches(atile_id, btile_id,
+        //    filtered_match_points_a, filtered_match_points_b, 1.0);
         break;
       }
     }
   }
 }
 
-
-
 void tfk::Section::compute_keypoints_and_matches() {
   // assume that section data doesn't exist.
-
 
   cilk_for (int i = 0; i < this->tiles.size(); i++) {
     Tile* tile = this->tiles[i];
@@ -157,41 +176,59 @@ void tfk::Section::compute_keypoints_and_matches() {
     this->compute_tile_matches(i, graph);
   }
 
-    for (int i = 0; i < graph->num_vertices(); i++) {
-      vdata* d = graph->getVertexData(i);
-      //_tile_data tdata = p_sec_data->tiles[i];
-      Tile* tile = this->tiles[i];
-      d->vertex_id = i;
-      d->mfov_id = tile->mfov_id;
-      d->tile_index = tile->index;
-      d->tile_id = i;
-      d->start_x = tile->x_start;
-      d->end_x = tile->x_finish;
-      d->start_y = tile->y_start;
-      d->end_y = tile->y_finish;
-      d->offset_x = 0.0;
-      d->offset_y = 0.0;
-      d->iteration_count = 0;
-      //d->last_radius_value = 9.0;
-      d->z = /*p_align_data->base_section + */this->section_id;
-      d->a00 = 1.0;
-      d->a01 = 0.0;
-      d->a10 = 0.0;
-      d->a11 = 1.0;
-      //d->neighbor_grad_x = 0.0;
-      //d->neighbor_grad_y = 0.0;
-      //d->converged = 0;
-      d->original_center_point =
-        cv::Point2f((tile->x_finish-tile->x_start)/2,
-                    (tile->y_finish-tile->y_start)/2);
+  // phase 0 of make_symmetric --- find edges to add.
+  cilk_for (int i = 0; i < this->tiles.size(); i++) {
+    this->tiles[i]->make_symmetric(0, this->tiles);
+  }
+
+  // phase 1 of make_symmetric --- insert found edges.
+  cilk_for (int i = 0; i < this->tiles.size(); i++) {
+    this->tiles[i]->make_symmetric(1, this->tiles);
+  }
+
+
+  for (int i = 0; i < graph->num_vertices(); i++) {
+    vdata* d = graph->getVertexData(i);
+
+
+    for (int j = 0; j < this->tiles[i]->edges.size(); j++) {
+      graph->edgeData[i].push_back(this->tiles[i]->edges[j]);
     }
 
-    printf("Num vertices is %d\n", graph->num_vertices());
-    for (int i = 0; i < graph->num_vertices(); i++) {
-      printf("The graph vertex id is %d\n",graph->getVertexData(i)->vertex_id);
-    } 
-    printf("Num vertices is %d\n", graph->num_vertices());
-    graph->section_id = this->section_id;
+    //_tile_data tdata = p_sec_data->tiles[i];
+    Tile* tile = this->tiles[i];
+    d->tile = tile;
+    d->vertex_id = i;
+    d->mfov_id = tile->mfov_id;
+    d->tile_index = tile->index;
+    d->tile_id = i;
+    d->start_x = tile->x_start;
+    d->end_x = tile->x_finish;
+    d->start_y = tile->y_start;
+    d->end_y = tile->y_finish;
+    d->offset_x = 0.0;
+    d->offset_y = 0.0;
+    d->iteration_count = 0;
+    //d->last_radius_value = 9.0;
+    d->z = /*p_align_data->base_section + */this->section_id;
+    d->a00 = 1.0;
+    d->a01 = 0.0;
+    d->a10 = 0.0;
+    d->a11 = 1.0;
+    //d->neighbor_grad_x = 0.0;
+    //d->neighbor_grad_y = 0.0;
+    //d->converged = 0;
+    d->original_center_point =
+      cv::Point2f((tile->x_finish-tile->x_start)/2,
+                  (tile->y_finish-tile->y_start)/2);
+  }
+
+  printf("Num vertices is %d\n", graph->num_vertices());
+  for (int i = 0; i < graph->num_vertices(); i++) {
+    printf("The graph vertex id is %d\n",graph->getVertexData(i)->vertex_id);
+  }
+  printf("Num vertices is %d\n", graph->num_vertices());
+  graph->section_id = this->section_id;
 
   // now compute keypoint matches
   //cilk_for (int i = 0; i < this->tiles.size(); i++) {
@@ -236,6 +273,7 @@ tfk::Section::Section(SectionData& section_data) {
     TileData tile_data = section_data.tiles(j);
 
     Tile* tile = new Tile(tile_data);
+    tile->tile_id = j;
     this->tiles.push_back(tile);
   }
 

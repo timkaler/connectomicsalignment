@@ -1,5 +1,179 @@
 
 
+void updateTile2DAlign(int vid, void* scheduler_void) {
+  double global_learning_rate = 0.49;
+
+  Scheduler* scheduler = reinterpret_cast<Scheduler*>(scheduler_void);
+  Graph* graph = reinterpret_cast<Graph*>(scheduler->graph_void);
+
+  vdata* vertex_data = graph->getVertexData(vid);
+  tfk::Tile* tile = (tfk::Tile*) vertex_data->tile;
+
+  if (vid != tile->tile_id) printf("Failure!\n");
+
+  tile->local2DAlignUpdate();
+
+  if (vertex_data->iteration_count < 2500) {
+    scheduler->add_task(vid, updateTile2DAlign);
+  }
+  vertex_data->iteration_count++;
+}
+
+
+void tfk::Tile::write_wafer(FILE* wafer_file, int section_id, int base_section) {
+  fprintf(wafer_file, "\t\t\"bbox\": [\n");
+
+  fprintf(wafer_file,
+      "\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f\n],",
+      this->x_start+this->offset_x, (this->x_finish+this->offset_x),
+      this->y_start+this->offset_y, (this->y_finish+this->offset_y));
+  fprintf(wafer_file, "\t\t\"height\": %d,\n",SIFT_D1_SHIFT_3D);
+  fprintf(wafer_file, "\t\t\"layer\": %d,\n",section_id + base_section+1);
+  fprintf(wafer_file, "\t\t\"maxIntensity\": %f,\n",255.0);
+  fprintf(wafer_file, "\t\t\"mfov\": %d,\n",
+      this->mfov_id);
+  fprintf(wafer_file, "\t\t\"minIntensity\": %f,\n",
+      0.0);
+  fprintf(wafer_file, "\t\t\"mipmapLevels\": {\n");
+  fprintf(wafer_file, "\t\t\"0\": {\n");
+  fprintf(wafer_file, "\t\t\t\"imageUrl\": \"%s\"\n", this->filepath.c_str());
+  fprintf(wafer_file, "\t\t\t}\n");
+  fprintf(wafer_file, "\t\t},\n");
+  fprintf(wafer_file, "\t\t\"tile_index\": %d,\n",
+      this->index);
+  fprintf(wafer_file, "\t\t\"transforms\": [\n");
+  // {'className': 'mpicbg.trakem2.transform.AffineModel2D', 'dataString': '0.1 0.0 0.0 0.1 0.0 0.0'}
+
+  fprintf(wafer_file, "\t\t\t{\n");
+  fprintf(wafer_file,
+      "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.AffineModel2D\",\n");
+  fprintf(wafer_file,
+      "\t\t\t\t\"dataString\": \"%f %f %f %f %f %f\"\n", this->a00,
+      this->a10, this->a01, this->a11, this->x_start+this->offset_x, this->y_start+this->offset_y);
+  //#ifdef ALIGN3D
+  //if (true) {
+  //#else
+  //if (false) {
+  //#endif 
+  //fprintf(wafer_file,
+  //    "\t\t\t},\n");
+
+  //fprintf(wafer_file, "\t\t\t{\n");
+  //fprintf(wafer_file,
+  //    "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.PointsTransformModel\",\n");
+  //fprintf(wafer_file,
+  //    "\t\t\t\t\"dataString\": \"%s\"\n", get_point_transform_string(graph, vd).c_str());
+  //fprintf(wafer_file,
+  //    "\t\t\t}\n");
+  //} else {
+   fprintf(wafer_file,
+      "\t\t\t}\n");
+  //}
+
+  fprintf(wafer_file,
+      "\t\t],\n");
+  fprintf(wafer_file,
+      "\t\t\"width\":%d\n",SIFT_D2_SHIFT_3D);
+}
+
+void tfk::Tile::local2DAlignUpdate() {
+  //std::vector<edata>& edges = graph->edgeData[vid];
+  double global_learning_rate = 0.49;
+  if (this->edges.size() == 0) return;
+  if (this->edges.size() == 0) return;
+
+  double learning_rate = global_learning_rate;
+  double grad_error_x = 0.0;
+  double grad_error_y = 0.0;
+  double weight_sum = 1.0;
+
+  for (int i = 0; i < this->edges.size(); i++) {
+    std::vector<cv::Point2f>* v_points = this->edges[i].v_points;
+    std::vector<cv::Point2f>* n_points = this->edges[i].n_points;
+    //vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
+    Tile* neighbor = (Tile*) this->edges[i].neighbor_tile;
+
+    double curr_weight = 1.0/v_points->size();
+
+    for (int j = 0; j < v_points->size(); j++) {
+      cv::Point2f ptx1 = this->rigid_transform((*v_points)[j]); //transform_point(vertex_data, (*v_points)[j]);
+      cv::Point2f ptx2 = neighbor->rigid_transform((*n_points)[j]);//transform_point(neighbor_vertex, (*n_points)[j]);
+
+      double delta_x = ptx2.x - ptx1.x;
+      double delta_y = ptx2.y - ptx1.y;
+      grad_error_x += 2 * delta_x * curr_weight;
+      grad_error_y += 2 * delta_y * curr_weight;
+      weight_sum += curr_weight;
+    }
+  }
+
+  //printf("gradient %f %f\n", grad_error_x, grad_error_y);
+
+  // update the gradients.
+  this->offset_x += grad_error_x*learning_rate/(weight_sum);
+  this->offset_y += grad_error_y*learning_rate/(weight_sum);
+}
+
+
+void tfk::Tile::make_symmetric(int phase, std::vector<Tile*>& tile_list) {
+  if (phase == 0) {
+
+    for (int i = 0; i < tile_list.size(); i++) {
+      Tile* other = tile_list[i];
+      for (int j = 0; j < other->edges.size(); j++) {
+        edata edge = other->edges[j];
+        if (edge.neighbor_id == this->tile_id) {
+          edata edge2;
+          edge2.v_points = edge.n_points;
+          edge2.n_points = edge.v_points;
+          edge2.neighbor_id = other->tile_id;
+          edge2.neighbor_tile = other;
+          edge2.weight = 1.0;
+          //printf("adding symmetricn edge %d %d\n", this->tile_id, other->tile_id);
+          this->add_edges.push_back(edge2);
+        }
+      }
+    }
+  } else if (phase == 1) {
+    for (int i = 0; i < this->add_edges.size(); i++) {
+      this->edges.push_back(this->add_edges[i]);
+    }
+  }
+}
+
+
+void tfk::Tile::insert_matches(Tile* neighbor, std::vector<cv::Point2f>& points_a, std::vector<cv::Point2f>& points_b) {
+  std::vector<cv::Point2f>* vedges = new std::vector<cv::Point2f>();
+  std::vector<cv::Point2f>* nedges = new std::vector<cv::Point2f>();
+
+  for (int i = 0; i < points_a.size(); i++) {
+    vedges->push_back(cv::Point2f(points_a[i]));
+  }
+
+  for (int i = 0; i < points_b.size(); i++) {
+    nedges->push_back(cv::Point2f(points_b[i]));
+  }
+
+  edata edge1;
+  edge1.v_points = vedges;
+  edge1.n_points = nedges;
+  edge1.neighbor_id = neighbor->tile_id;
+  edge1.neighbor_tile = (void*) neighbor;
+  edge1.weight = 1.0;
+
+  this->edges.push_back(edge1);
+
+
+
+  //this->insertEdge(atile_id, edge1);
+  // make bi-directional later.
+  //edata edge2;
+  //edge2.v_points = nedges;
+  //edge2.n_points = vedges;
+  //edge2.neighbor_id = atile_id;
+  //edge2.weight = weight;
+  //this->insertEdge(btile_id, edge2);
+}
 
 tfk::Tile::Tile(int section_id, int tile_id, int index, std::string filepath,
     int x_start, int x_finish, int y_start, int y_finish) {
@@ -11,6 +185,14 @@ tfk::Tile::Tile(int section_id, int tile_id, int index, std::string filepath,
   this->x_finish = x_finish;
   this->y_start = y_start;
   this->y_finish = y_finish;
+  this->offset_x = 0.0;
+  this->offset_y = 0.0;
+}
+
+
+cv::Point2f tfk::Tile::rigid_transform(cv::Point2f pt) {
+  cv::Point2f pt2 = cv::Point2f(pt.x+this->offset_x+this->x_start, pt.y+this->offset_y+this->y_start);
+  return pt2;
 }
 
 
@@ -44,6 +226,8 @@ tfk::Tile::Tile(TileData& tile_data) {
     this->x_finish = tile_data.x_finish();
     this->y_start = tile_data.y_start();
     this->y_finish = tile_data.y_finish();
+    this->offset_x = 0.0;
+    this->offset_y = 0.0;
     this->filepath = tile_data.tile_filepath();
     this->p_image = new cv::Mat();
     this->p_kps = new std::vector<cv::KeyPoint>();
@@ -53,6 +237,12 @@ tfk::Tile::Tile(TileData& tile_data) {
     this->p_kps_desc_3d = new cv::Mat();
     this->level = 0;
     this->bad = false;
+
+    this->a00 = 1.0;
+    this->a10 = 0.0;
+    this->a01 = 0.0;
+    this->a11 = 1.0;
+
 
     if (tile_data.has_ignore()) {
       bool *ignore = (bool *) malloc(sizeof(bool));

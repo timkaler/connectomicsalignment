@@ -23,8 +23,9 @@
 //#include "./meshoptimize.h"
 #ifndef ALIGNSTACK
 #define ALIGNSTACK
-static bool STORE_ALIGN_RESULTS = false;
 
+void updateTile2DAlign(int vid, void* scheduler_void);
+static bool STORE_ALIGN_RESULTS = false;
 static double totalTime = 0;
 static float CONTRAST_THRESH = 0.04;
 static float CONTRAST_THRESH_3D = 0.04;
@@ -57,10 +58,10 @@ class Tile {
    int index;
    std::string filepath;
    cv::Mat * p_image;
-   int x_start;
-   int x_finish;
-   int y_start;
-   int y_finish;
+   double x_start;
+   double x_finish;
+   double y_start;
+   double y_finish;
 
    std::vector<cv::KeyPoint>* p_kps;
    cv::Mat* p_kps_desc;
@@ -80,6 +81,9 @@ class Tile {
    int level;
    bool bad;
 
+   std::vector<edata> edges;
+   std::vector<edata> add_edges; //temporary.
+
 
    Tile(int section_id, int tile_id, int index, std::string filepath,
             int x_start, int x_finish, int y_start, int y_finish);
@@ -89,8 +93,14 @@ class Tile {
    void compute_sift_keypoints2d();
    void compute_sift_keypoints3d();
 
-   bool overlaps_with(Tile* other);
+   cv::Point2f rigid_transform(cv::Point2f pt);
 
+
+   bool overlaps_with(Tile* other);
+   void local2DAlignUpdate();
+   void insert_matches(Tile* neighbor, std::vector<cv::Point2f>& points_a, std::vector<cv::Point2f>& points_b);
+   void make_symmetric(int phase, std::vector<Tile*>& tile_list);
+   void write_wafer(FILE* wafer_file, int section_id, int base_section);
 };
 
 
@@ -113,6 +123,17 @@ class Section {
     std::vector<int> get_all_close_tiles(int atile_id);
     void compute_keypoints_and_matches();
     void compute_tile_matches(int tile_id, Graph* graph);
+
+
+    double a00;
+    double a10;
+    double a11;
+    double a01;
+    double offset_x;
+    double offset_y;
+
+    cv::Point2f affine_transform(cv::Point2f pt);
+    void write_wafer(FILE* wafer_file, int base_section);
 };
 
 
