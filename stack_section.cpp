@@ -10,6 +10,10 @@ cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
   return cv::Point2f(new_x, new_y);
 }
 
+//void render_section(double min_x, double min_y, double max_x, double max_y) {
+//}
+
+
 std::pair<cv::Point2f, cv::Point2f> tfk::Section::affine_transform_bbox(
     std::pair<cv::Point2f, cv::Point2f> bbox) {
   cv::Point2f corners[4];
