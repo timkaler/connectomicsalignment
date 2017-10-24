@@ -140,6 +140,10 @@ float max(float a, float b) {
 	if(a > b) return a;
 	return b;
 } 
+int max(int a, int b) {
+  if(a > b) return a;
+  return b;
+} 
 float min(float a, float b) {
 	if(a < b) return a;
 	return b;
@@ -785,8 +789,8 @@ float error_tile_pair(tile_data_t *tile_1, tile_data_t *tile_2) {
 
   cv::Mat tile_p_image_1;
   cv::Mat tile_p_image_2;
-  tile_p_image_1 = imread_with_cache(tile_1->filepath, CV_LOAD_IMAGE_UNCHANGED);
-  tile_p_image_2 = imread_with_cache(tile_2->filepath, CV_LOAD_IMAGE_UNCHANGED);
+  tile_p_image_1 = cv::imread(tile_1->filepath, CV_LOAD_IMAGE_UNCHANGED);
+  tile_p_image_2 = cv::imread(tile_2->filepath, CV_LOAD_IMAGE_UNCHANGED);
 
   int nrows = min(max_y(tile_1), max_y(tile_2)) - max(min_y(tile_1), min_y(tile_2));
   int ncols = min(max_x(tile_1), max_x(tile_2)) - max(min_x(tile_1), min_x(tile_2));
@@ -850,23 +854,130 @@ void get_all_error_pairs(section_data_t* section) {
       if (!(tiles_overlap(&(section->tiles[i]), &(section->tiles[j])))) {
         continue;
       }
-      double corr = error_tile_pair(&(section->tiles[i]), &(section->tiles[j]));
+      int corr = 100 * error_tile_pair(&(section->tiles[i]), &(section->tiles[j]));
       if (corr >= -1) {
         __sync_fetch_and_add(&(section->tiles[i].number_overlaps),1);
         __sync_fetch_and_add(&(section->tiles[j].number_overlaps),1);
-        int corr_slot = (int) (10*(corr+1));
-         __sync_fetch_and_add(&(section->tiles[i].corralation_counts[corr_slot]),1);
-         __sync_fetch_and_add(&(section->tiles[j].corralation_counts[corr_slot]),1);
+         __sync_fetch_and_add(&(section->tiles[i].corralation_sum),corr);
+         __sync_fetch_and_add(&(section->tiles[j].corralation_sum),corr);
       }
     }
   }
   for (int i = 0; i < section->n_tiles; i++) {
-    printf("Tile %d overlaps %d times, corr counts are ",i, section->tiles[i].number_overlaps);
-    for (int j = 0; j < 20; j++) {
-      printf("%d",section->tiles[i].corralation_counts[j]);
+    int avg_corr = section->tiles[i].corralation_sum / section->tiles[i].number_overlaps;
+    if (avg_corr < 70) {
+      section->tiles[i].bad = true;
+      printf("Tile %d overlaps %d times, average corr is %d\n",i, section->tiles[i].number_overlaps, avg_corr);
     }
-    printf("\n");
   }
+}
+
+/* 
+rendering for a 2d section
+This does not do the 9 pixel bluring and it does not averege if multiple pixels go to the same place
+it instead just takes the last pixel to write to each location
+*/
+cv::Mat render_2d_no_blur(section_data_t* section, std::string filename, int input_lower_x, int input_upper_x, int input_lower_y, int input_upper_y, int box_width, int box_height, Resolution res, bool write) {
+
+
+  int lower_y, lower_x, upper_y, upper_x;
+  int nrows, ncols;
+  double scale_x, scale_y;
+  //calculate scale
+  if(res == THUMBNAIL) {
+      std::string thumbnailpath = std::string(section->tiles[0].filepath);
+        thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".bmp"), 4,".jpg");
+        thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
+        cv::Mat thumbnail_img = imread_with_cache(thumbnailpath,CV_LOAD_IMAGE_UNCHANGED);
+        cv::Mat img = imread_with_cache(section->tiles[0].filepath,CV_LOAD_IMAGE_UNCHANGED);
+    scale_x = (double)(img.size().width)/thumbnail_img.size().width;
+        scale_y = (double)(img.size().height)/thumbnail_img.size().height;
+
+      //create new matrix
+    lower_y = (int)(input_lower_y/scale_y + 0.5);
+    lower_x = (int)(input_lower_x/scale_x + 0.5);
+    upper_y = (int)(input_upper_y/scale_y + 0.5);
+    upper_x = (int)(input_upper_x/scale_x + 0.5);
+
+    nrows = (input_upper_y-input_lower_y)/scale_y;
+        ncols = (input_upper_x-input_lower_x)/scale_x; 
+  }
+  if(res == FULL) {
+    lower_y = input_lower_y;
+    lower_x = input_lower_x;
+    upper_y = input_upper_y;
+    upper_x = input_upper_x;
+    nrows = upper_y - lower_y;
+    ncols = upper_x - lower_x;
+    scale_x = 1;
+    scale_y = 1;
+  }
+
+  cv::Mat* section_p_out = new cv::Mat();
+  cv::Mat* section_p_out_mask = new cv::Mat();
+  cv::Mat* tile_p_image = new cv::Mat();
+  (*section_p_out).create(nrows, ncols, CV_8UC1);
+  (*section_p_out_mask).create(nrows, ncols, CV_32F);
+      
+    for (int y = 0; y < nrows; y++) {
+      for (int x = 0; x < ncols; x++) {
+        section_p_out_mask->at<float>(y,x) = 0.0;
+        section_p_out->at<unsigned char>(y,x) = 0;
+      }
+    }
+
+    for (int i = section->n_tiles; --i>=0;/*i < section->n_tiles; i++*/) {
+      tile_data_t tile = section->tiles[i];
+
+      if (!tile_in_bounds(tile, input_lower_x, input_upper_x, input_lower_y, input_upper_y)) {
+    continue;
+      } 
+
+      if (res == THUMBNAIL) { 
+        std::string path = std::string(tile.filepath);
+      path = path.replace(path.find(".bmp"), 4,".jpg");                 
+        path = path.insert(path.find_last_of("/") + 1, "thumbnail_");
+    (*tile_p_image) = imread_with_cache(path,CV_LOAD_IMAGE_GRAYSCALE);
+      }
+ 
+      if (res == FULL) {
+        (*tile_p_image) = cv::imread(tile.filepath, CV_LOAD_IMAGE_UNCHANGED);
+      }
+      int score = 0;
+      if (tile.bad){
+       int avg_corr = section->tiles[i].corralation_sum / section->tiles[i].number_overlaps; 
+        score = 100 - avg_corr;
+      }
+
+      for (int _y = 0; _y < (*tile_p_image).size().height; _y++) {
+        for (int _x = 0; _x < (*tile_p_image).size().width; _x++) {
+          cv::Point2f p = cv::Point2f(_x*scale_x, _y*scale_y);
+          cv::Point2f transformed_p = affine_transform(&tile, p);
+
+          int x_c = (int)(transformed_p.x/scale_x + 0.5);
+
+          int y_c = (int)(transformed_p.y/scale_y + 0.5);
+          unsigned char val = tile_p_image->at<unsigned char>(_y, _x);
+          if (y_c-lower_y >= 0 && y_c-lower_y < nrows && x_c-lower_x >= 0 && x_c-lower_x < ncols) {
+            section_p_out->at<unsigned char>(y_c-lower_y, x_c-lower_x) = val;
+            if (tile.bad) {
+              section_p_out_mask->at<float>(y_c-lower_y, x_c-lower_x) = max(((float)score)/100,section_p_out_mask->at<float>(y_c-lower_y, x_c-lower_x));
+            }
+          }
+        }
+      }
+      tile_p_image->release();
+    }
+ 
+  cv::Mat heatmap_image = apply_heatmap_to_grayscale(section_p_out, section_p_out_mask, nrows, ncols); 
+  bool ret = cv::imwrite(filename, (*section_p_out));
+  std::string filename_mask = filename.replace(filename.find(".tif"),4,".png");
+  if(write) {
+    cv::Mat out;
+    cv::resize(heatmap_image, out, cv::Size(), 0.25, 0.25);
+    ret = cv::imwrite(filename_mask, out);
+  }
+  return (*section_p_out);
 }
 
 
@@ -921,12 +1032,11 @@ cv::Mat render_2d(section_data_t* section, std::string filename, int input_lower
         cv::Mat* section_p_out_ncount = new cv::Mat();
         //section->p_out = new cv::Mat();
         (*section_p_out_ncount).create(nrows, ncols, CV_16UC1);
+      
     for (int y = 0; y < nrows; y++) {
       for (int x = 0; x < ncols; x++) {
         section_p_out_mask->at<float>(y,x) = 0.0;
         section_p_out->at<unsigned char>(y,x) = 0;
-        section_p_out_sum->at<unsigned short>(y,x) = 0;
-        section_p_out_ncount->at<unsigned short>(y,x) = 0;
       }
     }
 
@@ -947,6 +1057,11 @@ cv::Mat render_2d(section_data_t* section, std::string filename, int input_lower
       if (res == FULL) {
         (*tile_p_image) = imread_with_cache(tile.filepath, CV_LOAD_IMAGE_UNCHANGED);
       }
+      int score = 0;
+      if (tile.bad){
+       int avg_corr = section->tiles[i].corralation_sum / section->tiles[i].number_overlaps; 
+        score = 100 - avg_corr;
+      }
 
       for (int _x = 0; _x < (*tile_p_image).size().width; _x++) {
         for (int _y = 0; _y < (*tile_p_image).size().height; _y++) {
@@ -965,6 +1080,9 @@ cv::Mat render_2d(section_data_t* section, std::string filename, int input_lower
               if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
                 section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) += val;
                 section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) += 1;
+                if (tile.bad) {
+                  section_p_out_mask->at<float>(y-lower_y, x-lower_x) += ((float)score)/100;
+                }
               }
             }
           }
@@ -986,11 +1104,11 @@ cv::Mat render_2d(section_data_t* section, std::string filename, int input_lower
       }
     }
  
-
+  cv::Mat heatmap_image = apply_heatmap_to_grayscale(section_p_out, section_p_out_mask, nrows, ncols); 
   bool ret = cv::imwrite(filename, (*section_p_out));
   std::string filename_mask = filename.replace(filename.find(".tif"),4,".png");
   if(write) {
-    ret = cv::imwrite(filename_mask, (*section_p_out));
+    ret = cv::imwrite(filename_mask, heatmap_image);
   }
   return (*section_p_out);
 }

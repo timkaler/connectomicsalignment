@@ -492,6 +492,12 @@ int protobuf_to_struct(align_data_t *p_tile_data) {
       if (tile_data.has_bad()) {
         p_cur_tile->bad = tile_data.bad();
       }
+      if (tile_data.has_number_overlaps()) {
+        p_cur_tile->number_overlaps = tile_data.number_overlaps();
+      }
+      if (tile_data.has_corralation_sum()) {
+        p_cur_tile->corralation_sum = tile_data.corralation_sum();
+      }
     }
   }
   return 1;
@@ -633,7 +639,8 @@ int struct_to_protobuf(align_data_t *p_tile_data) {
       tile_data->set_a11(p_cur_tile->a11);
       tile_data->set_level(p_cur_tile->level);
       tile_data->set_bad(p_cur_tile->bad);
-
+      tile_data->set_number_overlaps(p_cur_tile->number_overlaps);
+      tile_data->set_corralation_sum(p_cur_tile->corralation_sum);
     }
   }
   // Write the new address book back to disk.

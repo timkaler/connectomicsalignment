@@ -696,6 +696,13 @@ std::vector<int> bad_sections_index(align_data_t *p_align_data, int start_x, int
 
 
 
+void mess_up_tiles(align_data_t *p_align_data) {
+  for (int i = 0; i < p_align_data->sec_data[0].n_tiles; i+=25) {
+    p_align_data->sec_data[0].tiles[i].offset_x+=5;
+  }
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // EXTERNAL FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////
@@ -773,7 +780,7 @@ void align_execute(align_data_t *p_align_data) {
 //}
 
 
-
+    
     protobuf_to_struct(p_align_data);
 
     for (int i = 0; i < p_align_data->n_sections; i++) {
@@ -803,16 +810,20 @@ void align_execute(align_data_t *p_align_data) {
     //for (int i = 0; i < p_align_data->n_sections; i++) {
     //  store_3d_matches(i, p_align_data);
     //}
-
+    
     Graph<vdata, edata>* merged_graph;
 
 
     merged_graph = pack_graph();
     compute_alignment_2d(p_align_data, merged_graph);
+
+
+    
     #ifdef ALIGN3D
     compute_alignment_3d(p_align_data, merged_graph, true);
     #endif
     unpack_graph(p_align_data, merged_graph);
+    //mess_up_tiles(p_align_data);
 
     //merged_graph = pack_graph();
     //compute_alignment_3d(p_align_data, merged_graph, false);
@@ -836,10 +847,10 @@ void align_execute(align_data_t *p_align_data) {
 		qq += std::string("thumb-elastic-thumb") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
 		output_section_image_affine_elastic_thumbnail_to_thumbnail(&(p_align_data->sec_data[i]), qq, 50000, 51000, 50000, 51000);
 	}*/
-    int start_x = 50000;
-    int start_y = 50000;
-    int size_x = 50000;
-    int size_y = 50000;
+    int start_x = 23000;
+    int start_y = 47000;
+    int size_x =  40000;
+    int size_y =  40000;
     #ifdef ALIGN3D
     bad_sections_index(p_align_data, start_x, start_y, size_x, size_y);
 
@@ -858,16 +869,18 @@ void align_execute(align_data_t *p_align_data) {
     STOP_TIMER(&t_timer, "t_total-time:");
     
     #else
+    
     for(int i = 0; i < p_align_data->n_sections; i ++) {
+      printf("error for each pair\n");
+      get_all_error_pairs(&(p_align_data->sec_data[i]));
       std::string qq ="";
       qq = "";
       qq += std::string("error") + std::to_string(i+p_align_data->base_section+1) + std::string(".tif");
-      cilk_spawn render_2d(&(p_align_data->sec_data[i]), qq, start_x,
-                             start_x + size_x, start_y, start_y + size_y, 100, 100, THUMBNAIL, true);
-      printf("error for each pair\n");
-      get_all_error_pairs(&(p_align_data->sec_data[i]));
+      cilk_spawn render_2d_no_blur(&(p_align_data->sec_data[i]), qq, start_x,
+                             start_x + size_x, start_y, start_y + size_y, 100, 100, FULL, true);
     }
     cilk_sync;
+    
     #endif
     printf("Got to the end of the function\n");
 }

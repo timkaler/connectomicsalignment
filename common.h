@@ -255,7 +255,7 @@ typedef struct _tile_data {
     bool bad;
     // TODO not in proto yet
     int number_overlaps; // the number of tiles we overlap with as seen in get_all_error_pairs
-    int corralation_counts[20]; // the count of corralations, mapping -1,1 to 0,20
+    int corralation_sum; // the sum of corralations
 } tile_data_t;
 
 typedef struct _section_data {
