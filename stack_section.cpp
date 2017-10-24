@@ -10,6 +10,376 @@ cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
   return cv::Point2f(new_x, new_y);
 }
 
+std::pair<cv::Point2f, cv::Point2f> tfk::Section::affine_transform_bbox(
+    std::pair<cv::Point2f, cv::Point2f> bbox) {
+  cv::Point2f corners[4];
+  corners[0] = cv::Point2f(bbox.first.x, bbox.first.y);
+  corners[1] = cv::Point2f(bbox.second.x, bbox.first.y);
+  corners[2] = cv::Point2f(bbox.first.x, bbox.second.y);
+  corners[3] = cv::Point2f(bbox.second.x, bbox.second.y);
+
+  for (int i = 0; i < 4; i++) {
+    corners[i] = this->affine_transform(corners[i]);
+  }
+
+  float min_x = corners[0].x;
+  float max_x = corners[0].x;
+  float min_y = corners[0].y;
+  float max_y = corners[0].y;
+  for (int i = 1; i < 4; i++) {
+    if (corners[i].x < min_x) min_x = corners[i].x;
+    if (corners[i].x > max_x) max_x = corners[i].x;
+
+    if (corners[i].y < min_y) min_y = corners[i].y;
+    if (corners[i].y > max_y) max_y = corners[i].y;
+  }
+  return std::make_pair(cv::Point2f(min_x,min_y), cv::Point2f(max_x, max_y));
+}
+
+
+void tfk::Section::affine_transform_keypoints(std::vector<cv::KeyPoint>& keypoints) {
+  for (int i = 0; i < keypoints.size(); i++) {
+    keypoints[i].pt = this->affine_transform(keypoints[i].pt);
+  }
+}
+
+void tfk::Section::get_elastic_matches_one(Section* neighbor) {
+
+  double ransac_thresh = 64.0;
+
+  // Determine a good bounding box.
+  std::pair<cv::Point2f, cv::Point2f> bbox = this->get_bbox();
+
+  // bbox is before the affine transform so I need to recompute it.
+  bbox = this->affine_transform_bbox(bbox);
+
+
+  double min_x = bbox.first.x;
+  double max_x = bbox.second.x;
+  double min_y = bbox.first.y;
+  double max_y = bbox.second.y;
+
+
+  std::vector <cv::KeyPoint > atile_all_kps;
+  std::vector <cv::Mat > atile_all_kps_desc;
+
+  std::vector <cv::KeyPoint > btile_all_kps;
+  std::vector <cv::Mat > btile_all_kps_desc;
+
+  for (int i = 0; i < this->tiles.size(); i++) {
+    this->tiles[i]->get_3d_keypoints(atile_all_kps, atile_all_kps_desc);
+  }
+
+  for (int i = 0; i < neighbor->tiles.size(); i++) {
+    neighbor->tiles[i]->get_3d_keypoints(btile_all_kps, btile_all_kps_desc);
+  }
+
+  this->affine_transform_keypoints(atile_all_kps);
+  neighbor->affine_transform_keypoints(btile_all_kps);
+
+  std::vector< cv::Point2f > filtered_match_points_a(0);
+  std::vector< cv::Point2f > filtered_match_points_b(0);
+
+  for (double box_iter_x = min_x; box_iter_x < max_x + 48000; box_iter_x += 24000) {
+    for (double box_iter_y = min_y; box_iter_y < max_y + 48000; box_iter_y += 24000) {
+      // Filter the matches with RANSAC
+      int num_filtered = 0;
+      std::vector<cv::Point2f> match_points_a, match_points_b;
+      double box_min_x = box_iter_x;
+      double box_max_x = box_iter_x+48000;
+      double box_min_y = box_iter_y;
+      double box_max_y = box_iter_y+48000;
+
+      std::vector <cv::KeyPoint > atile_kps_in_overlap;
+      std::vector <cv::Mat > atile_kps_desc_in_overlap_list;
+      std::vector<int> atile_kps_tile_list;
+      std::vector <cv::KeyPoint > btile_kps_in_overlap;
+      std::vector <cv::Mat > btile_kps_desc_in_overlap_list;
+      std::vector<int> btile_kps_tile_list;
+
+      std::vector<double> atile_weights;
+      std::vector<double> btile_weights;
+
+      // filter out any keypoints that are not inside this iterations box.
+      for (int i = 0; i < atile_all_kps.size(); i++) {
+        if (atile_all_kps[i].pt.x < box_min_x) continue;
+        if (atile_all_kps[i].pt.x > box_max_x) continue;
+        if (atile_all_kps[i].pt.y < box_min_y) continue;
+        if (atile_all_kps[i].pt.y > box_max_y) continue;
+        atile_kps_in_overlap.push_back(atile_all_kps[i]);
+        atile_kps_desc_in_overlap_list.push_back(atile_all_kps_desc[i]);
+      }
+      for (int i = 0; i < btile_all_kps.size(); i++) {
+        if (btile_all_kps[i].pt.x < box_min_x) continue;
+        if (btile_all_kps[i].pt.x > box_max_x) continue;
+        if (btile_all_kps[i].pt.y < box_min_y) continue;
+        if (btile_all_kps[i].pt.y > box_max_y) continue;
+        btile_kps_in_overlap.push_back(btile_all_kps[i]);
+        btile_kps_desc_in_overlap_list.push_back(btile_all_kps_desc[i]);
+      }
+
+      if (atile_kps_in_overlap.size() < 4 || btile_kps_in_overlap.size() < 4) continue;
+
+      // Now do the matching.
+      cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
+      cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
+      cv::vconcat(btile_kps_desc_in_overlap_list, (btile_kps_desc_in_overlap));
+
+      std::vector< cv::DMatch > matches;
+      match_features(matches,
+                     atile_kps_desc_in_overlap,
+                     btile_kps_desc_in_overlap,
+                     0.65);
+      //printf("Done with the matching. Num matches is %lu\n", matches.size());
+      if (matches.size() == 0) continue;
+
+      for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
+        match_points_a.push_back(atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
+        match_points_b.push_back(btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
+      }
+
+      bool* mask = (bool*)calloc(match_points_a.size()+1, 1);
+      tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, ransac_thresh, mask);
+      for (int c = 0; c < match_points_a.size(); c++) {
+        if (mask[c]) {
+          num_filtered++;
+        }
+      }
+
+      if (num_filtered < match_points_a.size()*0.2 || num_filtered < 12) {
+        free(mask);
+        continue;
+      }
+
+      for (int c = 0; c < match_points_a.size(); c++) {
+        if (mask[c]) {
+          filtered_match_points_a.push_back(
+              match_points_a[c]);
+          filtered_match_points_b.push_back(
+              match_points_b[c]);
+        }
+      }
+      free(mask);
+    }
+  }
+
+  for (int m = 0; m < filtered_match_points_a.size(); m++) {
+    cv::Point2f my_pt = filtered_match_points_a[m];
+    cv::Point2f n_pt = filtered_match_points_b[m];
+
+    tfkMatch match;
+    // find the triangle...
+    std::vector<tfkTriangle>* triangles = this->triangles;
+    std::vector<cv::Point2f>* mesh = this->mesh;
+
+    std::vector<tfkTriangle>* n_triangles = neighbor->triangles;
+    std::vector<cv::Point2f>* n_mesh = neighbor->mesh;
+
+
+    int my_triangle_index = -1;
+    int n_triangle_index = -1;
+    for (int s = 0; s < triangles->size(); s++) {
+      float u,v,w;
+      cv::Point2f pt1 = (*mesh)[(*triangles)[s].index1];
+      cv::Point2f pt2 = (*mesh)[(*triangles)[s].index2];
+      cv::Point2f pt3 = (*mesh)[(*triangles)[s].index3];
+      Barycentric(my_pt, pt1,pt2,pt3,u,v,w);
+      if (u <= 0 || v <= 0 || w <= 0) continue;
+      my_triangle_index = s;
+      match.my_tri = (*triangles)[my_triangle_index];
+      match.my_barys[0] = (double)1.0*u;
+      match.my_barys[1] = (double)1.0*v;
+      match.my_barys[2] = (double)1.0*w;
+      break;
+    }
+
+    for (int s = 0; s < n_triangles->size(); s++) {
+      float u,v,w;
+      cv::Point2f pt1 = (*n_mesh)[(*n_triangles)[s].index1];
+      cv::Point2f pt2 = (*n_mesh)[(*n_triangles)[s].index2];
+      cv::Point2f pt3 = (*n_mesh)[(*n_triangles)[s].index3];
+      Barycentric(n_pt, pt1,pt2,pt3,u,v,w);
+      if (u <= 0 || v <= 0 || w <= 0) continue;
+      n_triangle_index = s;
+      match.n_tri = (*n_triangles)[n_triangle_index];
+      match.n_barys[0] = (double)1.0*u;
+      match.n_barys[1] = (double)1.0*v;
+      match.n_barys[2] = (double)1.0*w;
+      break;
+    }
+    if (my_triangle_index == -1 || n_triangle_index == -1) continue;
+    //match.my_section_data = *section_data_a;
+    //match.n_section_data = *section_data_b;
+    match.my_section = (void*) this;
+    match.n_section = (void*) neighbor;
+
+    this->section_mesh_matches.push_back(match);
+  }
+
+
+}
+
+void tfk::Section::get_elastic_matches(std::vector<Section*> neighbors) {
+  for (int i = 0; i < neighbors.size(); i++) {
+    this->get_elastic_matches_one(neighbors[i]);
+  }
+}
+
+
+std::vector<cv::Point2f>* tfk::Section::generate_hex_grid(double* bounding_box, double spacing) {
+  double hexheight = spacing;
+  double hexwidth = sqrt(3.0) * spacing / 2.0;
+  double vertspacing = 0.75 * hexheight;
+  double horizspacing = hexwidth;
+  int sizex = (int)((bounding_box[1]-bounding_box[0])/horizspacing) + 2; 
+  int sizey = (int)((bounding_box[3]-bounding_box[2])/vertspacing) + 2;
+
+  if (sizey % 2 == 0) {
+    sizey += 1;
+  }
+
+  std::vector<cv::Point2f>* hex_grid = new std::vector<cv::Point2f>();
+  for (int i = -2; i < sizex; i++) {
+    for (int j = -2; j < sizey; j++) {
+      //double xpos = i * spacing;
+      //double ypos = j * spacing;
+      double xpos = i * horizspacing;
+      double ypos = j * vertspacing;
+      if (j % 2 == 1) {
+        xpos += spacing * 0.5;
+      }
+      if (j % 2 == 1 && i == sizex-1) {
+        continue;
+      }
+      hex_grid->push_back(cv::Point2f(xpos+bounding_box[0], ypos+bounding_box[2]));
+    }
+  }
+  return hex_grid;
+}
+
+void tfk::Section::affine_transform_mesh() {
+  for (int mesh_index = 0; mesh_index < this->mesh->size(); mesh_index++) {
+        (*this->mesh)[mesh_index] = this->affine_transform((*this->mesh)[mesh_index]);
+        (*this->mesh_orig)[mesh_index] = this->affine_transform((*this->mesh_orig)[mesh_index]);
+  }
+}
+
+
+void tfk::Section::construct_triangles() {
+  double hex_spacing = 1500.0;
+
+  std::pair<cv::Point2f, cv::Point2f> bbox = this->get_bbox();
+
+  double min_x = bbox.first.x;
+  double min_y = bbox.first.y;
+  double max_x = bbox.second.x;
+  double max_y = bbox.second.y;
+
+  double bounding_box[4] = {min_x,max_x,min_y,max_y};
+  std::vector<cv::Point2f>* hex_grid = this->generate_hex_grid(bounding_box, hex_spacing);
+
+  cv::Rect rect(min_x-hex_spacing*2,min_y-hex_spacing*2,max_x-min_x+hex_spacing*4, max_y-min_y + hex_spacing*4);
+  cv::Subdiv2D subdiv(rect);
+  subdiv.initDelaunay(rect);
+  for (int i = 0; i < hex_grid->size(); i++) {
+    cv::Point2f pt = (*hex_grid)[i];
+    subdiv.insert(pt);
+  }
+
+  std::vector<cv::Vec6f> triangle_list;
+  subdiv.getTriangleList(triangle_list);
+
+  printf("The number of triangles is %lu\n", triangle_list.size());
+
+  std::vector<tfkTriangle> triangle_list_index;
+  for (int i = 0; i < triangle_list.size(); i++) {
+    cv::Point2f tpt1 = cv::Point2f(triangle_list[i][0],triangle_list[i][1]);
+    cv::Point2f tpt2 = cv::Point2f(triangle_list[i][2],triangle_list[i][3]);
+    cv::Point2f tpt3 = cv::Point2f(triangle_list[i][4],triangle_list[i][5]);
+    int index1=-1;
+    int index2=-1;
+    int index3=-1;
+
+    for (int j = 0; j < hex_grid->size(); j++) {
+      cv::Point2f pt = (*hex_grid)[j];
+      if (std::abs(pt.x-tpt1.x) < 0.01 && std::abs(pt.y-tpt1.y) < 0.01) {
+        index1 = j;    
+      }
+
+      if (std::abs(pt.x-tpt2.x) < 0.01 && std::abs(pt.y-tpt2.y) < 0.01) {
+        index2 = j;    
+      }
+      
+      if (std::abs(pt.x-tpt3.x) < 0.01 && std::abs(pt.y-tpt3.y) < 0.01) {
+        index3 = j;    
+      }
+    }
+    //printf("triangle is %f %f %f %f %f %f\n", triangle_list[i][0], triangle_list[i][1], triangle_list[i][2], triangle_list[i][3], triangle_list[i][4], triangle_list[i][5]);
+    //printf("points are %f %f %f %f %f %f\n", tpt1.x, tpt1.y, tpt2.x, tpt2.y, tpt3.x, tpt3.y);
+    if (!(index1 >= 0 && index2 >= 0 && index3 >=0)) continue;
+   // printf("Success\n");
+    tfkTriangle tri;
+    tri.index1 = index3;
+    tri.index2 = index2;
+    tri.index3 = index1;
+    triangle_list_index.push_back(tri);
+  }
+
+  printf("Triangle_list_index length is %lu\n", triangle_list_index.size());
+
+  std::vector<std::pair<int,int> > triangle_edges;
+  for (int i = 0; i < triangle_list_index.size(); i++) {
+    tfkTriangle tri = triangle_list_index[i];
+
+    if (tri.index1 < tri.index2) {
+      triangle_edges.push_back(std::make_pair(tri.index1,tri.index2));
+    } else {
+      triangle_edges.push_back(std::make_pair(tri.index2,tri.index1));
+    }
+
+    if (tri.index2 < tri.index3) {
+      triangle_edges.push_back(std::make_pair(tri.index2,tri.index3));
+    } else {
+      triangle_edges.push_back(std::make_pair(tri.index3,tri.index2));
+    }
+
+    if (tri.index1 < tri.index3) {
+      triangle_edges.push_back(std::make_pair(tri.index1,tri.index3));
+    } else {
+      triangle_edges.push_back(std::make_pair(tri.index3,tri.index1));
+    }
+  } 
+
+  std::vector<std::pair<int,int> > triangle_edges_dedupe;
+  std::set<std::pair<int, int> > triangle_edges_set;
+  for (int i = 0; i < triangle_edges.size(); i++) {
+    if (triangle_edges_set.find(triangle_edges[i]) == triangle_edges_set.end()) {
+      triangle_edges_set.insert(triangle_edges[i]);
+      triangle_edges_dedupe.push_back(triangle_edges[i]);
+    }
+  }
+
+
+  std::vector<std::pair<int, int> >* _triangle_edges = new std::vector<std::pair<int, int> >();
+  for (int i = 0; i < triangle_edges_dedupe.size(); i++) {
+    _triangle_edges->push_back(triangle_edges_dedupe[i]);
+  }
+  std::vector<tfkTriangle>* _triangle_list = new std::vector<tfkTriangle>();
+  for (int i = 0; i < triangle_list_index.size(); i++) {
+    _triangle_list->push_back(triangle_list_index[i]);
+  }  
+
+  std::vector<cv::Point2f>* orig_hex_grid = new std::vector<cv::Point2f>();
+  for (int i = 0; i < hex_grid->size(); i++) {
+    orig_hex_grid->push_back((*hex_grid)[i]);
+  }
+
+  this->triangle_edges = _triangle_edges;
+  this->mesh_orig = orig_hex_grid;
+  this->mesh = hex_grid;
+  this->triangles = _triangle_list;
+
+}
 
 void tfk::Section::write_wafer(FILE* wafer_file, int base_section) {
   fprintf(wafer_file, "[\n");
@@ -26,6 +396,155 @@ void tfk::Section::write_wafer(FILE* wafer_file, int base_section) {
     }
   }
 }
+
+std::pair<cv::Point2f, cv::Point2f> tfk::Section::get_bbox() {
+
+  float min_x = 0;
+  float max_x = 0;
+  float min_y = 0;
+  float max_y = 0;
+
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* tile = this->tiles[i];
+    std::pair<cv::Point2f, cv::Point2f> bbox = tile->get_bbox();
+    if (i == 0) {
+      min_x = bbox.first.x;
+      min_y = bbox.first.y;
+      max_x = bbox.second.x;
+      max_y = bbox.second.y;
+    } else {
+      if (bbox.first.x < min_x) min_x = bbox.first.x;
+      if (bbox.first.y < min_y) min_y = bbox.first.y;
+      if (bbox.second.x > max_x) max_x = bbox.second.x;
+      if (bbox.second.y > max_y) max_y = bbox.second.y;
+    }
+  }
+  return std::make_pair(cv::Point2f(min_x, min_y), cv::Point2f(max_x, max_y));
+}
+
+
+// Find affine transform for this section that aligns it to neighbor.
+void tfk::Section::coarse_affine_align(Section* neighbor) {
+
+  // a = neighbor.
+  std::vector <cv::KeyPoint > atile_kps_in_overlap;
+  std::vector <cv::Mat > atile_kps_desc_in_overlap_list;
+
+  // b = this
+  std::vector <cv::KeyPoint > btile_kps_in_overlap;
+  std::vector <cv::Mat > btile_kps_desc_in_overlap_list;
+
+  for (int i = 0; i < this->tiles.size(); i++) {
+    this->tiles[i]->get_3d_keypoints(btile_kps_in_overlap, btile_kps_desc_in_overlap_list);
+  }
+
+  for (int i = 0; i < neighbor->tiles.size(); i++) {
+    neighbor->tiles[i]->get_3d_keypoints(atile_kps_in_overlap, atile_kps_desc_in_overlap_list);
+  }
+
+
+  printf("Total size of a tile (%d) kps is %lu\n", neighbor->section_id, atile_kps_in_overlap.size());
+  printf("Total size of b tile (%d) kps is %lu\n", this->section_id, btile_kps_in_overlap.size());
+
+  cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
+  cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
+  cv::vconcat(btile_kps_desc_in_overlap_list, (btile_kps_desc_in_overlap));
+
+  std::vector< cv::DMatch > matches;
+  match_features(matches,
+                 atile_kps_desc_in_overlap,
+                 btile_kps_desc_in_overlap,
+                 0.92);
+
+  printf("Done with the matching. Num matches is %lu\n", matches.size());
+
+  // Filter the matches with RANSAC
+  std::vector<cv::Point2f> match_points_a, match_points_b;
+
+  // Grab the matches.
+  for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
+    match_points_a.push_back(atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
+    match_points_b.push_back(btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
+    //p_align_data->sec_data[section_a].p_kps->push_back(atile_kps_in_overlap[matches[tmpi].queryIdx]);
+    //p_align_data->sec_data[section_b].p_kps->push_back(btile_kps_in_overlap[matches[tmpi].trainIdx]);
+  }
+
+  bool* mask = (bool*)calloc(matches.size()+1, 1);
+  //std::pair<double,double> offset_pair;
+
+  // pre-filter matches with very forgiving ransac threshold.
+  tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 1024, mask);
+
+  std::vector< cv::Point2f > filtered_match_points_a_pre(0);
+  std::vector< cv::Point2f > filtered_match_points_b_pre(0);
+  int num_filtered = 0;
+  for (int c = 0; c < matches.size(); c++) {
+    if (mask[c]) {
+      num_filtered++;
+      filtered_match_points_a_pre.push_back(
+          match_points_a[c]);
+      filtered_match_points_b_pre.push_back(
+          match_points_b[c]);
+    }
+  }
+  free(mask);
+
+  mask = (bool*)calloc(matches.size()+1, 1);
+  printf("First pass filter got %d matches\n", num_filtered);
+
+  if (num_filtered < 32) {
+    printf("Not enough matches, skipping section\n");
+    return;
+  }
+
+  tfk_simple_ransac_strict_ret_affine(filtered_match_points_a_pre, filtered_match_points_b_pre, 64.0, mask);
+
+  std::vector< cv::Point2f > filtered_match_points_a(0);
+  std::vector< cv::Point2f > filtered_match_points_b(0);
+
+  num_filtered = 0;
+  for (int c = 0; c < filtered_match_points_a_pre.size(); c++) {
+    if (mask[c]) {
+      num_filtered++;
+      filtered_match_points_a.push_back(
+          filtered_match_points_a_pre[c]);
+      filtered_match_points_b.push_back(
+          filtered_match_points_b_pre[c]);
+    }
+  }
+  printf("Second pass filter got %d matches\n", num_filtered);
+
+  if (num_filtered < 12) {
+    printf("Not enough matches %d for section %d with thresh\n", num_filtered, this->section_id);
+    return;
+  } else {
+    printf("Got enough matches %d for section %d with thresh\n", num_filtered, this->section_id);
+  }
+
+  cv::Mat section_transform;
+
+  cv::computeAffineTFK(filtered_match_points_a, filtered_match_points_b, section_transform);
+
+  std::cout << section_transform << std::endl;
+  this->affine_transforms.push_back(section_transform);
+  cv::Mat& B = section_transform;
+
+  neighbor->a00 = B.at<double>(0,0);
+  neighbor->a01 = B.at<double>(0,1);
+  neighbor->a10 = B.at<double>(1,0);
+  neighbor->a11 = B.at<double>(1,1);
+  neighbor->offset_x = B.at<double>(0,2);
+  neighbor->offset_y = B.at<double>(1,2);
+
+  this->a00 = 1.0;
+  this->a01 = 0.0;
+  this->a10 = 0.0;
+  this->a11 = 1.0;
+  this->offset_x = 0.0;
+  this->offset_y = 0.0;
+
+}
+
 
 void tfk::Section::compute_tile_matches(int tile_id, Graph* graph) {
 

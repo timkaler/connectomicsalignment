@@ -30,10 +30,12 @@
 // Helper functions
 #include "align_helpers.cpp"
 #include "AlignData.pb.h"
-#include "render_tiles.cpp"
+
 #include "cilk_tools/Graph.h"
 #include "serialize.h"
 #include "stack.hpp"
+
+#include "render_tiles.cpp"
 
 void SIFT_initialize() {
   //generateBoxBlurExecutionPlan();
@@ -727,7 +729,9 @@ void align_execute(align_data_t *p_align_data) {
     printf("Got past the init\n");
     printf("stack has sections %d\n", stack->sections.size()); 
     stack->align_2d();
-    stack->unpack_graph();
+    stack->coarse_affine_align();
+    stack->elastic_align();
+    //stack->unpack_graph();
     printf("Got to the end.\n");
     return;
 

@@ -20,6 +20,58 @@ void updateTile2DAlign(int vid, void* scheduler_void) {
 }
 
 
+std::vector<cv::Point2f> tfk::Tile::get_corners() {
+
+  std::vector<cv::Point2f> post_corners;
+
+  double dx = this->shape_dx;
+  double dy = this->shape_dy;
+
+  cv::Point2f corners[4];
+  corners[0] = cv::Point2f(0.0,0.0);
+  corners[1] = cv::Point2f(dx,0.0);
+  corners[2] = cv::Point2f(0.0,dy);
+  corners[3] = cv::Point2f(dx,dy);
+
+  for (int i = 0; i < 4; i++) {
+    post_corners.push_back(this->rigid_transform(corners[i]));
+  }
+
+  return post_corners;
+}
+
+// format is min_x,min_y , max_x,max_y
+std::pair<cv::Point2f, cv::Point2f> tfk::Tile::get_bbox() {
+
+  std::vector<cv::Point2f> corners = this->get_corners();
+  float min_x = corners[0].x;
+  float max_x = corners[0].x;
+  float min_y = corners[0].y;
+  float max_y = corners[0].y;
+  for (int i = 1; i < corners.size(); i++) {
+    if (corners[i].x < min_x) min_x = corners[i].x;
+    if (corners[i].x > max_x) max_x = corners[i].x;
+
+    if (corners[i].y < min_y) min_y = corners[i].y;
+    if (corners[i].y > max_y) max_y = corners[i].y;
+  }
+  return std::make_pair(cv::Point2f(min_x,min_y), cv::Point2f(max_x, max_y));
+}
+
+void tfk::Tile::get_3d_keypoints(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::Mat>& desc) {
+  if (this->p_kps_3d->size() <= 0) return;
+
+  for (int pt_idx = 0; pt_idx < this->p_kps_3d->size(); ++pt_idx) {
+    //if (this->ignore[pt_idx]) continue;
+    cv::Point2f pt = this->rigid_transform((*(this->p_kps_3d))[pt_idx].pt);
+    cv::KeyPoint kpt = (*(this->p_kps_3d))[pt_idx];
+    kpt.pt = pt;
+    keypoints.push_back(kpt);
+    desc.push_back(this->p_kps_desc_3d->row(pt_idx).clone());
+  }
+}
+
+
 void tfk::Tile::write_wafer(FILE* wafer_file, int section_id, int base_section) {
   fprintf(wafer_file, "\t\t\"bbox\": [\n");
 
@@ -218,6 +270,9 @@ bool tfk::Tile::overlaps_with(Tile* other) {
 tfk::Tile::Tile(TileData& tile_data) {
     //tile_data_t *p_cur_tile = &(p_sec_data->tiles[p_sec_data->n_tiles]);
     //p_sec_data->n_tiles++;
+
+    this->shape_dx = tile_data.y_finish() - tile_data.y_finish();
+    this->shape_dy = tile_data.y_finish() - tile_data.y_finish();
 
     this->section_id = tile_data.section_id();
     this->mfov_id = tile_data.tile_mfov();

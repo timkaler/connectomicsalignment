@@ -6,9 +6,9 @@
 
 enum Resolution {THUMBNAIL, FULL};
 
-static float Dot(cv::Point2f a, cv::Point2f b) {
-  return a.x*b.x + a.y*b.y;
-}
+//static float Dot(cv::Point2f a, cv::Point2f b) {
+//  return a.x*b.x + a.y*b.y;
+//}
 
 static cv::Mat colorize(cv::Mat c1, cv::Mat c2, cv::Mat c3, unsigned int channel = 0) {
     std::vector<cv::Mat> channels;
@@ -40,21 +40,21 @@ static cv::Mat apply_heatmap_to_grayscale(cv::Mat* gray, cv::Mat* heat_floats, i
 }
 
 
-/*MOVE TO COMMON.H OR SOME OTHER FILE*/
-static void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
-   float &u, float &v, float &w)
-{
-    cv::Point2f v0 = b - a, v1 = c - a, v2 = p - a;
-    float d00 = Dot(v0, v0);
-    float d01 = Dot(v0, v1);
-    float d11 = Dot(v1, v1);
-    float d20 = Dot(v2, v0);
-    float d21 = Dot(v2, v1);
-    float denom = d00 * d11 - d01 * d01;
-    v = (d11 * d20 - d01 * d21) / denom;
-    w = (d00 * d21 - d01 * d20) / denom;
-    u = 1.0f - v - w;
-}
+///*MOVE TO COMMON.H OR SOME OTHER FILE*/
+//static void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
+//   float &u, float &v, float &w)
+//{
+//    cv::Point2f v0 = b - a, v1 = c - a, v2 = p - a;
+//    float d00 = Dot(v0, v0);
+//    float d01 = Dot(v0, v1);
+//    float d11 = Dot(v1, v1);
+//    float d20 = Dot(v2, v0);
+//    float d21 = Dot(v2, v1);
+//    float denom = d00 * d11 - d01 * d01;
+//    v = (d11 * d20 - d01 * d21) / denom;
+//    w = (d00 * d21 - d01 * d20) / denom;
+//    u = 1.0f - v - w;
+//}
 
 /* resizing using remap */
 cv::Mat resize(float scale, cv::Mat img) {

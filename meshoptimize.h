@@ -730,6 +730,7 @@ void coarse_alignment_3d(Graph* merged_graph, align_data_t* p_align_data, double
                    0.92);
 
    printf("Done with the matching. Num matches is %lu\n", matches.size());
+
    // Filter the matches with RANSAC
    std::vector<cv::Point2f> match_points_a, match_points_b;
 

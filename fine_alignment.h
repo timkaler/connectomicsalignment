@@ -221,6 +221,7 @@ void fine_alignment_3d_2(Graph* merged_graph, align_data_t* p_align_data, double
 
       for (double box_iter_x = min_x; box_iter_x < max_x+48000; box_iter_x += 24000) {
       for (double box_iter_y = min_y; box_iter_y < max_y+48000; box_iter_y += 24000) {
+
         // Filter the matches with RANSAC
         int num_filtered = 0;
         std::vector<cv::Point2f> match_points_a, match_points_b;

@@ -60,6 +60,8 @@ typedef struct {
   double n_barys[3];
   graph_section_data my_section_data;  
   graph_section_data n_section_data;
+  void* my_section;
+  void* n_section;
 } tfkMatch;
 
 

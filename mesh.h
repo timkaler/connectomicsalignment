@@ -32,7 +32,7 @@ std::vector<cv::Point2f>* generate_hex_grid(double* bounding_box, double spacing
   return hex_grid;
 }
 
-double c_huber(double value, double target, double sigma, double d_value_dx, double d_value_dy,
+static double c_huber(double value, double target, double sigma, double d_value_dx, double d_value_dy,
                double* d_huber_dx, double* d_huber_dy) {
   double diff, a, b;
 
@@ -50,7 +50,7 @@ double c_huber(double value, double target, double sigma, double d_value_dx, dou
   }
 }
 
-double c_reglen(double vx, double vy, double d_vx_dx, double d_vy_dy,
+static double c_reglen(double vx, double vy, double d_vx_dx, double d_vy_dy,
                 double* d_reglen_dx, double* d_reglen_dy) {
   double sq_len, sqrt_len;
   double small_value = 0.0001;
@@ -62,7 +62,7 @@ double c_reglen(double vx, double vy, double d_vx_dx, double d_vy_dy,
 }
 
 
-double crosslink_mesh_derivs(std::vector<cv::Point2f>* mesh1, std::vector<cv::Point2f>* mesh2,
+static double crosslink_mesh_derivs(std::vector<cv::Point2f>* mesh1, std::vector<cv::Point2f>* mesh2,
                              cv::Point2f* d_cost_d_mesh1, cv::Point2f* d_cost_d_mesh2,
                              int* indices1, int* indices2, double* barys1, double* barys2,
                              double all_weight, double sigma) {
@@ -136,7 +136,7 @@ double crosslink_mesh_derivs(std::vector<cv::Point2f>* mesh1, std::vector<cv::Po
   return cost;
 }
 
-double internal_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* d_cost_d_mesh,
+static double internal_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* d_cost_d_mesh,
                             std::pair<int, int> edge_indices,
                             double rest_length, double all_weight,
                             double sigma) {
@@ -173,7 +173,7 @@ double internal_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* d_cost_
   return cost;
 }
 
-double area_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* d_cost_d_mesh,
+static double area_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* d_cost_d_mesh,
                         int* triangle_indices, double rest_area, double all_weight) {
   int idx0, idx1, idx2;
   double v01x, v01y, v02x, v02y, area, r_area;
@@ -364,6 +364,7 @@ void construct_triangles(Graph* graph, double hex_spacing) {
   }
  
   graph_section_data section_data;
+
   section_data.triangle_edges = _triangle_edges;
   section_data.mesh_orig = orig_hex_grid;
   section_data.mesh = hex_grid;
@@ -414,7 +415,7 @@ void construct_triangles(Graph* graph, double hex_spacing) {
 
 }
 
-double computeTriangleArea(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3) {
+static double computeTriangleArea(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3) {
 
 
   double v01x = p2.x - p1.x;
