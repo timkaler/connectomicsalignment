@@ -462,6 +462,11 @@ class Section {
     cv::Mat render(std::pair<cv::Point2f, cv::Point2f> bbox, Resolution resolution);
     void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename);
     cv::Point2f get_render_scale(Resolution resolution);
+
+
+    renderTriangle getRenderTriangle(tfkTriangle tri);
+    std::tuple<bool, float, float, float> get_triangle_for_point(cv::Point2f pt);
+
 };
 
 

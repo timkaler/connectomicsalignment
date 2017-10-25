@@ -340,11 +340,11 @@ void tfk::Tile::compute_sift_keypoints3d() {
 
   // NOTE(TFK): I need to check these parameters against the prefix_ cached ones.
   p_sift = new cv::xfeatures2d::SIFT_Impl(
-            32,  // num_features --- unsupported.
+            16,  // num_features --- unsupported.
             6,  // number of octaves
             CONTRAST_THRESH_3D,  // contrast threshold.
             EDGE_THRESH_3D,  // edge threshold.
-            1.6*2);  // sigma.
+            1.6);  // sigma.
 
     int max_rows = rows / SIFT_D1_SHIFT_3D;
     int max_cols = cols / SIFT_D2_SHIFT_3D;

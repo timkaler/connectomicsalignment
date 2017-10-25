@@ -96,9 +96,56 @@ cv::Mat* tfk::Section::read_tile(std::string filepath, Resolution res) {
   return tile_p_image;
 }
 
+renderTriangle tfk::Section::getRenderTriangle(tfkTriangle tri) {
+  renderTriangle rTri;
+  rTri.p[0] = (*(this->mesh_orig))[tri.index1];
+  rTri.p[1] = (*(this->mesh_orig))[tri.index2];
+  rTri.p[2] = (*(this->mesh_orig))[tri.index3];
+
+  rTri.q[0] = (*(this->mesh))[tri.index1];
+  rTri.q[1] = (*(this->mesh))[tri.index2];
+  rTri.q[2] = (*(this->mesh))[tri.index3];
+  return rTri;
+}
+
+std::tuple<bool, float, float, float> tfk::Section::get_triangle_for_point(cv::Point2f pt) {
+  for (int i = 0; i < this->triangles->size(); i++) {
+    renderTriangle rTri = this->getRenderTriangle((*this->triangles)[i]);
+    float u,v,w;
+    cv::Point2f a,b,c;
+    a = rTri.p[0];
+    b = rTri.p[1];
+    c = rTri.p[2];
+
+    Barycentric(pt, a,b,c,u,v,w);
+    if (u >=0 && v>=0 && w >= 0) {
+      int j = i;
+      while (j > 0) {
+        tfkTriangle tmp = (*this->triangles)[j-1];
+        (*this->triangles)[j-1] = (*this->triangles)[j];
+        (*this->triangles)[j] = tmp;
+        j--;
+      }
+      //printf("found the triangle\n");
+      return std::make_tuple(true, u,v,w);
+    }
+  }
+  //printf("didn't find the triangle\n");
+  return std::make_tuple(false, -1, -1, -1);
+}
+
 // assumes point p is post section-global affine.
 cv::Point2f tfk::Section::elastic_transform(cv::Point2f p) {
-  return p;
+  std::tuple<bool, float, float, float> info = this->get_triangle_for_point(p);
+  if (!std::get<0>(info)) return p;
+
+  renderTriangle tri = this->getRenderTriangle((*this->triangles)[0]);
+  float u = std::get<1>(info);
+  float v = std::get<2>(info);
+  float w = std::get<3>(info);
+  float new_x = u*tri.q[0].x + v*tri.q[1].x + w*tri.q[2].x;
+  float new_y = u*tri.q[0].y + v*tri.q[1].y + w*tri.q[2].y;
+  return cv::Point2f(new_x, new_y);
 }
 
 // bbox is in unscaled (i.e. full resolution) transformed coordinate system.
