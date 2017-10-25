@@ -321,6 +321,9 @@ namespace cv {
 
 
 namespace tfk {
+
+enum Resolution {THUMBNAIL, FULL};
+
 class Tile {
   public:
    int section_id;
@@ -435,6 +438,11 @@ class Section {
     std::pair<cv::Point2f, cv::Point2f> get_bbox();
 
     cv::Point2f affine_transform(cv::Point2f pt);
+    cv::Point2f elastic_transform(cv::Point2f pt);
+
+    cv::Mat* read_tile(std::string filepath, Resolution res);
+
+
     std::pair<cv::Point2f, cv::Point2f> affine_transform_bbox(
         std::pair<cv::Point2f, cv::Point2f> bbox);
     void affine_transform_keypoints(std::vector<cv::KeyPoint>& keypoints);
@@ -445,6 +453,15 @@ class Section {
     //void construct_triangles();
 
     void write_wafer(FILE* wafer_file, int base_section);
+
+
+    std::pair<cv::Point2f, cv::Point2f> scale_bbox(std::pair<cv::Point2f, cv::Point2f> bbox,
+        cv::Point2f scale);
+    bool tile_in_render_box(Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox);
+
+    cv::Mat render(std::pair<cv::Point2f, cv::Point2f> bbox, Resolution resolution);
+    void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename);
+    cv::Point2f get_render_scale(Resolution resolution);
 };
 
 
@@ -480,6 +497,8 @@ class Stack {
 
     void get_elastic_matches();
     void elastic_gradient_descent();
+
+    void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix);
 
 };
 

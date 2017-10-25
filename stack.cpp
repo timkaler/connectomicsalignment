@@ -15,6 +15,13 @@ tfk::Stack::Stack(int base_section, int n_sections,
 }
 
 
+void tfk::Stack::render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
+  for (int i = 0; i < this->sections.size(); i++) {
+    Section* section = this->sections[i];
+    section->render(bbox, filename_prefix+std::to_string(i)+".tif");
+  }
+}
+
 void tfk::Stack::coarse_affine_align() {
   // get affine transform matrix for each section
   //   matrix A_i aligning section i to i-1.

@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-
+#include <utility>
 //bool STORE_ALIGN_RESULTS = false;
 //
 //float CONTRAST_THRESH = 0.04;
@@ -730,7 +730,8 @@ void align_execute(align_data_t *p_align_data) {
     printf("stack has sections %d\n", stack->sections.size()); 
     stack->align_2d();
     stack->coarse_affine_align();
-    stack->elastic_align();
+    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "testrender");
+    //stack->elastic_align();
     //stack->unpack_graph();
     printf("Got to the end.\n");
     return;
