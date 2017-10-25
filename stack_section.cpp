@@ -668,6 +668,32 @@ std::pair<cv::Point2f, cv::Point2f> tfk::Section::get_bbox() {
 }
 
 
+void tfk::Section::apply_affine_transforms() {
+  // init identity matrix.
+  cv::Mat A(3, 3, cv::DataType<double>::type);
+  A.at<double>(0,0) = 1.0;
+  A.at<double>(0,1) = 0.0;
+  A.at<double>(0,2) = 0.0;
+  A.at<double>(1,0) = 0.0;
+  A.at<double>(1,1) = 1.0;
+  A.at<double>(1,2) = 0.0;
+  A.at<double>(2,0) = 0.0;
+  A.at<double>(2,1) = 0.0;
+  A.at<double>(2,2) = 1.0;
+
+  for (int i = 0; i < this->affine_transforms.size(); i++) {
+    A = A*this->affine_transforms[i];
+  }
+
+  this->a00 = A.at<double>(0,0);
+  this->a01 = A.at<double>(0,1);
+  this->offset_x = A.at<double>(0,2);
+  this->a10 = A.at<double>(1,0);
+  this->a11 = A.at<double>(1,1);
+  this->offset_y = A.at<double>(1,2);
+
+}
+
 // Find affine transform for this section that aligns it to neighbor.
 void tfk::Section::coarse_affine_align(Section* neighbor) {
 
@@ -771,22 +797,41 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   cv::computeAffineTFK(filtered_match_points_a, filtered_match_points_b, section_transform);
 
   std::cout << section_transform << std::endl;
-  this->affine_transforms.push_back(section_transform);
-  cv::Mat& B = section_transform;
 
-  neighbor->a00 = B.at<double>(0,0);
-  neighbor->a01 = B.at<double>(0,1);
-  neighbor->a10 = B.at<double>(1,0);
-  neighbor->a11 = B.at<double>(1,1);
-  neighbor->offset_x = B.at<double>(0,2);
-  neighbor->offset_y = B.at<double>(1,2);
+  // push this affine transform onto the neighbor.
 
-  this->a00 = 1.0;
-  this->a01 = 0.0;
-  this->a10 = 0.0;
-  this->a11 = 1.0;
-  this->offset_x = 0.0;
-  this->offset_y = 0.0;
+  cv::Mat A(3, 3, cv::DataType<double>::type);
+
+  //cv::Mat& B = section_transform;
+
+  //neighbor->a00 = B.at<double>(0,0);
+  //neighbor->a01 = B.at<double>(0,1);
+  //neighbor->a10 = B.at<double>(1,0);
+  //neighbor->a11 = B.at<double>(1,1);
+  //neighbor->offset_x = B.at<double>(0,2);
+  //neighbor->offset_y = B.at<double>(1,2);
+
+  A.at<double>(0,0) = section_transform.at<double>(0,0);
+  A.at<double>(0,1) = section_transform.at<double>(0,1);
+  A.at<double>(0,2) = section_transform.at<double>(0,2);
+  A.at<double>(1,0) = section_transform.at<double>(1,0);
+  A.at<double>(1,1) = section_transform.at<double>(1,1);
+  A.at<double>(1,2) = section_transform.at<double>(1,2);
+  A.at<double>(2,0) = 0.0;
+  A.at<double>(2,1) = 0.0;
+  A.at<double>(2,2) = 0.0;
+
+
+  neighbor->affine_transforms.push_back(A);
+
+
+
+  //this->a00 = 1.0;
+  //this->a01 = 0.0;
+  //this->a10 = 0.0;
+  //this->a11 = 1.0;
+  //this->offset_x = 0.0;
+  //this->offset_y = 0.0;
 
 }
 

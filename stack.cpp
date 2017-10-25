@@ -25,9 +25,23 @@ void tfk::Stack::render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string fi
 void tfk::Stack::coarse_affine_align() {
   // get affine transform matrix for each section
   //   matrix A_i aligning section i to i-1.
-  for (int i = 1; i < this->sections.size(); i++) {
+  cilk_for (int i = 1; i < this->sections.size(); i++) {
     this->sections[i]->coarse_affine_align(this->sections[i-1]);
   }
+
+  // cascade the affine transforms down.
+  for (int i = 1; i < this->sections.size(); i++) {
+    for (int j = i+1; j < this->sections.size(); j++) {
+      for (int k = 0; k < this->sections[j]->affine_transforms.size(); k++) {
+          this->sections[i]->affine_transforms.push_back(this->sections[j]->affine_transforms[k]);
+        }
+    }
+  }
+
+  for (int i = 0; i < this->sections.size(); i++) {
+    this->sections[i]->apply_affine_transforms();
+  }
+
 }
 
 void tfk::Stack::get_elastic_matches() {

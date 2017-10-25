@@ -467,6 +467,8 @@ class Section {
     renderTriangle getRenderTriangle(tfkTriangle tri);
     std::tuple<bool, float, float, float> get_triangle_for_point(cv::Point2f pt);
 
+    void apply_affine_transforms();
+
 };
 
 
