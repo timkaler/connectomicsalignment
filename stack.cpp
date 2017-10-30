@@ -31,11 +31,18 @@ void tfk::Stack::coarse_affine_align() {
 
   // cascade the affine transforms down.
   for (int i = 1; i < this->sections.size(); i++) {
-    for (int j = i+1; j < this->sections.size(); j++) {
-      for (int k = 0; k < this->sections[j]->affine_transforms.size(); k++) {
-          this->sections[i]->affine_transforms.push_back(this->sections[j]->affine_transforms[k]);
-        }
+    for (int j = 0; j < i; j++) {
+      this->sections[j]->affine_transforms.push_back(this->sections[i]->coarse_transform);
     }
+    //for (int k = 0; k < this->sections[i-1]->affine_transforms.size(); k++) {
+    //  this->sections[i]->affine_transforms.push_back(this->sections[i-1]->affine_transforms[k]);
+    //}
+    //for (int j = i+1; j < this->sections.size(); j++) {
+
+    //  for (int k = 0; k < this->sections[j]->affine_transforms.size(); k++) {
+    //      this->sections[i]->affine_transforms.push_back(this->sections[j]->affine_transforms[k]);
+    //    }
+    //}
   }
 
   for (int i = 0; i < this->sections.size(); i++) {
@@ -49,6 +56,7 @@ void tfk::Stack::get_elastic_matches() {
     std::vector<Section*> neighbors;
     int section_a = section;
     for (int section_b = section-2; section_b < section+1; section_b++) {
+    //for (int section_b = section-1; section_b < section; section_b++) {
       if (section_b < 0 || section_b == section_a || section_b >= this->sections.size()) {
         continue;
       }
@@ -331,6 +339,7 @@ void tfk::Stack::elastic_gradient_descent() {
         }
       }
     }
+    printf("Done with the elastic gradient descent\n");
 }
 
 
@@ -436,7 +445,7 @@ void tfk::Stack::unpack_graph() {
 
 
 void tfk::Stack::align_2d() {
-  for (int i = 0; i < this->sections.size(); i++) {
+  cilk_for (int i = 0; i < this->sections.size(); i++) {
     this->sections[i]->compute_keypoints_and_matches();
   }
 

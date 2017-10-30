@@ -13,6 +13,17 @@ cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
 //void render_section(double min_x, double min_y, double max_x, double max_y) {
 //}
 
+bool tfk::Section::section_data_exists() {
+  std::string filename =
+      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
+
+  cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"), cv::FileStorage::READ);
+  if (!fs.isOpened()) {
+    return false;
+  } else {
+    return true;
+  }
+}
 
 cv::Point2f tfk::Section::get_render_scale(Resolution resolution) {
   if (resolution == THUMBNAIL) {
@@ -48,6 +59,8 @@ std::pair<cv::Point2f, cv::Point2f> tfk::Section::scale_bbox(
 }
 
 bool tfk::Section::tile_in_render_box(Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox) {
+
+  //return tile->overlaps_with(bbox);
 
   std::pair<cv::Point2f, cv::Point2f> tile_bbox = tile->get_bbox();
 
@@ -796,7 +809,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
 
   cv::computeAffineTFK(filtered_match_points_a, filtered_match_points_b, section_transform);
 
-  std::cout << section_transform << std::endl;
+  //std::cout << section_transform << std::endl;
 
   // push this affine transform onto the neighbor.
 
@@ -819,12 +832,14 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   A.at<double>(1,2) = section_transform.at<double>(1,2);
   A.at<double>(2,0) = 0.0;
   A.at<double>(2,1) = 0.0;
-  A.at<double>(2,2) = 0.0;
+  A.at<double>(2,2) = 1.0;
 
+  printf("Printing out A\n");
+  std::cout << A << std::endl;
 
-  neighbor->affine_transforms.push_back(A);
-
-
+  //neighbor->affine_transforms.push_back(A);
+  //this->coarse_transform = new cv::Mat();
+  this->coarse_transform = A.clone();
 
   //this->a00 = 1.0;
   //this->a01 = 0.0;
@@ -969,22 +984,133 @@ void tfk::Section::compute_tile_matches(int tile_id, Graph* graph) {
   }
 }
 
+
+
+void tfk::Section::read_3d_keypoints(std::string filename) {
+  cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"), cv::FileStorage::READ);
+  int count = 0;
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* tile = this->tiles[i];
+    tile->p_kps_3d = new std::vector<cv::KeyPoint>();
+    tile->p_kps_desc_3d = new cv::Mat();
+    fs["keypoints_"+std::to_string(i)] >> *(tile->p_kps_3d);
+    count += tile->p_kps_3d->size();
+    fs["descriptors_"+std::to_string(i)] >> *(tile->p_kps_desc_3d);
+  }
+  fs.release();
+  printf("Read %d 3d matches for section %d\n", count, this->real_section_id);
+}
+
+void tfk::Section::save_3d_keypoints(std::string filename) {
+  cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"),
+                     cv::FileStorage::WRITE);
+  // store the 3d keypoints
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* tile = this->tiles[i];
+    cv::write(fs, "keypoints_"+std::to_string(i),
+              (*(tile->p_kps_3d)));
+    cv::write(fs, "descriptors_"+std::to_string(i),
+              (*(tile->p_kps_desc_3d)));
+  }
+  fs.release();
+}
+
+void tfk::Section::save_2d_graph(std::string filename) {
+  cv::FileStorage fs(filename+std::string("_2d_matches.yml.gz"), cv::FileStorage::WRITE);
+  int count = 0;
+  for (int i = 0; i < this->tiles.size(); i++) {
+      Tile* tile = this->tiles[i];
+      cv::write(fs, "num_edges_"+std::to_string(i), (int) tile->edges.size());
+    for (int j = 0; j < tile->edges.size(); j++) {
+      cv::write(fs, "neighbor_id_"+std::to_string(i) + "_" + std::to_string(j),
+          tile->edges[j].neighbor_id);
+      cv::write(fs, "weight_"+std::to_string(i) + "_" + std::to_string(j),
+          1.0);
+      cv::write(fs, "v_points_"+std::to_string(i)+"_"+std::to_string(j),
+          *(tile->edges[j].v_points));
+      cv::write(fs, "n_points_"+std::to_string(i)+"_"+std::to_string(j),
+          *(tile->edges[j].n_points));
+      count++;
+    }
+  }
+  printf("wrote %d edges\n", count);
+  fs.release();
+}
+void tfk::Section::read_2d_graph(std::string filename) {
+  cv::FileStorage fs(filename+std::string("_2d_matches.yml.gz"), cv::FileStorage::READ);
+  int count = 0;
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* tile = this->tiles[i];
+    int edge_size;
+    fs["num_edges_"+std::to_string(i)] >> edge_size;
+    std::vector<edata> edge_data;
+    std::set<int> n_ids_seen;
+    tile->edges.clear();
+    n_ids_seen.clear();
+    for (int j = 0; j < edge_size; j++) {
+      edata edge;
+      fs["neighbor_id_"+std::to_string(i) + "_" + std::to_string(j)] >> edge.neighbor_id;
+      std::vector<cv::Point2f>* v_points = new std::vector<cv::Point2f>();
+      std::vector<cv::Point2f>* n_points = new std::vector<cv::Point2f>();
+      fs["weight_"+std::to_string(i) + "_" + std::to_string(j)] >> edge.weight;
+      fs["v_points_"+std::to_string(i) + "_" + std::to_string(j)] >> *v_points;
+      fs["n_points_"+std::to_string(i) + "_" + std::to_string(j)] >> *n_points;
+      edge.v_points = v_points;
+      edge.n_points = n_points;
+      edge.neighbor_tile = this->tiles[edge.neighbor_id];
+      tile->edges.push_back(edge);
+      count++;
+    }
+    //tile->edges = edge_data;
+  }
+
+  printf("read %d edges\n", count);
+  fs.release();
+}
+
+
+
+void tfk::Section::read_tile_matches() {
+
+  std::string filename =
+      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
+
+  this->read_3d_keypoints(filename);
+  this->read_2d_graph(filename);
+}
+
+void tfk::Section::save_tile_matches() {
+
+  std::string filename =
+      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
+
+  this->save_3d_keypoints(filename);
+  this->save_2d_graph(filename);
+}
+
 void tfk::Section::compute_keypoints_and_matches() {
   // assume that section data doesn't exist.
 
-  cilk_for (int i = 0; i < this->tiles.size(); i++) {
-    Tile* tile = this->tiles[i];
-    tile->compute_sift_keypoints2d();
-    tile->compute_sift_keypoints3d();
+
+  if (!this->section_data_exists()) {
+    cilk_for (int i = 0; i < this->tiles.size(); i++) {
+      Tile* tile = this->tiles[i];
+      tile->compute_sift_keypoints2d();
+      tile->compute_sift_keypoints3d();
+    }
+
+
+    cilk_for (int i = 0; i < this->tiles.size(); i++) {
+      this->compute_tile_matches(i, graph);
+    }
+
+    this->save_tile_matches();
+  } else {
+    this->read_tile_matches();
   }
 
-  this->graph = new Graph();
-  graph->resize(this->tiles.size());
-
-  cilk_for (int i = 0; i < this->tiles.size(); i++) {
-    this->compute_tile_matches(i, graph);
-  }
-
+    this->graph = new Graph();
+    graph->resize(this->tiles.size());
   // phase 0 of make_symmetric --- find edges to add.
   cilk_for (int i = 0; i < this->tiles.size(); i++) {
     this->tiles[i]->make_symmetric(0, this->tiles);
@@ -1069,7 +1195,14 @@ tfk::Section::Section(SectionData& section_data) {
   //section_data_t *p_sec_data = &(p_tile_data->sec_data[i - p_tile_data->base_section]);
 
   this->section_id = section_data.section_id();
+  this->real_section_id = section_data.section_id();
   this->n_tiles = 0;
+  this->a00 = 1.0;
+  this->a11 = 1.0;
+  this->a01 = 0.0;
+  this->a10 = 0.0;
+  this->offset_x = 0.0;
+  this->offset_y = 0.0;
   if (section_data.has_out_d1()) {
     this->out_d1 = section_data.out_d1();
   }

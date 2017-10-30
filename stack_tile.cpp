@@ -247,6 +247,25 @@ cv::Point2f tfk::Tile::rigid_transform(cv::Point2f pt) {
   return pt2;
 }
 
+bool tfk::Tile::overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox) {
+    int x1_start = this->x_start;
+    int x1_finish = this->x_finish;
+    int y1_start = this->y_start;
+    int y1_finish = this->y_finish;
+
+    int x2_start = bbox.first.x;
+    int x2_finish = bbox.second.x;
+    int y2_start = bbox.first.y;
+    int y2_finish = bbox.second.y;
+
+    bool res = false;
+    if ((x1_start < x2_finish) && (x1_finish > x2_start) &&
+        (y1_start < y2_finish) && (y1_finish > y2_start)) {
+        res = true;
+    }
+    return res;
+}
+
 
 bool tfk::Tile::overlaps_with(Tile* other) {
     int x1_start = this->x_start;

@@ -375,6 +375,7 @@ class Tile {
 
 
    void get_3d_keypoints(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::Mat>& desc);
+   bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
    bool overlaps_with(Tile* other);
    void local2DAlignUpdate();
    void insert_matches(Tile* neighbor, std::vector<cv::Point2f>& points_a, std::vector<cv::Point2f>& points_b);
@@ -389,6 +390,7 @@ class Tile {
 class Section {
   public:
     int section_id;
+    int real_section_id;
     int n_tiles;
     int out_d1;
     int out_d2;
@@ -419,8 +421,10 @@ class Section {
     double* rest_lengths;
     double* rest_areas;
 
+
+
     std::vector<tfkMatch> section_mesh_matches;
-    //cv::Mat* transform;
+    cv::Mat coarse_transform;
 
 
 
@@ -442,6 +446,8 @@ class Section {
 
     cv::Mat* read_tile(std::string filepath, Resolution res);
 
+
+    bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
 
     std::pair<cv::Point2f, cv::Point2f> affine_transform_bbox(
         std::pair<cv::Point2f, cv::Point2f> bbox);
@@ -469,6 +475,15 @@ class Section {
 
     void apply_affine_transforms();
 
+    void read_3d_keypoints(std::string filename);
+    void save_3d_keypoints(std::string filename);
+    void read_2d_graph(std::string filename);
+    void save_2d_graph(std::string filename);
+
+    bool section_data_exists();
+
+    void read_tile_matches();
+    void save_tile_matches();
 };
 
 
