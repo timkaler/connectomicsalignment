@@ -10,35 +10,6 @@ enum Resolution {THUMBNAIL, FULL};
 //  return a.x*b.x + a.y*b.y;
 //}
 
-static cv::Mat colorize(cv::Mat c1, cv::Mat c2, cv::Mat c3, unsigned int channel = 0) {
-    std::vector<cv::Mat> channels;
-    channels.push_back(c1);
-    channels.push_back(c2);
-    channels.push_back(c3);
-    cv::Mat color;
-    cv::merge(channels, color);
-    return color;
-}
-
-static cv::Mat apply_heatmap_to_grayscale(cv::Mat* gray, cv::Mat* heat_floats, int nrows, int ncols) {
-  cv::Mat c1,c2,c3;
-  c1.create(nrows, ncols, CV_8UC1);
-  c2.create(nrows, ncols, CV_8UC1);
-  c3.create(nrows, ncols, CV_8UC1);
-
-  for (int x = 0; x < gray->size().width; x++) {
-    for (int y = 0; y < gray->size().height; y++) {
-       float g = (1.0*gray->at<unsigned char>(y,x))/255;
-       float h = 0.5 + 0.5*(heat_floats->at<float>(y,x)*heat_floats->at<float>(y,x));
-
-       c1.at<unsigned char>(y,x) = (unsigned char) (g*255*(1-h));
-       c2.at<unsigned char>(y,x) = (unsigned char) (g*255*(1-h));
-       c3.at<unsigned char>(y,x) = (unsigned char) (g*255*((h)));
-    }
-  }
-  return colorize(c1,c2,c3);
-}
-
 
 ///*MOVE TO COMMON.H OR SOME OTHER FILE*/
 //static void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,

@@ -30,6 +30,35 @@ static float CONTRAST_THRESH = 0.04;
 static float CONTRAST_THRESH_3D = 0.04;
 static float EDGE_THRESH_3D = 5.0;
 static float EDGE_THRESH_2D = 5.0;
+static cv::Mat colorize(cv::Mat c1, cv::Mat c2, cv::Mat c3, unsigned int channel = 0) {
+    std::vector<cv::Mat> channels;
+    channels.push_back(c1);
+    channels.push_back(c2);
+    channels.push_back(c3);
+    cv::Mat color;
+    cv::merge(channels, color);
+    return color;
+}
+
+
+static cv::Mat apply_heatmap_to_grayscale(cv::Mat* gray, cv::Mat* heat_floats, int nrows, int ncols) {
+  cv::Mat c1,c2,c3;
+  c1.create(nrows, ncols, CV_8UC1);
+  c2.create(nrows, ncols, CV_8UC1);
+  c3.create(nrows, ncols, CV_8UC1);
+
+  for (int x = 0; x < gray->size().width; x++) {
+    for (int y = 0; y < gray->size().height; y++) {
+       float g = (1.0*gray->at<unsigned char>(y,x))/255;
+       float h = 0.5 + 0.5*(heat_floats->at<float>(y,x)*heat_floats->at<float>(y,x));
+
+       c1.at<unsigned char>(y,x) = (unsigned char) (g*255*(1-h));
+       c2.at<unsigned char>(y,x) = (unsigned char) (g*255*(1-h));
+       c3.at<unsigned char>(y,x) = (unsigned char) (g*255*((h)));
+    }
+  }
+  return colorize(c1,c2,c3);
+}
 
 // Helper method to check if a key point is inside a given bounding
 // box.
@@ -469,6 +498,8 @@ class Section {
     void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename);
     cv::Point2f get_render_scale(Resolution resolution);
 
+    void render_error(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
+                      std::string filename);
 
     renderTriangle getRenderTriangle(tfkTriangle tri);
     std::tuple<bool, float, float, float> get_triangle_for_point(cv::Point2f pt);
@@ -522,6 +553,7 @@ class Stack {
 
     void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix);
 
+    void render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix);
 };
 
 } // end namespace tfk.

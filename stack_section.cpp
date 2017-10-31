@@ -13,6 +13,53 @@ cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
 //void render_section(double min_x, double min_y, double max_x, double max_y) {
 //}
 
+
+void tfk::Section::render_error(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
+  cv::Mat n_image = neighbor->render(bbox, THUMBNAIL);
+  cv::Mat my_image = this->render(bbox, THUMBNAIL);
+
+  int nrows = n_image.rows;
+  int ncols = n_image.cols;
+
+  cv::Mat heat_map;
+  cv::Mat n_patch;
+  cv::Mat my_patch;
+
+  n_patch.create(10, 10, CV_8UC1);
+  my_patch.create(10, 10, CV_8UC1);
+  heat_map.create(nrows, ncols, CV_32F);
+
+  std::vector<std::pair<cv::Point2f, float> > patch_results;
+
+  for (int y = 0; y +10< nrows; y += 10) {
+    for (int x = 0; x +10< ncols; x += 10) {
+      for (int _y = 0; _y < 10; _y++) {
+        for (int _x = 0; _x < 10; _x++) {
+          n_patch.at<uint8_t>(_y, _x) = n_image.at<uint8_t>(y+_y, x+_x);
+          my_patch.at<uint8_t>(_y, _x) = my_image.at<uint8_t>(y+_y, x+_x);
+        }
+      }
+
+      cv::Mat result;
+      cv::matchTemplate(n_patch, my_patch, result, CV_TM_CCOEFF_NORMED);
+      float corr = result.at<float>(0,0);
+
+      for (int _y = 0; _y < 10; _y++) {
+        for (int _x = 0; _x < 10; _x++) {
+          if (corr < 0.1) {
+            heat_map.at<float>(y+_y, x+_x) = 1.0;
+          } else {
+            heat_map.at<float>(y+_y, x+_x) = 0.0;
+          }
+        }
+      }
+    }
+  }
+
+  cv::Mat heatmap = apply_heatmap_to_grayscale(&my_image, &heat_map, nrows, ncols);
+  imwrite(filename_prefix, heatmap);
+}
+
 bool tfk::Section::section_data_exists() {
   std::string filename =
       std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
