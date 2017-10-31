@@ -23,16 +23,11 @@ def extract_sift():
     def extract_sift_nested(tile):
         try:
             image_path = tile.filepath
-            img = cv2.imread(image_path,cv2.cv.CV_LOAD_IMAGE_GRAYSCALE)
-            detector = cv2.FeatureDetector_create("SIFT")
-            descriptor = cv2.DescriptorExtractor_create("SIFT")
-            #print("Detecting keypoints...")
-            kp = detector.detect(img)
-            #print("Computing descriptions...")
-            kp, descs = descriptor.compute(img,kp) 
+            img = cv2.imread(image_path,cv2.IMREAD_GRAYSCALE)
+            #nfeatures=4, nOctaveLayers=6, contrastThreshold=0.04, edgeThreshold=5, sigma=1.6
+            sift = cv2.xfeatures2d.SIFT_create(4, 6, 0.04, 5, 1.6)
+            kp, descs = sift.detectAndCompute(img,None)
             kp = [point.pt for point in kp]
-
-
             return Row(tile_id=tile.tile_id,
                             x_start=tile.x_start,
                             x_finish=tile.x_finish,
@@ -62,6 +57,11 @@ def nearest_neighbor():
     def nearest_neighbor_nested(pair):
         tile_1 = pair[0]
         tile_2 = pair[1]
+        OFFSET = 50
+        min_x = max(tile_1.x_start, tile_2.x_start) - 50
+        max_x = min(tile_1.x_finish, tile_2.x_finish) + 50
+        min_y = max(tile_1.y_start, tile_2.y_start) - 50
+        max_y = min(tile_1.y_finish, tile_2.y_finish) + 50
         # FLANN 
         FLANN_INDEX_KDTREE = 0
         index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
@@ -74,7 +74,9 @@ def nearest_neighbor():
         for m,n in matches:
             if m.distance < 0.75*n.distance:
                 #just remember the pt locations for the pair
-                matches_for_pair.append((tile_1.kps[m.queryIdx],tile_2.kps[n.trainIdx]))
+                if ( (min_x <= tile_1.kps[m.queryIdx][0]+tile_1.x_start <= max_x and min_y <= tile_1.kps[m.queryIdx][1]+tile_1.y_start <= max_y) or
+                    (min_x <= tile_2.kps[n.trainIdx][0]+tile_2.x_start <= max_x and min_y <= tile_2.kps[n.trainIdx][1]+tile_2.y_start <= max_y)):
+                    matches_for_pair.append((tile_1.kps[m.queryIdx],tile_2.kps[n.trainIdx]))
 
         return Row(tile_1_id=tile_1.tile_id,
                             x_start_1=tile_1.x_start,
@@ -136,6 +138,7 @@ if __name__ == "__main__":
 
     
     sc = SparkContext(appName="feature_extractor")
+    sc._conf.set("spark.python.profile", "true")
     log4jLogger = sc._jvm.org.apache.log4j
     LOGGER = log4jLogger.LogManager.getLogger(__name__)
     LOGGER.info("pyspark script logger initialized")
@@ -157,8 +160,9 @@ if __name__ == "__main__":
     matches = overlapping_pairs.map(nearest_neighbor())
     thresh = 5.0
     filtered_matches = matches.map(simple_ransac(thresh)).filter(lambda x: x.matches != [])
+    filtered_matches.collect()
     filtered_matches.foreach(print)
-    #features = features.map(lambda x: (Row(fileName=x[0], features=x[1].tolist())))
+    sc.show_profiles()
     
 
 
