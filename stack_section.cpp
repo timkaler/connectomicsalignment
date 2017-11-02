@@ -37,6 +37,11 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
   bbox = this->affine_transform_bbox(bbox);
   bbox = this->elastic_transform_bbox(bbox);
 
+  float slack = 4000.0;
+  bbox.first.x -= slack;
+  bbox.first.y -= slack;
+  bbox.second.x += slack;
+  bbox.second.y += slack;
 
   cv::Mat halo = other_neighbor->render(bbox, FULL);
 
@@ -51,7 +56,7 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
       pt = tile->rigid_transform(pt);
       pt = this->affine_transform(pt);
       pt = this->elastic_transform(pt);
-      uint8_t halo_val = halo.at<uint8_t>(pt.y, pt.x);
+      uint8_t halo_val = halo.at<uint8_t>((int)(pt.y - bbox.first.y), (int)(pt.x - bbox.first.x));
       if (halo_val == 0) {
         printf("Halo value 0 detected, skipping this one.\n");
         return;
@@ -149,10 +154,10 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor,
           }
         }
 
-        int bad_min_x = bbox.first.x + (bx)*render_scale.x;
+        int bad_min_x = bbox.first.x + (bx-100)*render_scale.x;
         int bad_max_x = bbox.first.x + (bx+100)*render_scale.x;
 
-        int bad_min_y = bbox.first.y + (by)*render_scale.y;
+        int bad_min_y = bbox.first.y + (by-100)*render_scale.y;
         int bad_max_y = bbox.first.y + (by+100)*render_scale.y;
 
         auto bad_bbox = std::make_pair(cv::Point2f(bad_min_x, bad_min_y),
