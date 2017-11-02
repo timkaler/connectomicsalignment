@@ -78,6 +78,8 @@ message TileData {
 
     optional uint64 level = 23;
     optional bool bad = 24;
+    optional uint64 number_overlaps = 25;
+    optional int64 corralation_sum = 26;
 
 }
 

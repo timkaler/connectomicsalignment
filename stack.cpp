@@ -16,9 +16,9 @@ tfk::Stack::Stack(int base_section, int n_sections,
 
 void tfk::Stack::render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
 
-  for (int i = 1; i < this->sections.size(); i++) {
+  for (int i = 1; i < this->sections.size()-1; i++) {
     Section* section = this->sections[i];
-    section->render_error(this->sections[i-1], bbox, filename_prefix+std::to_string(i)+".png");
+    section->render_error(this->sections[i-1], this->sections[i+1], bbox, filename_prefix+std::to_string(i)+".png");
   }
 
 }

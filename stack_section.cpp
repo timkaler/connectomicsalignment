@@ -18,8 +18,10 @@ cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
 
 
 
-void tfk::Section::render_error(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
+void tfk::Section::render_error(Section* neighbor, Section* other_neighbor,
+    std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
   cv::Mat n_image = neighbor->render(bbox, THUMBNAIL);
+  cv::Mat other_n_image = other_neighbor->render(bbox, THUMBNAIL);
   cv::Mat my_image = this->render(bbox, THUMBNAIL);
 
   int nrows = n_image.rows;
@@ -27,9 +29,11 @@ void tfk::Section::render_error(Section* neighbor, std::pair<cv::Point2f, cv::Po
 
   cv::Mat heat_map;
   cv::Mat n_patch;
+  cv::Mat other_n_patch;
   cv::Mat my_patch;
 
   n_patch.create(10, 10, CV_8UC1);
+  other_n_patch.create(10, 10, CV_8UC1);
   my_patch.create(10, 10, CV_8UC1);
   heat_map.create(nrows, ncols, CV_32F);
 
@@ -52,10 +56,12 @@ void tfk::Section::render_error(Section* neighbor, std::pair<cv::Point2f, cv::Po
         for (int x = 0; x +10< 100; x += 10) {
           for (int _y = 0; _y < 10; _y++) {
             for (int _x = 0; _x < 10; _x++) {
+              other_n_patch.at<uint8_t>(_y, _x) = other_n_image.at<uint8_t>(by+y+_y, bx+x+_x);
               n_patch.at<uint8_t>(_y, _x) = n_image.at<uint8_t>(by+y+_y, bx+x+_x);
               my_patch.at<uint8_t>(_y, _x) = my_image.at<uint8_t>(by+y+_y, bx+x+_x);
               if (n_patch.at<uint8_t>(_y,_x) == 0 ||
-                  my_patch.at<uint8_t>(_y,_x) == 0) {
+                  my_patch.at<uint8_t>(_y,_x) == 0 ||
+                  other_n_patch.at<uint8_t>(_y,_x) == 0) {
                 skip = true;
               }
             }
@@ -64,7 +70,13 @@ void tfk::Section::render_error(Section* neighbor, std::pair<cv::Point2f, cv::Po
           cv::Mat result;
           cv::matchTemplate(n_patch, my_patch, result, CV_TM_CCOEFF_NORMED);
           float corr = result.at<float>(0,0);
-          if (corr < 0.1) {
+
+          cv::Mat other_result;
+          cv::matchTemplate(other_n_patch, my_patch, other_result, CV_TM_CCOEFF_NORMED);
+          float other_corr = other_result.at<float>(0,0);
+
+
+          if (corr < 0.1 && other_corr < 0.1) {
             bad++;
           }
           total++;

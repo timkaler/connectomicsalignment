@@ -498,7 +498,7 @@ class Section {
     void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename);
     cv::Point2f get_render_scale(Resolution resolution);
 
-    void render_error(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
+    void render_error(Section* neighbor, Section* other_neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
                       std::string filename);
 
     renderTriangle getRenderTriangle(tfkTriangle tri);
