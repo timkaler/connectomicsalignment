@@ -181,10 +181,10 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor,
           }
         }
 
-        int bad_min_x = bbox.first.x + (bx-100)*render_scale.x;
+        int bad_min_x = bbox.first.x + (bx)*render_scale.x;
         int bad_max_x = bbox.first.x + (bx+100)*render_scale.x;
 
-        int bad_min_y = bbox.first.y + (by-100)*render_scale.y;
+        int bad_min_y = bbox.first.y + (by)*render_scale.y;
         int bad_max_y = bbox.first.y + (by+100)*render_scale.y;
 
         auto bad_bbox = std::make_pair(cv::Point2f(bad_min_x, bad_min_y),
