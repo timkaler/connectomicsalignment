@@ -290,8 +290,8 @@ tfk::Tile::Tile(TileData& tile_data) {
     //tile_data_t *p_cur_tile = &(p_sec_data->tiles[p_sec_data->n_tiles]);
     //p_sec_data->n_tiles++;
 
-    this->shape_dx = tile_data.y_finish() - tile_data.y_finish();
-    this->shape_dy = tile_data.y_finish() - tile_data.y_finish();
+    this->shape_dx = tile_data.x_finish() - tile_data.x_start();
+    this->shape_dy = tile_data.y_finish() - tile_data.y_start();
 
     this->section_id = tile_data.section_id();
     this->mfov_id = tile_data.tile_mfov();

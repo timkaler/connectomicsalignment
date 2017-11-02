@@ -119,6 +119,7 @@ bool tfk::Section::tile_in_render_box(Tile* tile, std::pair<cv::Point2f, cv::Poi
 
   for (int i = 0; i < 4; i++) {
     corners[i] = this->affine_transform(corners[i]);
+    corners[i] = this->elastic_transform(corners[i]);
   }
 
   float tile_min_x = corners[0].x;
@@ -297,6 +298,10 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
       }
       section_p_out->at<unsigned char>(y, x) =
           section_p_out_sum->at<unsigned short>(y, x) / section_p_out_ncount->at<unsigned short>(y,x);
+      // force the min value to be at least 1 so that we can check for out-of-range pixels.
+      if (section_p_out->at<unsigned char>(y, x) == 0) {
+        section_p_out->at<unsigned char>(y, x) = 1;
+      }
     }
   }
 
