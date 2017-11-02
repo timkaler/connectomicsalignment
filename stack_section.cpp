@@ -16,11 +16,38 @@ cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
 // need to implement tile intersects with bounding box.
 // need to implement render_replacement_tile
 
+bool tfk::Section::transformed_tile_overlaps_with(Tile* tile,
+    std::pair<cv::Point2f, cv::Point2f> bbox) {
+  auto tile_bbox = tile->get_bbox();
+  tile_bbox = this->affine_transform_bbox(tile_bbox);
+  tile_bbox = this->elastic_transform_bbox(tile_bbox);
+
+  int x1_start = tile_bbox.first.x;
+  int x1_finish = tile_bbox.second.x;
+  int y1_start = tile_bbox.first.y;
+  int y1_finish = tile_bbox.second.y;
+
+  int x2_start = bbox.first.x;
+  int x2_finish = bbox.second.x;
+  int y2_start = bbox.first.y;
+  int y2_finish = bbox.second.y;
+
+  bool res = false;
+  if ((x1_start < x2_finish) && (x1_finish > x2_start) &&
+      (y1_start < y2_finish) && (y1_finish > y2_start)) {
+      res = true;
+  }
+  return res;
+
+}
+
+
 void tfk::Section::replace_bad_region(std::pair<cv::Point2f, cv::Point2f> bad_bbox,
                                      Section* other_neighbor) {
   for (int i = 0; i < this->tiles.size(); i++) {
     Tile* tile = this->tiles[i];
-    if (tile->overlaps_with(bad_bbox)) {
+    //if (tile->overlaps_with(bad_bbox)) {
+    if (this->transformed_tile_overlaps_with(tile, bad_bbox)) {
       // check to make sure this tile hasn't already been replaced.
       if (this->replaced_tile_ids.find(i) == this->replaced_tile_ids.end()) {
         this->replaced_tile_ids.insert(i);

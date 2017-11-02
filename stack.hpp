@@ -525,6 +525,8 @@ class Section {
     // tile belongs to *this* section.
     void replace_bad_tile(Tile* tile, Section* other_neighbor);
 
+    bool transformed_tile_overlaps_with(Tile* tile,
+        std::pair<cv::Point2f, cv::Point2f> bbox);
 };
 
 
