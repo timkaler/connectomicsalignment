@@ -16,6 +16,54 @@ cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
 // need to implement tile intersects with bounding box.
 // need to implement render_replacement_tile
 
+void tfk::Section::replace_bad_region(std::pair<cv::Point2f, cv::Point2f> bad_bbox,
+                                     Section* other_neighbor) {
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* tile = this->tiles[i];
+    if (tile->overlaps_with(bad_bbox)) {
+      // check to make sure this tile hasn't already been replaced.
+      if (this->replaced_tile_ids.find(i) == this->replaced_tile_ids.end()) {
+        this->replaced_tile_ids.insert(i);
+        printf("Replacing tile in section %d with tile_id %d\n", this->real_section_id, i);
+        this->replace_bad_tile(tile, other_neighbor);
+      }
+    }
+  }
+}
+
+void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
+
+  auto bbox = tile->get_bbox();
+  bbox = this->affine_transform_bbox(bbox);
+  bbox = this->elastic_transform_bbox(bbox);
+
+
+  cv::Mat halo = other_neighbor->render(bbox, FULL);
+
+  cv::Mat tile_img = cv::imread(tile->filepath, CV_LOAD_IMAGE_UNCHANGED);
+
+  imwrite("orig_tiles/sec_"+std::to_string(this->real_section_id) +
+          "_tileid_" + std::to_string(tile->tile_id) +".bmp", tile_img);
+
+  for (int y = 0; y < tile_img.rows; y++) {
+    for (int x = 0; x < tile_img.cols; x++) {
+      cv::Point2f pt = cv::Point2f(x,y);
+      pt = tile->rigid_transform(pt);
+      pt = this->affine_transform(pt);
+      pt = this->elastic_transform(pt);
+      uint8_t halo_val = halo.at<uint8_t>(pt.y, pt.x);
+      if (halo_val == 0) {
+        printf("Halo value 0 detected, skipping this one.\n");
+        return;
+      }
+      tile_img.at<uint8_t>(y,x) = halo_val;
+    }
+  }
+
+  imwrite("new_tiles/sec_"+std::to_string(this->real_section_id) +
+          "_tileid_" + std::to_string(tile->tile_id) +".bmp", tile_img);
+
+}
 
 
 void tfk::Section::render_error(Section* neighbor, Section* other_neighbor,
@@ -46,6 +94,7 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor,
   }
 
 
+  cv::Point2f render_scale = this->get_render_scale(THUMBNAIL);
 
   for (int by = 0; by + 100 < nrows; by += 100) {
     for (int bx = 0; bx + 100 < ncols; bx += 100) {
@@ -99,7 +148,21 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor,
             heat_map.at<float>(by+y, bx+x) = 1.0;
           }
         }
+
+        int bad_min_x = bbox.first.x + (bx)*render_scale.x;
+        int bad_max_x = bbox.first.x + (bx+100)*render_scale.x;
+
+        int bad_min_y = bbox.first.y + (by)*render_scale.y;
+        int bad_max_y = bbox.first.y + (by+100)*render_scale.y;
+
+        auto bad_bbox = std::make_pair(cv::Point2f(bad_min_x, bad_min_y),
+                                   cv::Point2f(bad_max_x, bad_max_y));
+
+        this->replace_bad_region(bad_bbox, other_neighbor);
       }
+
+
+
     }
   }
 
@@ -364,6 +427,32 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
 void tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename) {
   cv::Mat img = this->render(bbox, THUMBNAIL);
   cv::imwrite(filename, img);
+}
+
+std::pair<cv::Point2f, cv::Point2f> tfk::Section::elastic_transform_bbox(
+    std::pair<cv::Point2f, cv::Point2f> bbox) {
+  cv::Point2f corners[4];
+  corners[0] = cv::Point2f(bbox.first.x, bbox.first.y);
+  corners[1] = cv::Point2f(bbox.second.x, bbox.first.y);
+  corners[2] = cv::Point2f(bbox.first.x, bbox.second.y);
+  corners[3] = cv::Point2f(bbox.second.x, bbox.second.y);
+
+  for (int i = 0; i < 4; i++) {
+    corners[i] = this->elastic_transform(corners[i]);
+  }
+
+  float min_x = corners[0].x;
+  float max_x = corners[0].x;
+  float min_y = corners[0].y;
+  float max_y = corners[0].y;
+  for (int i = 1; i < 4; i++) {
+    if (corners[i].x < min_x) min_x = corners[i].x;
+    if (corners[i].x > max_x) max_x = corners[i].x;
+
+    if (corners[i].y < min_y) min_y = corners[i].y;
+    if (corners[i].y > max_y) max_y = corners[i].y;
+  }
+  return std::make_pair(cv::Point2f(min_x,min_y), cv::Point2f(max_x, max_y));
 }
 
 

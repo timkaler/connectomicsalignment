@@ -450,6 +450,7 @@ class Section {
     double* rest_lengths;
     double* rest_areas;
 
+    std::set<int> replaced_tile_ids;
 
 
     std::vector<tfkMatch> section_mesh_matches;
@@ -479,6 +480,8 @@ class Section {
     bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
 
     std::pair<cv::Point2f, cv::Point2f> affine_transform_bbox(
+        std::pair<cv::Point2f, cv::Point2f> bbox);
+    std::pair<cv::Point2f, cv::Point2f> elastic_transform_bbox(
         std::pair<cv::Point2f, cv::Point2f> bbox);
     void affine_transform_keypoints(std::vector<cv::KeyPoint>& keypoints);
     void get_elastic_matches_one(Section* neighbor);
@@ -515,6 +518,13 @@ class Section {
 
     void read_tile_matches();
     void save_tile_matches();
+
+    void replace_bad_region(std::pair<cv::Point2f, cv::Point2f> bad_bbox,
+                            Section* other_neighbor);
+
+    // tile belongs to *this* section.
+    void replace_bad_tile(Tile* tile, Section* other_neighbor);
+
 };
 
 
