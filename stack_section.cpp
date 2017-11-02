@@ -13,6 +13,10 @@ cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
 //void render_section(double min_x, double min_y, double max_x, double max_y) {
 //}
 
+// need to implement tile intersects with bounding box.
+// need to implement render_replacement_tile
+
+
 
 void tfk::Section::render_error(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
   cv::Mat n_image = neighbor->render(bbox, THUMBNAIL);
@@ -31,25 +35,56 @@ void tfk::Section::render_error(Section* neighbor, std::pair<cv::Point2f, cv::Po
 
   std::vector<std::pair<cv::Point2f, float> > patch_results;
 
-  for (int y = 0; y +10< nrows; y += 10) {
-    for (int x = 0; x +10< ncols; x += 10) {
-      for (int _y = 0; _y < 10; _y++) {
-        for (int _x = 0; _x < 10; _x++) {
-          n_patch.at<uint8_t>(_y, _x) = n_image.at<uint8_t>(y+_y, x+_x);
-          my_patch.at<uint8_t>(_y, _x) = my_image.at<uint8_t>(y+_y, x+_x);
+  for (int y = 0; y < nrows; y++) {
+    for (int x = 0; x < ncols; x++) {
+      heat_map.at<float>(y,x) = 0.0;
+    }
+  }
+
+
+
+  for (int by = 0; by + 100 < nrows; by += 100) {
+    for (int bx = 0; bx + 100 < ncols; bx += 100) {
+      int bad = 0;
+      int total = 0;
+      bool skip = false;
+      for (int y = 0; y +10< 100; y += 10) {
+        for (int x = 0; x +10< 100; x += 10) {
+          for (int _y = 0; _y < 10; _y++) {
+            for (int _x = 0; _x < 10; _x++) {
+              n_patch.at<uint8_t>(_y, _x) = n_image.at<uint8_t>(by+y+_y, bx+x+_x);
+              my_patch.at<uint8_t>(_y, _x) = my_image.at<uint8_t>(by+y+_y, bx+x+_x);
+              if (n_patch.at<uint8_t>(_y,_x) == 0 ||
+                  my_patch.at<uint8_t>(_y,_x) == 0) {
+                skip = true;
+              }
+            }
+          }
+
+          cv::Mat result;
+          cv::matchTemplate(n_patch, my_patch, result, CV_TM_CCOEFF_NORMED);
+          float corr = result.at<float>(0,0);
+          if (corr < 0.1) {
+            bad++;
+          }
+          total++;
+
+          //for (int _y = 0; _y < 10; _y++) {
+          //  for (int _x = 0; _x < 10; _x++) {
+          //    if (corr < 0.1) {
+          //      heat_map.at<float>(y+_y, x+_x) = 1.0;
+          //    } else {
+          //      heat_map.at<float>(y+_y, x+_x) = 0.0;
+          //    }
+          //  }
+          //}
         }
       }
 
-      cv::Mat result;
-      cv::matchTemplate(n_patch, my_patch, result, CV_TM_CCOEFF_NORMED);
-      float corr = result.at<float>(0,0);
-
-      for (int _y = 0; _y < 10; _y++) {
-        for (int _x = 0; _x < 10; _x++) {
-          if (corr < 0.1) {
-            heat_map.at<float>(y+_y, x+_x) = 1.0;
-          } else {
-            heat_map.at<float>(y+_y, x+_x) = 0.0;
+      if (bad > total/4 && !skip) {
+        for (int y = 0; y < 100; y++) {
+          for (int x = 0; x < 100; x++) {
+            heat_map.at<float>(by+y, bx+x) = 1.0;
           }
         }
       }
