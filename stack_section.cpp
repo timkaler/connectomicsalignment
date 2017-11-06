@@ -70,6 +70,8 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
   bbox.second.x += slack;
   bbox.second.y += slack;
 
+{
+  // full resolution
   cv::Mat halo = other_neighbor->render(bbox, FULL);
 
   cv::Mat tile_img = cv::imread(tile->filepath, CV_LOAD_IMAGE_UNCHANGED);
@@ -94,14 +96,56 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
 
   imwrite("new_tiles/sec_"+std::to_string(this->real_section_id) +
           "_tileid_" + std::to_string(tile->tile_id) +".bmp", tile_img);
+}
+
+{
+  cv::Point2f render_scale = this->get_render_scale(THUMBNAIL);
+
+  std::string thumbnailpath = std::string(tile->filepath);
+  thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".bmp"), 4,".jpg");
+  if (thumbnailpath.find("new_tiles") != -1) {
+    thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
+  }
+
+  // thumbnail resolution
+  cv::Mat halo = other_neighbor->render(bbox, THUMBNAIL);
+  cv::Mat tile_img = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
+
+  imwrite("orig_tiles/sec_"+std::to_string(this->real_section_id) +
+          "_tileid_" + std::to_string(tile->tile_id) +".jpg", tile_img);
+
+  for (int y = 0; y < tile_img.rows; y++) {
+    for (int x = 0; x < tile_img.cols; x++) {
+      cv::Point2f pt = cv::Point2f(x*render_scale.x,y*render_scale.y);
+      pt = tile->rigid_transform(pt);
+      pt = this->affine_transform(pt);
+      pt = this->elastic_transform(pt);
+      uint8_t halo_val = halo.at<uint8_t>((int)((pt.y - bbox.first.y)/render_scale.y), (int)((pt.x - bbox.first.x)/render_scale.x));
+      if (halo_val == 0) {
+        printf("Halo value 0 detected, skipping this one.\n");
+        return;
+      }
+      tile_img.at<uint8_t>(y,x) = halo_val;
+    }
+  }
+
+  imwrite("new_tiles/sec_"+std::to_string(this->real_section_id) +
+          "_tileid_" + std::to_string(tile->tile_id) +".jpg", tile_img);
+}
+
+
+
+
+
 
 }
 
 
-void tfk::Section::render_error(Section* neighbor, Section* other_neighbor,
+void tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Section* other2_neighbor,
     std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
   cv::Mat n_image = neighbor->render(bbox, THUMBNAIL);
   cv::Mat other_n_image = other_neighbor->render(bbox, THUMBNAIL);
+  cv::Mat other2_n_image = other2_neighbor->render(bbox, THUMBNAIL);
   cv::Mat my_image = this->render(bbox, THUMBNAIL);
 
   int nrows = n_image.rows;
@@ -110,11 +154,18 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor,
   cv::Mat heat_map;
   cv::Mat n_patch;
   cv::Mat other_n_patch;
+  cv::Mat other2_n_patch;
   cv::Mat my_patch;
 
-  n_patch.create(10, 10, CV_8UC1);
-  other_n_patch.create(10, 10, CV_8UC1);
-  my_patch.create(10, 10, CV_8UC1);
+
+  int patch_3_size = 100;
+  int patch_2_size = 20;
+
+
+  n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+  other_n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+  other2_n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+  my_patch.create(patch_2_size, patch_2_size, CV_8UC1);
   heat_map.create(nrows, ncols, CV_32F);
 
   std::vector<std::pair<cv::Point2f, float> > patch_results;
@@ -128,21 +179,27 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor,
 
   cv::Point2f render_scale = this->get_render_scale(THUMBNAIL);
 
-  for (int by = 0; by + 100 < nrows; by += 100) {
-    for (int bx = 0; bx + 100 < ncols; bx += 100) {
+
+
+
+  for (int by = 0; by + patch_3_size < nrows; by += patch_3_size/2) {
+    for (int bx = 0; bx + patch_3_size < ncols; bx += patch_3_size/2) {
       int bad = 0;
       int total = 0;
       bool skip = false;
-      for (int y = 0; y +10< 100; y += 10) {
-        for (int x = 0; x +10< 100; x += 10) {
-          for (int _y = 0; _y < 10; _y++) {
-            for (int _x = 0; _x < 10; _x++) {
+      int bad_above = 0;
+      for (int y = 0; y + patch_2_size < patch_3_size; y += patch_2_size/2) {
+        for (int x = 0; x + patch_2_size < patch_3_size; x += patch_2_size/2) {
+          for (int _y = 0; _y < patch_2_size; _y++) {
+            for (int _x = 0; _x < patch_2_size; _x++) {
               other_n_patch.at<uint8_t>(_y, _x) = other_n_image.at<uint8_t>(by+y+_y, bx+x+_x);
+              other2_n_patch.at<uint8_t>(_y, _x) = other2_n_image.at<uint8_t>(by+y+_y, bx+x+_x);
               n_patch.at<uint8_t>(_y, _x) = n_image.at<uint8_t>(by+y+_y, bx+x+_x);
               my_patch.at<uint8_t>(_y, _x) = my_image.at<uint8_t>(by+y+_y, bx+x+_x);
               if (n_patch.at<uint8_t>(_y,_x) == 0 ||
                   my_patch.at<uint8_t>(_y,_x) == 0 ||
-                  other_n_patch.at<uint8_t>(_y,_x) == 0) {
+                  other_n_patch.at<uint8_t>(_y,_x) == 0 ||
+                  other2_n_patch.at<uint8_t>(_y,_x) == 0) {
                 skip = true;
               }
             }
@@ -156,10 +213,19 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor,
           cv::matchTemplate(other_n_patch, my_patch, other_result, CV_TM_CCOEFF_NORMED);
           float other_corr = other_result.at<float>(0,0);
 
+          cv::Mat other2_result;
+          cv::matchTemplate(other2_n_patch, other_n_patch, other2_result, CV_TM_CCOEFF_NORMED);
+          float other2_corr = other2_result.at<float>(0,0);
 
-          if (corr < 0.1 && other_corr < 0.1) {
+
+          if (corr < 0 && other_corr < 0 && other2_corr > 0.1) {
             bad++;
           }
+
+          if (other2_corr < 0) {
+            bad_above++;
+          }
+
           total++;
 
           //for (int _y = 0; _y < 10; _y++) {
@@ -167,30 +233,30 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor,
           //    if (corr < 0.1) {
           //      heat_map.at<float>(y+_y, x+_x) = 1.0;
           //    } else {
-          //      heat_map.at<float>(y+_y, x+_x) = 0.0;
+          //      //heat_map.at<float>(y+_y, x+_x) = 0.0;
           //    }
           //  }
           //}
         }
       }
 
-      if (bad > total/4 && !skip) {
-        for (int y = 0; y < 100; y++) {
-          for (int x = 0; x < 100; x++) {
+      if (bad > total/4 && !skip && bad_above == 0) {
+        for (int y = 0; y < patch_3_size; y++) {
+          for (int x = 0; x < patch_3_size; x++) {
             heat_map.at<float>(by+y, bx+x) = 1.0;
           }
         }
 
         int bad_min_x = bbox.first.x + (bx)*render_scale.x;
-        int bad_max_x = bbox.first.x + (bx+100)*render_scale.x;
+        int bad_max_x = bbox.first.x + (bx+patch_3_size)*render_scale.x;
 
         int bad_min_y = bbox.first.y + (by)*render_scale.y;
-        int bad_max_y = bbox.first.y + (by+100)*render_scale.y;
+        int bad_max_y = bbox.first.y + (by+patch_3_size)*render_scale.y;
 
         auto bad_bbox = std::make_pair(cv::Point2f(bad_min_x, bad_min_y),
                                    cv::Point2f(bad_max_x, bad_max_y));
 
-        this->replace_bad_region(bad_bbox, other_neighbor);
+        //this->replace_bad_region(bad_bbox, other_neighbor);
       }
 
 
@@ -206,6 +272,7 @@ bool tfk::Section::section_data_exists() {
   std::string filename =
       std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
 
+
   cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"), cv::FileStorage::READ);
   if (!fs.isOpened()) {
     return false;
@@ -220,8 +287,9 @@ cv::Point2f tfk::Section::get_render_scale(Resolution resolution) {
 
     std::string thumbnailpath = std::string(first_tile->filepath);
     thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".bmp"), 4,".jpg");
-    thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
-
+    if (thumbnailpath.find("new_tiles") != -1) {
+      thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
+    }
     cv::Mat thumbnail_img = cv::imread(thumbnailpath, CV_LOAD_IMAGE_UNCHANGED);
     cv::Mat img = cv::imread(first_tile->filepath, CV_LOAD_IMAGE_UNCHANGED);
 
@@ -290,7 +358,9 @@ cv::Mat* tfk::Section::read_tile(std::string filepath, Resolution res) {
   if(res == THUMBNAIL) {
     std::string path = std::string(filepath);
     path = path.replace(path.find(".bmp"), 4,".jpg");
-    path = path.insert(path.find_last_of("/") + 1, "thumbnail_");
+    if (path.find("new_tiles") != -1) {
+      path = path.insert(path.find_last_of("/") + 1, "thumbnail_");
+    }
     (*tile_p_image) = cv::imread(path, CV_LOAD_IMAGE_GRAYSCALE);
   }
   if(res == FULL) {
@@ -1436,6 +1506,17 @@ tfk::Section::Section(SectionData& section_data) {
 
     Tile* tile = new Tile(tile_data);
     tile->tile_id = j;
+
+    std::string new_filepath = "new_tiles/sec_"+std::to_string(this->real_section_id) +
+        "_tileid_"+std::to_string(tile->tile_id) + ".bmp";
+
+  if (FILE *file = fopen(new_filepath.c_str(), "r")) {
+        fclose(file);
+      tile->filepath = std::string(new_filepath);
+      printf("Found replacement tile\n");
+    } else {
+    }
+
     this->tiles.push_back(tile);
   }
 
