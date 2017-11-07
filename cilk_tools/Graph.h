@@ -22,7 +22,7 @@
 #include "opencv2/opencv.hpp"
 
 //#include "common.h"
-#include "simple_mutex.h"
+//#include "simple_mutex.h"
 
 
 
@@ -32,6 +32,7 @@
 //#include "../stack.hpp"
 
 
+typedef int64_t simple_mutex_t;
 
 typedef struct {
   int index1;

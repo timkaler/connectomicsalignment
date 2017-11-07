@@ -4,7 +4,7 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <cstring>
-
+#include "simple_mutex.h"
 Graph::Graph() {
   vertexData = NULL;
 }

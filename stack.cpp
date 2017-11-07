@@ -1,8 +1,9 @@
 #include "stack.hpp"
-
+#include "stack_helpers.cpp"
 #include "./othersift2.hpp"
 #include "./stack_tile.cpp"
 #include "./stack_section.cpp"
+
 
 //#include "cilk_tools/engine.h"
 
@@ -260,8 +261,8 @@ void tfk::Stack::elastic_gradient_descent() {
 
           //int myz = mesh_matches[j].my_section_data.z;
           //int nz = mesh_matches[j].n_section_data.z;
-          int myz = my_section->section_id;
-          int nz = n_section->section_id;
+          //int myz = my_section->section_id;
+          //int nz = n_section->section_id;
 
           cv::Point2f* gradients1 = my_section->gradients;
           cv::Point2f* gradients2 = n_section->gradients;

@@ -1,4 +1,6 @@
 
+#include "stack_helpers.cpp"
+
 tfk::Section::Section(int section_id) {
   this->section_id = section_id;
 }
@@ -256,7 +258,7 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Sect
         auto bad_bbox = std::make_pair(cv::Point2f(bad_min_x, bad_min_y),
                                    cv::Point2f(bad_max_x, bad_max_y));
 
-        //this->replace_bad_region(bad_bbox, other_neighbor);
+        this->replace_bad_region(bad_bbox, other_neighbor);
       }
 
 
@@ -302,7 +304,7 @@ cv::Point2f tfk::Section::get_render_scale(Resolution resolution) {
   if (resolution == FULL) {
     return cv::Point2f(1.0,1.0);
   }
-
+  return cv::Point2f(1.0,1.0);
 }
 
 std::pair<cv::Point2f, cv::Point2f> tfk::Section::scale_bbox(
@@ -436,8 +438,8 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
 
   int lower_x = scaled_bbox.first.x;
   int lower_y = scaled_bbox.first.y;
-  int upper_x = scaled_bbox.second.x;
-  int upper_y = scaled_bbox.second.y;
+  //int upper_x = scaled_bbox.second.x;
+  //int upper_y = scaled_bbox.second.y;
 
   int nrows = (input_upper_y-input_lower_y)/render_scale.y;
   int ncols = (input_upper_x-input_lower_x)/render_scale.x;
@@ -1148,7 +1150,7 @@ void tfk::Section::compute_tile_matches(int tile_id, Graph* graph) {
   Tile* a_tile = this->tiles[tile_id];
 
   for (int i = 0; i < neighbors.size(); i++) {
-    int atile_id = tile_id;
+    //int atile_id = tile_id;
     int btile_id = neighbors[i];
     Tile* b_tile = this->tiles[btile_id];
 
@@ -1467,7 +1469,7 @@ void tfk::Section::compute_keypoints_and_matches() {
 std::vector<int> tfk::Section::get_all_close_tiles(int atile_id) {
   std::vector<int> neighbor_index_list(0);
 
-  int indices_to_check_len = 0;
+  //int indices_to_check_len = 0;
 
   Tile* a_tile = this->tiles[atile_id];
   for (int i = atile_id+1; i < this->tiles.size(); i++) {

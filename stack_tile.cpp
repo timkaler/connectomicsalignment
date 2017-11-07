@@ -1,7 +1,7 @@
 
 
 void updateTile2DAlign(int vid, void* scheduler_void) {
-  double global_learning_rate = 0.49;
+  //double global_learning_rate = 0.49;
 
   Scheduler* scheduler = reinterpret_cast<Scheduler*>(scheduler_void);
   Graph* graph = reinterpret_cast<Graph*>(scheduler->graph_void);

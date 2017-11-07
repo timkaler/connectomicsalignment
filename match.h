@@ -10,53 +10,34 @@
 /////////////////////////////////////////////////////////////////////////////////////////
 // INCLUDES
 /////////////////////////////////////////////////////////////////////////////////////////
-#include "common.h"
-#include "cilk_tools/Graph.h"
-/////////////////////////////////////////////////////////////////////////////////////////
-// DEFINES 
-/////////////////////////////////////////////////////////////////////////////////////////
+//#include "common.h"
+
+#include <cilk/cilk.h>
+#include <cilk/reducer_list.h>
+#include <opencv2/videostab/outlier_rejection.hpp>
+#include <mutex>
+#include <set>
+#include <list>
+#include <string>
+#include <algorithm>
+#include <vector>
+#include <random>
+#include <algorithm>
+#include "./fasttime.h"
+
+#include "./cilk_tools/Graph.h"
+
 const int MIN_FEATURES_NUM = 5;
 const int MAX_EPSILON = 10;
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// TYPES
-/////////////////////////////////////////////////////////////////////////////////////////
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// EXTERNAL FUNCTIONS
-/////////////////////////////////////////////////////////////////////////////////////////
-//void compute_tile_matches(align_data_t *p_align_data);
-void compute_alignment_2d(align_data_t *p_align_data, Graph* merged_graph);
-void compute_alignment_3d(align_data_t *p_align_data, Graph* merged_graph, bool construct_tri);
-
-void compute_tile_matches_active_set(align_data_t *p_align_data, int sec_id, std::set<int> active_set, Graph* graph);
-
-void set_graph_list(std::vector<Graph* > graph_list, bool startEmpty);
-
-void unpack_graph(align_data_t* p_align_data, Graph* merged_graph);
-
-Graph* pack_graph();
-
-int get_all_close_tiles(int atile_id, section_data_t *p_sec_data, int* indices_to_check);
 
 void match_features(std::vector< cv::DMatch > &matches,
                            cv::Mat &descs1, cv::Mat &descs2,
                            float rod);
+
 cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local);
-void updateVertex2DAlignFULLFast(int vid, void* scheduler_void);
-void computeError2DAlign(int vid, void* scheduler_void);
 
-std::string get_point_transform_string(Graph* merged_graph, vdata* vd);
-
-static std::string matchPadTo(std::string str, const size_t num, const char paddingChar = '0')
-{
-    if(num > str.size())
-        str.insert(0, num - str.size(), paddingChar);
-    return str;
-}
-
-/////////////////////////////////////////////////////////////////////////////////////////
-// EXTERNAL MACROS
-/////////////////////////////////////////////////////////////////////////////////////////
+void match_features(std::vector< cv::DMatch > &matches,
+                           cv::Mat &descs1, cv::Mat &descs2,
+                           float rod);
 
 #endif // MATCH_H

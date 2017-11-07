@@ -2,12 +2,13 @@
 
 #ifndef SIMPLE_MUTEX_T_H
 #define SIMPLE_MUTEX_T_H
+
 typedef int64_t simple_mutex_t;
 
 
-static void simple_mutex_init(simple_mutex_t* m) {
-  *m = 0;
-}
+//static void simple_mutex_init(simple_mutex_t* m) {
+//  *m = 0;
+//}
 
 static void simple_acquire(simple_mutex_t* m) {
   while (!__sync_bool_compare_and_swap(m, 0, 1)) {
