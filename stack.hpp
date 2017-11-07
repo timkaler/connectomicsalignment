@@ -38,7 +38,7 @@ static float EDGE_THRESH_2D = 5.0;
 
 namespace tfk {
 
-enum Resolution {THUMBNAIL, FULL};
+enum Resolution {THUMBNAIL, FULL, PERCENT30};
 
 class Tile {
   public:
@@ -100,6 +100,8 @@ class Tile {
 
    std::pair<cv::Point2f, cv::Point2f> get_bbox();
    std::vector<cv::Point2f> get_corners();
+
+   cv::Mat get_tile_data(Resolution res);
 };
 
 
@@ -185,7 +187,7 @@ class Section {
     bool tile_in_render_box(Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox);
 
     cv::Mat render(std::pair<cv::Point2f, cv::Point2f> bbox, Resolution resolution);
-    void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename);
+    void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename, Resolution res);
     cv::Point2f get_render_scale(Resolution resolution);
 
     void render_error(Section* neighbor, Section* other_neighbor, Section* other2_neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
@@ -250,7 +252,7 @@ class Stack {
     void get_elastic_matches();
     void elastic_gradient_descent();
 
-    void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix);
+    void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix, Resolution res);
 
     void render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix);
 };

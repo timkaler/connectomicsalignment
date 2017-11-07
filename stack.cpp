@@ -24,10 +24,11 @@ void tfk::Stack::render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::str
 
 }
 
-void tfk::Stack::render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
+void tfk::Stack::render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix,
+    Resolution res) {
   for (int i = 0; i < this->sections.size(); i++) {
     Section* section = this->sections[i];
-    section->render(bbox, filename_prefix+std::to_string(i)+".tif");
+    section->render(bbox, filename_prefix+std::to_string(i)+".tif", res);
   }
 }
 

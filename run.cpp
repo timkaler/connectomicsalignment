@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
   align_data_t *p_align_data;
   p_align_data = (align_data_t *)malloc(sizeof(align_data_t));
 
-  init_align(p_align_data);
+  //init_align(p_align_data);
 
   // declare all the options here.
   int zstart, numslices;

@@ -396,6 +396,37 @@ void tfk::Tile::compute_sift_keypoints3d() {
 
 }
 
+
+cv::Mat tfk::Tile::get_tile_data(Resolution res) {
+
+  std::string thumbnailpath = std::string(this->filepath);
+  thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".bmp"), 4,".jpg");
+  thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
+
+  switch(res) {
+    case THUMBNAIL: {
+      return cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
+      break;
+    }
+    case FULL: {
+      return cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+      break;
+    }
+    case PERCENT30: {
+      cv::Mat tmp = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+      cv::Mat ret;
+      cv::resize(tmp, ret, cv::Size(), 0.3,0.3,CV_INTER_AREA);
+      return ret;
+      break;
+    }
+    default: {
+      printf("Error in get_tile_data, invalid resolution specified\n");
+      exit(1);
+      return cv::Mat();
+    }
+  }
+}
+
 void tfk::Tile::compute_sift_keypoints2d() {
 
   (*this->p_image).create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
