@@ -72,33 +72,33 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
   bbox.second.x += slack;
   bbox.second.y += slack;
 
-//{
-//  // full resolution
-//  cv::Mat halo = other_neighbor->render(bbox, FULL);
-//
-//  cv::Mat tile_img = cv::imread(tile->filepath, CV_LOAD_IMAGE_UNCHANGED);
-//
-//  imwrite("orig_tiles/sec_"+std::to_string(this->real_section_id) +
-//          "_tileid_" + std::to_string(tile->tile_id) +".bmp", tile_img);
-//
-//  for (int y = 0; y < tile_img.rows; y++) {
-//    for (int x = 0; x < tile_img.cols; x++) {
-//      cv::Point2f pt = cv::Point2f(x,y);
-//      pt = tile->rigid_transform(pt);
-//      pt = this->affine_transform(pt);
-//      pt = this->elastic_transform(pt);
-//      uint8_t halo_val = halo.at<uint8_t>((int)(pt.y - bbox.first.y), (int)(pt.x - bbox.first.x));
-//      if (halo_val == 0) {
-//        printf("Halo value 0 detected, skipping this one.\n");
-//        return;
-//      }
-//      tile_img.at<uint8_t>(y,x) = halo_val;
-//    }
-//  }
-//
-//  imwrite("new_tiles/sec_"+std::to_string(this->real_section_id) +
-//          "_tileid_" + std::to_string(tile->tile_id) +".bmp", tile_img);
-//}
+{
+  // full resolution
+  cv::Mat halo = other_neighbor->render(bbox, FULL);
+
+  cv::Mat tile_img = cv::imread(tile->filepath, CV_LOAD_IMAGE_UNCHANGED);
+
+  imwrite("orig_tiles/sec_"+std::to_string(this->real_section_id) +
+          "_tileid_" + std::to_string(tile->tile_id) +".bmp", tile_img);
+
+  for (int y = 0; y < tile_img.rows; y++) {
+    for (int x = 0; x < tile_img.cols; x++) {
+      cv::Point2f pt = cv::Point2f(x,y);
+      pt = tile->rigid_transform(pt);
+      pt = this->affine_transform(pt);
+      pt = this->elastic_transform(pt);
+      uint8_t halo_val = halo.at<uint8_t>((int)(pt.y - bbox.first.y), (int)(pt.x - bbox.first.x));
+      if (halo_val == 0) {
+        printf("Halo value 0 detected, skipping this one.\n");
+        return;
+      }
+      tile_img.at<uint8_t>(y,x) = halo_val;
+    }
+  }
+
+  imwrite("new_tiles/sec_"+std::to_string(this->real_section_id) +
+          "_tileid_" + std::to_string(tile->tile_id) +".bmp", tile_img);
+}
 
 {
   cv::Point2f render_scale = this->get_render_scale(THUMBNAIL);

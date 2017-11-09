@@ -50,8 +50,8 @@ void align_execute(align_data_t *p_align_data) {
     stack->align_2d();
     stack->coarse_affine_align();
     stack->elastic_align();
-//    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "render", tfk::PERCENT30);
-    stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "testrender");
+    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "render", tfk::PERCENT30);
+    //stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "testrender");
     printf("Got to the end.\n");
     return;
 }
