@@ -601,7 +601,7 @@ void tfk::Section::affine_transform_keypoints(std::vector<cv::KeyPoint>& keypoin
 
 void tfk::Section::get_elastic_matches_one(Section* neighbor) {
 
-  double ransac_thresh = 64.0;
+  double ransac_thresh = 128.0;
 
   // Determine a good bounding box.
   std::pair<cv::Point2f, cv::Point2f> bbox = this->get_bbox();
@@ -685,7 +685,7 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
       match_features(matches,
                      atile_kps_desc_in_overlap,
                      btile_kps_desc_in_overlap,
-                     0.65);
+                     0.92);
       //printf("Done with the matching. Num matches is %lu\n", matches.size());
       if (matches.size() == 0) continue;
 
@@ -822,7 +822,7 @@ void tfk::Section::affine_transform_mesh() {
 
 
 void tfk::Section::construct_triangles() {
-  double hex_spacing = 1500.0;
+  double hex_spacing = 3000.0;
 
   std::pair<cv::Point2f, cv::Point2f> bbox = this->get_bbox();
 
@@ -1520,12 +1520,12 @@ tfk::Section::Section(SectionData& section_data) {
 
     std::string test_filepath = "new_tiles/thumbnail_sec_"+std::to_string(this->real_section_id) +
         "_tileid_"+std::to_string(tile->tile_id) + ".jpg";
-    //if (FILE *file = fopen(test_filepath.c_str(), "r")) {
-    //    fclose(file);
-    //  tile->filepath = std::string(new_filepath);
-    //  printf("Found replacement tile\n");
-    //} else {
-    //}
+    if (FILE *file = fopen(test_filepath.c_str(), "r")) {
+        fclose(file);
+      tile->filepath = std::string(new_filepath);
+      printf("Found replacement tile\n");
+    } else {
+    }
 
     this->tiles.push_back(tile);
   }
