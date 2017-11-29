@@ -135,9 +135,9 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
           "_tileid_" + std::to_string(tile->tile_id) +".jpg", tile_img);
 }
 
-
-
-
+  tile->filepath = "new_tiles/sec_"+std::to_string(this->real_section_id) +
+          "_tileid_" + std::to_string(tile->tile_id) +".bmp";
+  tile->image_data_replaced = true;
 
 
 }
@@ -1384,6 +1384,17 @@ void tfk::Section::save_tile_matches() {
 
   this->save_3d_keypoints(filename);
   this->save_2d_graph(filename);
+}
+
+void tfk::Section::recompute_keypoints() {
+  cilk_for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* tile = this->tiles[i];
+    if (tile->image_data_replaced) {
+      //tile->compute_sift_keypoints2d();
+      tile->compute_sift_keypoints3d();
+      tile->image_data_replaced = false;
+    }
+  }
 }
 
 void tfk::Section::compute_keypoints_and_matches() {

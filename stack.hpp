@@ -75,6 +75,8 @@ class Tile {
    int level;
    bool bad;
 
+   bool image_data_replaced;
+
    std::vector<edata> edges;
    std::vector<edata> add_edges; //temporary.
 
@@ -154,6 +156,8 @@ class Section {
     std::vector<Tile*> get_all_close_tiles(Tile* atile_id);
     void compute_keypoints_and_matches();
     void compute_tile_matches(Tile* a_tile, Graph* graph);
+
+    void recompute_keypoints();
 
 
     void coarse_affine_align(Section* neighbor);
@@ -250,6 +254,9 @@ class Stack {
     void unpack_graph();
     void coarse_affine_align();
     void elastic_align();
+
+
+    void recompute_alignment();
 
     void get_elastic_matches();
     void elastic_gradient_descent();

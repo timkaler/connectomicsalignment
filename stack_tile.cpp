@@ -253,6 +253,7 @@ tfk::Tile::Tile(int section_id, int tile_id, int index, std::string filepath,
   this->y_finish = y_finish;
   this->offset_x = 0.0;
   this->offset_y = 0.0;
+  this->image_data_replaced = false;
 }
 
 
@@ -303,7 +304,7 @@ bool tfk::Tile::overlaps_with(Tile* other) {
 tfk::Tile::Tile(TileData& tile_data) {
     //tile_data_t *p_cur_tile = &(p_sec_data->tiles[p_sec_data->n_tiles]);
     //p_sec_data->n_tiles++;
-
+    this->image_data_replaced = false;
     this->shape_dx = tile_data.x_finish() - tile_data.x_start();
     this->shape_dy = tile_data.y_finish() - tile_data.y_start();
 
