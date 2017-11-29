@@ -89,6 +89,7 @@ class Tile {
 
    cv::Point2f rigid_transform(cv::Point2f pt);
 
+   void release_2d_keypoints();
 
    void get_3d_keypoints(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::Mat>& desc);
    bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
@@ -150,8 +151,9 @@ class Section {
     Section(int section_id);
     Section(SectionData& section_data);
     std::vector<int> get_all_close_tiles(int atile_id);
+    std::vector<Tile*> get_all_close_tiles(Tile* atile_id);
     void compute_keypoints_and_matches();
-    void compute_tile_matches(int tile_id, Graph* graph);
+    void compute_tile_matches(Tile* a_tile, Graph* graph);
 
 
     void coarse_affine_align(Section* neighbor);

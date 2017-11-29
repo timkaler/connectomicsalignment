@@ -1149,11 +1149,11 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
 }
 
 
-void tfk::Section::compute_tile_matches(int tile_id, Graph* graph) {
+void tfk::Section::compute_tile_matches(Tile* a_tile, Graph* graph) {
 
-  std::vector<int> neighbors = get_all_close_tiles(tile_id);
+  std::vector<int> neighbors = get_all_close_tiles(a_tile->tile_id);
 
-  Tile* a_tile = this->tiles[tile_id];
+  //Tile* a_tile = this->tiles[tile_id];
 
   for (int i = 0; i < neighbors.size(); i++) {
     //int atile_id = tile_id;
@@ -1389,20 +1389,125 @@ void tfk::Section::save_tile_matches() {
 void tfk::Section::compute_keypoints_and_matches() {
   // assume that section data doesn't exist.
 
-
   if (!this->section_data_exists()) {
-    cilk_for (int i = 0; i < this->tiles.size(); i++) {
-      Tile* tile = this->tiles[i];
-      tile->compute_sift_keypoints2d();
-      tile->compute_sift_keypoints3d();
+
+    std::vector<std::pair<float, Tile*> > sorted_tiles;
+    for (int i = 0; i < this->tiles.size(); i++) {
+      Tile* t = this->tiles[i];
+      sorted_tiles.push_back(std::make_pair(t->x_start, t));
+    }
+    std::sort(sorted_tiles.begin(), sorted_tiles.end());
+    // sorted tiles is now sorted in increasing order based on x_start;
+
+    std::set<Tile*> active_set;
+    std::set<Tile*> neighbor_set;
+
+    std::set<Tile*> opened_set;
+    std::set<Tile*> closed_set;
+
+    Tile* pivot = sorted_tiles[0].second;
+
+    bool pivot_good = false;
+    int pivot_search_start = 0;
+    for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
+      if (sorted_tiles[i].second->x_start > pivot->x_finish) {
+        pivot = sorted_tiles[i].second;
+        pivot_search_start = i;
+        pivot_good = true;
+        break;
+      } else {
+        active_set.insert(sorted_tiles[i].second);
+      }
+    }
+    printf("Num tiles in sweep 0 is %lu\n", active_set.size()); 
+
+    while (active_set.size() > 0) {
+      printf("Current active set size is %lu\n", active_set.size());
+      // find all the neighbors.
+      for (auto it = active_set.begin(); it != active_set.end(); ++it) {
+        Tile* tile = *it;
+        std::vector<Tile*> overlapping = this->get_all_close_tiles(tile);
+        for (int j = 0; j < overlapping.size(); j++) {
+          neighbor_set.insert(overlapping[j]);
+        }
+      }
+
+      // close open tiles that aren't in active or neighbor set.
+      for (auto it = opened_set.begin(); it != opened_set.end(); ++it) {
+        Tile* tile = *it;
+        if (active_set.find(tile) == active_set.end() &&
+            neighbor_set.find(tile) == neighbor_set.end()) {
+          closed_set.insert(tile);
+          tile->release_2d_keypoints();
+        }
+      }
+
+      std::vector<Tile*> tiles_to_process_keypoints, tiles_to_process_matches;
+
+      for (auto it = active_set.begin(); it != active_set.end(); ++it) {
+        Tile* tile = *it;
+        tiles_to_process_matches.push_back(tile);
+        if (opened_set.find(tile) == opened_set.end()) {
+          opened_set.insert(tile);
+          tiles_to_process_keypoints.push_back(tile);
+        }
+      }
+
+      for (auto it = neighbor_set.begin(); it != neighbor_set.end(); ++it) {
+        Tile* tile = *it;
+        if (opened_set.find(tile) == opened_set.end()) {
+          opened_set.insert(tile);
+          tiles_to_process_keypoints.push_back(tile);
+        }
+      }
+
+      cilk_for (int i = 0; i < tiles_to_process_keypoints.size(); i++) {
+        Tile* tile = tiles_to_process_keypoints[i];
+        tile->compute_sift_keypoints2d();
+        //tile->compute_sift_keypoints3d();
+      }
+
+      cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
+        this->compute_tile_matches(tiles_to_process_matches[i], graph);
+      }
+
+      opened_set.clear();
+      for (auto it = active_set.begin(); it != active_set.end(); ++it) {
+        opened_set.insert(*it);
+      }
+      for (auto it = neighbor_set.begin(); it != neighbor_set.end(); ++it) {
+        opened_set.insert(*it);
+      }
+      // clear the active and neighbor set.
+      active_set.clear();
+      neighbor_set.clear();
+
+      pivot_good = false;
+      for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
+        if (sorted_tiles[i].second->x_start > pivot->x_finish) {
+          pivot = sorted_tiles[i].second;
+          pivot_search_start = i;
+          pivot_good = true;
+          break;
+        } else {
+          active_set.insert(sorted_tiles[i].second);
+        }
+      }
+      if (!pivot_good) break;
     }
 
+    //cilk_for (int i = 0; i < this->tiles.size(); i++) {
+    //  Tile* tile = this->tiles[i];
+    //  tile->compute_sift_keypoints2d();
+    //  tile->compute_sift_keypoints3d();
+    //}
 
-    cilk_for (int i = 0; i < this->tiles.size(); i++) {
-      this->compute_tile_matches(i, graph);
-    }
 
-    this->save_tile_matches();
+    //cilk_for (int i = 0; i < this->tiles.size(); i++) {
+    //  this->compute_tile_matches(i, graph);
+    //}
+
+    //this->save_tile_matches();
   } else {
     this->read_tile_matches();
   }
@@ -1470,6 +1575,17 @@ void tfk::Section::compute_keypoints_and_matches() {
 
 }
 
+
+std::vector<tfk::Tile*> tfk::Section::get_all_close_tiles(Tile* a_tile) {
+  std::vector<Tile*> neighbor_tiles(0);
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* b_tile = this->tiles[i];
+    if (a_tile->overlaps_with(b_tile)) {
+      neighbor_tiles.push_back(b_tile);
+    }
+  }
+  return neighbor_tiles;
+}
 
 
 std::vector<int> tfk::Section::get_all_close_tiles(int atile_id) {

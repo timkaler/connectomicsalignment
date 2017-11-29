@@ -19,6 +19,20 @@ void updateTile2DAlign(int vid, void* scheduler_void) {
   vertex_data->iteration_count++;
 }
 
+void tfk::Tile::release_2d_keypoints() {
+
+    this->p_kps->clear();
+    std::vector<cv::KeyPoint>().swap(*(this->p_kps));
+    this->p_kps_desc->release();
+    //// clean up the memory
+    //for (auto del : known_set) {
+    //  tile_data_t *a_tile = &(p_sec_data->tiles[del]);
+    //  a_tile->p_kps->clear();
+    //  std::vector<cv::KeyPoint>().swap(*(a_tile->p_kps));
+    //  ((a_tile->p_kps_desc))->release();
+    //}
+}
+
 
 std::vector<cv::Point2f> tfk::Tile::get_corners() {
 
