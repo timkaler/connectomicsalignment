@@ -363,6 +363,9 @@ void tfk::Tile::compute_sift_keypoints3d() {
   (*this->p_image).create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
   (*this->p_image) = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
 
+
+  this->p_kps_3d = new std::vector<cv::KeyPoint>();
+
   int rows = this->p_image->rows;
   int cols = this->p_image->cols;
   ASSERT((rows % SIFT_D1_SHIFT_3D) == 0);

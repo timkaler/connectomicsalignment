@@ -104,7 +104,7 @@ void tfk::Stack::elastic_gradient_descent() {
     double cross_slice_winsor = 20.0;
     double intra_slice_weight = 1.0;
     double intra_slice_winsor = 200.0;
-    int max_iterations = 10000; //ORIGINALL 5000
+    int max_iterations = 5000; //ORIGINALL 5000
     //double min_stepsize = 1e-20;
     double stepsize = 0.0001;
     double momentum = 0.5;

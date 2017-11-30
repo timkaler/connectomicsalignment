@@ -603,6 +603,9 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
 
   double ransac_thresh = 128.0;
 
+
+  this->section_mesh_matches.clear();
+
   // Determine a good bounding box.
   std::pair<cv::Point2f, cv::Point2f> bbox = this->get_bbox();
 

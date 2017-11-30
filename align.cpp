@@ -56,8 +56,11 @@ void align_execute(align_data_t *p_align_data) {
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "render", tfk::PERCENT30);
 
     stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "testrender");
+    printf("Now am going to recompute the alignment\n");
     stack->recompute_alignment();
+    printf("REcomputed the alignment, now am going to rerender with error markers.\n");
     stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "testrender_after");
+    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "render", tfk::PERCENT30);
 
     printf("Got to the end.\n");
     return;
