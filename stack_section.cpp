@@ -1650,12 +1650,12 @@ tfk::Section::Section(SectionData& section_data) {
 
     std::string test_filepath = "new_tiles/thumbnail_sec_"+std::to_string(this->real_section_id) +
         "_tileid_"+std::to_string(tile->tile_id) + ".jpg";
-    if (FILE *file = fopen(test_filepath.c_str(), "r")) {
-        fclose(file);
-      tile->filepath = std::string(new_filepath);
-      printf("Found replacement tile\n");
-    } else {
-    }
+    //if (FILE *file = fopen(test_filepath.c_str(), "r")) {
+    //    fclose(file);
+    //  tile->filepath = std::string(new_filepath);
+    //  printf("Found replacement tile\n");
+    //} else {
+    //}
 
     this->tiles.push_back(tile);
   }
