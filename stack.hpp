@@ -87,7 +87,7 @@ class Tile {
    Tile(TileData& tile_data);
 
    void compute_sift_keypoints2d();
-   void compute_sift_keypoints3d();
+   void compute_sift_keypoints3d(bool recomputation = false);
 
    cv::Point2f rigid_transform(cv::Point2f pt);
 

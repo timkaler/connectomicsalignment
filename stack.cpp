@@ -33,7 +33,7 @@ void tfk::Stack::render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string fi
 }
 
 void tfk::Stack::recompute_alignment() {
-  cilk_for (int i = 0; i < this->sections.size(); i++) {
+  for (int i = 0; i < this->sections.size(); i++) {
     this->sections[i]->recompute_keypoints();
   }
   this->elastic_align();
@@ -462,7 +462,7 @@ void tfk::Stack::unpack_graph() {
 
 
 void tfk::Stack::align_2d() {
-  cilk_for (int i = 0; i < this->sections.size(); i++) {
+  for (int i = 0; i < this->sections.size(); i++) {
     this->sections[i]->compute_keypoints_and_matches();
   }
 
