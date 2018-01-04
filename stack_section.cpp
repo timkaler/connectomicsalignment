@@ -471,9 +471,9 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
   int ncols = (input_upper_x-input_lower_x)/render_scale.x;
 
   // temporary matrix for the section.
-  cv::Mat* section_p_out = new cv::Mat();
+  cv::Mat section_p_out;// = new cv::Mat();
   //section->p_out = new cv::Mat();
-  (*section_p_out).create(nrows, ncols, CV_8UC1);
+  (section_p_out).create(nrows, ncols, CV_8UC1);
 
   // temporary matrix for the section.
   cv::Mat* section_p_out_sum = new cv::Mat();
@@ -488,7 +488,7 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
 
   for (int y = 0; y < nrows; y++) {
     for (int x = 0; x < ncols; x++) {
-      section_p_out->at<unsigned char>(y,x) = 0;
+      section_p_out.at<unsigned char>(y,x) = 0;
       section_p_out_sum->at<unsigned short>(y,x) = 0;
       section_p_out_ncount->at<unsigned short>(y,x) = 0;
     }
@@ -532,16 +532,16 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
     tile_p_image.release();
   }
 
-  for (int y = 0; y < section_p_out->size().height; y++) {
-    for (int x = 0; x < section_p_out->size().width; x++) {
+  for (int y = 0; y < section_p_out.size().height; y++) {
+    for (int x = 0; x < section_p_out.size().width; x++) {
       if (section_p_out_ncount->at<unsigned short>(y,x) == 0) {
         continue;
       }
-      section_p_out->at<unsigned char>(y, x) =
+      section_p_out.at<unsigned char>(y, x) =
           section_p_out_sum->at<unsigned short>(y, x) / section_p_out_ncount->at<unsigned short>(y,x);
       // force the min value to be at least 1 so that we can check for out-of-range pixels.
-      if (section_p_out->at<unsigned char>(y, x) == 0) {
-        section_p_out->at<unsigned char>(y, x) = 1;
+      if (section_p_out.at<unsigned char>(y, x) == 0) {
+        section_p_out.at<unsigned char>(y, x) = 1;
       }
     }
   }
@@ -557,7 +557,7 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
   //delete section_p_out_ncount;
 
 
-  return (*section_p_out);
+  return (section_p_out);
 }
 
 
