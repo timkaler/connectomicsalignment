@@ -76,8 +76,9 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
   // full resolution
   cv::Mat halo = other_neighbor->render(bbox, FULL);
 
+  printf("Tile image is %s\n", tile->filepath.c_str());
   cv::Mat tile_img = cv::imread(tile->filepath, CV_LOAD_IMAGE_UNCHANGED);
-
+  printf("Tile image is %s\n", tile->filepath.c_str());
   imwrite("orig_tiles/sec_"+std::to_string(this->real_section_id) +
           "_tileid_" + std::to_string(tile->tile_id) +".bmp", tile_img);
 
@@ -452,6 +453,7 @@ cv::Point2f tfk::Section::elastic_transform(cv::Point2f p) {
 // bbox is in unscaled (i.e. full resolution) transformed coordinate system.
 cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
     tfk::Resolution resolution) {
+  printf("Called render on bounding box %d %d %d %d\n", bbox.first.x, bbox.first.y, bbox.second.x, bbox.second.y);
   cv::Point2f render_scale = this->get_render_scale(resolution);
 
   // scaled_bbox is in transformed coordinate system
@@ -567,7 +569,7 @@ void tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string 
     Resolution res) {
   cv::Mat img = this->render(bbox, res);
   cv::imwrite(filename, img);
-  img.release(); 
+  //img.release(); 
 }
 
 std::pair<cv::Point2f, cv::Point2f> tfk::Section::elastic_transform_bbox(
@@ -719,7 +721,7 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
       match_features(matches,
                      atile_kps_desc_in_overlap,
                      btile_kps_desc_in_overlap,
-                     0.92);
+                     0.65);
       //printf("Done with the matching. Num matches is %lu\n", matches.size());
       if (matches.size() == 0) continue;
 
@@ -736,7 +738,7 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
         }
       }
 
-      if (num_filtered < match_points_a.size()*0.2 || num_filtered < 12) {
+      if (num_filtered < match_points_a.size()*0.1 || num_filtered < 12) {
         free(mask);
         continue;
       }

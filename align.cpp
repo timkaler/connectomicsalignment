@@ -34,6 +34,7 @@ void align_execute(align_data_t *p_align_data) {
                                        p_align_data->input_filepath,
                                        p_align_data->output_dirpath);
 
+
     stack->mode = p_align_data->mode;
     stack->output_dirpath = p_align_data->output_dirpath;
     stack->base_section = p_align_data->base_section;
@@ -52,16 +53,13 @@ void align_execute(align_data_t *p_align_data) {
     stack->elastic_align();
 
 
-
-    //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "render", tfk::PERCENT30);
-
+    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "renderbefore", tfk::THUMBNAIL);
     stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "testrender");
-    printf("Now am going to recompute the alignment\n");
+    //printf("Now am going to recompute the alignment\n");
     stack->recompute_alignment();
-    printf("REcomputed the alignment, now am going to rerender with error markers.\n");
+    //printf("REcomputed the alignment, now am going to rerender with error markers.\n");
     stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "testrender_after");
-    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "render", tfk::PERCENT30);
-
+    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "renderafter", tfk::THUMBNAIL);
     printf("Got to the end.\n");
     return;
 }

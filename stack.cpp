@@ -17,7 +17,7 @@ tfk::Stack::Stack(int base_section, int n_sections,
 
 void tfk::Stack::render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
 
-  for (int i = 1; i < this->sections.size()-2; i++) {
+  cilk_for (int i = 1; i < this->sections.size()-2; i++) {
     Section* section = this->sections[i];
     section->render_error(this->sections[i-1], this->sections[i+1], this->sections[i+2], bbox, filename_prefix+std::to_string(i)+".png");
   }
@@ -104,7 +104,7 @@ void tfk::Stack::elastic_gradient_descent() {
     double cross_slice_winsor = 20.0;
     double intra_slice_weight = 1.0;
     double intra_slice_winsor = 200.0;
-    int max_iterations = 5000; //ORIGINALL 5000
+    int max_iterations = 10000; //ORIGINALL 5000
     //double min_stepsize = 1e-20;
     double stepsize = 0.0001;
     double momentum = 0.5;
@@ -462,7 +462,7 @@ void tfk::Stack::unpack_graph() {
 
 
 void tfk::Stack::align_2d() {
-  for (int i = 0; i < this->sections.size(); i++) {
+  cilk_for (int i = 0; i < this->sections.size(); i++) {
     this->sections[i]->compute_keypoints_and_matches();
   }
 

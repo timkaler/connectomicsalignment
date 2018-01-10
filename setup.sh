@@ -15,7 +15,8 @@ export LD_LIBRARY_PATH=/efs/home/tfk/archive-linux/lib/:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$TAPIR_PREFIX/lib:$LD_LIBRARY_PATH
 export OMP_NUM_THREADS=1
 export EXTRA_CFLAGS="-ftapir -Wall"
-export LD_PRELOAD=/efs/tools/jemalloc/lib/libjemalloc.so
+export LD_PRELOAD=/usr/lib/libtcmalloc.so.4
+#export LD_PRELOAD=/efs/tools/jemalloc/lib/libjemalloc.so
 #export LD_PRELOAD=/efs/home/tfk/maprecurse/sift_features/test.so
 export N_TEMPORARY_BYTES=500000000
 #/efs/home/neboat/tapir-ex/src/build-release/bin
@@ -37,4 +38,5 @@ export LD_LIBRARY_PATH=/efs/home/wheatman/install_dir/protobufs/lib:$LD_LIBRARY_
 #export OMP_NUM_THREADS=1
 #export LD_PRELOAD=/efs/tools/jemalloc/lib/libjemalloc.so
 protoc --cpp_out=. --python_out=. AlignData.proto
+#HEAPCHECK=normal $@
 $@

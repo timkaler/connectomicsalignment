@@ -443,9 +443,9 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
     }
     case PERCENT30: {
       cv::Mat tmp = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
-      tmp.release();
       cv::Mat ret;
       cv::resize(tmp, ret, cv::Size(), 0.3,0.3,CV_INTER_AREA);
+      //tmp.release();
       return ret;
       break;
     }
