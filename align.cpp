@@ -61,6 +61,10 @@ void align_execute(align_data_t *p_align_data) {
     stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "testrender_after");
     stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "renderafter", tfk::THUMBNAIL);
     printf("Got to the end.\n");
+    printf("Counts of bad tiles replaced:\n");
+    for (int i = 0; i < stack->sections.size(); i++) {
+      printf("\tSection %d, %d tiles replaced\n", i, stack->sections[i]->num_tiles_replaced);
+    }
     return;
 }
 

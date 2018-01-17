@@ -115,6 +115,9 @@ class Section {
     int n_tiles;
     int out_d1;
     int out_d2;
+
+    int num_tiles_replaced;
+
     cv::Mat* p_out;
     std::vector<cv::KeyPoint>* p_kps;
     std::string cached_2d_matches;

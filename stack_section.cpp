@@ -3,6 +3,7 @@
 
 tfk::Section::Section(int section_id) {
   this->section_id = section_id;
+  this->num_tiles_replaced = 0;
 }
 
 
@@ -46,12 +47,18 @@ bool tfk::Section::transformed_tile_overlaps_with(Tile* tile,
 
 void tfk::Section::replace_bad_region(std::pair<cv::Point2f, cv::Point2f> bad_bbox,
                                      Section* other_neighbor) {
+  if (num_tiles_replaced > 100) {
+    printf("Don't replace bad region in sec %d (max treplaced reached)\n", this->section_id);
+    return;
+  }
+
   for (int i = 0; i < this->tiles.size(); i++) {
     Tile* tile = this->tiles[i];
     //if (tile->overlaps_with(bad_bbox)) {
     if (this->transformed_tile_overlaps_with(tile, bad_bbox)) {
       // check to make sure this tile hasn't already been replaced.
       if (this->replaced_tile_ids.find(i) == this->replaced_tile_ids.end()) {
+        num_tiles_replaced++;
         this->replaced_tile_ids.insert(i);
         printf("Replacing tile in section %d with tile_id %d\n", this->real_section_id, i);
         this->replace_bad_tile(tile, other_neighbor);
@@ -66,7 +73,7 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
   bbox = this->affine_transform_bbox(bbox);
   bbox = this->elastic_transform_bbox(bbox);
 
-  float slack = 4000.0;
+  float slack = 10.0;
   bbox.first.x -= slack;
   bbox.first.y -= slack;
   bbox.second.x += slack;
@@ -1657,6 +1664,7 @@ tfk::Section::Section(SectionData& section_data) {
 
   this->section_id = section_data.section_id();
   this->real_section_id = section_data.section_id();
+  this->num_tiles_replaced = 0;
   this->n_tiles = 0;
   this->a00 = 1.0;
   this->a11 = 1.0;
