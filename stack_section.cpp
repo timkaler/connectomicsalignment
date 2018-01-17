@@ -1,11 +1,10 @@
-
+#include <mutex> 
 #include "stack_helpers.cpp"
 
 tfk::Section::Section(int section_id) {
   this->section_id = section_id;
   this->num_tiles_replaced = 0;
 }
-
 
 cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
   float new_x = pt.x*this->a00 + pt.y * this->a01 + this->offset_x;
@@ -154,13 +153,12 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
   tile->filepath = "new_tiles/sec_"+std::to_string(this->real_section_id) +
           "_tileid_" + std::to_string(tile->tile_id) +".bmp";
   tile->image_data_replaced = true;
-
-
 }
 
-
-void tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Section* other2_neighbor,
+std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Section* other2_neighbor,
     std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
+
+  std::cout << "CALLING RENDER_ERROR " << std::endl;
   cv::Mat n_image = neighbor->render(bbox, THUMBNAIL);
   cv::Mat other_n_image = other_neighbor->render(bbox, THUMBNAIL);
   cv::Mat other2_n_image = other2_neighbor->render(bbox, THUMBNAIL);
@@ -170,20 +168,22 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Sect
   int ncols = n_image.cols;
 
   cv::Mat heat_map;
-  cv::Mat n_patch;
-  cv::Mat other_n_patch;
-  cv::Mat other2_n_patch;
-  cv::Mat my_patch;
+
 
 
   int patch_3_size = 100;
   int patch_2_size = 20;
 
+  //cv::Mat n_patch;
+  //cv::Mat other_n_patch;
+  //cv::Mat other2_n_patch;
+  //cv::Mat my_patch;
 
-  n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
-  other_n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
-  other2_n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
-  my_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+  //n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+  //other_n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+  //other2_n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+  //my_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+
   heat_map.create(nrows, ncols, CV_32F);
 
   std::vector<std::pair<cv::Point2f, float> > patch_results;
@@ -198,22 +198,44 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Sect
   cv::Point2f render_scale = this->get_render_scale(THUMBNAIL);
 
 
+  std::mutex mtx;
 
+  std::vector<std::pair<cv::Point2f, cv::Point2f>> below;
+  std::vector<std::pair<cv::Point2f, cv::Point2f>> above;
 
-  for (int by = 0; by + patch_3_size < nrows; by += patch_3_size/2) {
-    for (int bx = 0; bx + patch_3_size < ncols; bx += patch_3_size/2) {
+  //parallelize going through patches... ? 
+  cilk_for (int by = 0; by + patch_3_size < nrows; by += patch_3_size/2) {
+    cilk_for (int bx = 0; bx + patch_3_size < ncols; bx += patch_3_size/2) {
       int bad = 0;
       int total = 0;
       bool skip = false;
       int bad_above = 0;
-      for (int y = 0; y + patch_2_size < patch_3_size; y += patch_2_size/2) {
-        for (int x = 0; x + patch_2_size < patch_3_size; x += patch_2_size/2) {
+      cilk_for (int y = 0; y + patch_2_size < patch_3_size; y += patch_2_size/2) {
+        cilk_for (int x = 0; x + patch_2_size < patch_3_size; x += patch_2_size/2) {
+
+          cv::Mat n_patch;
+          cv::Mat other_n_patch;
+          cv::Mat other2_n_patch;
+          cv::Mat my_patch;
+
+          n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+          other_n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+          other2_n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+          my_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+
+
+
           for (int _y = 0; _y < patch_2_size; _y++) {
             for (int _x = 0; _x < patch_2_size; _x++) {
+
+              //mtx.lock(); //this is really dumb
               other_n_patch.at<uint8_t>(_y, _x) = other_n_image.at<uint8_t>(by+y+_y, bx+x+_x);
               other2_n_patch.at<uint8_t>(_y, _x) = other2_n_image.at<uint8_t>(by+y+_y, bx+x+_x);
               n_patch.at<uint8_t>(_y, _x) = n_image.at<uint8_t>(by+y+_y, bx+x+_x);
               my_patch.at<uint8_t>(_y, _x) = my_image.at<uint8_t>(by+y+_y, bx+x+_x);
+              //mtx.unlock();
+
+
               if (n_patch.at<uint8_t>(_y,_x) == 0 ||
                   my_patch.at<uint8_t>(_y,_x) == 0 ||
                   other_n_patch.at<uint8_t>(_y,_x) == 0 ||
@@ -223,7 +245,12 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Sect
             }
           }
 
-
+          /* baseline by comparing to gaussian blur */
+          cv::Mat my_patch_blur;
+          GaussianBlur(my_patch, my_patch_blur, cv::Size(0, 0), 1.2);
+          cv::Mat result_blur;
+          cv::matchTemplate(my_patch, my_patch_blur, result_blur, CV_TM_CCOEFF_NORMED);
+          float corr_blur = result_blur.at<float>(0,0);
 
           cv::Mat result;
 
@@ -238,18 +265,46 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Sect
           cv::matchTemplate(other2_n_patch, other_n_patch, other2_result, CV_TM_CCOEFF_NORMED);
           float other2_corr = other2_result.at<float>(0,0);
 
-          if (corr < other2_corr*0.25 and other_corr < other2_corr*0.5) {
-            bad++;
+          if(corr < 0.1*corr_blur) {
+            mtx.lock();
+            below.push_back(std::make_pair(cv::Point2f(y, x), cv::Point2f(y + patch_2_size, x + patch_2_size)));
+            mtx.unlock();
           }
+          if(other_corr < 0.1*corr_blur){
+            mtx.lock();
+            above.push_back(std::make_pair(cv::Point2f(y, x), cv::Point2f(y + patch_2_size, x + patch_2_size)));
+            mtx.unlock();
+          }
+
+          if(corr < corr_blur*0.1) {
+	        bad++;
+          }
+
+
+//         if(corr < corr_blur * 0.5) {
+//		   bad++;
+//         }
+
+
+		  // GET RID OF THIS
+          //if (corr < other2_corr*0.25 and other_corr < other2_corr*0.5) {
+          //  std::cout << "Condition " << corr << " " << other_corr << " " << other2_corr << std::endl;
+          //  if(corr < corr_blur) {
+          //  	bad++;
+		  //   } else{
+	      //     std::cout << "Correlation NOT bad enough " << corr << " " << corr_blur << std::endl;
+          //  }
+          //} else {
+		  //  std::cout << "Patch ok" << corr << " " << corr_blur << std::endl;
+          //}
 
           //if (corr < 0.1 && other_corr < 0.1 && other2_corr > 0.1) {
           //  bad++;
           //}
 
-          if (other2_corr < 0.1) {
-            bad_above++;
-          }
-
+          //if (other2_corr < 0.1) {
+          //  bad_above++;
+          //}
           total++;
 
           //for (int _y = 0; _y < 10; _y++) {
@@ -265,12 +320,14 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Sect
       }
 
       if (bad > 1 && !skip && bad_above < bad) {
+
+        mtx.lock(); //this is really dumb
         for (int y = 0; y < patch_3_size; y++) {
           for (int x = 0; x < patch_3_size; x++) {
             heat_map.at<float>(by+y, bx+x) = 1.0;
           }
         }
-
+        mtx.unlock();
         int bad_min_x = bbox.first.x + (bx)*render_scale.x;
         int bad_max_x = bbox.first.x + (bx+patch_3_size)*render_scale.x;
 
@@ -279,14 +336,15 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Sect
 
         auto bad_bbox = std::make_pair(cv::Point2f(bad_min_x, bad_min_y),
                                    cv::Point2f(bad_max_x, bad_max_y));
-
-        this->replace_bad_region(bad_bbox, other_neighbor);
+		//REPLACE BAD REGION
+        //this->replace_bad_region(bad_bbox, other_neighbor);
       }
-
-
-
     }
   }
+
+ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> result;
+  result.first = below;
+  result.second = above;
 
   cv::Mat heatmap = apply_heatmap_to_grayscale(&my_image, &heat_map, nrows, ncols);
   imwrite(filename_prefix, heatmap);
@@ -296,6 +354,8 @@ void tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Sect
   other2_n_image.release();
   my_image.release();
   heatmap.release();
+
+  return result;
 }
 
 bool tfk::Section::section_data_exists() {
@@ -418,8 +478,9 @@ renderTriangle tfk::Section::getRenderTriangle(tfkTriangle tri) {
 }
 
 std::tuple<bool, float, float, float> tfk::Section::get_triangle_for_point(cv::Point2f pt) {
-  for (int i = 0; i < this->triangles->size(); i++) {
-    renderTriangle rTri = this->getRenderTriangle((*this->triangles)[i]);
+  int wid = __cilkrts_get_worker_number();
+  for (int i = 0; i < this->triangles[wid]->size(); i++) {
+    renderTriangle rTri = this->getRenderTriangle((*this->triangles[wid])[i]);
     float u,v,w;
     cv::Point2f a,b,c;
     a = rTri.p[0];
@@ -430,9 +491,9 @@ std::tuple<bool, float, float, float> tfk::Section::get_triangle_for_point(cv::P
     if (u >=0 && v>=0 && w >= 0) {
       int j = i;
       while (j > 0) {
-        tfkTriangle tmp = (*this->triangles)[j-1];
-        (*this->triangles)[j-1] = (*this->triangles)[j];
-        (*this->triangles)[j] = tmp;
+        tfkTriangle tmp = (*this->triangles[wid])[j-1];
+        (*this->triangles[wid])[j-1] = (*this->triangles[wid])[j];
+        (*this->triangles[wid])[j] = tmp;
         j--;
       }
       //printf("found the triangle\n");
@@ -448,7 +509,8 @@ cv::Point2f tfk::Section::elastic_transform(cv::Point2f p) {
   std::tuple<bool, float, float, float> info = this->get_triangle_for_point(p);
   if (!std::get<0>(info)) return p;
 
-  renderTriangle tri = this->getRenderTriangle((*this->triangles)[0]);
+  int wid = __cilkrts_get_worker_number();
+  renderTriangle tri = this->getRenderTriangle((*this->triangles[wid])[0]);
   float u = std::get<1>(info);
   float v = std::get<2>(info);
   float w = std::get<3>(info);
@@ -765,13 +827,13 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
   for (int m = 0; m < filtered_match_points_a.size(); m++) {
     cv::Point2f my_pt = filtered_match_points_a[m];
     cv::Point2f n_pt = filtered_match_points_b[m];
-
+    int wid = __cilkrts_get_worker_number();
     tfkMatch match;
     // find the triangle...
-    std::vector<tfkTriangle>* triangles = this->triangles;
+    std::vector<tfkTriangle>* triangles = this->triangles[wid];
     std::vector<cv::Point2f>* mesh = this->mesh;
 
-    std::vector<tfkTriangle>* n_triangles = neighbor->triangles;
+    std::vector<tfkTriangle>* n_triangles = neighbor->triangles[wid];
     std::vector<cv::Point2f>* n_mesh = neighbor->mesh;
 
 
@@ -963,10 +1025,24 @@ void tfk::Section::construct_triangles() {
   for (int i = 0; i < triangle_edges_dedupe.size(); i++) {
     _triangle_edges->push_back(triangle_edges_dedupe[i]);
   }
-  std::vector<tfkTriangle>* _triangle_list = new std::vector<tfkTriangle>();
+
+
+
+  //std::vector<tfkTriangle>* _triangle_list = new std::vector<tfkTriangle>();
+  std::vector< std::vector<tfkTriangle>* > _triangle_list;
+  int nworkers = __cilkrts_get_nworkers();
+  for (int i = 0; i < nworkers; i++) {
+    _triangle_list.push_back(new std::vector<tfkTriangle>());
+  }
+
+
+
   for (int i = 0; i < triangle_list_index.size(); i++) {
-    _triangle_list->push_back(triangle_list_index[i]);
-  }  
+    for (int j = 0; j < nworkers; j++) {
+      _triangle_list[j]->push_back(triangle_list_index[i]);
+    }
+  }
+
 
   std::vector<cv::Point2f>* orig_hex_grid = new std::vector<cv::Point2f>();
   for (int i = 0; i < hex_grid->size(); i++) {

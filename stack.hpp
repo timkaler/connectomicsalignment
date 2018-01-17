@@ -139,7 +139,11 @@ class Section {
     std::vector<cv::Point2f>* mesh_old;
     std::vector<cv::Point2f>* mesh;
     std::vector<std::pair<int,int> >* triangle_edges;
-    std::vector<tfkTriangle>* triangles;
+
+    std::vector<std::vector<tfkTriangle>* > triangles;
+
+    //std::vector<tfkTriangle>* triangles;
+
     cv::Point2f* gradients;
     cv::Point2f* gradients_with_momentum;
     double* rest_lengths;
@@ -199,7 +203,7 @@ class Section {
     void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename, Resolution res);
     cv::Point2f get_render_scale(Resolution resolution);
 
-    void render_error(Section* neighbor, Section* other_neighbor, Section* other2_neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
+     std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> render_error(Section* neighbor, Section* other_neighbor, Section* other2_neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
                       std::string filename);
 
     renderTriangle getRenderTriangle(tfkTriangle tri);
