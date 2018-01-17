@@ -23,6 +23,10 @@
 
 #include "stack.hpp"
 
+#include <iostream>
+#include <cstdio>
+#include <ctime>
+
 void align_execute(align_data_t *p_align_data) {
     TIMER_VAR(t_timer);
     TIMER_VAR(timer);
@@ -53,14 +57,25 @@ void align_execute(align_data_t *p_align_data) {
     stack->elastic_align();
 
 
-    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "renderbefore", tfk::THUMBNAIL);
-    stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "testrender");
+	int size = 30000;
+    std::clock_t start;
+    double duration;
+
+    start = std::clock();
+
+
+    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderbefore", tfk::THUMBNAIL);
+    stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "testrender");
+
+  
     //printf("Now am going to recompute the alignment\n");
-    stack->recompute_alignment();
+    //stack->recompute_alignment();
     //printf("REcomputed the alignment, now am going to rerender with error markers.\n");
-    stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "testrender_after");
-    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(100000,100000)), "renderafter", tfk::THUMBNAIL);
+    //stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "testrender_after");
+    //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderafter", tfk::THUMBNAIL);
     printf("Got to the end.\n");
+	duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+	std::cout<<"printf: "<< duration <<'\n';
     return;
 }
 

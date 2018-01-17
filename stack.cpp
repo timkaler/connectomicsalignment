@@ -17,10 +17,13 @@ tfk::Stack::Stack(int base_section, int n_sections,
 
 void tfk::Stack::render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
 
-  cilk_for (int i = 1; i < this->sections.size()-2; i++) {
+  /*cilk_*/for (int i = 1; i < this->sections.size()-2; i++) {
+    std::cout << "starting section "  << i << std::endl;
     Section* section = this->sections[i];
-    section->render_error(this->sections[i-1], this->sections[i+1], this->sections[i+2], bbox, filename_prefix+std::to_string(i)+".png");
+    std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>>, std::vector<std::pair<cv::Point2f, cv::Point2f> > > res = section->render_error(this->sections[i-1], this->sections[i+1], this->sections[i+2], bbox, filename_prefix+std::to_string(i)+".png");
+
   }
+
 
 }
 
@@ -222,7 +225,6 @@ void tfk::Stack::elastic_gradient_descent() {
           ((section->gradients))[j] = cv::Point2f(0.0,0.0);
         }
       }
-
 
       // compute internal gradients.
       //for (std::map<int, graph_section_data>::iterator it = section_data_map.begin();
