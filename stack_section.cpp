@@ -205,11 +205,15 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
         for (int x = 0; x + patch_2_size < patch_3_size; x += patch_2_size/2) {
           for (int _y = 0; _y < patch_2_size; _y++) {
             for (int _x = 0; _x < patch_2_size; _x++) {
-
+              
+              mtx.lock(); //this is really dumb
               other_n_patch.at<uint8_t>(_y, _x) = other_n_image.at<uint8_t>(by+y+_y, bx+x+_x);
               other2_n_patch.at<uint8_t>(_y, _x) = other2_n_image.at<uint8_t>(by+y+_y, bx+x+_x);
               n_patch.at<uint8_t>(_y, _x) = n_image.at<uint8_t>(by+y+_y, bx+x+_x);
               my_patch.at<uint8_t>(_y, _x) = my_image.at<uint8_t>(by+y+_y, bx+x+_x);
+              mtx.unlock();
+
+
               if (n_patch.at<uint8_t>(_y,_x) == 0 ||
                   my_patch.at<uint8_t>(_y,_x) == 0 ||
                   other_n_patch.at<uint8_t>(_y,_x) == 0 ||
