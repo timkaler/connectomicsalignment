@@ -433,10 +433,29 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
   thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
 
   switch(res) {
+
     case THUMBNAIL: {
-      return cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
+      cv::Mat src = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
+      cv::Mat dst;
+      //cv::equalizeHist( src, dst );
+      int scale = 1;
+      cv::Laplacian(src, dst, CV_8U, 3, scale, 0, cv::BORDER_DEFAULT);
+
+      return dst;//cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
       break;
     }
+    case THUMBNAIL2: {
+      cv::Mat src = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
+      return src;
+      //cv::Mat dst;
+      ////cv::equalizeHist( src, dst );
+      //int scale = 1;
+      //cv::Laplacian(src, dst, CV_8U, 3, scale, 0, cv::BORDER_DEFAULT);
+
+      //return dst;//cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
+      break;
+    }
+
     case FULL: {
       return cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
       break;

@@ -38,7 +38,7 @@ static float EDGE_THRESH_2D = 5.0;
 
 namespace tfk {
 
-enum Resolution {THUMBNAIL, FULL, PERCENT30};
+enum Resolution {THUMBNAIL, FULL, PERCENT30, THUMBNAIL2};
 
 class Tile {
   public:

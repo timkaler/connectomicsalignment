@@ -95,7 +95,7 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
       pt = this->affine_transform(pt);
       pt = this->elastic_transform(pt);
       uint8_t halo_val = halo.at<uint8_t>((int)(pt.y - bbox.first.y), (int)(pt.x - bbox.first.x));
-      if (halo_val == 0) {
+      if (false && halo_val == 0) {
         printf("Halo value 0 detected, skipping this one.\n");
         halo.release();
         tile_img.release();
@@ -112,16 +112,16 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
 }
 
 {
-  cv::Point2f render_scale = this->get_render_scale(THUMBNAIL);
+  cv::Point2f render_scale = this->get_render_scale(THUMBNAIL2);
 
   std::string thumbnailpath = std::string(tile->filepath);
   thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".bmp"), 4,".jpg");
   thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
 
   // thumbnail resolution
-  cv::Mat halo = other_neighbor->render(bbox, THUMBNAIL);
+  cv::Mat halo = other_neighbor->render(bbox, THUMBNAIL2);
 
-  cv::Mat tile_img = tile->get_tile_data(THUMBNAIL);
+  cv::Mat tile_img = tile->get_tile_data(THUMBNAIL2);
   //cv::Mat tile_img = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
 
   imwrite("orig_tiles/thumbnail_sec_"+std::to_string(this->real_section_id) +
@@ -134,7 +134,7 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
       pt = this->affine_transform(pt);
       pt = this->elastic_transform(pt);
       uint8_t halo_val = halo.at<uint8_t>((int)((pt.y - bbox.first.y)/render_scale.y), (int)((pt.x - bbox.first.x)/render_scale.x));
-      if (halo_val == 0) {
+      if (false && halo_val == 0) {
         printf("Halo value 0 detected, skipping this one.\n");
          halo.release();
          tile_img.release();
@@ -171,8 +171,8 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
 
 
 
-  int patch_3_size = 100;
-  int patch_2_size = 20;
+  int patch_3_size = 400;
+  int patch_2_size = 100;
 
   //cv::Mat n_patch;
   //cv::Mat other_n_patch;
@@ -247,7 +247,8 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
 
           /* baseline by comparing to gaussian blur */
           cv::Mat my_patch_blur;
-          GaussianBlur(my_patch, my_patch_blur, cv::Size(0, 0), 1.2);
+          GaussianBlur(my_patch, my_patch_blur, cv::Size(0, 0), 4.0);
+
           cv::Mat result_blur;
           cv::matchTemplate(my_patch, my_patch_blur, result_blur, CV_TM_CCOEFF_NORMED);
           float corr_blur = result_blur.at<float>(0,0);
@@ -265,18 +266,20 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
           cv::matchTemplate(other2_n_patch, other_n_patch, other2_result, CV_TM_CCOEFF_NORMED);
           float other2_corr = other2_result.at<float>(0,0);
 
-          if(corr < 0.1*corr_blur) {
+          float blur_thresh = 0.5;
+
+          if(corr < blur_thresh*corr_blur) {
             mtx.lock();
             below.push_back(std::make_pair(cv::Point2f(y, x), cv::Point2f(y + patch_2_size, x + patch_2_size)));
             mtx.unlock();
           }
-          if(other_corr < 0.1*corr_blur){
+          if(other_corr < blur_thresh*corr_blur){
             mtx.lock();
             above.push_back(std::make_pair(cv::Point2f(y, x), cv::Point2f(y + patch_2_size, x + patch_2_size)));
             mtx.unlock();
           }
 
-          if(corr < corr_blur*0.1) {
+          if(corr < corr_blur*blur_thresh) {
 	        bad++;
           }
 
@@ -337,7 +340,7 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
         auto bad_bbox = std::make_pair(cv::Point2f(bad_min_x, bad_min_y),
                                    cv::Point2f(bad_max_x, bad_max_y));
 		//REPLACE BAD REGION
-        //this->replace_bad_region(bad_bbox, other_neighbor);
+        this->replace_bad_region(bad_bbox, other_neighbor);
       }
     }
   }
@@ -373,7 +376,7 @@ bool tfk::Section::section_data_exists() {
 }
 
 cv::Point2f tfk::Section::get_render_scale(Resolution resolution) {
-  if (resolution == THUMBNAIL) {
+  if (resolution == THUMBNAIL || resolution == THUMBNAIL2) {
     Tile* first_tile = this->tiles[0];
 
     std::string thumbnailpath = std::string(first_tile->filepath);
@@ -589,6 +592,7 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
         int y_c = (int)(transformed_p.y/render_scale.y + 0.5);
         for (int k = -1; k < 2; k++) {
           for (int m = -1; m < 2; m++) {
+            //if (k != 0 || m!=0) continue;
             unsigned char val = tile_p_image.at<unsigned char>(_y, _x);
             int x = x_c+k;
             int y = y_c+m;
