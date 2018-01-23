@@ -88,3 +88,31 @@ void align_execute(align_data_t *p_align_data) {
     return;
 }
 
+void param_optimize(align_data_t *p_align_data) {
+
+    tfk::Stack* stack = new tfk::Stack(p_align_data->base_section,
+                                       p_align_data->n_sections,
+                                       p_align_data->input_filepath,
+                                       p_align_data->output_dirpath);
+
+
+    stack->mode = p_align_data->mode;
+    stack->output_dirpath = p_align_data->output_dirpath;
+    stack->base_section = p_align_data->base_section;
+    stack->n_sections = p_align_data->n_sections;
+    stack->do_subvolume = p_align_data->do_subvolume;
+    stack->input_filepath = p_align_data->input_filepath;
+    stack->min_x = p_align_data->min_x;
+    stack->min_y = p_align_data->min_y;
+    stack->max_x = p_align_data->max_x;
+    stack->max_y = p_align_data->max_y;
+    stack->init();
+    printf("Got past the init\n");
+    printf("stack has sections %zu\n", stack->sections.size()); 
+    cilk_for (int i = 0; i < stack->sections.size(); i++) {
+      stack->sections[i]->parameter_optimization(10);
+    }
+    return;
+}
+
+

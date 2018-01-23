@@ -35,10 +35,18 @@ static float EDGE_THRESH_2D = 5.0;
 
 
 
-
 namespace tfk {
 
 enum Resolution {THUMBNAIL, FULL, PERCENT30, THUMBNAIL2};
+
+typedef struct params {
+    int num_features; // actually what size to start on but thats what we call it
+    int num_octaves;
+    float contrast_threshold;
+    float edge_threshold;
+    float sigma;
+    Resolution res;
+} params;
 
 class Tile {
   public:
@@ -88,6 +96,7 @@ class Tile {
 
    void compute_sift_keypoints2d();
    void compute_sift_keypoints3d(bool recomputation = false);
+   void compute_sift_keypoints_with_params(params p);
 
    cv::Point2f rigid_transform(cv::Point2f pt);
 
@@ -162,7 +171,10 @@ class Section {
     std::vector<int> get_all_close_tiles(int atile_id);
     std::vector<Tile*> get_all_close_tiles(Tile* atile_id);
     void compute_keypoints_and_matches();
-    void compute_tile_matches(Tile* a_tile, Graph* graph);
+    void compute_tile_matches(Tile* a_tile);
+    void compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
+      std::vector< cv::Point2f > &filtered_match_points_a, 
+      std::vector< cv::Point2f > &filtered_match_points_b);
 
     void recompute_keypoints();
 
@@ -229,6 +241,8 @@ class Section {
 
     bool transformed_tile_overlaps_with(Tile* tile,
         std::pair<cv::Point2f, cv::Point2f> bbox);
+    
+    void parameter_optimization(int trials);
 };
 
 

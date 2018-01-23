@@ -670,4 +670,199 @@ void tfk::Tile::compute_sift_keypoints2d() {
   this->p_image->release();
 }
 
+void tfk::Tile::compute_sift_keypoints_with_params(params p) {
+  printf("computing sift keypoints 2d\n");
+  (*this->p_image) = get_tile_data(p.res);
+
+  (*this->p_kps).clear();
+
+  //printf("Dimensiosn are %d %d\n", this->p_image->rows, this->p_image->cols);
+
+
+  int rows = this->p_image->rows;
+  int cols = this->p_image->cols;
+
+  ASSERT((rows % SIFT_D1_SHIFT) == 0);
+  ASSERT((cols % SIFT_D2_SHIFT) == 0);
+
+  cv::Ptr<cv::Feature2D> p_sift;
+
+  std::vector<cv::KeyPoint> v_kps[SIFT_MAX_SUB_IMAGES];
+  cv::Mat m_kps_desc[SIFT_MAX_SUB_IMAGES];
+
+  int n_sub_images;
+  if ((this->tile_id > MFOV_BOUNDARY_THRESH)) {
+    p_sift = new cv::xfeatures2d::SIFT_Impl(
+            p.num_features,  // num_features --- unsupported.
+            p.num_octaves,  // number of octaves
+            p.contrast_threshold,  // contrast threshold.
+            p.edge_threshold,  // edge threshold.
+            p.sigma);  // sigma.
+
+    // THEN: This tile is on the boundary, we need to compute SIFT features
+    // on the entire section.
+    int max_rows = rows / SIFT_D1_SHIFT;
+    int max_cols = cols / SIFT_D2_SHIFT;
+    n_sub_images = max_rows * max_cols;
+
+    cilk_for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
+      cilk_for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
+        //printf("cur_d2 is %d cur_d1 is %d\n", cur_d2, cur_d1);
+        // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
+        cv::Mat sub_im = (*this->p_image)(cv::Rect(cur_d2, cur_d1,
+            SIFT_D2_SHIFT, SIFT_D1_SHIFT));
+
+        // Mask for subimage
+        cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT, SIFT_D2_SHIFT,
+            CV_8UC1);
+
+        // Compute a subimage ID, refering to a tile within larger
+        //   2d image.
+        int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
+        int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
+        int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
+
+        // Detect the SIFT features within the subimage.
+        fasttime_t tstart = gettime();
+        p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
+            m_kps_desc[sub_im_id]);
+
+        fasttime_t tend = gettime();
+        totalTime += tdiff(tstart, tend);
+
+        for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
+          v_kps[sub_im_id][i].pt.x += cur_d2;
+          v_kps[sub_im_id][i].pt.y += cur_d1;
+        }
+      }
+    }
+    // Regardless of whether we were on or off MFOV boundary, we concat
+    //   the keypoints and their descriptors here.
+    for (int i = 0; i < n_sub_images; i++) {
+        for (int j = 0; j < v_kps[i].size(); j++) {
+            (*this->p_kps).push_back(v_kps[i][j]);
+        }
+    }
+
+  } else {
+    p_sift = new cv::xfeatures2d::SIFT_Impl(
+            p.num_features,  // num_features --- unsupported.
+            p.num_octaves,  // number of octaves
+            p.contrast_threshold,  // contrast threshold.
+            p.edge_threshold,  // edge threshold.
+            p.sigma);  // sigma.
+
+    // ELSE THEN: This tile is in the interior of the MFOV. Only need to
+    //     compute features along the boundary.
+    n_sub_images = 4;
+
+    // BEGIN TOP SLICE
+    {
+      // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
+      cv::Mat sub_im = (*this->p_image)(cv::Rect(
+          0, 0, SIFT_D2_SHIFT_3D, OVERLAP_2D));
+
+      // Mask for subimage
+      cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, SIFT_D2_SHIFT_3D, CV_8UC1);
+      int sub_im_id = 0;
+
+      // Detect the SIFT features within the subimage.
+      fasttime_t tstart = gettime();
+      p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
+          m_kps_desc[sub_im_id]);
+      fasttime_t tend = gettime();
+      totalTime += tdiff(tstart, tend);
+      for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
+          v_kps[sub_im_id][i].pt.x += 0;  // cur_d2;
+          v_kps[sub_im_id][i].pt.y += 0;  // cur_d1;
+      }
+    }
+    // END TOP SLICE
+
+    // BEGIN LEFT SLICE
+    {
+      // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
+      cv::Mat sub_im = (*this->p_image)(cv::Rect(
+          0, OVERLAP_2D, OVERLAP_2D, SIFT_D1_SHIFT_3D-OVERLAP_2D));
+
+      // Mask for subimage
+      cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT_3D-OVERLAP_2D, OVERLAP_2D,
+          CV_8UC1);
+      int sub_im_id = 1;
+      // Detect the SIFT features within the subimage.
+      fasttime_t tstart = gettime();
+      p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
+         m_kps_desc[sub_im_id]);
+      fasttime_t tend = gettime();
+      totalTime += tdiff(tstart, tend);
+      for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
+          v_kps[sub_im_id][i].pt.x += 0;  // cur_d2;
+          v_kps[sub_im_id][i].pt.y += OVERLAP_2D;  // cur_d1;
+      }
+    }
+    // END LEFT SLICE
+
+    // BEGIN RIGHT SLICE
+    {
+      // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
+      cv::Mat sub_im = (*this->p_image)(cv::Rect(
+          SIFT_D2_SHIFT_3D-OVERLAP_2D, OVERLAP_2D, OVERLAP_2D, SIFT_D1_SHIFT_3D-OVERLAP_2D));
+
+      // Mask for subimage
+      cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT_3D-OVERLAP_2D, OVERLAP_2D,
+          CV_8UC1);
+      int sub_im_id = 2;
+      // Detect the SIFT features within the subimage.
+      fasttime_t tstart = gettime();
+
+      p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
+          m_kps_desc[sub_im_id]);
+      fasttime_t tend = gettime();
+      totalTime += tdiff(tstart, tend);
+      for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
+          v_kps[sub_im_id][i].pt.x += SIFT_D2_SHIFT_3D-OVERLAP_2D;  // cur_d2;
+          v_kps[sub_im_id][i].pt.y += OVERLAP_2D;  // cur_d1;
+      }
+    }
+    // END RIGHT SLICE
+
+    // BEGIN BOTTOM SLICE
+    {
+      // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
+      cv::Mat sub_im = (*this->p_image)(cv::Rect(
+          OVERLAP_2D, SIFT_D1_SHIFT_3D-OVERLAP_2D, SIFT_D2_SHIFT_3D-OVERLAP_2D, OVERLAP_2D));
+
+      // Mask for subimage
+      cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, SIFT_D2_SHIFT_3D-OVERLAP_2D,
+          CV_8UC1);
+      // Compute a subimage ID, refering to a tile within larger
+      //   2d image.
+      int sub_im_id = 3;
+      // Detect the SIFT features within the subimage.
+      fasttime_t tstart = gettime();
+
+      p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
+          m_kps_desc[sub_im_id]);
+      fasttime_t tend = gettime();
+      totalTime += tdiff(tstart, tend);
+      for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
+          v_kps[sub_im_id][i].pt.x += OVERLAP_2D;  // cur_d2;
+          v_kps[sub_im_id][i].pt.y += (SIFT_D1_SHIFT_3D-OVERLAP_2D);  // cur_d1;
+      }
+    }
+    // END BOTTOM SLICE
+
+    // Regardless of whether we were on or off MFOV boundary, we concat
+    //   the keypoints and their descriptors here.
+    for (int i = 0; i < n_sub_images; i++) {
+        for (size_t j = 0; j < v_kps[i].size(); j++) {
+            (*this->p_kps).push_back(v_kps[i][j]);
+        }
+    }
+  }
+
+  cv::vconcat(m_kps_desc, n_sub_images, *(this->p_kps_desc));
+  this->p_image->release();
+}
+
 
