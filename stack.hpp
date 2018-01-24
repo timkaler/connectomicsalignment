@@ -242,7 +242,7 @@ class Section {
     bool transformed_tile_overlaps_with(Tile* tile,
         std::pair<cv::Point2f, cv::Point2f> bbox);
     
-    void parameter_optimization(int trials);
+    std::vector<std::tuple<int, double, int>> parameter_optimization(int trials, double threshold, std::vector<params> &ps);
 };
 
 

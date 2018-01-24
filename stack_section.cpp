@@ -1796,8 +1796,16 @@ tfk::Section::Section(SectionData& section_data) {
 
 }
 
-void tfk::Section::parameter_optimization(int trials) {
-  printf("section has %d tiles\n", this->n_tiles);
+// returns a vector
+// the first item is how many were within the threshold
+// the second item is the time it took
+// the third item is the total number of matches
+std::vector<std::tuple<int, double, int>> tfk::Section::parameter_optimization(int trials, double threshold, std::vector<params> &ps) {
+
+  std::vector<std::tuple<int, double, int>> results;
+  results.reserve(ps.size());
+
+  //printf("section has %d tiles\n", this->n_tiles);
   Tile* tile_pairs[trials][2];
   // choose all the random pairs of overlapping tiles
   for (int i = 0; i < trials; i++) {
@@ -1805,11 +1813,15 @@ void tfk::Section::parameter_optimization(int trials) {
     Tile* tile_a = this->tiles[rand()%this->n_tiles];
     std::vector<int> neighbor_ids = this->get_all_close_tiles(tile_a->tile_id);
     //pick a random neighbor of that tile
+    while (neighbor_ids.size() == 0) {
+      tile_a = this->tiles[rand()%this->n_tiles];
+      neighbor_ids = this->get_all_close_tiles(tile_a->tile_id);
+    }
     Tile* tile_b = this->tiles[neighbor_ids[rand()%neighbor_ids.size()]];
     tile_pairs[i][0] = tile_a;
     tile_pairs[i][1] = tile_b;
   }
-  printf("found pairs for testing\n");
+  //printf("found pairs for testing\n");
   
   double correct_movement[trials][2];
   params best_params;
@@ -1821,8 +1833,7 @@ void tfk::Section::parameter_optimization(int trials) {
   best_params.res = FULL;
 
 
-  // TODO set best params here
-  // fid the best movement for each pair using the best params
+  // find the best movement for each pair using the best params
   for (int i = 0; i < trials; i++) {
     Tile* tile_a = tile_pairs[i][0];
     Tile* tile_b = tile_pairs[i][1];
@@ -1840,18 +1851,54 @@ void tfk::Section::parameter_optimization(int trials) {
       correct_movement[i][0] += filtered_match_points_b[j].x - filtered_match_points_a[j].x;
       correct_movement[i][1] += filtered_match_points_b[j].y - filtered_match_points_a[j].y;
     }
-    correct_movement[i][0] /= filtered_match_points_a.size();
-    correct_movement[i][1] /= filtered_match_points_a.size();
-    printf("%f, %f\n", correct_movement[i][0], correct_movement[i][1]);
+    if (filtered_match_points_a.size() > 0) {
+      correct_movement[i][0] /= filtered_match_points_a.size();
+      correct_movement[i][1] /= filtered_match_points_a.size();
+    }
+    printf("%f, %f, ", correct_movement[i][0], correct_movement[i][1]);
   }
-  printf("found correct movements\n");
+  printf("\n");
+  //printf("found correct movements\n");
+
+  std::clock_t start;
+  double duration;
+  for (int k = 0; k < ps.size(); k++) {
+    start = std::clock();
+    int valid_moves = 0;
+    int matches_count = 0;
+    for (int i = 0; i < trials; i++) {
+      Tile* tile_a = tile_pairs[i][0];
+      Tile* tile_b = tile_pairs[i][1];
+      tile_a->compute_sift_keypoints_with_params(ps[k]);
+      tile_b->compute_sift_keypoints_with_params(ps[k]);
+      std::vector< cv::Point2f > filtered_match_points_a(0);
+      std::vector< cv::Point2f > filtered_match_points_b(0);
+      this->compute_tile_matches_pair(tile_a, tile_b, 
+        filtered_match_points_a, 
+        filtered_match_points_b);
+      double move_x = 0.0;
+      double move_y = 0.0;
+      // get the average movement
+      for (int j = 0; j < filtered_match_points_a.size(); j++) {
+        move_x += filtered_match_points_b[j].x - filtered_match_points_a[j].x;
+        move_y += filtered_match_points_b[j].y - filtered_match_points_a[j].y;
+      }
+      if (filtered_match_points_a.size() > 0) {
+        move_x /= filtered_match_points_a.size();
+        move_y /= filtered_match_points_a.size();
+      }
+      printf("%f, %f, ", move_x, move_y);
+      if (std::abs(move_x - correct_movement[i][0]) <= threshold && std::abs(move_y - correct_movement[i][1]) <= threshold) {
+        valid_moves++;
+      }
+      matches_count+= (tile_a->p_kps->size() + tile_b->p_kps->size());
+
+    }
+    printf("\n");
+    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+    results.push_back(std::make_tuple(valid_moves, duration, matches_count));
+  }
+  return results;
   
-  
-  
-
-
-
-
-
 }
 

@@ -469,7 +469,7 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       break;
     }
     default: {
-      printf("Error in get_tile_data, invalid resolution specified\n");
+      printf("Error in get_tile_data, invalid resolution specified, got %d\n", res);
       exit(1);
       return cv::Mat();
     }
@@ -671,7 +671,6 @@ void tfk::Tile::compute_sift_keypoints2d() {
 }
 
 void tfk::Tile::compute_sift_keypoints_with_params(params p) {
-  printf("computing sift keypoints 2d\n");
   (*this->p_image) = get_tile_data(p.res);
 
   (*this->p_kps).clear();
