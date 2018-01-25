@@ -11,6 +11,26 @@ cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
   return cv::Point2f(new_x, new_y);
 }
 
+
+cv::Point2f tfk::Section::affine_transform_plusA(cv::Point2f pt, cv::Mat A) {
+  float pre_new_x = pt.x*this->a00 + pt.y * this->a01 + this->offset_x;
+  float pre_new_y = pt.x*this->a10 + pt.y * this->a11 + this->offset_y;
+
+
+
+  double ta00 = A.at<double>(0,0);
+  double ta01 = A.at<double>(0,1);
+  double toffset_x = A.at<double>(0,2);
+  double ta10 = A.at<double>(1,0);
+  double ta11 = A.at<double>(1,1);
+  double toffset_y = A.at<double>(1,2);
+
+  float new_x = pre_new_x*ta00 + pre_new_y * ta01 + toffset_x;
+  float new_y = pre_new_x*ta10 + pre_new_y * ta11 + toffset_y;
+
+  return cv::Point2f(new_x, new_y);
+}
+
 //void render_section(double min_x, double min_y, double max_x, double max_y) {
 //}
 
@@ -148,6 +168,137 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
   tile->image_data_replaced = true;
 }
 
+
+
+std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> tfk::Section::render_error_affine(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix, cv::Mat A) {
+//get rid of neighbors!!!
+
+  std::cout << "CALLING RENDER_ERROR_AFFINE" << std::endl;
+  cv::Mat n_image = neighbor->render(bbox, THUMBNAIL);
+  cv::Mat my_image = this->render_affine(A, bbox, THUMBNAIL);
+
+  int nrows = n_image.rows;
+  int ncols = n_image.cols;
+
+  cv::Mat heat_map;
+  cv::Mat n_patch;
+  cv::Mat other_n_patch;
+  cv::Mat other2_n_patch;
+  cv::Mat my_patch;
+
+
+  int patch_3_size = 100;
+  int patch_2_size = 20;
+
+
+  n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+  my_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+  heat_map.create(nrows, ncols, CV_32F);
+
+  std::vector<std::pair<cv::Point2f, float> > patch_results;
+
+  for (int y = 0; y < nrows; y++) {
+    for (int x = 0; x < ncols; x++) {
+      heat_map.at<float>(y,x) = 0.0;
+    }
+  }
+
+
+  cv::Point2f render_scale = this->get_render_scale(THUMBNAIL);
+
+
+  std::mutex mtx;
+
+  std::vector<std::pair<cv::Point2f, cv::Point2f>> below;
+  std::vector<std::pair<cv::Point2f, cv::Point2f>> above;
+
+  //parallelize going through patches... ? 
+  /*cilk_*/for (int by = 0; by + patch_3_size < nrows; by += patch_3_size/2) {
+    /*cilk_*/for (int bx = 0; bx + patch_3_size < ncols; bx += patch_3_size/2) {
+      int bad = 0;
+      int total = 0;
+      bool skip = false;
+      int bad_above = 0;
+      for (int y = 0; y + patch_2_size < patch_3_size; y += patch_2_size/2) {
+        for (int x = 0; x + patch_2_size < patch_3_size; x += patch_2_size/2) {
+          for (int _y = 0; _y < patch_2_size; _y++) {
+            for (int _x = 0; _x < patch_2_size; _x++) {
+              
+              mtx.lock(); //this is really dumb
+              n_patch.at<uint8_t>(_y, _x) = n_image.at<uint8_t>(by+y+_y, bx+x+_x);
+              my_patch.at<uint8_t>(_y, _x) = my_image.at<uint8_t>(by+y+_y, bx+x+_x);
+              mtx.unlock();
+
+
+              if (n_patch.at<uint8_t>(_y,_x) == 0 || my_patch.at<uint8_t>(_y,_x) == 0) {
+                skip = true;
+              }
+            }
+          }
+
+          /* baseline by comparing to gaussian blur */
+          cv::Mat my_patch_blur;
+          GaussianBlur(my_patch, my_patch_blur, cv::Size(0, 0), 10);
+          cv::Mat result_blur;
+          cv::matchTemplate(my_patch, my_patch_blur, result_blur, CV_TM_CCOEFF_NORMED);
+          float corr_blur = result_blur.at<float>(0,0);
+		  std::cout << "blur val " << corr_blur << std::endl;
+
+          cv::Mat result;
+
+          cv::matchTemplate(n_patch, my_patch, result, CV_TM_CCOEFF_NORMED);
+          float corr = result.at<float>(0,0);
+
+
+          if(corr < 0.1*corr_blur) {
+            mtx.lock();
+            below.push_back(std::make_pair(cv::Point2f(y, x), cv::Point2f(y + patch_2_size, x + patch_2_size)));
+            mtx.unlock();
+          }
+
+          if(corr < corr_blur*0.1) {
+	        bad++;
+          }
+
+          total++;
+        }
+      }
+
+      if (bad > 1 && !skip && bad_above < bad) {
+        for (int y = 0; y < patch_3_size; y++) {
+          for (int x = 0; x < patch_3_size; x++) {
+            heat_map.at<float>(by+y, bx+x) = 1.0;
+          }
+        }
+
+        int bad_min_x = bbox.first.x + (bx)*render_scale.x;
+        int bad_max_x = bbox.first.x + (bx+patch_3_size)*render_scale.x;
+
+        int bad_min_y = bbox.first.y + (by)*render_scale.y;
+        int bad_max_y = bbox.first.y + (by+patch_3_size)*render_scale.y;
+
+        auto bad_bbox = std::make_pair(cv::Point2f(bad_min_x, bad_min_y),
+                                   cv::Point2f(bad_max_x, bad_max_y));
+		//REPLACE BAD REGION
+        //this->replace_bad_region(bad_bbox, other_neighbor);
+      }
+    }
+  }
+
+ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> result;
+  result.first = below;
+  result.second = above;
+
+  cv::Mat heatmap = apply_heatmap_to_grayscale(&my_image, &heat_map, nrows, ncols);
+  imwrite(filename_prefix, heatmap);
+  
+  n_image.release();
+  my_image.release();
+  heatmap.release();
+
+  return result;
+}
+
 std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Section* other2_neighbor,
     std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
 
@@ -225,10 +376,11 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
 
           /* baseline by comparing to gaussian blur */
           cv::Mat my_patch_blur;
-          GaussianBlur(my_patch, my_patch_blur, cv::Size(0, 0), 1.2);
+          GaussianBlur(my_patch, my_patch_blur, cv::Size(0, 0), 10);
           cv::Mat result_blur;
           cv::matchTemplate(my_patch, my_patch_blur, result_blur, CV_TM_CCOEFF_NORMED);
           float corr_blur = result_blur.at<float>(0,0);
+		  std::cout << "blur val " << corr_blur << std::endl;
 
           cv::Mat result;
 
@@ -242,6 +394,8 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
           cv::Mat other2_result;
           cv::matchTemplate(other2_n_patch, other_n_patch, other2_result, CV_TM_CCOEFF_NORMED);
           float other2_corr = other2_result.at<float>(0,0);
+
+          
 
           if(corr < 0.1*corr_blur) {
             mtx.lock();
@@ -492,6 +646,118 @@ cv::Point2f tfk::Section::elastic_transform(cv::Point2f p) {
   float new_y = u*tri.q[0].y + v*tri.q[1].y + w*tri.q[2].y;
   return cv::Point2f(new_x, new_y);
 }
+
+
+
+// bbox is in unscaled (i.e. full resolution) transformed coordinate system.
+cv::Mat tfk::Section::render_affine(cv::Mat A, std::pair<cv::Point2f, cv::Point2f> bbox,
+    tfk::Resolution resolution) {
+  printf("Called render on bounding box %d %d %d %d\n", bbox.first.x, bbox.first.y, bbox.second.x, bbox.second.y);
+  cv::Point2f render_scale = this->get_render_scale(resolution);
+
+  // scaled_bbox is in transformed coordinate system
+  std::pair<cv::Point2f, cv::Point2f> scaled_bbox = this->scale_bbox(bbox, render_scale);
+
+  int input_lower_x = bbox.first.x;
+  int input_lower_y = bbox.first.y;
+  int input_upper_x = bbox.second.x;
+  int input_upper_y = bbox.second.y;
+
+  int lower_x = scaled_bbox.first.x;
+  int lower_y = scaled_bbox.first.y;
+  //int upper_x = scaled_bbox.second.x;
+  //int upper_y = scaled_bbox.second.y;
+
+  int nrows = (input_upper_y-input_lower_y)/render_scale.y;
+  int ncols = (input_upper_x-input_lower_x)/render_scale.x;
+
+  // temporary matrix for the section.
+  cv::Mat section_p_out;// = new cv::Mat();
+  //section->p_out = new cv::Mat();
+  (section_p_out).create(nrows, ncols, CV_8UC1);
+
+  // temporary matrix for the section.
+  cv::Mat* section_p_out_sum = new cv::Mat();
+  //section->p_out = new cv::Mat();
+  (*section_p_out_sum).create(nrows, ncols, CV_16UC1);
+
+  // temporary matrix for the section.
+  cv::Mat* section_p_out_ncount = new cv::Mat();
+  //section->p_out = new cv::Mat();
+  (*section_p_out_ncount).create(nrows, ncols, CV_16UC1);
+
+
+  for (int y = 0; y < nrows; y++) {
+    for (int x = 0; x < ncols; x++) {
+      section_p_out.at<unsigned char>(y,x) = 0;
+      section_p_out_sum->at<unsigned short>(y,x) = 0;
+      section_p_out_ncount->at<unsigned short>(y,x) = 0;
+    }
+  }
+
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* tile = this->tiles[i];
+    if (!this->tile_in_render_box(tile, bbox)) continue;
+
+    //cv::Mat* tile_p_image = this->read_tile(tile->filepath, resolution);
+    cv::Mat tile_p_image = tile->get_tile_data(resolution);
+
+    for (int _y = 0; _y < (tile_p_image).size().height; _y++) {
+      for (int _x = 0; _x < (tile_p_image).size().width; _x++) {
+        cv::Point2f p = cv::Point2f(_x*render_scale.x, _y*render_scale.y);
+
+        cv::Point2f post_rigid_p = tile->rigid_transform(p);
+
+        cv::Point2f transformed_p = this->affine_transform_plusA(post_rigid_p, A);
+
+        int x_c = (int)(transformed_p.x/render_scale.x + 0.5);
+        int y_c = (int)(transformed_p.y/render_scale.y + 0.5);
+        for (int k = -1; k < 2; k++) {
+          for (int m = -1; m < 2; m++) {
+            unsigned char val = tile_p_image.at<unsigned char>(_y, _x);
+            int x = x_c+k;
+            int y = y_c+m;
+            if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
+              section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) += val;
+              section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) += 1;
+            }
+          }
+        }
+      }
+    }
+    tile_p_image.release();
+  }
+
+  for (int y = 0; y < section_p_out.size().height; y++) {
+    for (int x = 0; x < section_p_out.size().width; x++) {
+      if (section_p_out_ncount->at<unsigned short>(y,x) == 0) {
+        continue;
+      }
+      section_p_out.at<unsigned char>(y, x) =
+          section_p_out_sum->at<unsigned short>(y, x) / section_p_out_ncount->at<unsigned short>(y,x);
+      // force the min value to be at least 1 so that we can check for out-of-range pixels.
+      if (section_p_out.at<unsigned char>(y, x) == 0) {
+        section_p_out.at<unsigned char>(y, x) = 1;
+      }
+    }
+  }
+
+  //if (write) {
+  //  cv::imwrite(filename, (*section_p_out));
+  //}
+  section_p_out_sum->release();
+  section_p_out_ncount->release();
+  delete section_p_out_sum;
+  delete section_p_out_ncount;
+  //delete section_p_out;
+  //delete section_p_out_ncount;
+
+
+  return (section_p_out);
+}
+
+
+
 
 // bbox is in unscaled (i.e. full resolution) transformed coordinate system.
 cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
@@ -774,7 +1040,30 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
       }
 
       bool* mask = (bool*)calloc(match_points_a.size()+1, 1);
-      tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, ransac_thresh, mask);
+	  //HERE
+      vdata v = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, ransac_thresh, mask);
+
+      // which match points to do this for...?
+      cv::Mat A(3, 3, cv::DataType<double>::type);
+      A.at<double>(0,0) = v.a00;
+      A.at<double>(0,1) = v.a01;
+      A.at<double>(0,2) = v.offset_x;
+      A.at<double>(1,0) = v.a10;
+      A.at<double>(1,1) = v.a11;
+      A.at<double>(1,2) = v.offset_y;
+      A.at<double>(2,0) = 0.0;
+      A.at<double>(2,1) = 0.0;
+      A.at<double>(2,2) = 1.0;
+
+      std::pair<cv::Point2f, cv::Point2f> bbox = std::make_pair(cv::Point2f(box_iter_x, box_iter_y), cv::Point2f(box_iter_x + 24000, box_iter_y + 24000));
+
+	  // call render error to do error detection
+	  //What to make the other neightbor??
+      std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> res = this->render_error_affine(neighbor, bbox, "filename", A);
+
+	//what now?
+
+
       for (int c = 0; c < match_points_a.size(); c++) {
         if (mask[c]) {
           num_filtered++;
@@ -1058,6 +1347,21 @@ std::pair<cv::Point2f, cv::Point2f> tfk::Section::get_bbox() {
 }
 
 
+void tfk::Section::apply_affine_transforms(cv::Mat A) {
+  //pass in affine transform matrix
+  for (int i = 0; i < this->affine_transforms.size(); i++) {
+    A = A*this->affine_transforms[i];
+  }
+
+  this->a00 = A.at<double>(0,0);
+  this->a01 = A.at<double>(0,1);
+  this->offset_x = A.at<double>(0,2);
+  this->a10 = A.at<double>(1,0);
+  this->a11 = A.at<double>(1,1);
+  this->offset_y = A.at<double>(1,2);
+
+}
+
 void tfk::Section::apply_affine_transforms() {
   // init identity matrix.
   cv::Mat A(3, 3, cv::DataType<double>::type);
@@ -1085,6 +1389,8 @@ void tfk::Section::apply_affine_transforms() {
 }
 
 // Find affine transform for this section that aligns it to neighbor.
+
+//coarse affine align or elastic??
 void tfk::Section::coarse_affine_align(Section* neighbor) {
 
   // a = neighbor.
@@ -1134,8 +1440,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   //std::pair<double,double> offset_pair;
 
   // pre-filter matches with very forgiving ransac threshold.
-  tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 1024, mask);
-
+  vdata v = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 1024, mask);
   std::vector< cv::Point2f > filtered_match_points_a_pre(0);
   std::vector< cv::Point2f > filtered_match_points_b_pre(0);
   int num_filtered = 0;
@@ -1226,7 +1531,6 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   //this->offset_y = 0.0;
 
 }
-
 
 void tfk::Section::compute_tile_matches(Tile* a_tile, Graph* graph) {
 
@@ -1334,348 +1638,9 @@ void tfk::Section::compute_tile_matches(Tile* a_tile, Graph* graph) {
       bool* mask = (bool*) calloc(match_points_a.size(), 1);
       double thresh = 5.0;
       tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
-
-
-      std::vector< cv::Point2f > filtered_match_points_a(0);
-      std::vector< cv::Point2f > filtered_match_points_b(0);
-
-      int num_matches_filtered = 0;
-      // Use the output mask to filter the matches
-      for (size_t i = 0; i < matches.size(); ++i) {
-        if (mask[i]) {
-          num_matches_filtered++;
-          filtered_match_points_a.push_back(
-              atile_kps_in_overlap[matches[i].queryIdx].pt);
-          filtered_match_points_b.push_back(
-              btile_kps_in_overlap[matches[i].trainIdx].pt);
-        }
-      }
-      free(mask);
-      if (num_matches_filtered > 12) {
-        a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
-        //graph->insert_matches(atile_id, btile_id,
-        //    filtered_match_points_a, filtered_match_points_b, 1.0);
-        break;
-      }
-    }
-  }
+   }
 }
-
-
-
-void tfk::Section::read_3d_keypoints(std::string filename) {
-  cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"), cv::FileStorage::READ);
-  int count = 0;
-  for (int i = 0; i < this->tiles.size(); i++) {
-    Tile* tile = this->tiles[i];
-    tile->p_kps_3d = new std::vector<cv::KeyPoint>();
-    tile->p_kps_desc_3d = new cv::Mat();
-    fs["keypoints_"+std::to_string(i)] >> *(tile->p_kps_3d);
-    count += tile->p_kps_3d->size();
-    fs["descriptors_"+std::to_string(i)] >> *(tile->p_kps_desc_3d);
-  }
-  fs.release();
-  printf("Read %d 3d matches for section %d\n", count, this->real_section_id);
-}
-
-void tfk::Section::save_3d_keypoints(std::string filename) {
-  cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"),
-                     cv::FileStorage::WRITE);
-  // store the 3d keypoints
-  for (int i = 0; i < this->tiles.size(); i++) {
-    Tile* tile = this->tiles[i];
-    cv::write(fs, "keypoints_"+std::to_string(i),
-              (*(tile->p_kps_3d)));
-    cv::write(fs, "descriptors_"+std::to_string(i),
-              (*(tile->p_kps_desc_3d)));
-  }
-  fs.release();
-}
-
-void tfk::Section::save_2d_graph(std::string filename) {
-  cv::FileStorage fs(filename+std::string("_2d_matches.yml.gz"), cv::FileStorage::WRITE);
-  int count = 0;
-  for (int i = 0; i < this->tiles.size(); i++) {
-      Tile* tile = this->tiles[i];
-      cv::write(fs, "num_edges_"+std::to_string(i), (int) tile->edges.size());
-    for (int j = 0; j < tile->edges.size(); j++) {
-      cv::write(fs, "neighbor_id_"+std::to_string(i) + "_" + std::to_string(j),
-          tile->edges[j].neighbor_id);
-      cv::write(fs, "weight_"+std::to_string(i) + "_" + std::to_string(j),
-          1.0);
-      cv::write(fs, "v_points_"+std::to_string(i)+"_"+std::to_string(j),
-          *(tile->edges[j].v_points));
-      cv::write(fs, "n_points_"+std::to_string(i)+"_"+std::to_string(j),
-          *(tile->edges[j].n_points));
-      count++;
-    }
-  }
-  printf("wrote %d edges\n", count);
-  fs.release();
-}
-void tfk::Section::read_2d_graph(std::string filename) {
-  cv::FileStorage fs(filename+std::string("_2d_matches.yml.gz"), cv::FileStorage::READ);
-  int count = 0;
-  for (int i = 0; i < this->tiles.size(); i++) {
-    Tile* tile = this->tiles[i];
-    int edge_size;
-    fs["num_edges_"+std::to_string(i)] >> edge_size;
-    std::vector<edata> edge_data;
-    std::set<int> n_ids_seen;
-    tile->edges.clear();
-    n_ids_seen.clear();
-    for (int j = 0; j < edge_size; j++) {
-      edata edge;
-      fs["neighbor_id_"+std::to_string(i) + "_" + std::to_string(j)] >> edge.neighbor_id;
-      std::vector<cv::Point2f>* v_points = new std::vector<cv::Point2f>();
-      std::vector<cv::Point2f>* n_points = new std::vector<cv::Point2f>();
-      fs["weight_"+std::to_string(i) + "_" + std::to_string(j)] >> edge.weight;
-      fs["v_points_"+std::to_string(i) + "_" + std::to_string(j)] >> *v_points;
-      fs["n_points_"+std::to_string(i) + "_" + std::to_string(j)] >> *n_points;
-      edge.v_points = v_points;
-      edge.n_points = n_points;
-      edge.neighbor_tile = this->tiles[edge.neighbor_id];
-      tile->edges.push_back(edge);
-      count++;
-    }
-    //tile->edges = edge_data;
-  }
-
-  printf("read %d edges\n", count);
-  fs.release();
-}
-
-
-
-void tfk::Section::read_tile_matches() {
-
-  std::string filename =
-      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
-
-  this->read_3d_keypoints(filename);
-  this->read_2d_graph(filename);
-}
-
-void tfk::Section::save_tile_matches() {
-
-  std::string filename =
-      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
-
-  this->save_3d_keypoints(filename);
-  this->save_2d_graph(filename);
-}
-
-void tfk::Section::recompute_keypoints() {
-  for (int i = 0; i < this->tiles.size(); i++) {
-    Tile* tile = this->tiles[i];
-    if (tile->image_data_replaced) {
-      //tile->compute_sift_keypoints2d();
-      tile->compute_sift_keypoints3d(true);
-      tile->image_data_replaced = false;
-    }
-  }
-}
-
-void tfk::Section::compute_keypoints_and_matches() {
-  // assume that section data doesn't exist.
-
-  if (!this->section_data_exists()) {
-
-    std::vector<std::pair<float, Tile*> > sorted_tiles;
-    for (int i = 0; i < this->tiles.size(); i++) {
-      Tile* t = this->tiles[i];
-      sorted_tiles.push_back(std::make_pair(t->x_start, t));
-    }
-    std::sort(sorted_tiles.begin(), sorted_tiles.end());
-    // sorted tiles is now sorted in increasing order based on x_start;
-
-    std::set<Tile*> active_set;
-    std::set<Tile*> neighbor_set;
-
-    std::set<Tile*> opened_set;
-    std::set<Tile*> closed_set;
-
-    Tile* pivot = sorted_tiles[0].second;
-
-    bool pivot_good = false;
-    int pivot_search_start = 0;
-    for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-      if (sorted_tiles[i].second->x_start > pivot->x_finish) {
-        pivot = sorted_tiles[i].second;
-        pivot_search_start = i;
-        pivot_good = true;
-        break;
-      } else {
-        active_set.insert(sorted_tiles[i].second);
-      }
-    }
-    printf("Num tiles in sweep 0 is %lu\n", active_set.size()); 
-
-    while (active_set.size() > 0) {
-      printf("Current active set size is %lu\n", active_set.size());
-      // find all the neighbors.
-      for (auto it = active_set.begin(); it != active_set.end(); ++it) {
-        Tile* tile = *it;
-        std::vector<Tile*> overlapping = this->get_all_close_tiles(tile);
-        for (int j = 0; j < overlapping.size(); j++) {
-          neighbor_set.insert(overlapping[j]);
-        }
-      }
-
-      // close open tiles that aren't in active or neighbor set.
-      for (auto it = opened_set.begin(); it != opened_set.end(); ++it) {
-        Tile* tile = *it;
-        if (active_set.find(tile) == active_set.end() &&
-            neighbor_set.find(tile) == neighbor_set.end()) {
-          closed_set.insert(tile);
-          tile->release_2d_keypoints();
-        }
-      }
-
-      std::vector<Tile*> tiles_to_process_keypoints, tiles_to_process_matches;
-
-      for (auto it = active_set.begin(); it != active_set.end(); ++it) {
-        Tile* tile = *it;
-        tiles_to_process_matches.push_back(tile);
-        if (opened_set.find(tile) == opened_set.end()) {
-          opened_set.insert(tile);
-          tiles_to_process_keypoints.push_back(tile);
-        }
-      }
-
-      for (auto it = neighbor_set.begin(); it != neighbor_set.end(); ++it) {
-        Tile* tile = *it;
-        if (opened_set.find(tile) == opened_set.end()) {
-          opened_set.insert(tile);
-          tiles_to_process_keypoints.push_back(tile);
-        }
-      }
-
-      cilk_for (int i = 0; i < tiles_to_process_keypoints.size(); i++) {
-        Tile* tile = tiles_to_process_keypoints[i];
-        tile->compute_sift_keypoints2d();
-        tile->compute_sift_keypoints3d();
-      }
-
-      cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
-        this->compute_tile_matches(tiles_to_process_matches[i], graph);
-      }
-
-      opened_set.clear();
-      for (auto it = active_set.begin(); it != active_set.end(); ++it) {
-        opened_set.insert(*it);
-      }
-      for (auto it = neighbor_set.begin(); it != neighbor_set.end(); ++it) {
-        opened_set.insert(*it);
-      }
-      // clear the active and neighbor set.
-      active_set.clear();
-      neighbor_set.clear();
-
-      pivot_good = false;
-      for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-        if (sorted_tiles[i].second->x_start > pivot->x_finish) {
-          pivot = sorted_tiles[i].second;
-          pivot_search_start = i;
-          pivot_good = true;
-          break;
-        } else {
-          active_set.insert(sorted_tiles[i].second);
-        }
-      }
-      if (!pivot_good) break;
-    }
-
-    //cilk_for (int i = 0; i < this->tiles.size(); i++) {
-    //  Tile* tile = this->tiles[i];
-    //  tile->compute_sift_keypoints2d();
-    //  tile->compute_sift_keypoints3d();
-    //}
-
-
-    //cilk_for (int i = 0; i < this->tiles.size(); i++) {
-    //  this->compute_tile_matches(i, graph);
-    //}
-
-    //this->save_tile_matches();
-  } else {
-    this->read_tile_matches();
-  }
-
-    this->graph = new Graph();
-    graph->resize(this->tiles.size());
-  // phase 0 of make_symmetric --- find edges to add.
-  cilk_for (int i = 0; i < this->tiles.size(); i++) {
-    this->tiles[i]->make_symmetric(0, this->tiles);
-  }
-
-  // phase 1 of make_symmetric --- insert found edges.
-  cilk_for (int i = 0; i < this->tiles.size(); i++) {
-    this->tiles[i]->make_symmetric(1, this->tiles);
-  }
-
-
-  for (int i = 0; i < graph->num_vertices(); i++) {
-    vdata* d = graph->getVertexData(i);
-
-
-    for (int j = 0; j < this->tiles[i]->edges.size(); j++) {
-      graph->edgeData[i].push_back(this->tiles[i]->edges[j]);
-    }
-
-    //_tile_data tdata = p_sec_data->tiles[i];
-    Tile* tile = this->tiles[i];
-    d->tile = tile;
-    d->vertex_id = i;
-    d->mfov_id = tile->mfov_id;
-    d->tile_index = tile->index;
-    d->tile_id = i;
-    d->start_x = tile->x_start;
-    d->end_x = tile->x_finish;
-    d->start_y = tile->y_start;
-    d->end_y = tile->y_finish;
-    d->offset_x = 0.0;
-    d->offset_y = 0.0;
-    d->iteration_count = 0;
-    //d->last_radius_value = 9.0;
-    d->z = /*p_align_data->base_section + */this->section_id;
-    d->a00 = 1.0;
-    d->a01 = 0.0;
-    d->a10 = 0.0;
-    d->a11 = 1.0;
-    //d->neighbor_grad_x = 0.0;
-    //d->neighbor_grad_y = 0.0;
-    //d->converged = 0;
-    d->original_center_point =
-      cv::Point2f((tile->x_finish-tile->x_start)/2,
-                  (tile->y_finish-tile->y_start)/2);
-  }
-
-  printf("Num vertices is %d\n", graph->num_vertices());
-  for (int i = 0; i < graph->num_vertices(); i++) {
-    printf("The graph vertex id is %d\n",graph->getVertexData(i)->vertex_id);
-  }
-  printf("Num vertices is %d\n", graph->num_vertices());
-  graph->section_id = this->section_id;
-
-  // now compute keypoint matches
-  //cilk_for (int i = 0; i < this->tiles.size(); i++) {
-  //    compute_tile_matches_active_set(p_align_data, sec_id, active_set, graph);
-  //}
-
-}
-
-
-std::vector<tfk::Tile*> tfk::Section::get_all_close_tiles(Tile* a_tile) {
-  std::vector<Tile*> neighbor_tiles(0);
-  for (int i = 0; i < this->tiles.size(); i++) {
-    Tile* b_tile = this->tiles[i];
-    if (a_tile->overlaps_with(b_tile)) {
-      neighbor_tiles.push_back(b_tile);
-    }
-  }
-  return neighbor_tiles;
-}
+} //THIS IS WRONG 
 
 
 std::vector<int> tfk::Section::get_all_close_tiles(int atile_id) {

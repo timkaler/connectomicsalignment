@@ -168,8 +168,10 @@ class Section {
 
     cv::Point2f affine_transform(cv::Point2f pt);
     cv::Point2f elastic_transform(cv::Point2f pt);
-
-    cv::Mat* read_tile(std::string filepath, Resolution res);
+    cv::Point2f affine_transform(cv::Mat A, cv::Point2f pt);
+    cv::Point2f affine_transform_plusA(cv::Point2f pt, cv::Mat A);
+    
+	cv::Mat* read_tile(std::string filepath, Resolution res);
 
 
     bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
@@ -192,6 +194,7 @@ class Section {
         cv::Point2f scale);
     bool tile_in_render_box(Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox);
 
+    cv::Mat render_affine(cv::Mat A, std::pair<cv::Point2f, cv::Point2f> bbox, Resolution resolution);
     cv::Mat render(std::pair<cv::Point2f, cv::Point2f> bbox, Resolution resolution);
     void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename, Resolution res);
     cv::Point2f get_render_scale(Resolution resolution);
@@ -199,10 +202,14 @@ class Section {
      std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> render_error(Section* neighbor, Section* other_neighbor, Section* other2_neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
                       std::string filename);
 
+     std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> render_error_affine(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
+                      std::string filename, cv::Mat A);
+
     renderTriangle getRenderTriangle(tfkTriangle tri);
     std::tuple<bool, float, float, float> get_triangle_for_point(cv::Point2f pt);
 
     void apply_affine_transforms();
+    void apply_affine_transforms(cv::Mat A);
 
     void read_3d_keypoints(std::string filename);
     void save_3d_keypoints(std::string filename);

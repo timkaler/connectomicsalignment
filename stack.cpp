@@ -86,6 +86,9 @@ void tfk::Stack::get_elastic_matches() {
   }
 }
 
+
+//START
+// only do triangles with vertices in bad areas
 void tfk::Stack::elastic_align() {
   cilk_for (int i = 0; i < this->sections.size(); i++) {
     this->sections[i]->construct_triangles();
