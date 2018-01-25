@@ -981,6 +981,8 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
   std::vector< cv::Point2f > filtered_match_points_a(0);
   std::vector< cv::Point2f > filtered_match_points_b(0);
 
+  int count = 0;
+
   for (double box_iter_x = min_x; box_iter_x < max_x + 48000; box_iter_x += 24000) {
     for (double box_iter_y = min_y; box_iter_y < max_y + 48000; box_iter_y += 24000) {
       // Filter the matches with RANSAC
@@ -1059,9 +1061,13 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
 
 	  // call render error to do error detection
 	  //What to make the other neightbor??
-      std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> res = this->render_error_affine(neighbor, bbox, "filename", A);
+      std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> res = this->render_error_affine(neighbor, bbox, "affine" + std::to_string(count) + ".png", A);
 
 	//what now?
+
+	
+
+	count = count + 1;
 
 
       for (int c = 0; c < match_points_a.size(); c++) {
