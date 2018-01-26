@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
   //init_align(p_align_data);
 
   // declare all the options here.
-  int zstart, numslices;
+  int zstart, numslices, mode;
   std::string datafile_path, outputdir_path;
 
   // parse the arguments.
@@ -41,12 +41,18 @@ int main(int argc, char **argv) {
       ("n,numslices", "Number of frames to process after zstart", cxxopts::value<int>(numslices))
       ("d,datafile", "The protobuf containing the tilespec information.", cxxopts::value<std::string>(datafile_path))
       ("o,outputdir", "The directory used to output results.", cxxopts::value<std::string>(outputdir_path))
+      ("m,mode", "what mode to run in 1 to run the alignment 2 to run the paramter optimization", cxxopts::value<int>(mode))
       ("help", "Print help");
 
     options.parse(argc, argv);
     if (options.count("help")) {
       std::cout << options.help({"", "Group"}) << std::endl;
     }
+
+    if (!options.count("mode")) {
+      mode = 1;
+    }
+
 
     bool missing_required = false;
     for (int i = 0; i < NUM_REQUIRED; i++) {
@@ -61,7 +67,7 @@ int main(int argc, char **argv) {
       exit(0);
     }
 
-    p_align_data->mode = 1; // probably unused.
+    p_align_data->mode = mode; // probably unused.
     p_align_data->base_section = zstart;
     p_align_data->n_sections = numslices;
     p_align_data->input_filepath = (char*)datafile_path.c_str();
@@ -78,7 +84,14 @@ int main(int argc, char **argv) {
   #ifdef PROFILE
     ProfilerStart("profile.data");
   #endif
-    align_execute(p_align_data);
+    if (mode == 1) {
+      align_execute(p_align_data);
+    } else if (mode == 2) {
+      param_optimize(p_align_data);
+    } else {
+      std::cout << "Invalid mode, stopping program" << std::endl;
+    }
+    
   #ifdef PROFILE
     ProfilerStop();
   #endif

@@ -35,10 +35,18 @@ static float EDGE_THRESH_2D = 5.0;
 
 
 
-
 namespace tfk {
 
-enum Resolution {THUMBNAIL, FULL, PERCENT30};
+enum Resolution {THUMBNAIL, FULL, PERCENT30, THUMBNAIL2};
+
+typedef struct params {
+    int num_features; // actually what size to start on but thats what we call it
+    int num_octaves;
+    float contrast_threshold;
+    float edge_threshold;
+    float sigma;
+    Resolution res;
+} params;
 
 class Tile {
   public:
@@ -88,6 +96,7 @@ class Tile {
 
    void compute_sift_keypoints2d();
    void compute_sift_keypoints3d(bool recomputation = false);
+   void compute_sift_keypoints_with_params(params p);
 
    cv::Point2f rigid_transform(cv::Point2f pt);
 
@@ -115,6 +124,9 @@ class Section {
     int n_tiles;
     int out_d1;
     int out_d2;
+
+    int num_tiles_replaced;
+
     cv::Mat* p_out;
     std::vector<cv::KeyPoint>* p_kps;
     std::string cached_2d_matches;
@@ -136,7 +148,11 @@ class Section {
     std::vector<cv::Point2f>* mesh_old;
     std::vector<cv::Point2f>* mesh;
     std::vector<std::pair<int,int> >* triangle_edges;
-    std::vector<tfkTriangle>* triangles;
+
+    std::vector<std::vector<tfkTriangle>* > triangles;
+
+    //std::vector<tfkTriangle>* triangles;
+
     cv::Point2f* gradients;
     cv::Point2f* gradients_with_momentum;
     double* rest_lengths;
@@ -155,7 +171,10 @@ class Section {
     std::vector<int> get_all_close_tiles(int atile_id);
     std::vector<Tile*> get_all_close_tiles(Tile* atile_id);
     void compute_keypoints_and_matches();
-    void compute_tile_matches(Tile* a_tile, Graph* graph);
+    void compute_tile_matches(Tile* a_tile);
+    void compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
+      std::vector< cv::Point2f > &filtered_match_points_a, 
+      std::vector< cv::Point2f > &filtered_match_points_b);
 
     void recompute_keypoints();
 
@@ -193,6 +212,10 @@ class Section {
     std::pair<cv::Point2f, cv::Point2f> scale_bbox(std::pair<cv::Point2f, cv::Point2f> bbox,
         cv::Point2f scale);
     bool tile_in_render_box(Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox);
+	bool tile_in_render_box_affine(cv::Mat A, Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox);
+
+
+
 
     cv::Mat render_affine(cv::Mat A, std::pair<cv::Point2f, cv::Point2f> bbox, Resolution resolution);
     cv::Mat render(std::pair<cv::Point2f, cv::Point2f> bbox, Resolution resolution);
@@ -229,6 +252,8 @@ class Section {
 
     bool transformed_tile_overlaps_with(Tile* tile,
         std::pair<cv::Point2f, cv::Point2f> bbox);
+    
+    std::vector<std::tuple<int, double, int>> parameter_optimization(int trials, double threshold, std::vector<params> &ps);
 };
 
 

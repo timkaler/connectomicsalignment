@@ -17,7 +17,7 @@ tfk::Stack::Stack(int base_section, int n_sections,
 
 void tfk::Stack::render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
 
-  /*cilk_*/for (int i = 1; i < this->sections.size()-2; i++) {
+  cilk_for (int i = 1; i < this->sections.size()-2; i++) {
     std::cout << "starting section "  << i << std::endl;
     Section* section = this->sections[i];
     std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>>, std::vector<std::pair<cv::Point2f, cv::Point2f> > > res = section->render_error(this->sections[i-1], this->sections[i+1], this->sections[i+2], bbox, filename_prefix+std::to_string(i)+".png");
@@ -172,11 +172,12 @@ void tfk::Stack::elastic_gradient_descent() {
 
     // INITIALIZE ALL THE SECTION DATA
     for (int i = 0; i < this->sections.size(); i++) {
+      int wid = __cilkrts_get_worker_number();
       Section* section = this->sections[i];
       section->gradients = new cv::Point2f[section->mesh->size()];
       section->gradients_with_momentum = new cv::Point2f[section->mesh->size()];
       section->rest_lengths = new double[section->triangle_edges->size()];
-      section->rest_areas = new double[section->triangles->size()];
+      section->rest_areas = new double[section->triangles[wid]->size()];
       section->mesh_old = new std::vector<cv::Point2f>();
 
       for (int j = 0; j < section->mesh->size(); j++) {
@@ -196,8 +197,8 @@ void tfk::Stack::elastic_gradient_descent() {
         double len = std::sqrt(dx*dx+dy*dy);
         section->rest_lengths[j] = len;
       }
-      for (int j = 0; j < section->triangles->size(); j++) {
-        tfkTriangle tri = (*(section->triangles))[j];
+      for (int j = 0; j < section->triangles[wid]->size(); j++) {
+        tfkTriangle tri = (*(section->triangles[wid]))[j];
         cv::Point2f p1 = (*(section->mesh))[tri.index1];
         cv::Point2f p2 = (*(section->mesh))[tri.index2];
         cv::Point2f p3 = (*(section->mesh))[tri.index3];
@@ -233,6 +234,7 @@ void tfk::Stack::elastic_gradient_descent() {
       //for (std::map<int, graph_section_data>::iterator it = section_data_map.begin();
       //     it != section_data_map.end(); ++it) {
       for (int i = 0; i < this->sections.size(); i++) {
+        int wid = __cilkrts_get_worker_number();
         Section* section = this->sections[i];
 
         // internal_mesh_derivs
@@ -242,7 +244,7 @@ void tfk::Stack::elastic_gradient_descent() {
         cv::Point2f* gradients = section->gradients;
 
         std::vector<std::pair<int, int> >* triangle_edges = section->triangle_edges;
-        std::vector<tfkTriangle >* triangles = section->triangles;
+        std::vector<tfkTriangle >* triangles = section->triangles[wid];
         double* rest_lengths = section->rest_lengths;
         double* rest_areas = section->rest_areas;
 

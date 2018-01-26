@@ -6,6 +6,8 @@
 
 void align_execute(align_data_t *p_align_data);
 
+void param_optimize(align_data_t *p_align_data);
+
 void testcv();
 
 #endif // ALIGN_H
