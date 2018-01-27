@@ -1138,6 +1138,20 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
       A.at<double>(2,1) = 0.0;
       A.at<double>(2,2) = 1.0;
 
+
+  	  cv::Mat I(3, 3, cv::DataType<double>::type);
+  	  I.at<double>(0,0) = 1.0;
+  	  I.at<double>(0,1) = 0.0;
+  	  I.at<double>(0,2) = 0.0;
+  	  I.at<double>(1,0) = 0.0;
+  	  I.at<double>(1,1) = 1.0;
+  	  I.at<double>(1,2) = 0.0;
+  	  I.at<double>(2,0) = 0.0;
+  	  I.at<double>(2,1) = 0.0;
+  	  I.at<double>(2,2) = 1.0;
+
+
+
       std::pair<cv::Point2f, cv::Point2f> bbox = std::make_pair(cv::Point2f(box_iter_x, box_iter_y), cv::Point2f(box_iter_x + 24000, box_iter_y + 24000));
 
 	  // call render error to do error detection
@@ -1150,10 +1164,14 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
       std::cout << "Section " << n_id << " " << id << " " << " num_bad: " << num_bad << " matches: " << matches.size() << std::endl;
 
 	  std::ofstream myfile;
-      myfile.open ("affine.csv");
+      myfile.open ("affine.csv", std::ios_base::app);
       myfile << n_id << "," << count << "," << num_bad << "," << matches.size() << "\n";
       myfile.close();
-      
+
+
+      std::string filename_identity =  id + "-" + "section" + std::to_string(n_id) + "identity.png";
+      this->render_error_affine(neighbor, bbox, filename_identity, I);
+	  
 	  count = count + 1;
 
 
