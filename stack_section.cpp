@@ -1127,16 +1127,59 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
       vdata v = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, ransac_thresh, mask);
 
       // which match points to do this for...?
-      cv::Mat A(3, 3, cv::DataType<double>::type);
-      A.at<double>(0,0) = v.a00;
-      A.at<double>(0,1) = v.a01;
-      A.at<double>(0,2) = v.offset_x;
-      A.at<double>(1,0) = v.a10;
-      A.at<double>(1,1) = v.a11;
-      A.at<double>(1,2) = v.offset_y;
-      A.at<double>(2,0) = 0.0;
-      A.at<double>(2,1) = 0.0;
-      A.at<double>(2,2) = 1.0;
+      //cv::Mat A(3, 3, cv::DataType<double>::type);
+      //A.at<double>(0,0) = v.a00;
+      //A.at<double>(0,1) = v.a01;
+      //A.at<double>(0,2) = v.offset_x;
+      //A.at<double>(1,0) = v.a10;
+      //A.at<double>(1,1) = v.a11;
+      //A.at<double>(1,2) = v.offset_y;
+      //A.at<double>(2,0) = 0.0;
+      //A.at<double>(2,1) = 0.0;
+      //A.at<double>(2,2) = 1.0;
+
+  std::vector< cv::Point2f > test_filtered_match_points_a(0);
+  std::vector< cv::Point2f > test_filtered_match_points_b(0);
+      for (int c = 0; c < match_points_a.size(); c++) {
+        if (mask[c]) {
+          test_filtered_match_points_a.push_back(
+              match_points_a[c]);
+          test_filtered_match_points_b.push_back(
+              match_points_b[c]);
+        }
+      }
+
+  	  cv::Mat section_transform;
+
+  	  cv::computeAffineTFK(test_filtered_match_points_a, test_filtered_match_points_b, section_transform);
+
+  	  //std::cout << section_transform << std::endl;
+
+  	  // push this affine transform onto the neighbor.
+
+  	  cv::Mat A(3, 3, cv::DataType<double>::type);
+
+  	  //cv::Mat& B = section_transform;
+
+  	  //neighbor->a00 = B.at<double>(0,0);
+  	  //neighbor->a01 = B.at<double>(0,1);
+  	  //neighbor->a10 = B.at<double>(1,0);
+  	  //neighbor->a11 = B.at<double>(1,1);
+  	  //neighbor->offset_x = B.at<double>(0,2);
+  	  //neighbor->offset_y = B.at<double>(1,2);
+
+  	  A.at<double>(0,0) = section_transform.at<double>(0,0);
+  	  A.at<double>(0,1) = section_transform.at<double>(0,1);
+  	  A.at<double>(0,2) = section_transform.at<double>(0,2);
+  	  A.at<double>(1,0) = section_transform.at<double>(1,0);
+  	  A.at<double>(1,1) = section_transform.at<double>(1,1);
+  	  A.at<double>(1,2) = section_transform.at<double>(1,2);
+  	  A.at<double>(2,0) = 0.0;
+  	  A.at<double>(2,1) = 0.0;
+  	  A.at<double>(2,2) = 1.0;
+
+  	  printf("Printing out A\n");
+  	  std::cout << A << std::endl;
 
 
   	  cv::Mat I(3, 3, cv::DataType<double>::type);
