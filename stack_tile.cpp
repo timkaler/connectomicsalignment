@@ -358,6 +358,71 @@ tfk::Tile::Tile(TileData& tile_data) {
     }
 }
 
+void tfk::Tile::recompute_3d_keypoints(std::vector<cv::KeyPoint>& atile_all_kps,
+                                       std::vector<cv::Mat> atile_all_kps_desc,
+                                       tfk::params sift_parameters) {
+
+  cv::Mat local_p_image;
+  local_p_image.create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
+  local_p_image = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+
+
+  //this->p_kps_3d = new std::vector<cv::KeyPoint>();
+
+  int rows = local_p_image.rows;
+  int cols = local_p_image.cols;
+
+  ASSERT((rows % SIFT_D1_SHIFT_3D) == 0);
+  ASSERT((cols % SIFT_D2_SHIFT_3D) == 0);
+
+  std::vector<cv::KeyPoint> v_kps[SIFT_MAX_SUB_IMAGES];
+  cv::Mat m_kps_desc[SIFT_MAX_SUB_IMAGES];
+  int n_sub_images;
+
+
+  cv::Ptr<cv::Feature2D> p_sift;
+  p_sift = new cv::xfeatures2d::SIFT_Impl(
+            sift_parameters.num_features,  // num_features --- unsupported.
+            sift_parameters.num_octaves,  // number of octaves
+            sift_parameters.contrast_threshold,  // contrast threshold.
+            sift_parameters.edge_threshold,  // edge threshold.
+            sift_parameters.sigma);  // sigma.
+
+    int max_rows = rows / SIFT_D1_SHIFT_3D;
+    int max_cols = cols / SIFT_D2_SHIFT_3D;
+    n_sub_images = max_rows * max_cols;
+        cv::Mat sub_im_mask = cv::Mat::ones(0,0,
+            CV_8UC1);
+        int sub_im_id = 0;
+        // Detect the SIFT features within the subimage.
+        fasttime_t tstart = gettime();
+        p_sift->detectAndCompute((local_p_image), sub_im_mask, v_kps[sub_im_id],
+            m_kps_desc[sub_im_id], false);
+
+        fasttime_t tend = gettime();
+        totalTime += tdiff(tstart, tend);
+    // Regardless of whether we were on or off MFOV boundary, we concat
+    //   the keypoints and their descriptors here.
+    int point_count_3d = 0;
+    for (int _i = 0; _i < n_sub_images; _i++) {
+        for (int _j = 0; _j < v_kps[_i].size(); _j++) {
+            cv::Point2f pt = this->rigid_transform(v_kps[_i][_j].pt);
+            cv::KeyPoint kpt = v_kps[_i][_j];
+            kpt.pt = pt;
+            atile_all_kps.push_back(kpt);
+            point_count_3d++;
+        }
+    }
+
+  //cv::Mat m_kps_desc_filtered = m_kps_desc[0].clone();
+  //*(this)->p_kps_desc_3d = m_kps_desc[0].clone();
+
+  atile_all_kps_desc.push_back(m_kps_desc[0].clone());
+
+  printf("Number of 3d points is %d\n", point_count_3d);
+  local_p_image.release();
+}
+
 
 void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
   (*this->p_image).create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
@@ -436,12 +501,13 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
 
     case THUMBNAIL: {
       cv::Mat src = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
-      cv::Mat dst;
-      //cv::equalizeHist( src, dst );
-      int scale = 1;
-      cv::Laplacian(src, dst, CV_8U, 3, scale, 0, cv::BORDER_DEFAULT);
+      //cv::Mat dst;
+      ////cv::equalizeHist( src, dst );
 
-      return dst;//cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
+      //int scale = 1;
+      //cv::Laplacian(src, dst, CV_8U, 3, scale, 0, cv::BORDER_DEFAULT);
+      return src;
+      //return dst;//cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
       break;
     }
     case THUMBNAIL2: {

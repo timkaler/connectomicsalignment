@@ -103,6 +103,12 @@ class Tile {
    void release_2d_keypoints();
 
    void get_3d_keypoints(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::Mat>& desc);
+
+   void recompute_3d_keypoints(std::vector<cv::KeyPoint>& atile_all_kps,
+                                       std::vector<cv::Mat> atile_all_kps_desc,
+                                       tfk::params sift_parameters);
+
+
    bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
    bool overlaps_with(Tile* other);
    void local2DAlignUpdate();
@@ -124,7 +130,7 @@ class Section {
     int n_tiles;
     int out_d1;
     int out_d2;
-
+    bool elastic_transform_ready;
     int num_tiles_replaced;
 
     cv::Mat* p_out;
@@ -176,7 +182,27 @@ class Section {
       std::vector< cv::Point2f > &filtered_match_points_a, 
       std::vector< cv::Point2f > &filtered_match_points_b);
 
+
+
+
     void recompute_keypoints();
+
+    void get_3d_keypoints_for_box(std::pair<cv::Point2f, cv::Point2f> bbox,
+        std::vector<cv::KeyPoint>& kps_in_box, cv::Mat& kps_desc_in_box, bool use_cached,
+        tfk::params sift_parameters);
+
+   void find_3d_matches_in_box(Section* neighbor,
+       std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
+       std::vector<cv::Point2f>& test_filtered_match_points_a,
+       std::vector<cv::Point2f>& test_filtered_match_points_b,
+       bool use_cached, tfk::params sift_parameters);
+
+
+   double compute_3d_error_in_box(Section* neighbor,
+       std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
+       std::vector<cv::Point2f>& test_filtered_match_points_a,
+       std::vector<cv::Point2f>& test_filtered_match_points_b);
+
 
 
     void coarse_affine_align(Section* neighbor);
@@ -225,7 +251,8 @@ class Section {
      std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> render_error(Section* neighbor, Section* other_neighbor, Section* other2_neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
                       std::string filename);
 
-     std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> render_error_affine(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
+     //std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> 
+    double render_error_affine(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
                       std::string filename, cv::Mat A);
 
     renderTriangle getRenderTriangle(tfkTriangle tri);

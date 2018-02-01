@@ -44,7 +44,10 @@ bool tfk::Section::transformed_tile_overlaps_with(Tile* tile,
     std::pair<cv::Point2f, cv::Point2f> bbox) {
   auto tile_bbox = tile->get_bbox();
   tile_bbox = this->affine_transform_bbox(tile_bbox);
-  tile_bbox = this->elastic_transform_bbox(tile_bbox);
+
+  if (this->elastic_transform_ready) {
+    tile_bbox = this->elastic_transform_bbox(tile_bbox);
+  }
 
   int x1_start = tile_bbox.first.x;
   int x1_finish = tile_bbox.second.x;
@@ -179,7 +182,9 @@ void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
 
 
 
-std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> tfk::Section::render_error_affine(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix, cv::Mat A) {
+//std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>>
+
+double tfk::Section::render_error_affine(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix, cv::Mat A) {
 //get rid of neighbors!!!
 
   std::cout << "CALLING RENDER_ERROR_AFFINE" << std::endl;
@@ -211,8 +216,8 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
   cv::Mat my_patch;
 
 
-  int patch_3_size = 100;
-  int patch_2_size = 20;
+  int patch_3_size = 400;
+  int patch_2_size = 100;
 
 
   n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
@@ -235,6 +240,9 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
 
   std::vector<std::pair<cv::Point2f, cv::Point2f>> below;
   std::vector<std::pair<cv::Point2f, cv::Point2f>> above;
+
+  int total_boxes = 0;
+  int total_bad_boxes = 0;
 
   //parallelize going through patches... ? 
   /*cilk_*/for (int by = 0; by + patch_3_size < nrows; by += patch_3_size/2) {
@@ -262,7 +270,8 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
 
           /* baseline by comparing to gaussian blur */
           cv::Mat my_patch_blur;
-          GaussianBlur(my_patch, my_patch_blur, cv::Size(0, 0), 10);
+          GaussianBlur(my_patch, my_patch_blur, cv::Size(0, 0), 4.0); // was 10.0
+
           cv::Mat result_blur;
           cv::matchTemplate(my_patch, my_patch_blur, result_blur, CV_TM_CCOEFF_NORMED);
           float corr_blur = result_blur.at<float>(0,0);
@@ -273,23 +282,26 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
           float corr = result.at<float>(0,0);
 
 
-          if(corr < 0.1*corr_blur) {
-            mtx.lock();
-            below.push_back(std::make_pair(cv::Point2f(y, x), cv::Point2f(y + patch_2_size, x + patch_2_size)));
-            mtx.unlock();
-	        bad++;
-          }
+          float blur_thresh = 0.5;
 
+          if(corr < blur_thresh*corr_blur) {
+            //mtx.lock();
+            //below.push_back(std::make_pair(cv::Point2f(y, x), cv::Point2f(y + patch_2_size, x + patch_2_size)));
+            //mtx.unlock();
+	    bad++;
+          }
           total++;
         }
       }
 
+      total_boxes++;
       if (bad > 1 && !skip && bad_above < bad) {
         for (int y = 0; y < patch_3_size; y++) {
           for (int x = 0; x < patch_3_size; x++) {
             heat_map.at<float>(by+y, bx+x) = 1.0;
           }
         }
+        total_bad_boxes++;
 
         int bad_min_x = bbox.first.x + (bx)*render_scale.x;
         int bad_max_x = bbox.first.x + (bx+patch_3_size)*render_scale.x;
@@ -310,13 +322,15 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
   result.second = above;
 
   cv::Mat heatmap = apply_heatmap_to_grayscale(&my_image, &heat_map, nrows, ncols);
-  imwrite(filename_prefix, heatmap);
+  //imwrite(filename_prefix, heatmap);
   
   n_image.release();
   my_image.release();
   heatmap.release();
 
-  return result;
+   
+  return 1.0*total_bad_boxes / (1.0+total_boxes);
+  //return result;
 }
 
 std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Section* other2_neighbor,
@@ -989,6 +1003,201 @@ std::pair<cv::Point2f, cv::Point2f> tfk::Section::elastic_transform_bbox(
 }
 
 
+
+void tfk::Section::get_3d_keypoints_for_box(std::pair<cv::Point2f, cv::Point2f> bbox,
+  std::vector<cv::KeyPoint>& kps_in_box, cv::Mat& kps_desc_in_box,
+  bool use_cached, tfk::params sift_parameters) {
+
+
+
+    std::vector <cv::KeyPoint > atile_all_kps;
+    std::vector <cv::Mat > atile_all_kps_desc;
+
+    if (use_cached) {
+      for (int i = 0; i < this->tiles.size(); i++) {
+        if (this->transformed_tile_overlaps_with(this->tiles[i], bbox)) {
+          this->tiles[i]->get_3d_keypoints(atile_all_kps, atile_all_kps_desc);
+        }
+      }
+    } else {
+      for (int i = 0; i < this->tiles.size(); i++) {
+        if (this->transformed_tile_overlaps_with(this->tiles[i], bbox)) {
+          this->tiles[i]->recompute_3d_keypoints(atile_all_kps, atile_all_kps_desc,
+              sift_parameters);
+        }
+      }
+    }
+
+    this->affine_transform_keypoints(atile_all_kps);
+
+    int num_filtered = 0;
+    std::vector<cv::Point2f> match_points_a, match_points_b;
+    double box_min_x = bbox.first.x;
+    double box_max_x = bbox.second.x;
+    double box_min_y = bbox.first.y;
+    double box_max_y = bbox.second.y;
+
+    //std::vector <cv::KeyPoint > kps_in_box;
+    std::vector <cv::Mat > kps_desc_in_box_list;
+
+    // filter out any keypoints that are not inside the bounding box.
+    for (int i = 0; i < atile_all_kps.size(); i++) {
+      if (atile_all_kps[i].pt.x < box_min_x) continue;
+      if (atile_all_kps[i].pt.x > box_max_x) continue;
+      if (atile_all_kps[i].pt.y < box_min_y) continue;
+      if (atile_all_kps[i].pt.y > box_max_y) continue;
+      kps_in_box.push_back(atile_all_kps[i]);
+      kps_desc_in_box_list.push_back(atile_all_kps_desc[i]);
+    }
+
+    if (kps_in_box.size() < 4) {
+      kps_in_box.clear();
+      return; // no points.
+    }
+
+    cv::vconcat(kps_desc_in_box_list, kps_desc_in_box);
+}
+
+
+void tfk::Section::find_3d_matches_in_box(Section* neighbor,
+    std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
+    std::vector<cv::Point2f>& test_filtered_match_points_a,
+    std::vector<cv::Point2f>& test_filtered_match_points_b,
+    bool use_cached, tfk::params sift_parameters) {
+
+  double ransac_thresh = 16.0;
+  int num_filtered = 0;
+
+  std::vector<cv::KeyPoint> atile_kps_in_overlap;
+  std::vector<cv::KeyPoint> btile_kps_in_overlap;
+  cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
+
+  this->get_3d_keypoints_for_box(sliding_bbox, atile_kps_in_overlap,
+      atile_kps_desc_in_overlap, true, sift_parameters);
+
+  neighbor->get_3d_keypoints_for_box(sliding_bbox, btile_kps_in_overlap,
+      btile_kps_desc_in_overlap, true, sift_parameters);
+
+  std::vector< cv::DMatch > matches;
+  match_features(matches,
+                 atile_kps_desc_in_overlap,
+                 btile_kps_desc_in_overlap,
+                 0.65);
+
+  // Bad don't add filtered matches.
+  if (matches.size() < 12) return;
+
+  std::vector<cv::Point2f> match_points_a, match_points_b;
+
+  for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
+    match_points_a.push_back(atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
+    match_points_b.push_back(btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
+  }
+
+  bool* mask = (bool*)calloc(match_points_a.size()+1, 1);
+      //HERE
+  vdata v = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, ransac_thresh, mask);
+
+
+  for (int c = 0; c < match_points_a.size(); c++) {
+    if (mask[c]) {
+      num_filtered++;
+      test_filtered_match_points_a.push_back(
+          match_points_a[c]);
+      test_filtered_match_points_b.push_back(
+          match_points_b[c]);
+    }
+  }
+
+  // Bad clear filtered matches.
+  if (num_filtered < 0.1*match_points_a.size() || num_filtered < 12) {
+     test_filtered_match_points_a.clear();
+     test_filtered_match_points_b.clear();
+  }
+
+  free(mask);
+}
+
+double tfk::Section::compute_3d_error_in_box(Section* neighbor,
+    std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
+    std::vector<cv::Point2f>& test_filtered_match_points_a,
+    std::vector<cv::Point2f>& test_filtered_match_points_b) {
+
+
+    if (test_filtered_match_points_a.size() == 0) return 2.0;
+
+    cv::Mat section_transform;
+    cv::computeAffineTFK(test_filtered_match_points_a, test_filtered_match_points_b, section_transform);
+
+    cv::Mat A(3, 3, cv::DataType<double>::type);
+
+    A.at<double>(0,0) = section_transform.at<double>(0,0);
+    A.at<double>(0,1) = section_transform.at<double>(0,1);
+    A.at<double>(0,2) = section_transform.at<double>(0,2);
+    A.at<double>(1,0) = section_transform.at<double>(1,0);
+    A.at<double>(1,1) = section_transform.at<double>(1,1);
+    A.at<double>(1,2) = section_transform.at<double>(1,2);
+    A.at<double>(2,0) = 0.0;
+    A.at<double>(2,1) = 0.0;
+    A.at<double>(2,2) = 1.0;
+
+    //printf("Printing out A\n");
+    //std::cout << A << std::endl;
+
+
+    double box_iter_x = sliding_bbox.first.x;
+    double box_iter_y = sliding_bbox.first.y;
+
+    cv::Mat I(3, 3, cv::DataType<double>::type);
+    I.at<double>(0,0) = 1.0;
+    I.at<double>(0,1) = 0.0;
+    I.at<double>(0,2) = 0.0;
+    I.at<double>(1,0) = 0.0;
+    I.at<double>(1,1) = 1.0;
+    I.at<double>(1,2) = 0.0;
+    I.at<double>(2,0) = 0.0;
+    I.at<double>(2,1) = 0.0;
+    I.at<double>(2,2) = 1.0;
+
+    std::pair<cv::Point2f, cv::Point2f> bbox = sliding_bbox;
+    //cv::Mat this1 = this->render_affine(A,bbox,THUMBNAIL2);
+    //cv::Mat neighbor1 = neighbor->render_affine(I,bbox,THUMBNAIL2);
+    //cv::Mat this2 = this->render_affine(I,bbox,THUMBNAIL2);
+
+    //std::string id = std::to_string(box_iter_x) + "-" + std::to_string(box_iter_y);
+    //std::string filename0 =  id + "-" + "section" + std::to_string(0) + ".tif";
+    //std::string filename1 =  id + "-" + "section" + std::to_string(1) + ".tif";
+    //std::string filename2 =  id + "-" + "section" + std::to_string(2) + ".tif";
+
+    //imwrite(filename0, this1);
+    //imwrite(filename1, neighbor1);
+    //imwrite(filename2, this2);
+
+    // call render error to do error detection
+    //What to make the other neightbor??
+    int n_id = neighbor->section_id;
+    std::string id = std::to_string(box_iter_x) + "-" + std::to_string(box_iter_y);
+    std::string filename =  id + "-" + "section" + std::to_string(n_id) + ".png";
+    //std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> res = 
+    double bad_fraction = this->render_error_affine(neighbor, bbox, filename, A);
+
+    //int num_bad = res.first.size();
+    std::cout << "Section " << n_id << " " << id << " " << " num_bad: " << bad_fraction << std::endl;
+
+        std::ofstream myfile;
+    myfile.open ("affine.csv", std::ios_base::app);
+    myfile << n_id << "," << "," << bad_fraction << "," << "\n";
+    myfile.close();
+
+
+    //std::string filename_identity =  id + "-" + "section" + std::to_string(n_id) + "identity.png";
+    //this->render_error_affine(neighbor, bbox, filename_identity, I);
+
+    //count = count + 1;
+    return bad_fraction;
+}
+
+
 std::pair<cv::Point2f, cv::Point2f> tfk::Section::affine_transform_bbox(
     std::pair<cv::Point2f, cv::Point2f> bbox) {
   cv::Point2f corners[4];
@@ -1024,7 +1233,7 @@ void tfk::Section::affine_transform_keypoints(std::vector<cv::KeyPoint>& keypoin
 
 void tfk::Section::get_elastic_matches_one(Section* neighbor) {
 
-  double ransac_thresh = 128.0;
+  double ransac_thresh = 16.0;
 
 
   this->section_mesh_matches.clear();
@@ -1066,178 +1275,67 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
 
   for (double box_iter_x = min_x; box_iter_x < max_x + 48000; box_iter_x += 24000) {
     for (double box_iter_y = min_y; box_iter_y < max_y + 48000; box_iter_y += 24000) {
-      // Filter the matches with RANSAC
+
       int num_filtered = 0;
-      std::vector<cv::Point2f> match_points_a, match_points_b;
-      double box_min_x = box_iter_x;
-      double box_max_x = box_iter_x+48000;
-      double box_min_y = box_iter_y;
-      double box_max_y = box_iter_y+48000;
+      std::pair<cv::Point2f, cv::Point2f> sliding_bbox =
+          std::make_pair(cv::Point2f(box_iter_x, box_iter_y),
+                         cv::Point2f(box_iter_x+48000, box_iter_y+48000));
 
-      std::vector <cv::KeyPoint > atile_kps_in_overlap;
-      std::vector <cv::Mat > atile_kps_desc_in_overlap_list;
-      std::vector<int> atile_kps_tile_list;
-      std::vector <cv::KeyPoint > btile_kps_in_overlap;
-      std::vector <cv::Mat > btile_kps_desc_in_overlap_list;
-      std::vector<int> btile_kps_tile_list;
 
-      std::vector<double> atile_weights;
-      std::vector<double> btile_weights;
+      std::vector< cv::Point2f > test_filtered_match_points_a(0);
+      std::vector< cv::Point2f > test_filtered_match_points_b(0);
+      double bad_fraction = 2.0;
+      for (int trial = 0; trial < 2; trial++) {
+        // need to clear these to avoid pollution in event of multiple trials.
+        test_filtered_match_points_a.clear();
+        test_filtered_match_points_b.clear();
 
-      // filter out any keypoints that are not inside this iterations box.
-      for (int i = 0; i < atile_all_kps.size(); i++) {
-        if (atile_all_kps[i].pt.x < box_min_x) continue;
-        if (atile_all_kps[i].pt.x > box_max_x) continue;
-        if (atile_all_kps[i].pt.y < box_min_y) continue;
-        if (atile_all_kps[i].pt.y > box_max_y) continue;
-        atile_kps_in_overlap.push_back(atile_all_kps[i]);
-        atile_kps_desc_in_overlap_list.push_back(atile_all_kps_desc[i]);
-      }
-      for (int i = 0; i < btile_all_kps.size(); i++) {
-        if (btile_all_kps[i].pt.x < box_min_x) continue;
-        if (btile_all_kps[i].pt.x > box_max_x) continue;
-        if (btile_all_kps[i].pt.y < box_min_y) continue;
-        if (btile_all_kps[i].pt.y > box_max_y) continue;
-        btile_kps_in_overlap.push_back(btile_all_kps[i]);
-        btile_kps_desc_in_overlap_list.push_back(btile_all_kps_desc[i]);
-      }
+        // no need to init sift_parameters if we are passing 'true' for use_cached.
+        if (trial == 0) {
+          tfk::params sift_parameters;
+          this->find_3d_matches_in_box(neighbor, sliding_bbox, test_filtered_match_points_a,
+              test_filtered_match_points_b, true, sift_parameters);
+        } else {
+          tfk::params sift_parameters;
+          sift_parameters.num_features = 32;
+          sift_parameters.num_octaves = 12;
+          sift_parameters.contrast_threshold = 0.02;
+          sift_parameters.edge_threshold = 10.0;
+          sift_parameters.sigma = 1.6;
+          sift_parameters.res = Resolution::FULL;
 
-      if (atile_kps_in_overlap.size() < 4 || btile_kps_in_overlap.size() < 4) continue;
-
-      // Now do the matching.
-      cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
-      cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
-      cv::vconcat(btile_kps_desc_in_overlap_list, (btile_kps_desc_in_overlap));
-
-      std::vector< cv::DMatch > matches;
-      match_features(matches,
-                     atile_kps_desc_in_overlap,
-                     btile_kps_desc_in_overlap,
-                     0.65);
-      //printf("Done with the matching. Num matches is %lu\n", matches.size());
-      if (matches.size() == 0) continue;
-
-      for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
-        match_points_a.push_back(atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
-        match_points_b.push_back(btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
-      }
-
-      bool* mask = (bool*)calloc(match_points_a.size()+1, 1);
-	  //HERE
-      vdata v = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, ransac_thresh, mask);
-
-      // which match points to do this for...?
-      //cv::Mat A(3, 3, cv::DataType<double>::type);
-      //A.at<double>(0,0) = v.a00;
-      //A.at<double>(0,1) = v.a01;
-      //A.at<double>(0,2) = v.offset_x;
-      //A.at<double>(1,0) = v.a10;
-      //A.at<double>(1,1) = v.a11;
-      //A.at<double>(1,2) = v.offset_y;
-      //A.at<double>(2,0) = 0.0;
-      //A.at<double>(2,1) = 0.0;
-      //A.at<double>(2,2) = 1.0;
-
-  std::vector< cv::Point2f > test_filtered_match_points_a(0);
-  std::vector< cv::Point2f > test_filtered_match_points_b(0);
-      for (int c = 0; c < match_points_a.size(); c++) {
-        if (mask[c]) {
-          test_filtered_match_points_a.push_back(
-              match_points_a[c]);
-          test_filtered_match_points_b.push_back(
-              match_points_b[c]);
+          this->find_3d_matches_in_box(neighbor, sliding_bbox, test_filtered_match_points_a,
+              test_filtered_match_points_b, false, sift_parameters);
         }
-      }
+        double _bad_fraction = this->compute_3d_error_in_box(neighbor, sliding_bbox,
+            test_filtered_match_points_a, test_filtered_match_points_b);
 
-  	  cv::Mat section_transform;
-
-  	  cv::computeAffineTFK(test_filtered_match_points_a, test_filtered_match_points_b, section_transform);
-
-  	  //std::cout << section_transform << std::endl;
-
-  	  // push this affine transform onto the neighbor.
-
-  	  cv::Mat A(3, 3, cv::DataType<double>::type);
-
-  	  //cv::Mat& B = section_transform;
-
-  	  //neighbor->a00 = B.at<double>(0,0);
-  	  //neighbor->a01 = B.at<double>(0,1);
-  	  //neighbor->a10 = B.at<double>(1,0);
-  	  //neighbor->a11 = B.at<double>(1,1);
-  	  //neighbor->offset_x = B.at<double>(0,2);
-  	  //neighbor->offset_y = B.at<double>(1,2);
-
-  	  A.at<double>(0,0) = section_transform.at<double>(0,0);
-  	  A.at<double>(0,1) = section_transform.at<double>(0,1);
-  	  A.at<double>(0,2) = section_transform.at<double>(0,2);
-  	  A.at<double>(1,0) = section_transform.at<double>(1,0);
-  	  A.at<double>(1,1) = section_transform.at<double>(1,1);
-  	  A.at<double>(1,2) = section_transform.at<double>(1,2);
-  	  A.at<double>(2,0) = 0.0;
-  	  A.at<double>(2,1) = 0.0;
-  	  A.at<double>(2,2) = 1.0;
-
-  	  printf("Printing out A\n");
-  	  std::cout << A << std::endl;
-
-
-  	  cv::Mat I(3, 3, cv::DataType<double>::type);
-  	  I.at<double>(0,0) = 1.0;
-  	  I.at<double>(0,1) = 0.0;
-  	  I.at<double>(0,2) = 0.0;
-  	  I.at<double>(1,0) = 0.0;
-  	  I.at<double>(1,1) = 1.0;
-  	  I.at<double>(1,2) = 0.0;
-  	  I.at<double>(2,0) = 0.0;
-  	  I.at<double>(2,1) = 0.0;
-  	  I.at<double>(2,2) = 1.0;
-
-
-
-      std::pair<cv::Point2f, cv::Point2f> bbox = std::make_pair(cv::Point2f(box_iter_x, box_iter_y), cv::Point2f(box_iter_x + 24000, box_iter_y + 24000));
-
-	  // call render error to do error detection
-	  //What to make the other neightbor??
-	  int n_id = neighbor->section_id;
-	  std::string id = std::to_string(box_iter_x) + "-" + std::to_string(box_iter_y);
-      std::string filename =  id + "-" + "section" + std::to_string(n_id) + ".png";
-      std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> res = this->render_error_affine(neighbor, bbox, filename, A);
-	  int num_bad = res.first.size();
-      std::cout << "Section " << n_id << " " << id << " " << " num_bad: " << num_bad << " matches: " << matches.size() << std::endl;
-
-	  std::ofstream myfile;
-      myfile.open ("affine.csv", std::ios_base::app);
-      myfile << n_id << "," << count << "," << num_bad << "," << matches.size() << "\n";
-      myfile.close();
-
-
-      std::string filename_identity =  id + "-" + "section" + std::to_string(n_id) + "identity.png";
-      this->render_error_affine(neighbor, bbox, filename_identity, I);
-	  
-	  count = count + 1;
-
-
-      for (int c = 0; c < match_points_a.size(); c++) {
-        if (mask[c]) {
-          num_filtered++;
+        if (trial > 0 && _bad_fraction < 0.4) {
+          printf("Hurray recomputation helped us and got us error fraction %f\n", bad_fraction);
+        } else if (trial > 0 && _bad_fraction >= 0.4) {
+          printf("Recomputation failed and only got error fraction %f\n", bad_fraction);
         }
+
+        if (_bad_fraction < bad_fraction) {
+          bad_fraction = _bad_fraction;
+        }
+
+        if (bad_fraction <= 0.4) {
+          break;
+        }
+
       }
 
-      if (num_filtered < match_points_a.size()*0.1 || num_filtered < 12) {
-        free(mask);
+      if (bad_fraction > 0.4) {
+        // bad don't add the matches.
         continue;
       }
 
-      for (int c = 0; c < match_points_a.size(); c++) {
-        if (mask[c]) {
-          filtered_match_points_a.push_back(
-              match_points_a[c]);
-          filtered_match_points_b.push_back(
-              match_points_b[c]);
-        }
+      for (int c = 0; c < test_filtered_match_points_a.size(); c++) {
+        filtered_match_points_a.push_back(test_filtered_match_points_a[c]);
+        filtered_match_points_b.push_back(test_filtered_match_points_b[c]);
       }
-      free(mask);
+
     }
   }
 
@@ -2184,7 +2282,7 @@ std::vector<int> tfk::Section::get_all_close_tiles(int atile_id) {
 // Section from protobuf
 tfk::Section::Section(SectionData& section_data) {
   //section_data_t *p_sec_data = &(p_tile_data->sec_data[i - p_tile_data->base_section]);
-
+  this->elastic_transform_ready = false;
   this->section_id = section_data.section_id();
   this->real_section_id = section_data.section_id();
   this->num_tiles_replaced = 0;
