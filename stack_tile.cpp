@@ -359,7 +359,7 @@ tfk::Tile::Tile(TileData& tile_data) {
 }
 
 void tfk::Tile::recompute_3d_keypoints(std::vector<cv::KeyPoint>& atile_all_kps,
-                                       std::vector<cv::Mat> atile_all_kps_desc,
+                                       std::vector<cv::Mat>& atile_all_kps_desc,
                                        tfk::params sift_parameters) {
 
   cv::Mat local_p_image;
@@ -410,6 +410,7 @@ void tfk::Tile::recompute_3d_keypoints(std::vector<cv::KeyPoint>& atile_all_kps,
             cv::KeyPoint kpt = v_kps[_i][_j];
             kpt.pt = pt;
             atile_all_kps.push_back(kpt);
+            atile_all_kps_desc.push_back(m_kps_desc[_i].row(_j).clone());
             point_count_3d++;
         }
     }
@@ -417,9 +418,9 @@ void tfk::Tile::recompute_3d_keypoints(std::vector<cv::KeyPoint>& atile_all_kps,
   //cv::Mat m_kps_desc_filtered = m_kps_desc[0].clone();
   //*(this)->p_kps_desc_3d = m_kps_desc[0].clone();
 
-  atile_all_kps_desc.push_back(m_kps_desc[0].clone());
+  //atile_all_kps_desc.push_back(m_kps_desc[0].clone());
 
-  printf("Number of 3d points is %d\n", point_count_3d);
+  //printf("Number of 3d points is %d\n", point_count_3d);
   local_p_image.release();
 }
 

@@ -105,7 +105,7 @@ class Tile {
    void get_3d_keypoints(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::Mat>& desc);
 
    void recompute_3d_keypoints(std::vector<cv::KeyPoint>& atile_all_kps,
-                                       std::vector<cv::Mat> atile_all_kps_desc,
+                                       std::vector<cv::Mat>& atile_all_kps_desc,
                                        tfk::params sift_parameters);
 
 

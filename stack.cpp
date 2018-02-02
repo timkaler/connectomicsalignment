@@ -469,7 +469,7 @@ void tfk::Stack::unpack_graph() {
 
 
 void tfk::Stack::align_2d() {
-  cilk_for (int i = 0; i < this->sections.size(); i++) {
+  for (int i = 0; i < this->sections.size(); i++) {
     this->sections[i]->compute_keypoints_and_matches();
   }
 

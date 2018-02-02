@@ -1073,16 +1073,18 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
   cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
 
   this->get_3d_keypoints_for_box(sliding_bbox, atile_kps_in_overlap,
-      atile_kps_desc_in_overlap, true, sift_parameters);
+      atile_kps_desc_in_overlap, use_cached, sift_parameters);
 
   neighbor->get_3d_keypoints_for_box(sliding_bbox, btile_kps_in_overlap,
-      btile_kps_desc_in_overlap, true, sift_parameters);
+      btile_kps_desc_in_overlap, use_cached, sift_parameters);
+
+  if (atile_kps_in_overlap.size() < 4 || btile_kps_in_overlap.size() < 4) return;
 
   std::vector< cv::DMatch > matches;
   match_features(matches,
                  atile_kps_desc_in_overlap,
                  btile_kps_desc_in_overlap,
-                 0.65);
+                 0.92);
 
   // Bad don't add filtered matches.
   if (matches.size() < 12) return;
@@ -1273,8 +1275,8 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
 
   int count = 0;
 
-  for (double box_iter_x = min_x; box_iter_x < max_x + 48000; box_iter_x += 24000) {
-    for (double box_iter_y = min_y; box_iter_y < max_y + 48000; box_iter_y += 24000) {
+  for (double box_iter_x = min_x; box_iter_x < max_x + 24000; box_iter_x += 12000) {
+    for (double box_iter_y = min_y; box_iter_y < max_y + 24000; box_iter_y += 12000) {
 
       int num_filtered = 0;
       std::pair<cv::Point2f, cv::Point2f> sliding_bbox =
@@ -1285,7 +1287,7 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
       std::vector< cv::Point2f > test_filtered_match_points_a(0);
       std::vector< cv::Point2f > test_filtered_match_points_b(0);
       double bad_fraction = 2.0;
-      for (int trial = 0; trial < 2; trial++) {
+      for (int trial = 0; trial < 1; trial++) {
         // need to clear these to avoid pollution in event of multiple trials.
         test_filtered_match_points_a.clear();
         test_filtered_match_points_b.clear();
@@ -1297,11 +1299,11 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
               test_filtered_match_points_b, true, sift_parameters);
         } else {
           tfk::params sift_parameters;
-          sift_parameters.num_features = 32;
-          sift_parameters.num_octaves = 12;
-          sift_parameters.contrast_threshold = 0.02;
-          sift_parameters.edge_threshold = 10.0;
-          sift_parameters.sigma = 1.6;
+          sift_parameters.num_features = 8;
+          sift_parameters.num_octaves = 6;
+          sift_parameters.contrast_threshold = 0.04;
+          sift_parameters.edge_threshold = 5.0;
+          sift_parameters.sigma = 1.6*2;
           sift_parameters.res = Resolution::FULL;
 
           this->find_3d_matches_in_box(neighbor, sliding_bbox, test_filtered_match_points_a,

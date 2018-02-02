@@ -56,8 +56,11 @@ void align_execute(align_data_t *p_align_data) {
     stack->coarse_affine_align();
     stack->elastic_align();
 
+    for (int i = 0; i < stack->sections.size(); i++) {
+      stack->sections[i]->elastic_transform_ready = true;
+    }
 
-	int size = 30000;
+    int size = 50000;
     std::clock_t start;
     double duration;
 
@@ -67,14 +70,14 @@ void align_execute(align_data_t *p_align_data) {
     stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderbefore", tfk::THUMBNAIL2);
 
 
-    stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "testrender");
+    //stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "testrender");
 
 
     //printf("Now am going to recompute the alignment\n");
-    stack->recompute_alignment();
+    //stack->recompute_alignment();
     //printf("REcomputed the alignment, now am going to rerender with error markers.\n");
-    stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "testrender_after");
-    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderafter", tfk::THUMBNAIL);
+    //stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "testrender_after");
+    //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderafter", tfk::THUMBNAIL);
     printf("Got to the end.\n");
 //<<<<<<< HEAD
 //    printf("Counts of bad tiles replaced:\n");
