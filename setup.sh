@@ -25,6 +25,8 @@ export N_TEMPORARY_BYTES=500000000
 export PYTHONPATH=$PYTHONPATH:/efs/python_local/lib/python2.7/site-packages
 export LD_LIBRARY_PATH=/efs/home/wheatman/install_dir/protobufs/lib:$LD_LIBRARY_PATH
 
+export LD_LIBRARY_PATH=/efs/home/tfk/maprecurse/sift_features4/new_machine:$LD_LIBRARY_PATH
+
 #source /afs/csail.mit.edu/proj/courses/6.172/scripts/.bashrc_silent
 ##export PATH=/efs/tfk/tapir/bin:$PATH
 ##export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/efs/tfk/tapir/lib

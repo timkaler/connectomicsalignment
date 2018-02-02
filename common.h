@@ -52,8 +52,8 @@ inline bool operator<(const renderTriangle& a, const renderTriangle& b)
 
 #define OVERLAP_2D (200)
 
-#define MFOV_BOUNDARY_THRESH 37 // any section with id > 37 is on boundary.
-//#define MFOV_BOUNDARY_THRESH -1 // any section with id > 37 is on boundary.
+//#define MFOV_BOUNDARY_THRESH 37 // any section with id > 37 is on boundary.
+#define MFOV_BOUNDARY_THRESH -1 // any section with id > 37 is on boundary.
 
 
 

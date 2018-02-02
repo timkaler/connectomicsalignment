@@ -13,7 +13,7 @@ void updateTile2DAlign(int vid, void* scheduler_void) {
 
   tile->local2DAlignUpdate();
 
-  if (vertex_data->iteration_count < 2500) {
+  if (vertex_data->iteration_count < 25000) {
     scheduler->add_task(vid, updateTile2DAlign);
   }
   vertex_data->iteration_count++;
@@ -263,15 +263,15 @@ cv::Point2f tfk::Tile::rigid_transform(cv::Point2f pt) {
 }
 
 bool tfk::Tile::overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox) {
-    int x1_start = this->x_start;
-    int x1_finish = this->x_finish;
-    int y1_start = this->y_start;
-    int y1_finish = this->y_finish;
+    int x1_start = this->x_start - 100.0;
+    int x1_finish = this->x_finish + 100.0;
+    int y1_start = this->y_start - 100.0;
+    int y1_finish = this->y_finish + 100.0;
 
-    int x2_start = bbox.first.x;
-    int x2_finish = bbox.second.x;
-    int y2_start = bbox.first.y;
-    int y2_finish = bbox.second.y;
+    int x2_start = bbox.first.x - 100.0;
+    int x2_finish = bbox.second.x + 100.0;
+    int y2_start = bbox.first.y - 100.0;
+    int y2_finish = bbox.second.y + 100.0;
 
     bool res = false;
     if ((x1_start < x2_finish) && (x1_finish > x2_start) &&
@@ -565,11 +565,13 @@ void tfk::Tile::compute_sift_keypoints2d() {
   int n_sub_images;
   if ((this->tile_id > MFOV_BOUNDARY_THRESH)) {
     p_sift = new cv::xfeatures2d::SIFT_Impl(
-            4,  // num_features --- unsupported.
-            6,  // number of octaves
-            CONTRAST_THRESH,  // contrast threshold.
-            EDGE_THRESH_2D,  // edge threshold.
-            1.6);  // sigma.
+            2,  // num_features --- unsupported.
+            12,  // number of octaves
+            //CONTRAST_THRESH,  // contrast threshold.
+            0.02,
+            5.0,
+            //EDGE_THRESH_2D,  // edge threshold.
+            1.2);  // sigma.
 
     // THEN: This tile is on the boundary, we need to compute SIFT features
     // on the entire section.
