@@ -79,8 +79,8 @@ inline bool operator<(const renderTriangle& a, const renderTriangle& b)
 #define SIFT_D1_SHIFT_3D (681*4)
 #define SIFT_D2_SHIFT_3D (782*4)
 
-#define SIFT_D1_SHIFT (681)
-#define SIFT_D2_SHIFT (782)
+#define SIFT_D1_SHIFT (681*4) // originally wasn't *4
+#define SIFT_D2_SHIFT (782*4) // originally wasn't *4
 
 #define OUT_D1_SIZE (20000)
 #define OUT_D2_SIZE (20000)

@@ -45,9 +45,10 @@ void tfk::Stack::recompute_alignment() {
 void tfk::Stack::coarse_affine_align() {
   // get affine transform matrix for each section
   //   matrix A_i aligning section i to i-1.
-  cilk_for (int i = 1; i < this->sections.size(); i++) {
-    this->sections[i]->coarse_affine_align(this->sections[i-1]);
+  for (int i = 1; i < this->sections.size(); i++) {
+    cilk_spawn this->sections[i]->coarse_affine_align(this->sections[i-1]);
   }
+  cilk_sync;
 
   // cascade the affine transforms down.
   for (int i = 1; i < this->sections.size(); i++) {

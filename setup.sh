@@ -2,8 +2,8 @@
 
 #NOTE(TFK): You'll need this if you use GCC.
 
-export TAPIR_PREFIX=/efs/home/neboat/tapir-ex/src/build-release
-#export TAPIR_PREFIX=/efs/tapir-new-install/tapir-install
+#export TAPIR_PREFIX=/efs/home/neboat/tapir-ex/src/build-release
+export TAPIR_PREFIX=/efs/tapir-new-install/tapir-install
 
 export PATH=$TAPIR_PREFIX/bin:/efs/home/wheatman/install_dir/protobufs/bin:$PATH
 export CXX=clang++

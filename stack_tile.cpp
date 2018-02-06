@@ -565,12 +565,10 @@ void tfk::Tile::compute_sift_keypoints2d() {
   int n_sub_images;
   if ((this->tile_id > MFOV_BOUNDARY_THRESH)) {
     p_sift = new cv::xfeatures2d::SIFT_Impl(
-            2,  // num_features --- unsupported.
-            12,  // number of octaves
-            //CONTRAST_THRESH,  // contrast threshold.
-            0.02,
-            5.0,
-            //EDGE_THRESH_2D,  // edge threshold.
+            4,  // num_features --- unsupported.
+            4,  // number of octaves
+            0.01,  // contrast threshold.
+            20,  // edge threshold.
             1.2);  // sigma.
 
     // THEN: This tile is on the boundary, we need to compute SIFT features

@@ -45,9 +45,9 @@ bool tfk::Section::transformed_tile_overlaps_with(Tile* tile,
   auto tile_bbox = tile->get_bbox();
   tile_bbox = this->affine_transform_bbox(tile_bbox);
 
-  if (this->elastic_transform_ready) {
+  //if (this->elastic_transform_ready) {
     tile_bbox = this->elastic_transform_bbox(tile_bbox);
-  }
+  //}
 
   int x1_start = tile_bbox.first.x;
   int x1_finish = tile_bbox.second.x;
@@ -541,7 +541,6 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
 }
 
 bool tfk::Section::section_data_exists() {
-  return false;
   std::string filename =
       std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
 
@@ -924,7 +923,7 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
         int y_c = (int)(transformed_p.y/render_scale.y + 0.5);
         for (int k = -1; k < 2; k++) {
           for (int m = -1; m < 2; m++) {
-            if (k != 0 || m!=0) continue;
+            //if (k != 0 || m!=0) continue;
             unsigned char val = tile_p_image.at<unsigned char>(_y, _x);
             int x = x_c+k;
             int y = y_c+m;
@@ -1085,7 +1084,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
   match_features(matches,
                  atile_kps_desc_in_overlap,
                  btile_kps_desc_in_overlap,
-                 0.92);
+                 0.65);
 
   // Bad don't add filtered matches.
   if (matches.size() < 12) return;
@@ -1276,8 +1275,8 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
 
   int count = 0;
 
-  for (double box_iter_x = min_x; box_iter_x < max_x + 24000; box_iter_x += 12000) {
-    for (double box_iter_y = min_y; box_iter_y < max_y + 24000; box_iter_y += 12000) {
+  for (double box_iter_x = min_x; box_iter_x < max_x + 48000; box_iter_x += 24000) {
+    for (double box_iter_y = min_y; box_iter_y < max_y + 48000; box_iter_y += 24000) {
 
       int num_filtered = 0;
       std::pair<cv::Point2f, cv::Point2f> sliding_bbox =
@@ -1310,29 +1309,29 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
           this->find_3d_matches_in_box(neighbor, sliding_bbox, test_filtered_match_points_a,
               test_filtered_match_points_b, false, sift_parameters);
         }
-        double _bad_fraction = this->compute_3d_error_in_box(neighbor, sliding_bbox,
-            test_filtered_match_points_a, test_filtered_match_points_b);
+        //double _bad_fraction = this->compute_3d_error_in_box(neighbor, sliding_bbox,
+        //    test_filtered_match_points_a, test_filtered_match_points_b);
 
-        if (trial > 0 && _bad_fraction < 0.4) {
-          printf("Hurray recomputation helped us and got us error fraction %f\n", bad_fraction);
-        } else if (trial > 0 && _bad_fraction >= 0.4) {
-          printf("Recomputation failed and only got error fraction %f\n", bad_fraction);
-        }
+        //if (trial > 0 && _bad_fraction < 0.3) {
+        //  printf("Hurray recomputation helped us and got us error fraction %f\n", bad_fraction);
+        //} else if (trial > 0 && _bad_fraction >= 0.3) {
+        //  printf("Recomputation failed and only got error fraction %f\n", bad_fraction);
+        //}
 
-        if (_bad_fraction < bad_fraction) {
-          bad_fraction = _bad_fraction;
-        }
+        //if (_bad_fraction < bad_fraction) {
+        //  bad_fraction = _bad_fraction;
+        //}
 
-        if (bad_fraction <= 0.4) {
-          break;
-        }
+        //if (bad_fraction <= 0.3) {
+        //  break;
+        //}
 
       }
 
-      if (bad_fraction > 0.4) {
-        // bad don't add the matches.
-        continue;
-      }
+      //if (bad_fraction > 0.3) {
+      //  // bad don't add the matches.
+      //  continue;
+      //}
 
       for (int c = 0; c < test_filtered_match_points_a.size(); c++) {
         filtered_match_points_a.push_back(test_filtered_match_points_a[c]);
@@ -2184,7 +2183,7 @@ void tfk::Section::compute_keypoints_and_matches() {
     //  this->compute_tile_matches(i, graph);
     //}
 
-    //this->save_tile_matches();
+    this->save_tile_matches();
   } else {
     this->read_tile_matches();
   }
