@@ -76,13 +76,15 @@ void tfk::Stack::get_elastic_matches() {
   cilk_for (int section = 1; section < this->sections.size(); section++) {
     std::vector<Section*> neighbors;
     int section_a = section;
-    for (int section_b = section-2; section_b < section+1; section_b++) {
+    neighbors.push_back(this->sections[section-1]);
+
+    //for (int section_b = section-2; section_b < section+1; section_b++) {
     //for (int section_b = section-1; section_b < section; section_b++) {
-      if (section_b < 0 || section_b == section_a || section_b >= this->sections.size()) {
-        continue;
-      }
-      neighbors.push_back(this->sections[section_b]);
-    }
+    //  if (section_b < 0 || section_b == section_a || section_b >= this->sections.size()) {
+    //    continue;
+    //  }
+    //  neighbors.push_back(this->sections[section_b]);
+    //}
     this->sections[section]->get_elastic_matches(neighbors);
   }
 }
@@ -470,9 +472,11 @@ void tfk::Stack::unpack_graph() {
 
 
 void tfk::Stack::align_2d() {
-  for (int i = 0; i < this->sections.size(); i++) {
+  cilk_for (int i = 0; i < this->sections.size(); i++) {
     this->sections[i]->compute_keypoints_and_matches();
   }
+
+
 
   cilk_for (int section_index = 0; section_index < this->sections.size(); section_index++) {
 

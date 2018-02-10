@@ -46,6 +46,8 @@ typedef struct params {
     float edge_threshold;
     float sigma;
     Resolution res;
+    float scale_x;
+    float scale_y;
 } params;
 
 class Tile {
@@ -61,12 +63,22 @@ class Tile {
    double y_start;
    double y_finish;
 
-
+   bool bad_2d_alignment;
    double shape_dx;
    double shape_dy;
 
    std::vector<cv::KeyPoint>* p_kps;
    cv::Mat* p_kps_desc;
+
+   std::vector<cv::KeyPoint>* p_kps_fallback;
+   cv::Mat* p_kps_desc_fallback;
+
+   void compute_sift_keypoints2d_params(tfk::params params,
+      std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc);
+   void compute_sift_keypoints2d_params(tfk::params params,
+      std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile);
+
+
 
    std::vector<cv::KeyPoint>* p_kps_3d;
    cv::Mat* p_kps_desc_3d;
@@ -102,6 +114,8 @@ class Tile {
 
    void release_2d_keypoints();
 
+   float error_tile_pair(Tile *other);
+
    void get_3d_keypoints(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::Mat>& desc);
 
    void recompute_3d_keypoints(std::vector<cv::KeyPoint>& atile_all_kps,
@@ -132,7 +146,7 @@ class Section {
     int out_d2;
     bool elastic_transform_ready;
     int num_tiles_replaced;
-
+    int num_bad_2d_matches;
     cv::Mat* p_out;
     std::vector<cv::KeyPoint>* p_kps;
     std::string cached_2d_matches;
@@ -178,9 +192,12 @@ class Section {
     std::vector<Tile*> get_all_close_tiles(Tile* atile_id);
     void compute_keypoints_and_matches();
     void compute_tile_matches(Tile* a_tile);
+
     void compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
-      std::vector< cv::Point2f > &filtered_match_points_a, 
-      std::vector< cv::Point2f > &filtered_match_points_b);
+      std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector <cv::KeyPoint>& b_tile_keypoints,
+      cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
+      std::vector< cv::Point2f > &filtered_match_points_a,
+      std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh);
 
 
 
