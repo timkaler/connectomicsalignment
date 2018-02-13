@@ -29,8 +29,8 @@ float tfk::Tile::error_tile_pair(Tile *other) {
 
   cv::Mat tile_p_image_1;
   cv::Mat tile_p_image_2;
-  tile_p_image_1 = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
-  tile_p_image_2 = cv::imread(other->filepath, CV_LOAD_IMAGE_UNCHANGED);
+  tile_p_image_1 = this->get_tile_data(Resolution::FULL); //cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+  tile_p_image_2 = other->get_tile_data(Resolution::FULL); //cv::imread(other->filepath, CV_LOAD_IMAGE_UNCHANGED);
 
 
   std::pair<cv::Point2f, cv::Point2f> tile_1_bounds = this->get_bbox(); 
@@ -93,6 +93,13 @@ float tfk::Tile::error_tile_pair(Tile *other) {
   return result_CCOEFF_NORMED.at<float>(0,0);
 }
 
+void tfk::Tile::release_full_image() {
+    full_image_lock->lock();
+    full_image.release();
+    has_full_image = false;
+    full_image_lock->unlock(); 
+}
+
 void tfk::Tile::release_2d_keypoints() {
 
     this->p_kps->clear();
@@ -102,6 +109,7 @@ void tfk::Tile::release_2d_keypoints() {
 
     this->p_kps_desc->release();
     this->p_kps_desc_fallback->release();
+
     //// clean up the memory
     //for (auto del : known_set) {
     //  tile_data_t *a_tile = &(p_sec_data->tiles[del]);
@@ -382,6 +390,8 @@ bool tfk::Tile::overlaps_with(Tile* other) {
 tfk::Tile::Tile(TileData& tile_data) {
     //tile_data_t *p_cur_tile = &(p_sec_data->tiles[p_sec_data->n_tiles]);
     //p_sec_data->n_tiles++;
+    this->has_full_image = false;
+    this->full_image_lock = new std::mutex();
     this->image_data_replaced = false;
     this->shape_dx = tile_data.x_finish() - tile_data.x_start();
     this->shape_dy = tile_data.y_finish() - tile_data.y_start();
@@ -512,7 +522,7 @@ void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
 
   cv::Mat tmp_image;
   tmp_image.create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
-  tmp_image = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+  tmp_image = this->get_tile_data(Resolution::FULL); //cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
 
   //(*this->p_image).create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
 
@@ -582,11 +592,10 @@ void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
   //cv::Mat m_kps_desc_filtered = m_kps_desc[0].clone();
   *(this)->p_kps_desc_3d = m_kps_desc[0].clone();
 
-  printf("Number of 3d points is %d\n", point_count_3d);
+  //printf("Number of 3d points is %d\n", point_count_3d);
   this->p_image->release();
 
 }
-
 
 cv::Mat tfk::Tile::get_tile_data(Resolution res) {
 
@@ -620,11 +629,19 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
     }
 
     case FULL: {
-      return cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+      full_image_lock->lock();
+      if (!has_full_image) {
+        full_image = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+        has_full_image = true;
+      }
+      cv::Mat ret = full_image.clone();
+      full_image_lock->unlock();
+      return ret;
+      //return cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
       break;
     }
     case PERCENT30: {
-      cv::Mat tmp = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+      cv::Mat tmp = this->get_tile_data(Resolution::FULL);//cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
       cv::Mat ret;
       cv::resize(tmp, ret, cv::Size(), 0.3,0.3,CV_INTER_AREA);
       //tmp.release();
@@ -646,7 +663,7 @@ void tfk::Tile::compute_sift_keypoints2d_params(tfk::params params,
 
 void tfk::Tile::compute_sift_keypoints2d_params(tfk::params params,
     std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile) {
-  printf("computing sift keypoints 2d with params\n");
+  //printf("computing sift keypoints 2d with params\n");
 
   cv::Mat _tmp_image;
   _tmp_image.create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
@@ -781,7 +798,7 @@ void tfk::Tile::compute_sift_keypoints2d() {
 
   cv::Mat tmp_image;
   tmp_image.create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
-  tmp_image = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+  tmp_image = this->get_tile_data(Resolution::FULL);//cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
 
   //(*this->p_image).create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
 

@@ -95,6 +95,11 @@ class Tile {
    int level;
    bool bad;
 
+
+   bool has_full_image;
+   cv::Mat full_image;
+   std::mutex* full_image_lock;
+
    bool image_data_replaced;
 
    std::vector<edata> edges;
@@ -105,6 +110,8 @@ class Tile {
             int x_start, int x_finish, int y_start, int y_finish);
 
    Tile(TileData& tile_data);
+
+   void release_full_image();
 
    void compute_sift_keypoints2d();
    void compute_sift_keypoints3d(bool recomputation = false);

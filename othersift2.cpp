@@ -544,7 +544,7 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
     keypoints.clear();
 
 
-    int mutex = 0;
+    //int mutex = 0;
     float min_size = nfeatures*1.0;
     for( int o = 0; o < nOctaves; o++ )
         for( int i = 1; i <= nOctaveLayers; i++ )
@@ -614,11 +614,11 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
                                 kpt.angle = 360.f - (float)((360.f/n) * bin);
                                 if(std::abs(kpt.angle - 360.f) < FLT_EPSILON)
                                     kpt.angle = 0.f;
-                                while (!__sync_bool_compare_and_swap(&mutex, 0, 1)) {
-                                   continue;
-                                }
+                                //while (!__sync_bool_compare_and_swap(&mutex, 0, 1)) {
+                                //   continue;
+                                //}
                                 keypoints.push_back(kpt);
-                                __sync_bool_compare_and_swap(&mutex, 1,0);
+                                //__sync_bool_compare_and_swap(&mutex, 1,0);
                             }
                         }
                     }

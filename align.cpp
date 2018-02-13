@@ -60,15 +60,16 @@ void align_execute(align_data_t *p_align_data) {
       stack->sections[i]->elastic_transform_ready = true;
     }
 
-    int size = 50000;
+    int size = 5000;
     std::clock_t start;
     double duration;
 
     start = std::clock();
 
 
-    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderbefore", tfk::PERCENT30);
+    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderfull", tfk::FULL);
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderthumb", tfk::THUMBNAIL);
+    //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderbefore", tfk::PERCENT30);
 
 
     //stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "testrender");
