@@ -53,6 +53,8 @@ void align_execute(align_data_t *p_align_data) {
     printf("Got past the init\n");
     printf("stack has sections %zu\n", stack->sections.size()); 
     stack->align_2d();
+
+
     stack->coarse_affine_align();
     stack->elastic_align();
 
@@ -60,16 +62,18 @@ void align_execute(align_data_t *p_align_data) {
       stack->sections[i]->elastic_transform_ready = true;
     }
 
-    int size = 5000;
+    int size = 50000;
     std::clock_t start;
     double duration;
 
     start = std::clock();
 
+    int _start_x = 50000;
+    int _start_y = 50000;
 
-    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderfull", tfk::FULL);
-    //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderthumb", tfk::THUMBNAIL);
-    //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderbefore", tfk::PERCENT30);
+    //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderfull", tfk::FULL);
+    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderthumb", tfk::THUMBNAIL);
+    //stack->render(std::make_pair(cv::Point2f(_start_x,_start_y),cv::Point2f(_start_x + size, _start_y + size)), "renderbefore", tfk::PERCENT30);
 
 
     //stack->render_error(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "testrender");

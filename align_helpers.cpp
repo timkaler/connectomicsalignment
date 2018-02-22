@@ -81,82 +81,82 @@ std::string padTo(std::string str, const size_t num, const char paddingChar = '0
 //}
 
 
-void create_sift_hdf5(const char* filename, int num_points, std::vector<float> sizes,
-    std::vector<float> responses, std::vector<float> octaves,
-    std::vector<float> locations, const char* imageUrl){
-   hid_t       file_id, dataset_id, dataspace_id;  /* identifiers */
-   hsize_t     dims[2];
-
-   /* Create a new file using default properties. */
-   file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-
-   /* Create the data space for the dataset. */
-   dims[0] = num_points; 
-   dims[1] = 128; 
-   dataspace_id = H5Screate_simple(2, dims, NULL);
-
-
-   hsize_t dims2[1];
-   dims2[0] = 1;
-   hid_t dataspace_id2 = H5Screate_simple(0, dims2, NULL);
-
-   /* Create the dataset. */
-   dataset_id = H5Dcreate2(file_id, "/descs", H5T_STD_U8LE, dataspace_id, 
-                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-   ///* End access to the dataset and release resources used by it. */
-   H5Dclose(dataset_id);
-
-
-   hid_t filetype = H5Tcopy(H5T_C_S1);
-   H5Tset_size(filetype, strlen(imageUrl));
-   H5Tset_strpad(filetype, H5T_STR_NULLPAD);
-   hid_t memtype = H5Tcopy(H5T_C_S1);
-   H5Tset_size(memtype, strlen(imageUrl));
-   dataset_id = H5Dcreate2(file_id, "/imageUrl", filetype, dataspace_id2, 
-                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-   H5Dwrite(dataset_id, memtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, imageUrl); 
-   H5Dclose(dataset_id);
-
-
-   hid_t group_id = H5Gcreate2(file_id, "/pts", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-   H5Gclose(group_id);
-
-
-   hsize_t dims3[2];
-   dims3[0] = num_points;
-   dims3[1] = 2;
-   hid_t dataspace_id3 = H5Screate_simple(2, dims3, NULL);
-   dataset_id = H5Dcreate2(file_id, "/pts/locations", H5T_IEEE_F64LE, dataspace_id3, 
-                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-   H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &(locations[0])); 
-  
-
-   hsize_t dims4[1];
-   dims4[0] = num_points; 
-   hid_t dataspace_id4 = H5Screate_simple(1, dims4, NULL);
-   dataset_id = H5Dcreate2(file_id, "/pts/octaves", H5T_IEEE_F64LE, dataspace_id4, 
-                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-   H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &(octaves[0])); 
-
-   dataspace_id4 = H5Screate_simple(1, dims4, NULL);
-   dataset_id = H5Dcreate2(file_id, "/pts/responses", H5T_IEEE_F64LE, dataspace_id4, 
-                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-   H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &(responses[0])); 
-
-   dataspace_id4 = H5Screate_simple(1, dims4, NULL);
-   dataset_id = H5Dcreate2(file_id, "/pts/sizes", H5T_IEEE_F64LE, dataspace_id4, 
-                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-   H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &(sizes[0])); 
-
-   H5Dclose(dataset_id);
-
-   /* Terminate access to the data space. */ 
-   H5Sclose(dataspace_id);
-
-   /* Close the file. */
-   H5Fclose(file_id);
-
-}
+//void create_sift_hdf5(const char* filename, int num_points, std::vector<float> sizes,
+//    std::vector<float> responses, std::vector<float> octaves,
+//    std::vector<float> locations, const char* imageUrl){
+//   hid_t       file_id, dataset_id, dataspace_id;  /* identifiers */
+//   hsize_t     dims[2];
+//
+//   /* Create a new file using default properties. */
+//   file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+//
+//   /* Create the data space for the dataset. */
+//   dims[0] = num_points; 
+//   dims[1] = 128; 
+//   dataspace_id = H5Screate_simple(2, dims, NULL);
+//
+//
+//   hsize_t dims2[1];
+//   dims2[0] = 1;
+//   hid_t dataspace_id2 = H5Screate_simple(0, dims2, NULL);
+//
+//   /* Create the dataset. */
+//   dataset_id = H5Dcreate2(file_id, "/descs", H5T_STD_U8LE, dataspace_id, 
+//                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+//   ///* End access to the dataset and release resources used by it. */
+//   H5Dclose(dataset_id);
+//
+//
+//   hid_t filetype = H5Tcopy(H5T_C_S1);
+//   H5Tset_size(filetype, strlen(imageUrl));
+//   H5Tset_strpad(filetype, H5T_STR_NULLPAD);
+//   hid_t memtype = H5Tcopy(H5T_C_S1);
+//   H5Tset_size(memtype, strlen(imageUrl));
+//   dataset_id = H5Dcreate2(file_id, "/imageUrl", filetype, dataspace_id2, 
+//                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+//   H5Dwrite(dataset_id, memtype, H5S_ALL, H5S_ALL, H5P_DEFAULT, imageUrl); 
+//   H5Dclose(dataset_id);
+//
+//
+//   hid_t group_id = H5Gcreate2(file_id, "/pts", H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+//   H5Gclose(group_id);
+//
+//
+//   hsize_t dims3[2];
+//   dims3[0] = num_points;
+//   dims3[1] = 2;
+//   hid_t dataspace_id3 = H5Screate_simple(2, dims3, NULL);
+//   dataset_id = H5Dcreate2(file_id, "/pts/locations", H5T_IEEE_F64LE, dataspace_id3, 
+//                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+//   H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &(locations[0])); 
+//  
+//
+//   hsize_t dims4[1];
+//   dims4[0] = num_points; 
+//   hid_t dataspace_id4 = H5Screate_simple(1, dims4, NULL);
+//   dataset_id = H5Dcreate2(file_id, "/pts/octaves", H5T_IEEE_F64LE, dataspace_id4, 
+//                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+//   H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &(octaves[0])); 
+//
+//   dataspace_id4 = H5Screate_simple(1, dims4, NULL);
+//   dataset_id = H5Dcreate2(file_id, "/pts/responses", H5T_IEEE_F64LE, dataspace_id4, 
+//                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+//   H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &(responses[0])); 
+//
+//   dataspace_id4 = H5Screate_simple(1, dims4, NULL);
+//   dataset_id = H5Dcreate2(file_id, "/pts/sizes", H5T_IEEE_F64LE, dataspace_id4, 
+//                          H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+//   H5Dwrite(dataset_id, H5T_NATIVE_FLOAT, H5S_ALL, H5S_ALL, H5P_DEFAULT, &(sizes[0])); 
+//
+//   H5Dclose(dataset_id);
+//
+//   /* Terminate access to the data space. */ 
+//   H5Sclose(dataspace_id);
+//
+//   /* Close the file. */
+//   H5Fclose(file_id);
+//
+//}
 
 /////////////////////////////////////////////////////////////////////////////////////////
 // INTERNAL FUNCTIONS

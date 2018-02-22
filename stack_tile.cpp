@@ -606,13 +606,17 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
   switch(res) {
 
     case THUMBNAIL: {
-      cv::Mat src = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
+      cv::Mat tmp = this->get_tile_data(Resolution::FULL);//cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+      cv::Mat ret;
+      cv::resize(tmp, ret, cv::Size(), 0.1,0.1,CV_INTER_AREA);
+      //cv::Mat src = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
       //cv::Mat dst;
       ////cv::equalizeHist( src, dst );
 
       //int scale = 1;
       //cv::Laplacian(src, dst, CV_8U, 3, scale, 0, cv::BORDER_DEFAULT);
-      return src;
+      //return src;
+      return ret;
       //return dst;//cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
       break;
     }

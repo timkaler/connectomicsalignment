@@ -218,13 +218,13 @@ static double crosslink_mesh_derivs(std::vector<cv::Point2f>* mesh1, std::vector
   d_cost_d_mesh1[pidx1].y += (float)(pb1 * dh_dy);
   d_cost_d_mesh1[pidx2].y += (float)(pb2 * dh_dy);
 
-  d_cost_d_mesh2[qidx0].x -= (float)(qb0 * dh_dx);
-  d_cost_d_mesh2[qidx1].x -= (float)(qb1 * dh_dx);
-  d_cost_d_mesh2[qidx2].x -= (float)(qb2 * dh_dx);
+  //d_cost_d_mesh2[qidx0].x -= (float)(qb0 * dh_dx);
+  //d_cost_d_mesh2[qidx1].x -= (float)(qb1 * dh_dx);
+  //d_cost_d_mesh2[qidx2].x -= (float)(qb2 * dh_dx);
 
-  d_cost_d_mesh2[qidx0].y -= (float)(qb0 * dh_dy);
-  d_cost_d_mesh2[qidx1].y -= (float)(qb1 * dh_dy);
-  d_cost_d_mesh2[qidx2].y -= (float)(qb2 * dh_dy);
+  //d_cost_d_mesh2[qidx0].y -= (float)(qb0 * dh_dy);
+  //d_cost_d_mesh2[qidx1].y -= (float)(qb1 * dh_dy);
+  //d_cost_d_mesh2[qidx2].y -= (float)(qb2 * dh_dy);
 
   return cost;
 }

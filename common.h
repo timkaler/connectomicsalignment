@@ -13,8 +13,6 @@
 #include "opencv2/features2d.hpp"
 #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/imgproc/types_c.h>
-#include <hdf5.h>
-#include <opencv2/hdf/hdf5.hpp>
 //#define FILE "dset.h5"
 
 
@@ -194,9 +192,9 @@ inline bool operator<(const renderTriangle& a, const renderTriangle& b)
 #endif
 
 // haoran's favorite ugly macros
-#define rep(i,l,r) for (int i=(l); i<=(r); i++)
-#define repd(i,r,l) for (int i=(r); i>=(l); i--)
-#define rept(i,c) for (__typeof((c).begin()) i=(c).begin(); i!=(c).end(); i++)
+//#define rep(i,l,r) for (int i=(l); i<=(r); i++)
+//#define repd(i,r,l) for (int i=(r); i>=(l); i--)
+//#define rept(i,c) for (__typeof((c).begin()) i=(c).begin(); i!=(c).end(); i++)
 
 
 /////////////////////////////////////////////////////////////////////////////////////////

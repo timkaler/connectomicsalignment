@@ -29,7 +29,7 @@ void tfk::Stack::render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::str
 
 void tfk::Stack::render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix,
     Resolution res) {
-  for (int i = 0; i < this->sections.size(); i++) {
+  cilk_for (int i = 0; i < this->sections.size(); i++) {
     Section* section = this->sections[i];
     section->render(bbox, filename_prefix+std::to_string(i)+".tif", res);
   }
@@ -73,21 +73,76 @@ void tfk::Stack::coarse_affine_align() {
 }
 
 void tfk::Stack::get_elastic_matches() {
-  for (int section = 1; section < this->sections.size(); section++) {
-    std::vector<Section*> neighbors;
-    int section_a = section;
-    neighbors.push_back(this->sections[section-1]);
 
-    //for (int section_b = section-2; section_b < section+1; section_b++) {
-    //for (int section_b = section-1; section_b < section; section_b++) {
-    //  if (section_b < 0 || section_b == section_a || section_b >= this->sections.size()) {
-    //    continue;
-    //  }
-    //  neighbors.push_back(this->sections[section_b]);
-    //}
-    cilk_spawn this->sections[section]->get_elastic_matches(neighbors);
+
+  std::pair<cv::Point2f, cv::Point2f> stack_bbox = this->sections[0]->get_bbox();
+  stack_bbox = this->sections[0]->affine_transform_bbox(stack_bbox);
+  for (int i = 1; i < this->sections.size(); i++) {
+    auto bbox = this->sections[i]->get_bbox();
+    bbox = this->sections[i]->affine_transform_bbox(bbox);
+    stack_bbox.first.x = std::min(stack_bbox.first.x, bbox.first.x);
+    stack_bbox.first.y = std::min(stack_bbox.first.y, bbox.first.y);
+    stack_bbox.second.x = std::max(stack_bbox.second.x, bbox.second.x);
+    stack_bbox.second.y = std::max(stack_bbox.second.y, bbox.second.y);
   }
-  cilk_sync;
+
+  double min_x = stack_bbox.first.x;
+  double max_x = stack_bbox.second.x;
+  double min_y = stack_bbox.first.y;
+  double max_y = stack_bbox.second.y;
+
+  std::vector<std::pair<double, double> > valid_boxes;
+
+  for (double box_iter_x = min_x; box_iter_x < max_x + 12000; box_iter_x += 12000) {
+    for (double box_iter_y = min_y; box_iter_y < max_y + 12000; box_iter_y += 12000) {
+      valid_boxes.push_back(std::make_pair(box_iter_x, box_iter_y));
+    }
+  }
+
+ 
+
+  // 0 1 2 3 4 5 6
+  //   1   3   5
+  // 1 computes matches for 1->0, 2->1
+  // 3 computes matches for 3->2, 4->3
+  // 5 computes matches for 5->4 6->5
+
+
+  cilk_for (int i = 0; i < valid_boxes.size(); i++) {
+    auto bbox = valid_boxes[i];
+    std::vector<cv::KeyPoint> prev_keypoints(0);
+    cv::Mat prev_desc;
+    
+    for (int section = 1; section < this->sections.size(); section++) {
+      //neighbors.push_back(this->sections[section-1]);
+      
+      std::vector<cv::KeyPoint> my_keypoints(0);
+      cv::Mat my_desc;
+      this->sections[section]->get_elastic_matches_one_next_bbox(this->sections[section-1], bbox, prev_keypoints,
+          prev_desc, my_keypoints, my_desc);
+      prev_keypoints = my_keypoints;
+      prev_desc = my_desc; 
+    }
+     
+  }
+ 
+
+  //for (int section = 1; section < this->sections.size(); section++) {
+
+  //  std::vector<Section*> neighbors;
+  //  int section_a = section;
+  //  neighbors.push_back(this->sections[section-1]);
+
+  //  //for (int section_b = section-2; section_b < section+1; section_b++) {
+  //  //for (int section_b = section-1; section_b < section; section_b++) {
+  //  //  if (section_b < 0 || section_b == section_a || section_b >= this->sections.size()) {
+  //  //    continue;
+  //  //  }
+  //  //  neighbors.push_back(this->sections[section_b]);
+  //  //}
+
+  //  this->sections[section]->get_elastic_matches(neighbors);
+  //}
 }
 
 
@@ -110,6 +165,51 @@ void tfk::Stack::elastic_align() {
 }
 
 void tfk::Stack::elastic_gradient_descent() {
+    printf("Running associative gradient descent.\n");
+
+
+    for (int i = 0; i < this->sections.size(); i++) {
+      this->sections[i]->mesh_orig_save = this->sections[i]->mesh_orig;
+      this->sections[i]->mesh_orig = new std::vector<cv::Point2f>();
+      for (int j = 0; j < this->sections[i]->mesh_orig_save->size(); j++) {
+        this->sections[i]->mesh_orig->push_back((*this->sections[i]->mesh_orig_save)[j]);
+      }
+    } 
+
+    for (int iter = 0; iter < 1; iter++) {
+      for (int i = 0; i < this->sections.size(); i++) {
+        if (i==0) {
+          cilk_spawn this->sections[i]->elastic_gradient_descent_section(this->sections[0]);
+        } else {
+          cilk_spawn this->sections[i]->elastic_gradient_descent_section(this->sections[i-1]);
+        }
+      }
+      cilk_sync;
+      // section i is aligned to section i-1;
+      for (int i = 2; i < this->sections.size(); i++) {
+        Section* sec = this->sections[i];
+        //for (int j = i; --j > 0;) {
+        int j = i-1;
+          for (int k = 0; k < sec->mesh->size(); k++) {
+            (*sec->mesh)[k] = this->sections[j]->elastic_transform((*sec->mesh)[k]);
+          }
+        //}
+      }
+      for (int i = 0; i < this->sections.size(); i++) {
+        for (int j = 0; j < this->sections[i]->mesh_orig_save->size(); j++) {
+          (*this->sections[i]->mesh_orig)[j] = (*this->sections[i]->mesh)[j];
+        }   
+      }
+    }
+
+    for (int i = 0; i < this->sections.size(); i++) {
+      delete this->sections[i]->mesh_orig;
+      this->sections[i]->mesh_orig = this->sections[i]->mesh_orig_save;
+    }
+
+    return;
+
+
     double cross_slice_weight = 1.0;
     double cross_slice_winsor = 20.0;
     double intra_slice_weight = 1.0;
@@ -475,13 +575,8 @@ void tfk::Stack::unpack_graph() {
 void tfk::Stack::align_2d() {
   int count = 0;
   for (int i = 0; i < this->sections.size(); i++) {
-    cilk_spawn this->sections[i]->compute_keypoints_and_matches();
-    if (count > 4) {
-      cilk_sync;
-      count = 0;
-    }
+    this->sections[i]->compute_keypoints_and_matches();
   }
-  cilk_sync;
 
 
   cilk_for (int section_index = 0; section_index < this->sections.size(); section_index++) {

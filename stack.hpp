@@ -4,13 +4,12 @@
 #include <unistd.h>
 
 #include <mutex>
-
+#include <thread>
+#include <future>
 #include "opencv2/opencv.hpp"
 #include "opencv2/features2d.hpp"
 #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/imgproc/types_c.h>
-#include <hdf5.h>
-#include <opencv2/hdf/hdf5.hpp>
 #include "cilk_tools/Graph.h"
 //#include "cilk_tools/engine.h"
 #include "./common.h"
@@ -164,6 +163,8 @@ class Section {
     std::vector<Tile*> tiles;
     Graph* graph;
 
+    std::mutex* section_mesh_matches_mutex;
+
     double a00;
     double a10;
     double a11;
@@ -172,6 +173,7 @@ class Section {
     double offset_y;
 
     std::vector<cv::Point2f>* mesh_orig;
+    std::vector<cv::Point2f>* mesh_orig_save;
     std::vector<cv::Point2f>* mesh_old;
     std::vector<cv::Point2f>* mesh;
     std::vector<std::pair<int,int> >* triangle_edges;
@@ -199,6 +201,7 @@ class Section {
     std::vector<Tile*> get_all_close_tiles(Tile* atile_id);
     void compute_keypoints_and_matches();
     void compute_tile_matches(Tile* a_tile);
+    void compute_tile_matches2(Tile* a_tile);
 
     void compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
       std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector <cv::KeyPoint>& b_tile_keypoints,
@@ -206,6 +209,7 @@ class Section {
       std::vector< cv::Point2f > &filtered_match_points_a,
       std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh);
 
+    void elastic_gradient_descent_section(Section* _neighbor);
 
 
 
@@ -213,19 +217,39 @@ class Section {
 
     void get_3d_keypoints_for_box(std::pair<cv::Point2f, cv::Point2f> bbox,
         std::vector<cv::KeyPoint>& kps_in_box, cv::Mat& kps_desc_in_box, bool use_cached,
-        tfk::params sift_parameters);
+        tfk::params sift_parameters,
+        std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
 
    void find_3d_matches_in_box(Section* neighbor,
        std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
        std::vector<cv::Point2f>& test_filtered_match_points_a,
        std::vector<cv::Point2f>& test_filtered_match_points_b,
-       bool use_cached, tfk::params sift_parameters);
+       bool use_cached, tfk::params sift_parameters,
+       std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
+
+
+
+  void find_3d_matches_in_box_cache(Section* neighbor,
+    std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
+    std::vector<cv::Point2f>& test_filtered_match_points_a,
+    std::vector<cv::Point2f>& test_filtered_match_points_b,
+    bool use_cached, tfk::params sift_parameters, std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex, std::vector<cv::KeyPoint>& prev_keypoints, cv::Mat& prev_desc,
+              std::vector<cv::KeyPoint>& my_keypoints, cv::Mat& my_desc);
+
+void get_elastic_matches_one_next_bbox(Section* neighbor,
+    std::pair<double, double> bbox,
+    std::vector<cv::KeyPoint>& prev_keypoints,
+    cv::Mat& prev_desc,
+    std::vector<cv::KeyPoint>& my_keypoints,
+    cv::Mat& my_desc);
+
 
 
    double compute_3d_error_in_box(Section* neighbor,
        std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
        std::vector<cv::Point2f>& test_filtered_match_points_a,
-       std::vector<cv::Point2f>& test_filtered_match_points_b);
+       std::vector<cv::Point2f>& test_filtered_match_points_b,
+       std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
 
 
 
@@ -267,7 +291,8 @@ class Section {
 
 
 
-    cv::Mat render_affine(cv::Mat A, std::pair<cv::Point2f, cv::Point2f> bbox, Resolution resolution);
+    cv::Mat render_affine(cv::Mat A, std::pair<cv::Point2f, cv::Point2f> bbox, Resolution resolution,
+                          std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
     cv::Mat render(std::pair<cv::Point2f, cv::Point2f> bbox, Resolution resolution);
     void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename, Resolution res);
     cv::Point2f get_render_scale(Resolution resolution);
@@ -277,7 +302,8 @@ class Section {
 
      //std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> 
     double render_error_affine(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
-                      std::string filename, cv::Mat A);
+                      std::string filename, cv::Mat A,
+                      std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
 
     renderTriangle getRenderTriangle(tfkTriangle tri);
     std::tuple<bool, float, float, float> get_triangle_for_point(cv::Point2f pt);
