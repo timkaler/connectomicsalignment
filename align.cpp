@@ -52,6 +52,8 @@ void align_execute(align_data_t *p_align_data) {
     stack->init();
     printf("Got past the init\n");
     printf("stack has sections %zu\n", stack->sections.size()); 
+    //stack->test_io();
+    //return;
     stack->align_2d();
 
 
@@ -73,6 +75,7 @@ void align_execute(align_data_t *p_align_data) {
 
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderfull", tfk::FULL);
     stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderthumb", tfk::THUMBNAIL);
+    //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderthumb", tfk::PERCENT30);
     //stack->render(std::make_pair(cv::Point2f(_start_x,_start_y),cv::Point2f(_start_x + size, _start_y + size)), "renderbefore", tfk::PERCENT30);
 
 

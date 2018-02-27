@@ -1213,7 +1213,7 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
 
   for (int i = 0; i < this->tiles.size(); i++) {
     Tile* tile = this->tiles[i];
-    //if (tile->bad_2d_alignment) continue;
+    if (tile->bad_2d_alignment) continue;
     if (!this->tile_in_render_box(tile, bbox)) continue;
 
     //cv::Mat* tile_p_image = this->read_tile(tile->filepath, resolution);
@@ -1322,99 +1322,94 @@ void tfk::Section::get_3d_keypoints_for_box(std::pair<cv::Point2f, cv::Point2f> 
   std::vector<cv::KeyPoint>& kps_in_box, cv::Mat& kps_desc_in_box,
   bool use_cached, tfk::params sift_parameters, std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex) {
 
-  cv::Mat A(3, 3, cv::DataType<double>::type);
-  A.at<double>(0,0) = 1.0;
-  A.at<double>(0,1) = 0.0;
-  A.at<double>(0,2) = 0.0;
-  A.at<double>(1,0) = 0.0;
-  A.at<double>(1,1) = 1.0;
-  A.at<double>(1,2) = 0.0;
-  A.at<double>(2,0) = 0.0;
-  A.at<double>(2,1) = 0.0;
-  A.at<double>(2,2) = 1.0;
 
-  cv::Mat tmp_image = this->render_affine(A,bbox, Resolution::PERCENT30, tiles_loaded, tiles_loaded_mutex);
-
-  int black_pixels = 0;
-  for (int r = 0; r < tmp_image.rows; r++) {
-    for (int c = 0; c < tmp_image.cols; c++) {
-      if (tmp_image.at<unsigned char>(r,c) == 0) black_pixels++;
-    }
-  }
-  if (black_pixels > tmp_image.rows*tmp_image.cols*0.3) return;
-
-
-
-  cv::Mat local_p_image;
-  float scale_x = sift_parameters.scale_x;
-  float scale_y = sift_parameters.scale_y;
-  cv::resize(tmp_image, local_p_image, cv::Size(), scale_x,scale_y,CV_INTER_AREA);
-
-  int rows = local_p_image.rows;
-  int cols = local_p_image.cols;
-
-  cv::Ptr<cv::Feature2D> p_sift = new cv::xfeatures2d::SIFT_Impl(
-            sift_parameters.num_features,  // num_features --- unsupported.
-            sift_parameters.num_octaves,  // number of octaves
-            sift_parameters.contrast_threshold,  // contrast threshold.
-            sift_parameters.edge_threshold,  // edge threshold.
-            sift_parameters.sigma);  // sigma.
-
-  cv::Mat sub_im = (local_p_image)(cv::Rect(0, 0, cols, rows));
-  cv::Mat sub_im_mask = cv::Mat::ones(rows,cols, CV_8UC1);
-
-  // lets try to mask out any background.
-  for (int r = 0; r < local_p_image.rows; r++) {
-    for (int c = 0; c < local_p_image.cols; c++) {
-      if (local_p_image.at<unsigned char>(r,c) == 0) {
-        for (int dx = -1; dx < 2; dx++) {
-          for (int dy = -1; dy < 2; dy++) {
-            int nc = r+dx;
-            int nr = c+dy;
-            if (nc < 0 || nc >= local_p_image.cols) continue;
-            if (nr < 0 || nr >= local_p_image.rows) continue;
-            sub_im_mask.at<unsigned char>(nr,nc) = 0;
+      std::vector <cv::KeyPoint > atile_all_kps;
+      std::vector <cv::Mat > atile_all_kps_desc;
+    if (use_cached) {
+      for (int i = 0; i < this->tiles.size(); i++) {
+        if (this->transformed_tile_overlaps_with(this->tiles[i], bbox)) {
+          this->tiles[i]->get_3d_keypoints(atile_all_kps, atile_all_kps_desc);
+        }
+      }
+      this->affine_transform_keypoints(atile_all_kps); 
+    } else {
+      cv::Mat A(3, 3, cv::DataType<double>::type);
+      A.at<double>(0,0) = 1.0;
+      A.at<double>(0,1) = 0.0;
+      A.at<double>(0,2) = 0.0;
+      A.at<double>(1,0) = 0.0;
+      A.at<double>(1,1) = 1.0;
+      A.at<double>(1,2) = 0.0;
+      A.at<double>(2,0) = 0.0;
+      A.at<double>(2,1) = 0.0;
+      A.at<double>(2,2) = 1.0;
+  
+      cv::Mat tmp_image = this->render_affine(A,bbox, Resolution::PERCENT30, tiles_loaded, tiles_loaded_mutex);
+  
+      int black_pixels = 0;
+      for (int r = 0; r < tmp_image.rows; r++) {
+        for (int c = 0; c < tmp_image.cols; c++) {
+          if (tmp_image.at<unsigned char>(r,c) == 0) black_pixels++;
+        }
+      }
+      if (black_pixels > tmp_image.rows*tmp_image.cols*0.3) return;
+  
+  
+  
+      cv::Mat local_p_image;
+      float scale_x = sift_parameters.scale_x;
+      float scale_y = sift_parameters.scale_y;
+      cv::resize(tmp_image, local_p_image, cv::Size(), scale_x,scale_y,CV_INTER_AREA);
+  
+      int rows = local_p_image.rows;
+      int cols = local_p_image.cols;
+  
+      cv::Ptr<cv::Feature2D> p_sift = new cv::xfeatures2d::SIFT_Impl(
+                sift_parameters.num_features,  // num_features --- unsupported.
+                sift_parameters.num_octaves,  // number of octaves
+                sift_parameters.contrast_threshold,  // contrast threshold.
+                sift_parameters.edge_threshold,  // edge threshold.
+                sift_parameters.sigma);  // sigma.
+  
+      cv::Mat sub_im = (local_p_image)(cv::Rect(0, 0, cols, rows));
+      cv::Mat sub_im_mask = cv::Mat::ones(rows,cols, CV_8UC1);
+  
+      // lets try to mask out any background.
+      for (int r = 0; r < local_p_image.rows; r++) {
+        for (int c = 0; c < local_p_image.cols; c++) {
+          if (local_p_image.at<unsigned char>(r,c) == 0) {
+            for (int dx = -1; dx < 2; dx++) {
+              for (int dy = -1; dy < 2; dy++) {
+                int nc = r+dx;
+                int nr = c+dy;
+                if (nc < 0 || nc >= local_p_image.cols) continue;
+                if (nr < 0 || nr >= local_p_image.rows) continue;
+                sub_im_mask.at<unsigned char>(nr,nc) = 0;
+              }
+            }
           }
         }
       }
+  
+  
+      std::vector<cv::KeyPoint> v_kps;
+      cv::Mat m_kps_desc;
+  
+      p_sift->detectAndCompute(sub_im, sub_im_mask, v_kps, m_kps_desc);
+  
+      for (int j = 0; j < v_kps.size(); j++) {
+        v_kps[j].pt.x /= (scale_x*0.3);
+        v_kps[j].pt.y /= (scale_y*0.3);
+        v_kps[j].pt.x += bbox.first.x;
+        v_kps[j].pt.y += bbox.first.y;
+        atile_all_kps.push_back(v_kps[j]);
+        atile_all_kps_desc.push_back(m_kps_desc.row(j).clone());
+      }
+      //printf("Num keypoints computed %d\n", atile_all_kps.size());
     }
-  }
-
-
-  std::vector<cv::KeyPoint> v_kps;
-  cv::Mat m_kps_desc;
-
-  p_sift->detectAndCompute(sub_im, sub_im_mask, v_kps, m_kps_desc);
-
-  std::vector <cv::KeyPoint > atile_all_kps;
-  std::vector <cv::Mat > atile_all_kps_desc;
-  for (int j = 0; j < v_kps.size(); j++) {
-    v_kps[j].pt.x /= (scale_x*0.3);
-    v_kps[j].pt.y /= (scale_y*0.3);
-    v_kps[j].pt.x += bbox.first.x;
-    v_kps[j].pt.y += bbox.first.y;
-    atile_all_kps.push_back(v_kps[j]);
-    atile_all_kps_desc.push_back(m_kps_desc.row(j).clone());
-  }
-  //printf("Num keypoints computed %d\n", atile_all_kps.size());
 
 
 
-    //if (use_cached) {
-    //  for (int i = 0; i < this->tiles.size(); i++) {
-    //    if (this->transformed_tile_overlaps_with(this->tiles[i], bbox)) {
-    //      this->tiles[i]->get_3d_keypoints(atile_all_kps, atile_all_kps_desc);
-    //    }
-    //  }
-    //} else {
-    //  for (int i = 0; i < this->tiles.size(); i++) {
-    //    if (this->transformed_tile_overlaps_with(this->tiles[i], bbox)) {
-    //      this->tiles[i]->recompute_3d_keypoints(atile_all_kps, atile_all_kps_desc,
-    //          sift_parameters);
-    //    }
-    //  }
-    //}
-    //this->affine_transform_keypoints(atile_all_kps);
 
     int num_filtered = 0;
     std::vector<cv::Point2f> match_points_a, match_points_b;
@@ -1451,7 +1446,7 @@ void tfk::Section::find_3d_matches_in_box_cache(Section* neighbor,
     bool use_cached, tfk::params sift_parameters, std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex, std::vector<cv::KeyPoint>& prev_keypoints, cv::Mat& prev_desc,
               std::vector<cv::KeyPoint>& my_keypoints, cv::Mat& my_desc) {
 
-  double ransac_thresh = 32.0;
+  double ransac_thresh = 128.0;
   int num_filtered = 0;
 
 
@@ -1474,7 +1469,7 @@ void tfk::Section::find_3d_matches_in_box_cache(Section* neighbor,
   std::vector<cv::KeyPoint>& atile_kps_in_overlap = my_keypoints;
   cv::Mat& atile_kps_desc_in_overlap = my_desc;
  
-  if (atile_kps_in_overlap.size() < 120) return;
+  if (atile_kps_in_overlap.size() < 12) return;
 
   if (prev_keypoints.size() == 0) {
     neighbor->get_3d_keypoints_for_box(sliding_bbox, prev_keypoints,
@@ -1484,7 +1479,7 @@ void tfk::Section::find_3d_matches_in_box_cache(Section* neighbor,
   std::vector<cv::KeyPoint>& btile_kps_in_overlap = prev_keypoints;
   cv::Mat& btile_kps_desc_in_overlap = prev_desc;
 
-  if (btile_kps_in_overlap.size() < 120) return;
+  if (btile_kps_in_overlap.size() < 12) return;
 
   if (atile_kps_in_overlap.size() < 4 || btile_kps_in_overlap.size() < 4) return;
 
@@ -1617,7 +1612,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
     std::vector<cv::Point2f>& test_filtered_match_points_b,
     bool use_cached, tfk::params sift_parameters, std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex) {
 
-  double ransac_thresh = 32.0;
+  double ransac_thresh = 128.0;
   int num_filtered = 0;
 
   std::vector<cv::KeyPoint> atile_kps_in_overlap;
@@ -1812,7 +1807,7 @@ void tfk::Section::get_elastic_matches_one_next_bbox(Section* neighbor,
     std::vector<cv::KeyPoint>& my_keypoints,
     cv::Mat& my_desc) {
 
-  double ransac_thresh = 32.0;
+  double ransac_thresh = 128.0;
 
   std::vector< cv::Point2f > filtered_match_points_a(0);
   std::vector< cv::Point2f > filtered_match_points_b(0);
@@ -1830,7 +1825,7 @@ void tfk::Section::get_elastic_matches_one_next_bbox(Section* neighbor,
       int num_filtered = 0;
       std::pair<cv::Point2f, cv::Point2f> sliding_bbox =
           std::make_pair(cv::Point2f(box_iter_x, box_iter_y),
-                         cv::Point2f(box_iter_x+12000, box_iter_y+12000));
+                         cv::Point2f(box_iter_x+24000, box_iter_y+24000));
 
 
       std::vector< cv::Point2f > test_filtered_match_points_a(0);
@@ -1838,11 +1833,11 @@ void tfk::Section::get_elastic_matches_one_next_bbox(Section* neighbor,
       double bad_fraction = 2.0;
 
 
-      for (int trial = 0; trial < 1; trial++) {
+      for (int trial = 0; trial < 2; trial++) {
         // need to clear these to avoid pollution in event of multiple trials.
         test_filtered_match_points_a.clear();
         test_filtered_match_points_b.clear();
-
+        double _bad_fraction = 2.0;
         // no need to init sift_parameters if we are passing 'true' for use_cached.
         if (trial == 0) {
           tfk::params sift_parameters;
@@ -1855,10 +1850,12 @@ void tfk::Section::get_elastic_matches_one_next_bbox(Section* neighbor,
           sift_parameters.scale_y = 0.25;
 
 
-          this->find_3d_matches_in_box_cache(neighbor, sliding_bbox, test_filtered_match_points_a,
-              test_filtered_match_points_b, true, sift_parameters, tiles_loaded, tiles_loaded_mutex,
-              prev_keypoints, prev_desc, my_keypoints, my_desc);
-
+          //this->find_3d_matches_in_box_cache(neighbor, sliding_bbox, test_filtered_match_points_a,
+          //    test_filtered_match_points_b, true, sift_parameters, tiles_loaded, tiles_loaded_mutex,
+          //    prev_keypoints, prev_desc, my_keypoints, my_desc);
+          this->find_3d_matches_in_box(neighbor, sliding_bbox, test_filtered_match_points_a,
+              test_filtered_match_points_b, true, sift_parameters, tiles_loaded, tiles_loaded_mutex);
+          if (test_filtered_match_points_a.size() > 0) _bad_fraction = 0.0;
         } else {
           tfk::params sift_parameters;
           sift_parameters.num_features = 1;
@@ -1872,9 +1869,10 @@ void tfk::Section::get_elastic_matches_one_next_bbox(Section* neighbor,
 
           this->find_3d_matches_in_box(neighbor, sliding_bbox, test_filtered_match_points_a,
               test_filtered_match_points_b, false, sift_parameters, tiles_loaded, tiles_loaded_mutex);
+          if (test_filtered_match_points_a.size() >= 64) _bad_fraction = 0.0;
         }
 
-        double _bad_fraction = 0.0;/*this->compute_3d_error_in_box(neighbor, sliding_bbox,
+        /*this->compute_3d_error_in_box(neighbor, sliding_bbox,
             test_filtered_match_points_a, test_filtered_match_points_b, tiles_loaded, tiles_loaded_mutex);*/
 
        if (trial > 0 && _bad_fraction < 0.1) {
@@ -2813,7 +2811,7 @@ void tfk::Section::compute_tile_matches2(Tile* a_tile) {
 
       float val = tmp_a_tile.error_tile_pair(b_tile);
       lock.lock();
-      if (val >= 0.5) {
+      if (val >= 0.7) {
         neighbor_success_count++;
         a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
       }
@@ -2880,7 +2878,7 @@ void tfk::Section::compute_tile_matches(Tile* a_tile) {
 
     float val = tmp_a_tile.error_tile_pair(b_tile);
   //  lock.lock();
-    if (val >= 0.5) {
+    if (val >= 0.7) {
       neighbor_success_count++;
       a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
     } else {
@@ -3168,13 +3166,15 @@ void tfk::Section::compute_keypoints_and_matches() {
         tile->compute_sift_keypoints3d();
       }
 
-      cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
-        this->compute_tile_matches(tiles_to_process_matches[i]);
+      for (int i = 0; i < tiles_to_process_matches.size(); i++) {
+        cilk_spawn this->compute_tile_matches(tiles_to_process_matches[i]);
       }
+      cilk_sync;
 
-      //cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
-      //  this->compute_tile_matches2(tiles_to_process_matches[i]);
-      //}
+      for (int i = 0; i < tiles_to_process_matches.size(); i++) {
+        cilk_spawn this->compute_tile_matches2(tiles_to_process_matches[i]);
+      }
+      cilk_sync;
 
       opened_set.clear();
       for (auto it = active_set.begin(); it != active_set.end(); ++it) {

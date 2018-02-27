@@ -36,7 +36,7 @@ static float EDGE_THRESH_2D = 5.0;
 
 namespace tfk {
 
-enum Resolution {THUMBNAIL, FULL, PERCENT30, THUMBNAIL2};
+enum Resolution {THUMBNAIL, FULL, PERCENT30, THUMBNAIL2, FILEIOTEST};
 
 typedef struct params {
     int num_features; // actually what size to start on but thats what we call it
@@ -356,6 +356,8 @@ class Stack {
 
     Stack(int base_section, int n_sections, std::string input_filepath,
                std::string output_dirpath);
+
+    void test_io();
 
     void init();
     void align_2d();

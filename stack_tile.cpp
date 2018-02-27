@@ -612,7 +612,7 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       //cv::Mat src = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
       //cv::Mat dst;
       ////cv::equalizeHist( src, dst );
-
+      
       //int scale = 1;
       //cv::Laplacian(src, dst, CV_8U, 3, scale, 0, cv::BORDER_DEFAULT);
       //return src;
@@ -632,14 +632,34 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       break;
     }
 
+    case FILEIOTEST: {
+      //std::string new_path = this->filepath + "_.jpg";
+      //cv::Mat full_image = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+      cv::Mat full_image = cv::imread(this->filepath, CV_LOAD_IMAGE_GRAYSCALE);
+      return full_image;
+      //return cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+      break;
+    }
+
     case FULL: {
       full_image_lock->lock();
       if (!has_full_image) {
-        full_image = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
-        has_full_image = true;
+        //std::string path = this->filepath.replace(0,5,"/efstest/data/");
+        //printf("%s\n", path.c_str());
+        std::string new_path = this->filepath + "_.jpg";
+        //printf("%s\n", new_path.c_str());
+        full_image = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+        //printf("image rows %d and cols %d\n", full_image.rows, full_image.cols);
+        //full_image = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+        //printf("%s\n", new_path.c_str());
+        //cv::imwrite(new_path,full_image);
+        //full_image = cv::imread(path, CV_LOAD_IMAGE_UNCHANGED);
+        has_full_image = true; //uncomment for cashing
       }
       cv::Mat ret = full_image.clone();
       full_image_lock->unlock();
+      //full_image.release(); // remove for caching
+      //printf("image rows %d and cols %d\n", ret.rows, ret.cols);
       return ret;
       //return cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
       break;

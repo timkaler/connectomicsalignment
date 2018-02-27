@@ -27,11 +27,24 @@ void tfk::Stack::render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::str
 
 }
 
+
+void tfk::Stack::test_io() {
+  for (int i = 0; i < this->sections.size(); i++) {
+    Section* section = this->sections[i];
+    cilk_for (int j = 0; j < section->tiles.size(); j++) {
+      Tile* tile = section->tiles[j];
+      cv::Mat mat = tile->get_tile_data(Resolution::FILEIOTEST);
+      mat.release();
+      printf("tile %d of section %d\n", j, i);
+    }
+  }
+}
+
 void tfk::Stack::render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix,
     Resolution res) {
   cilk_for (int i = 0; i < this->sections.size(); i++) {
     Section* section = this->sections[i];
-    section->render(bbox, filename_prefix+std::to_string(i)+".tif", res);
+    section->render(bbox, filename_prefix+std::to_string(i+this->base_section)+".tif", res);
   }
 }
 
@@ -93,8 +106,8 @@ void tfk::Stack::get_elastic_matches() {
 
   std::vector<std::pair<double, double> > valid_boxes;
 
-  for (double box_iter_x = min_x; box_iter_x < max_x + 12000; box_iter_x += 12000) {
-    for (double box_iter_y = min_y; box_iter_y < max_y + 12000; box_iter_y += 12000) {
+  for (double box_iter_x = min_x; box_iter_x < max_x + 24000; box_iter_x += 24000) {
+    for (double box_iter_y = min_y; box_iter_y < max_y + 24000; box_iter_y += 24000) {
       valid_boxes.push_back(std::make_pair(box_iter_x, box_iter_y));
     }
   }
@@ -574,9 +587,13 @@ void tfk::Stack::unpack_graph() {
 
 void tfk::Stack::align_2d() {
   int count = 0;
+
   for (int i = 0; i < this->sections.size(); i++) {
-    this->sections[i]->compute_keypoints_and_matches();
+    cilk_spawn this->sections[i]->compute_keypoints_and_matches();
+
+    if ((i+1)%5 == 0) cilk_sync;
   }
+  cilk_sync;
 
 
   cilk_for (int section_index = 0; section_index < this->sections.size(); section_index++) {
