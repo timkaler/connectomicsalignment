@@ -648,3 +648,152 @@ void tfk::Stack::align_2d() {
 
 }
 
+// returns a vector
+// the first item is how many were within the threshold
+// the second item is the time it took
+// the third item is the total number of matches
+void tfk::Stack::parameter_optimization(int trials, double threshold, std::vector<params> ps,
+        std::vector<std::tuple<int, double, int>>&results) {
+
+  //std::vector<std::tuple<int, double, int>> results;
+  results.reserve(ps.size());
+  //FILE * pFile;
+  //pFile = fopen("param_results.csv", "w");
+  //fprintf(pFile, "num_features,num_octaves,sigma,contrast_threshold,edge_threshold,res,number_correct,threshold,time,memory\n");
+
+  std::vector<Tile*[2]> tile_pairs(trials);
+
+
+  // choose all the random pairs of overlapping tiles
+  cilk_for (int i = 0; i < trials; i++) {
+    // pick a random section
+    Section* sec = this->sections[rand()%this->n_sections];
+    // pick a random tile in that section
+    Tile* tile_a = sec->tiles[rand()%sec->n_tiles];
+    std::vector<int> neighbor_ids = sec->get_all_close_tiles(tile_a->tile_id);
+    //pick a random neighbor of that tile
+    while (neighbor_ids.size() == 0) {
+      tile_a = sec->tiles[rand()%sec->n_tiles];
+      neighbor_ids = sec->get_all_close_tiles(tile_a->tile_id);
+    }
+    Tile* tile_b = sec->tiles[neighbor_ids[rand()%neighbor_ids.size()]];
+    tile_pairs[i][0] = tile_a;
+    tile_pairs[i][1] = tile_b;
+  }
+  //printf("found pairs for testing\n");
+
+
+
+  std::vector<cv::Point2f> correct_movement(trials);
+
+  params best_params;
+  best_params.num_features = 1;
+  best_params.num_octaves = 6;
+  best_params.contrast_threshold = .015;//CONTRAST_THRESH;
+  best_params.edge_threshold = 10;//EDGE_THRESH_2D;
+  best_params.sigma = 1.6;//1.6;
+  best_params.res = FULL;
+
+
+  // find the best movement for each pair using the best params
+  cilk_for (int i = 0; i < trials; i++) {
+    Tile* tile_a = new Tile(tile_pairs[i][0]->tile_data);
+    Tile* tile_b = new Tile(tile_pairs[i][1]->tile_data);
+    tile_a->compute_sift_keypoints_with_params(best_params);
+    tile_b->compute_sift_keypoints_with_params(best_params);
+    std::vector< cv::Point2f > filtered_match_points_a(0);
+    std::vector< cv::Point2f > filtered_match_points_b(0);
+
+    cv::Point2f relative_offset = this->sections[tile_a->section_id]->compute_tile_matches_pair(tile_a, tile_b,
+      filtered_match_points_a,
+      filtered_match_points_b);
+    tile_a->offset_x += relative_offset.x + (tile_b->x_start - tile_a->x_start);
+    tile_a->offset_y += relative_offset.y + (tile_b->y_start - tile_a->y_start);
+    correct_movement[i] = relative_offset;
+
+    if (filtered_match_points_a.size() == 0) {
+      printf("no matches for set params\n");
+    } else {
+      //printf("accuracy score of %f\n", tile_a->error_tile_pair(tile_b));
+    }
+
+
+    //printf("%f, %f, ", correct_movement[i][0], correct_movement[i][1]);
+    tile_a->release_2d_keypoints();
+    tile_b->release_2d_keypoints();
+    delete tile_a;
+    delete tile_b;
+  }
+  //printf("\n");
+  //printf("found correct movements\n");
+
+
+  int ps_size = ps.size();
+  std::vector<std::vector<std::tuple<int, double, int> > > worker_results(ps_size);
+  for (int k = 0; k < ps_size; k++) {
+    double duration;
+    std::clock_t  start = std::clock();
+    int valid_moves = 0;
+    int matches_count = 0;
+
+    std::vector<int> worker_valid_moves(trials);
+    std::vector<int> worker_matches_count(trials);
+
+
+    cilk_for (int i = 0; i < trials; i++) {
+
+      Tile* tile_a = new Tile(tile_pairs[i][0]->tile_data);
+      Tile* tile_b = new Tile(tile_pairs[i][1]->tile_data);
+
+      tile_a->compute_sift_keypoints_with_params(ps[k]);
+      tile_b->compute_sift_keypoints_with_params(ps[k]);
+      std::vector< cv::Point2f > filtered_match_points_a(0);
+      std::vector< cv::Point2f > filtered_match_points_b(0);
+
+      cv::Point2f relative_offset = this->sections[tile_a->section_id]->compute_tile_matches_pair(tile_a, tile_b,
+        filtered_match_points_a,
+        filtered_match_points_b);
+
+      if (filtered_match_points_a.size() > 0) {
+        //printf("found matching points\n");
+        //tile_a->offset_x += relative_offset.x + (tile_b->x_start - tile_a->x_start);
+        //tile_a->offset_y += relative_offset.y + (tile_b->y_start - tile_a->y_start);
+        //float accuracy = tile_a->error_tile_pair(tile_b);
+      }
+
+      cv::Point2f error_vec = relative_offset - correct_movement[i];
+      if (std::abs(error_vec.x) <= threshold && std::abs(error_vec.y) <= threshold) {
+        worker_valid_moves[i]++;
+      }
+      worker_matches_count[i] += (tile_a->p_kps->size() + tile_b->p_kps->size());
+      tile_a->release_2d_keypoints();
+      tile_b->release_2d_keypoints();
+      delete tile_a;
+      delete tile_b;
+    }
+    //printf("\n");
+    for (int i = 0; i < worker_matches_count.size(); i++) {
+      matches_count += worker_matches_count[i];
+      valid_moves += worker_valid_moves[i];
+    }
+    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
+    worker_results[k].push_back(std::make_tuple(valid_moves, duration, matches_count));
+    fprintf(pFile, "%d,%d,%f,%f,%f,%d,%d,%f,%f,%d\n",
+          ps[k].num_features, ps[k].num_octaves, ps[k].sigma, ps[k].contrast_threshold  , ps[k].edge_threshold ,
+          ps[k].res, valid_moves , threshold, duration  , matches_count );
+        //printf("%d,%d,%f,%f,%f,%d,%d,%f,%f,%d\n",
+    //      ps[k].num_features, ps[k].num_octaves, ps[k].sigma, ps[k].contrast_threshold  , ps[k].edge_threshold ,
+    //      ps[k].res, valid_moves , threshold, duration  , matches_count );
+    //fflush(pFile);
+    printf("\r%d out of %zu", k, ps.size());
+    fflush(stdout);
+  }
+  //fclose(pFile);
+
+  for (int i = 0; i < worker_results.size(); i++) {
+    for (int j = 0; j < worker_results[i].size(); j++) {
+      results.push_back(worker_results[i][j]);
+    }
+  }
+
+}

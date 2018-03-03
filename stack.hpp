@@ -375,6 +375,8 @@ class Stack {
     void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix, Resolution res);
 
     void render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix);
+
+    void parameter_optimization(int trials, double threshold, std::vector<params> ps, std::vector<std::tuple<int, double, int>>& results);
 };
 
 } // end namespace tfk.

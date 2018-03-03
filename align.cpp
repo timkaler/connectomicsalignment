@@ -120,69 +120,53 @@ void param_optimize(align_data_t *p_align_data) {
     stack->max_y = p_align_data->max_y;
     stack->init();
     printf("Got past the init\n");
-    printf("stack has sections %zu\n", stack->sections.size()); 
+    printf("stack has sections %zu\n", stack->sections.size());
     std::vector<tfk::params> ps;
-    
 
-    for (int nf = 0; nf < 1; nf++) {
+
+    for (int nf = 0; nf < 3; nf++) {
         int num_features = 1 << nf;
-        for (int no = 6; no < 7; no++) {
+        for (int no = 5; no < 20; no++) {
             int num_octaves = no;
-            for (float sigma = 1.6; sigma < 1.7; sigma+=.2) {
-                //for (int r = 2; r < 3; r++) {
-                    // can only run at full size
-                    tfk::Resolution res = tfk::FULL;
-                    /*
-                    if (r==0) {
-                        res = tfk::THUMBNAIL;
-                    } else if (r==1) {
-                        res = tfk::THUMBNAIL2;
-                    } else if (r==2) {
-                        res = tfk::FULL;
-                    } else if (r==3) {
-                        res = tfk::PERCENT30;
+            for (float sigma = 1; sigma < 2; sigma+=.1) {
+                for (float ct = .001; ct < .025; ct+=.001) {
+                    for (float et = 4; et < 15; et+=3) {
+
+                          tfk::params p;
+                          p.num_features = num_features;//num_features;
+                          p.num_octaves = num_octaves;
+                          p.contrast_threshold = ct;//CONTRAST_THRESH;//10.0;
+                          p.edge_threshold = et;//EDGE_THRESH_2D;
+                          p.sigma = sigma;//sigma;
+                          p.res = tfk::FULL;
+                          ps.push_back(p);
+
+                          tfk::params p2;
+                          p2.num_features = num_features;//num_features;
+                          p2.num_octaves = num_octaves;
+                          p2.contrast_threshold = ct;//CONTRAST_THRESH;//10.0;
+                          p2.edge_threshold = et;//EDGE_THRESH_2D;
+                          p2.sigma = sigma;//sigma;
+                                                p2.res = tfk::PERCENT50;
+                          ps.push_back(p2);
                     }
-                    */
-                      tfk::params p;
-                      p.num_features = num_features;
-                      p.num_octaves = num_octaves;
-                      p.contrast_threshold = CONTRAST_THRESH;
-                      p.edge_threshold = EDGE_THRESH_2D;
-                      p.sigma = sigma;
-                      p.res = res;
-                      ps.push_back(p);
-                //}
+                }
+
             }
         }
     }
+    std::random_shuffle ( ps.begin(), ps.end() );
     printf("testing %zu different paramter combinations\n", ps.size());
-    std::vector<std::tuple<int, double, int>> current[stack->sections.size()];
+    std::vector<std::tuple<int, double, int>> current;
 
-    double threshold = 1.0;
-    int trials = 10;
-    for (int i = 0; i < stack->sections.size(); i++) {
-      current[i] = stack->sections[i]->parameter_optimization(trials, threshold, ps);
-      // to treat each section independently as a seperate trial
-      for (int j = 0; j < ps.size(); j++) {
-        printf("%d, %d, %f, %d, %d, %f, %f, %d\n",
-            ps[j].num_features, ps[j].num_octaves, ps[j].sigma, 
-            ps[j].res, std::get<0>(current[i][j]), threshold, std::get<1>(current[i][j]), std::get<2>(current[i][j]));
-      }
-    }
-    // to sum up across the different sections
-    /*
-    for (int j = 0; j < ps.size(); j++) {
-      for (int i = 1; i < stack->sections.size(); i++) {
-        std::get<0>(current[0][j]) += std::get<0>(current[i][j]);
-        std::get<1>(current[0][j]) += std::get<1>(current[i][j]);
-        std::get<2>(current[0][j]) += std::get<2>(current[i][j]);
-      }
-      printf("%d, %d, %f, %d, %d, %f, %f, %d\n",
-        ps[j].num_features, ps[j].num_octaves, ps[j].sigma, ps[j].res, 
-        std::get<0>(current[0][j]), threshold, std::get<1>(current[0][j]), std::get<2>(current[0][j]));
-    }
-    */
-
+    double threshold = 5;
+    int trials = 500;
+    stack->parameter_optimization(trials, threshold, ps, current);
+    /*for (int j = 0; j < ps.size(); j++) {
+      printf("%d, %d, %f, %f, %f, %d, %d, %f, %f, %d\n",
+          ps[j].num_features, ps[j].num_octaves, ps[j].sigma, ps[j].contrast_threshold  , ps[j].edge_threshold ,
+          ps[j].res, std::get<0>(current[j]), threshold, std::get<1>(current[j]), std::get<2>(current[j]));
+    }*/
     return;
 }
 
