@@ -20,6 +20,7 @@
 #include "./ransac.h"
 
 #include "cilk_tools/engine.h"
+#include "mrtask.hpp"
 //#include "./meshoptimize.h"
 #ifndef ALIGNSTACK
 #define ALIGNSTACK
@@ -51,6 +52,8 @@ typedef struct params {
 
 class Tile {
   public:
+   std::map<int, cv::Point2f> ideal_offsets;
+   std::map<int, float> neighbor_correlations;
    int section_id;
    int tile_id;
    int mfov_id;
@@ -77,7 +80,7 @@ class Tile {
    void compute_sift_keypoints2d_params(tfk::params params,
       std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile);
 
-
+   float compute_deviation(Tile* b_tile);
 
    std::vector<cv::KeyPoint>* p_kps_3d;
    cv::Mat* p_kps_desc_3d;
@@ -132,6 +135,7 @@ class Tile {
    bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
    bool overlaps_with(Tile* other);
    void local2DAlignUpdate();
+   void local2DAlignUpdateLimited(std::set<Tile*>* active_set);
    void insert_matches(Tile* neighbor, std::vector<cv::Point2f>& points_a, std::vector<cv::Point2f>& points_b);
    void make_symmetric(int phase, std::vector<Tile*>& tile_list);
    void write_wafer(FILE* wafer_file, int section_id, int base_section);
@@ -193,6 +197,8 @@ class Section {
     std::vector<tfkMatch> section_mesh_matches;
     cv::Mat coarse_transform;
 
+
+    void save_elastic_mesh(Section* neighbor);
 
 
     Section(int section_id);
@@ -367,6 +373,8 @@ class Stack {
     void elastic_align();
 
 
+    void compute_on_tile_neighborhood(Section* section, Tile* tile);
+
     void recompute_alignment();
 
     void get_elastic_matches();
@@ -376,6 +384,34 @@ class Stack {
 
     void render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix);
 };
+
+class MatchTilesTask : MRTask {
+  public:
+
+    std::vector<int> param_adjustments;
+    std::vector<int> param_train_deltas;
+
+    void set_random_train();
+    //void update_result(float last_correct, float next_correct);
+
+    Tile* tile;
+    std::vector<Tile*> neighbors;
+    std::map<Tile*, std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f> > > neighbor_to_matched_points;
+    std::map<Tile*, bool> neighbor_to_success;
+     void compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
+      std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
+      cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
+      std::vector< cv::Point2f > &filtered_match_points_a,
+      std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh);
+
+    MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors);
+
+    void compute(float probability_correct, std::vector<int>& param_adjustments, std::vector<int>& param_train_deltas);
+    void commit();
+    bool error_check(float false_negative_rate);
+};
+
+
 
 } // end namespace tfk.
 #endif // ALIGNSTACK

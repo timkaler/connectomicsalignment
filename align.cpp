@@ -27,6 +27,97 @@
 #include <cstdio>
 #include <ctime>
 
+namespace tfk {
+  void train_match_tiles_task(Stack* stack) {
+    int success = 0;
+    int trials = 0;
+    std::vector<int> param_adjustments(7);
+    std::vector<int> param_train_deltas(7);
+
+    for (int i = 0; i < param_adjustments.size(); i++) {
+      param_adjustments[i] = 0;
+      param_train_deltas[i] = 0;
+    }
+
+    cilk_for (int i = 0; i < 200; i++) {
+      // pick random section.
+      int section_id = rand()%stack->sections.size();
+      Section* section = stack->sections[section_id];
+      int tile_id = rand()%section->tiles.size();
+      Tile* tile = section->tiles[tile_id];
+      std::vector<Tile*> neighbors = section->get_all_close_tiles(tile);
+      MatchTilesTask* task = new MatchTilesTask(tile, neighbors);
+      task->compute(0.9, param_adjustments, param_train_deltas);
+      bool res = task->error_check(0.9);
+      if (res) {
+        __sync_fetch_and_add(&success, 1);
+      }
+      __sync_fetch_and_add(&trials, 1);
+      //trials++;
+      //printf("prelim %f\n", (1.0*success)/trials);
+    }
+    printf("Result is %f\n", (1.0*success)/trials);
+
+    float last_correct = (1.0*success)/trials;
+
+    for (int j = 0; j < 100; j++) {
+       success = 0;
+       trials = 0;
+         for (int k = 0; k < param_train_deltas.size(); k++) {
+           param_train_deltas[k] = 0;
+         }
+       for (int k = 0; k < param_train_deltas.size(); k++) {
+         int index = rand()%param_train_deltas.size();
+         int sign = rand()%2 ? -1 : 1;
+         param_train_deltas[index] += sign;
+       }
+
+       cilk_for (int i = 0; i < 200; i++) {
+        // pick random section.
+        int section_id = rand()%stack->sections.size();
+        Section* section = stack->sections[section_id];
+        int tile_id = rand()%section->tiles.size();
+        Tile* tile = section->tiles[tile_id];
+        std::vector<Tile*> neighbors = section->get_all_close_tiles(tile);
+        MatchTilesTask* task = new MatchTilesTask(tile, neighbors);
+        task->compute(0.9, param_adjustments, param_train_deltas);
+        bool res = task->error_check(0.9);
+        if (res) {
+          __sync_fetch_and_add(&success, 1);
+        }
+        __sync_fetch_and_add(&trials, 1);
+        //trials++;
+        //printf("prelim %f\n", (1.0*success)/trials);
+      }
+      printf("Result is %f\n", (1.0*success)/trials);
+      float next_correct = (1.0*success)/trials;
+        for (int i = 0; i < param_train_deltas.size(); i++) {
+            if (next_correct > last_correct) {
+              param_adjustments[i] += param_train_deltas[i];
+            } else {
+              //param_adjustments[i] -= param_train_deltas[i];
+            }
+          param_train_deltas[i] = 0;
+        }
+
+      if (next_correct > last_correct) {
+        last_correct = next_correct; 
+      printf("params:\n");
+      printf("scale_x %f\n", 0.1 + param_adjustments[0]*0.05);
+      printf("scale_y %f\n", 0.1 + param_adjustments[1]*0.05);
+      printf("num_features %f\n", 1.0 + param_adjustments[2]);
+      printf("num_octaves %f\n", 6.0 + param_adjustments[3]);
+      printf("contrast_thresh %f\n", 0.01 + param_adjustments[4]*0.001);
+      printf("edge_thresh %f\n", 20.0 + param_adjustments[5]);
+      printf("edge_thresh %f\n", 1.2 + param_adjustments[6]*0.05);
+
+      }
+    }
+
+  }
+}
+
+
 void align_execute(align_data_t *p_align_data) {
     TIMER_VAR(t_timer);
     TIMER_VAR(timer);
@@ -51,7 +142,9 @@ void align_execute(align_data_t *p_align_data) {
     stack->max_y = p_align_data->max_y;
     stack->init();
     printf("Got past the init\n");
-    printf("stack has sections %zu\n", stack->sections.size()); 
+    printf("stack has sections %zu\n", stack->sections.size());
+    //tfk::train_match_tiles_task(stack);
+    //return;
     //stack->test_io();
     //return;
     stack->align_2d();
