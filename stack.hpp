@@ -224,7 +224,7 @@ class Section {
     void get_3d_keypoints_for_box(std::pair<cv::Point2f, cv::Point2f> bbox,
         std::vector<cv::KeyPoint>& kps_in_box, cv::Mat& kps_desc_in_box, bool use_cached,
         tfk::params sift_parameters,
-        std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
+        std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex, bool apply_transform);
 
    void find_3d_matches_in_box(Section* neighbor,
        std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
@@ -248,6 +248,8 @@ void get_elastic_matches_one_next_bbox(Section* neighbor,
     cv::Mat& prev_desc,
     std::vector<cv::KeyPoint>& my_keypoints,
     cv::Mat& my_desc);
+
+void get_elastic_matches_relative(Section* neighbor);
 
 
 

@@ -341,18 +341,22 @@ void tfk::Stack::recompute_alignment() {
 void tfk::Stack::coarse_affine_align() {
   // get affine transform matrix for each section
   //   matrix A_i aligning section i to i-1.
+
+
+  this->sections[0]->coarse_affine_align(NULL);
+  //cilk_spawn this->sections[0]->coarse_affine_align(this->sections[0]);
   for (int i = 1; i < this->sections.size(); i++) {
     cilk_spawn this->sections[i]->coarse_affine_align(this->sections[i-1]);
   }
   cilk_sync;
 
-  // simply apply the coarse transform for now.
-  for (int i = 1; i < this->sections.size(); i++) {
-    this->sections[i]->affine_transforms.clear();
-    this->sections[i]->affine_transforms.push_back(this->sections[i]->coarse_transform);
-  }
+  //// simply apply the coarse transform for now.
+  //for (int i = 1; i < this->sections.size(); i++) {
+  //  this->sections[i]->affine_transforms.clear();
+  //  this->sections[i]->affine_transforms.push_back(this->sections[i]->coarse_transform);
+  //}
 
-  // apply the transforms.
+  ////// apply the transforms.
   for (int i = 0; i < this->sections.size(); i++) {
     this->sections[i]->apply_affine_transforms();
   }
@@ -378,63 +382,70 @@ void tfk::Stack::coarse_affine_align() {
 
 void tfk::Stack::get_elastic_matches() {
   std::pair<cv::Point2f, cv::Point2f> stack_bbox = this->sections[0]->get_bbox();
-  stack_bbox = this->sections[0]->affine_transform_bbox(stack_bbox);
-  for (int i = 1; i < this->sections.size(); i++) {
-    auto bbox = this->sections[i]->get_bbox();
-    bbox = this->sections[i]->affine_transform_bbox(bbox);
-    stack_bbox.first.x = std::min(stack_bbox.first.x, bbox.first.x);
-    stack_bbox.first.y = std::min(stack_bbox.first.y, bbox.first.y);
-    stack_bbox.second.x = std::max(stack_bbox.second.x, bbox.second.x);
-    stack_bbox.second.y = std::max(stack_bbox.second.y, bbox.second.y);
+  //stack_bbox = this->sections[0]->affine_transform_bbox(stack_bbox);
+  //stack_bbox = this->sections[0]->elastic_transform_bbox(stack_bbox);
+
+
+
+  //for (int i = 1; i < this->sections.size(); i++) {
+  //  auto bbox = this->sections[i]->get_bbox();
+  //  //bbox = this->sections[i]->affine_transform_bbox(bbox);
+  //  bbox = this->sections[i]->elastic_transform_bbox(bbox);
+  //  stack_bbox.first.x = std::min(stack_bbox.first.x, bbox.first.x);
+  //  stack_bbox.first.y = std::min(stack_bbox.first.y, bbox.first.y);
+  //  stack_bbox.second.x = std::max(stack_bbox.second.x, bbox.second.x);
+  //  stack_bbox.second.y = std::max(stack_bbox.second.y, bbox.second.y);
+  //}
+
+  //double min_x = stack_bbox.first.x;
+  //double max_x = stack_bbox.second.x;
+  //double min_y = stack_bbox.first.y;
+  //double max_y = stack_bbox.second.y;
+
+  //std::vector<std::pair<double, double> > valid_boxes;
+  //for (double box_iter_x = min_x; box_iter_x < max_x + 24000; box_iter_x += 24000) {
+  //  for (double box_iter_y = min_y; box_iter_y < max_y + 24000; box_iter_y += 24000) {
+  //    valid_boxes.push_back(std::make_pair(box_iter_x, box_iter_y));
+  //  }
+  //}
+
+  //// simply apply the coarse transform for now.
+  //for (int i = 1; i < this->sections.size(); i++) {
+  //  this->sections[i]->affine_transforms.clear();
+  //  //this->sections[i]->affine_transforms.push_back(this->sections[i]->coarse_transform);
+  //}
+
+  //// apply the transforms.
+  //for (int i = 0; i < this->sections.size(); i++) {
+  //  this->sections[i]->apply_affine_transforms();
+  //}
+
+
+  for (int section = 1; section < this->sections.size(); section++) {
+    cilk_spawn this->sections[section]->get_elastic_matches_relative(this->sections[section-1]);
   }
+  cilk_sync;
 
-  double min_x = stack_bbox.first.x;
-  double max_x = stack_bbox.second.x;
-  double min_y = stack_bbox.first.y;
-  double max_y = stack_bbox.second.y;
+  //// 0 1 2 3 4 5 6
+  ////   1   3   5
+  //// 1 computes matches for 1->0, 2->1
+  //// 3 computes matches for 3->2, 4->3
+  //// 5 computes matches for 5->4 6->5
+  //cilk_for (int i = 0; i < valid_boxes.size(); i++) {
+  //  auto bbox = valid_boxes[i];
+  //  std::vector<cv::KeyPoint> prev_keypoints(0);
+  //  cv::Mat prev_desc;
 
-  std::vector<std::pair<double, double> > valid_boxes;
-  for (double box_iter_x = min_x; box_iter_x < max_x + 24000; box_iter_x += 24000) {
-    for (double box_iter_y = min_y; box_iter_y < max_y + 24000; box_iter_y += 24000) {
-      valid_boxes.push_back(std::make_pair(box_iter_x, box_iter_y));
-    }
-  }
-
-  // simply apply the coarse transform for now.
-  for (int i = 1; i < this->sections.size(); i++) {
-    this->sections[i]->affine_transforms.clear();
-    //this->sections[i]->affine_transforms.push_back(this->sections[i]->coarse_transform);
-  }
-
-  // apply the transforms.
-  for (int i = 0; i < this->sections.size(); i++) {
-    this->sections[i]->apply_affine_transforms();
-  }
-
-
-
-
-
-  // 0 1 2 3 4 5 6
-  //   1   3   5
-  // 1 computes matches for 1->0, 2->1
-  // 3 computes matches for 3->2, 4->3
-  // 5 computes matches for 5->4 6->5
-  cilk_for (int i = 0; i < valid_boxes.size(); i++) {
-    auto bbox = valid_boxes[i];
-    std::vector<cv::KeyPoint> prev_keypoints(0);
-    cv::Mat prev_desc;
-
-    for (int section = 1; section < this->sections.size(); section++) {
-      //neighbors.push_back(this->sections[section-1]);
-      std::vector<cv::KeyPoint> my_keypoints(0);
-      cv::Mat my_desc;
-      this->sections[section]->get_elastic_matches_one_next_bbox(this->sections[section-1], bbox, prev_keypoints,
-          prev_desc, my_keypoints, my_desc);
-      prev_keypoints = my_keypoints;
-      prev_desc = my_desc; 
-    }
-  }
+  //  for (int section = 1; section < this->sections.size(); section++) {
+  //    //neighbors.push_back(this->sections[section-1]);
+  //    std::vector<cv::KeyPoint> my_keypoints(0);
+  //    cv::Mat my_desc;
+  //    this->sections[section]->get_elastic_matches_one_next_bbox(this->sections[section-1], bbox, prev_keypoints,
+  //        prev_desc, my_keypoints, my_desc);
+  //    prev_keypoints = my_keypoints;
+  //    prev_desc = my_desc; 
+  //  }
+  //}
 
   //for (int section = 1; section < this->sections.size(); section++) {
 
@@ -458,6 +469,7 @@ void tfk::Stack::get_elastic_matches() {
 //START
 // only do triangles with vertices in bad areas
 void tfk::Stack::elastic_align() {
+
   cilk_for (int i = 0; i < this->sections.size(); i++) {
     this->sections[i]->construct_triangles();
     this->sections[i]->affine_transform_mesh();
@@ -511,7 +523,7 @@ void tfk::Stack::elastic_gradient_descent() {
 
 
       // section i is aligned to section i-1;
-      for (int i = 2; i < this->sections.size(); i++) {
+      for (int i = 1; i < this->sections.size(); i++) {
         Section* sec = this->sections[i];
         //for (int j = i; --j > 0;) {
         int j = i-1;
@@ -920,12 +932,12 @@ void tfk::Stack::compute_on_tile_neighborhood(tfk::Section* section, tfk::Tile* 
 void tfk::Stack::align_2d() {
   int count = 0;
 
-  cilk_for (int i = 0; i < this->sections.size(); i++) {
-     this->sections[i]->compute_keypoints_and_matches();
+  for (int i = 0; i < this->sections.size(); i++) {
+     cilk_spawn this->sections[i]->compute_keypoints_and_matches();
 
     //if ((i+1)%2 == 0) cilk_sync;
   }
-
+  cilk_sync;
 
   cilk_for (int section_index = 0; section_index < this->sections.size(); section_index++) {
 

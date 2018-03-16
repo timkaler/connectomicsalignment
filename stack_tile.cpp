@@ -625,6 +625,9 @@ void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
 
   float scale_x = 1.0/8;
   float scale_y = 1.0/8;
+
+  //float scale_x = 1.0;
+  //float scale_y = 1.0;
   cv::resize(tmp_image, (*this->p_image), cv::Size(), scale_x,scale_y,CV_INTER_AREA);
 
 
@@ -645,6 +648,7 @@ void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
   p_sift = new cv::xfeatures2d::SIFT_Impl(
             1,  // num_features --- unsupported.
             6,  // number of octaves
+            //24,  // number of octaves
             CONTRAST_THRESH_3D,  // contrast threshold.
             EDGE_THRESH_3D,  // edge threshold.
             1.6*2);  // sigma.
