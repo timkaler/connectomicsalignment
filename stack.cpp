@@ -932,13 +932,20 @@ void tfk::Stack::compute_on_tile_neighborhood(tfk::Section* section, tfk::Tile* 
 void tfk::Stack::align_2d() {
   int count = 0;
 
-  for (int i = 0; i < this->sections.size(); i++) {
-     cilk_spawn this->sections[i]->compute_keypoints_and_matches();
+  int j = 0;
+  int i = 0;
+  while (j < this->sections.size()) {
+    j += 4;
+    if (j >= this->sections.size()) j = this->sections.size();
 
-    //if ((i+1)%2 == 0) cilk_sync;
+    for (; i < j; i++) {
+       //cilk_spawn this->sections[i]->compute_keypoints_and_matches();
+       cilk_spawn this->sections[i]->align_2d();
+      //if ((i+1)%4 == 0) cilk_sync;
+    }
+    cilk_sync;
   }
-  cilk_sync;
-
+  return;
   cilk_for (int section_index = 0; section_index < this->sections.size(); section_index++) {
 
     int ncolors = this->sections[section_index]->graph->compute_trivial_coloring();

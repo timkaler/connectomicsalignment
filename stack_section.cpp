@@ -15,6 +15,99 @@ cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
 }
 
 
+void tfk::Section::align_2d() {
+
+
+    if (this->alignment2d_exists()) {
+  std::string filename =
+      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
+
+      this->load_2d_alignment();
+      this->read_3d_keypoints(filename);
+      return;
+    }
+
+
+    this->compute_keypoints_and_matches();
+  
+    int ncolors = this->graph->compute_trivial_coloring();
+    printf("ncolors is %d\n", ncolors);
+    Scheduler* scheduler;
+    engine* e;
+    scheduler =
+        new Scheduler(this->graph->vertexColors, ncolors+1, this->graph->num_vertices());
+    scheduler->graph_void = (void*) this->graph;
+    scheduler->roundNum = 0;
+    e = new engine(this->graph, scheduler);
+
+    for (int trial = 0; trial < 5; trial++) {
+      //global_learning_rate = 0.49;
+      std::vector<int> vertex_ids;
+      for (int i = 0; i < this->graph->num_vertices(); i++) {
+        vertex_ids.push_back(i);
+      }
+      //std::srand(trial);
+      //std::random_shuffle(vertex_ids.begin(), vertex_ids.end());
+      // pick one section to be "converged"
+      for (int i = 0; i < this->graph->num_vertices(); i++) {
+        this->graph->getVertexData(i)->iteration_count = 0;
+      }
+      std::set<int> section_list;
+      for (int _i = 0; _i < this->graph->num_vertices(); _i++) {
+        int i = _i;//vertex_ids[_i];
+        int z = this->graph->getVertexData(i)->z;
+        this->graph->getVertexData(i)->iteration_count = 0;
+        if (section_list.find(z) == section_list.end()) {
+          if (this->graph->edgeData[i].size() > 4) {
+            section_list.insert(z);
+          }
+        }
+      }
+
+      scheduler->isStatic = false;
+      for (int i = 0; i < this->graph->num_vertices(); i++) {
+        scheduler->add_task_static(i, updateTile2DAlign); //updateVertex2DAlignFULLFast);
+      }
+      scheduler->isStatic = true;
+
+      printf("starting run\n");
+      e->run();
+      printf("ending run\n");
+      //this->coarse_affine_align();
+      //this->elastic_align();
+      int count = 0;
+      for (int i = 0; i < this->tiles.size(); i++) {
+        Tile* t = this->tiles[i];
+        if (t->bad_2d_alignment) printf("Tile has bad 2d alignment\n");
+        if (t->bad_2d_alignment) continue;
+        for (int k = 0; k < t->edges.size(); k++) {
+          Tile* neighbor = this->tiles[t->edges[k].neighbor_id];
+          if (neighbor->bad_2d_alignment) continue;
+          if (t->ideal_offsets.find(neighbor->tile_id) == t->ideal_offsets.end()) continue;
+          float val = t->compute_deviation(neighbor);
+          if (val > 10.0) {
+            printf("bad tile with deviation %f corr %f\n", val, t->neighbor_correlations[neighbor->tile_id]);
+            //compute_on_tile_neighborhood(this->sections[section_index],t);
+            //float val = t->compute_deviation(neighbor);
+            //printf("after bad tile with deviation %f corr %f\n", val, t->neighbor_correlations[neighbor->tile_id]);
+            //return;
+            auto bbox1 = t->get_bbox();
+            t->bad_2d_alignment = true;
+            neighbor->bad_2d_alignment = true; 
+            //this->render(t->get_bbox(), "errortest"+std::to_string(count++), FULL);
+          }
+          
+        }
+      }
+      break;
+    }
+
+
+    // save 2d alignment
+    this->save_2d_alignment();
+}
+
+
 cv::Point2f tfk::Section::affine_transform_plusA(cv::Point2f pt, cv::Mat A) {
   float pre_new_x = pt.x*this->a00 + pt.y * this->a01 + this->offset_x;
   float pre_new_y = pt.x*this->a10 + pt.y * this->a11 + this->offset_y;
@@ -825,6 +918,7 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
 
 bool tfk::Section::section_data_exists() {
   return false;
+
   std::string filename =
       std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
 
@@ -3038,8 +3132,8 @@ void tfk::Section::compute_tile_matches2(Tile* a_tile) {
     cv::Mat a_tile_desc;
     std::mutex lock;
     tfk::params new_params;
-    new_params.scale_x = 1.0;
-    new_params.scale_y = 1.0;
+    new_params.scale_x = 0.5;
+    new_params.scale_y = 0.5;
     new_params.num_features = 1;
     new_params.num_octaves = 6;
     new_params.contrast_threshold = 0.01;
@@ -3268,8 +3362,22 @@ void tfk::Section::compute_tile_matches(Tile* a_tile) {
 
 
 
+bool tfk::Section::alignment2d_exists() {
+  std::string filename =
+      std::string("2d_alignment_"+std::to_string(this->real_section_id));
+
+  cv::FileStorage fs(filename, cv::FileStorage::READ);
+  if (!fs.isOpened()) {
+    return false;
+  } else {
+    return true;
+  }
+
+}
+
 void tfk::Section::read_3d_keypoints(std::string filename) {
-  cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"), cv::FileStorage::READ);
+  cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"),
+                     cv::FileStorage::READ);
   int count = 0;
   for (int i = 0; i < this->tiles.size(); i++) {
     Tile* tile = this->tiles[i];
@@ -3280,7 +3388,39 @@ void tfk::Section::read_3d_keypoints(std::string filename) {
     fs["descriptors_"+std::to_string(i)] >> *(tile->p_kps_desc_3d);
   }
   fs.release();
-  //printf("Read %d 3d matches for section %d\n", count, this->real_section_id);
+}
+
+void tfk::Section::load_2d_alignment() {
+  cv::FileStorage fs(std::string("2d_alignment_"+std::to_string(this->real_section_id)),
+                     cv::FileStorage::READ);
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* tile = this->tiles[i];
+    fs["bad_2d_alignment_"+std::to_string(i)] >> tile->bad_2d_alignment;
+    fs["x_start_"+std::to_string(i)] >> tile->x_start;
+    fs["x_finish_"+std::to_string(i)] >> tile->x_finish;
+    fs["y_start_"+std::to_string(i)] >> tile->y_start;
+    fs["y_finish_"+std::to_string(i)] >> tile->y_finish;
+    fs["offset_x_"+std::to_string(i)] >> tile->offset_x;
+    fs["offset_y_"+std::to_string(i)] >> tile->offset_y;
+  }
+  fs.release();
+}
+
+
+void tfk::Section::save_2d_alignment() {
+  cv::FileStorage fs(std::string("2d_alignment_"+std::to_string(this->real_section_id)),
+                     cv::FileStorage::WRITE);
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* tile = this->tiles[i];
+    cv::write(fs, "bad_2d_alignment_"+std::to_string(i), tile->bad_2d_alignment);
+    cv::write(fs, "x_start_"+std::to_string(i), tile->x_start);
+    cv::write(fs, "x_finish_"+std::to_string(i), tile->x_finish);
+    cv::write(fs, "y_start_"+std::to_string(i), tile->y_start);
+    cv::write(fs, "y_finish_"+std::to_string(i), tile->y_finish);
+    cv::write(fs, "offset_x_"+std::to_string(i), tile->offset_x);
+    cv::write(fs, "offset_y_"+std::to_string(i), tile->offset_y);
+  }
+  fs.release();
 }
 
 void tfk::Section::save_3d_keypoints(std::string filename) {

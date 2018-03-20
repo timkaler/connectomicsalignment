@@ -176,6 +176,10 @@ class Section {
     double offset_x;
     double offset_y;
 
+    bool alignment2d_exists();
+    void load_2d_alignment();
+    void save_2d_alignment();
+
     std::vector<cv::Point2f>* mesh_orig;
     std::vector<cv::Point2f>* mesh_orig_save;
     std::vector<cv::Point2f>* mesh_old;
@@ -217,7 +221,7 @@ class Section {
 
     void elastic_gradient_descent_section(Section* _neighbor);
 
-
+    void align_2d();
 
     void recompute_keypoints();
 

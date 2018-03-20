@@ -761,7 +761,7 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
 
     case FULL: {
       full_image_lock->lock();
-      if (true || !has_full_image) {
+      if (/*true || */!has_full_image) {
       //  std::string new_path = this->filepath.replace(0,5,"/ebs/");
       std::string new_path;
       //if (this->tile_id % 3 == 0) {
@@ -782,11 +782,11 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
         //printf("%s\n", new_path.c_str());
         //cv::imwrite(new_path,full_image);
         //full_image = cv::imread(path, CV_LOAD_IMAGE_UNCHANGED);
-        //has_full_image = true; //uncomment for cashing
+        has_full_image = true; //uncomment for cashing
       }
       cv::Mat ret = full_image.clone();
       full_image_lock->unlock();
-      full_image.release(); // remove for caching
+      //full_image.release(); // remove for caching
       //printf("image rows %d and cols %d\n", ret.rows, ret.cols);
       return ret;
       //return cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
