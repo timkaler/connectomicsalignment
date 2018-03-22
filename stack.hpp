@@ -370,32 +370,29 @@ class Stack {
 
     Graph* merged_graph;
 
+
+    // Init functions
     Stack(int base_section, int n_sections, std::string input_filepath,
                std::string output_dirpath);
-
-    void test_io();
-
     void init();
-    void align_2d();
-    void pack_graph();
-    void unpack_graph();
-    void coarse_affine_align();
-    void elastic_align();
 
+   
 
+    // Test functions
+    void test_io();
     void compute_on_tile_neighborhood(Section* section, Tile* tile);
 
-    void recompute_alignment();
-
-    void get_elastic_matches();
-    void elastic_gradient_descent();
-
+    // Rendering functions
     void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix, Resolution res);
-
-    void align_3d();
-
     void render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix);
+
+    // Alignment algorithms
+    void align_2d();
+    void align_3d();
 };
+
+
+
 
 class MatchTilesTask : MRTask {
   public:

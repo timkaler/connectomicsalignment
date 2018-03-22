@@ -3,11 +3,16 @@
 #include <fstream>
 #include "stack_helpers.cpp"
 
+
+// Init functions
 tfk::Section::Section(int section_id) {
   this->section_id = section_id;
   this->num_tiles_replaced = 0;
 }
 
+
+
+// BEGIN transformation functions
 cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
   float new_x = pt.x*this->a00 + pt.y * this->a01 + this->offset_x;
   float new_y = pt.x*this->a10 + pt.y * this->a11 + this->offset_y;
@@ -15,9 +20,45 @@ cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
 }
 
 
+
+cv::Point2f tfk::Section::affine_transform_plusA(cv::Point2f pt, cv::Mat A) {
+  float pre_new_x = pt.x*this->a00 + pt.y * this->a01 + this->offset_x;
+  float pre_new_y = pt.x*this->a10 + pt.y * this->a11 + this->offset_y;
+
+  double ta00 = A.at<double>(0,0);
+  double ta01 = A.at<double>(0,1);
+  double toffset_x = A.at<double>(0,2);
+  double ta10 = A.at<double>(1,0);
+  double ta11 = A.at<double>(1,1);
+  double toffset_y = A.at<double>(1,2);
+
+  float new_x = pre_new_x*ta00 + pre_new_y * ta01 + toffset_x;
+  float new_y = pre_new_x*ta10 + pre_new_y * ta11 + toffset_y;
+
+  return cv::Point2f(new_x, new_y);
+}
+
+// assumes point p is post section-global affine.
+cv::Point2f tfk::Section::elastic_transform(cv::Point2f p) {
+  std::tuple<bool, float, float, float> info = this->get_triangle_for_point(p);
+  if (!std::get<0>(info)) return p;
+
+  int wid = __cilkrts_get_worker_number();
+  renderTriangle tri = this->getRenderTriangle((*this->triangles[wid])[0]);
+  float u = std::get<1>(info);
+  float v = std::get<2>(info);
+  float w = std::get<3>(info);
+  float new_x = u*tri.q[0].x + v*tri.q[1].x + w*tri.q[2].x;
+  float new_y = u*tri.q[0].y + v*tri.q[1].y + w*tri.q[2].y;
+  return cv::Point2f(new_x, new_y);
+}
+
+
+// END transformation functions
+
+
+// BEGIN alignment functions
 void tfk::Section::align_2d() {
-
-
     if (this->alignment2d_exists()) {
   std::string filename =
       std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
@@ -26,7 +67,6 @@ void tfk::Section::align_2d() {
       this->read_3d_keypoints(filename);
       return;
     }
-
 
     this->compute_keypoints_and_matches();
   
@@ -106,61 +146,6 @@ void tfk::Section::align_2d() {
     // save 2d alignment
     this->save_2d_alignment();
 }
-
-
-cv::Point2f tfk::Section::affine_transform_plusA(cv::Point2f pt, cv::Mat A) {
-  float pre_new_x = pt.x*this->a00 + pt.y * this->a01 + this->offset_x;
-  float pre_new_y = pt.x*this->a10 + pt.y * this->a11 + this->offset_y;
-
-
-
-  double ta00 = A.at<double>(0,0);
-  double ta01 = A.at<double>(0,1);
-  double toffset_x = A.at<double>(0,2);
-  double ta10 = A.at<double>(1,0);
-  double ta11 = A.at<double>(1,1);
-  double toffset_y = A.at<double>(1,2);
-
-  float new_x = pre_new_x*ta00 + pre_new_y * ta01 + toffset_x;
-  float new_y = pre_new_x*ta10 + pre_new_y * ta11 + toffset_y;
-
-  return cv::Point2f(new_x, new_y);
-}
-
-//void render_section(double min_x, double min_y, double max_x, double max_y) {
-//}
-
-// need to implement tile intersects with bounding box.
-// need to implement render_replacement_tile
-
-bool tfk::Section::transformed_tile_overlaps_with(Tile* tile,
-    std::pair<cv::Point2f, cv::Point2f> bbox) {
-  auto tile_bbox = tile->get_bbox();
-  tile_bbox = this->affine_transform_bbox(tile_bbox);
-
-  //if (this->elastic_transform_ready) {
-    tile_bbox = this->elastic_transform_bbox(tile_bbox);
-  //}
-
-  int x1_start = tile_bbox.first.x;
-  int x1_finish = tile_bbox.second.x;
-  int y1_start = tile_bbox.first.y;
-  int y1_finish = tile_bbox.second.y;
-
-  int x2_start = bbox.first.x;
-  int x2_finish = bbox.second.x;
-  int y2_start = bbox.first.y;
-  int y2_finish = bbox.second.y;
-
-  bool res = false;
-  if ((x1_start < x2_finish) && (x1_finish > x2_start) &&
-      (y1_start < y2_finish) && (y1_finish > y2_start)) {
-      res = true;
-  }
-  return res;
-
-}
-
 
 void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
   double cross_slice_weight = 1.0;
@@ -402,6 +387,54 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
 
 }
 
+// END alignment functions
+
+
+// BEGIN utility functions
+
+bool tfk::Section::section_data_exists() {
+  return false;
+
+  std::string filename =
+      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
+
+
+  cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"), cv::FileStorage::READ);
+  cv::FileStorage fs2(filename+std::string("_2d_matches.yml.gz"), cv::FileStorage::READ);
+  if (!fs.isOpened() || !fs2.isOpened()) {
+    return false;
+  } else {
+    return true;
+  }
+}
+
+bool tfk::Section::transformed_tile_overlaps_with(Tile* tile,
+    std::pair<cv::Point2f, cv::Point2f> bbox) {
+  auto tile_bbox = tile->get_bbox();
+  tile_bbox = this->affine_transform_bbox(tile_bbox);
+
+  //if (this->elastic_transform_ready) {
+    tile_bbox = this->elastic_transform_bbox(tile_bbox);
+  //}
+
+  int x1_start = tile_bbox.first.x;
+  int x1_finish = tile_bbox.second.x;
+  int y1_start = tile_bbox.first.y;
+  int y1_finish = tile_bbox.second.y;
+
+  int x2_start = bbox.first.x;
+  int x2_finish = bbox.second.x;
+  int y2_start = bbox.first.y;
+  int y2_finish = bbox.second.y;
+
+  bool res = false;
+  if ((x1_start < x2_finish) && (x1_finish > x2_start) &&
+      (y1_start < y2_finish) && (y1_finish > y2_start)) {
+      res = true;
+  }
+  return res;
+
+}
 
 void tfk::Section::save_elastic_mesh(Section* neighbor) {
   std::string path =
@@ -436,6 +469,12 @@ void tfk::Section::save_elastic_mesh(Section* neighbor) {
   fs.release();
 }
 
+// END utility functions
+
+
+
+
+// BEGIN rendering functions
 
 void tfk::Section::replace_bad_region(std::pair<cv::Point2f, cv::Point2f> bad_bbox,
                                      Section* other_neighbor) {
@@ -920,22 +959,6 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
   return result;
 }
 
-bool tfk::Section::section_data_exists() {
-  return false;
-
-  std::string filename =
-      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
-
-
-  cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"), cv::FileStorage::READ);
-  cv::FileStorage fs2(filename+std::string("_2d_matches.yml.gz"), cv::FileStorage::READ);
-  if (!fs.isOpened() || !fs2.isOpened()) {
-    return false;
-  } else {
-    return true;
-  }
-}
-
 cv::Point2f tfk::Section::get_render_scale(Resolution resolution) {
   if (resolution == THUMBNAIL || resolution == THUMBNAIL2) {
     Tile* first_tile = this->tiles[0];
@@ -966,165 +989,6 @@ cv::Point2f tfk::Section::get_render_scale(Resolution resolution) {
 
   return cv::Point2f(1.0,1.0);
 }
-
-std::pair<cv::Point2f, cv::Point2f> tfk::Section::scale_bbox(
-    std::pair<cv::Point2f, cv::Point2f> bbox, cv::Point2f scale) {
-  int lower_x = (int) (bbox.first.x/scale.x + 0.5);
-  int lower_y = (int) (bbox.first.y/scale.y + 0.5);
-  int upper_x = (int) (bbox.second.x/scale.x + 0.5);
-  int upper_y = (int) (bbox.second.y/scale.y + 0.5);
-  return std::make_pair(cv::Point2f(1.0*lower_x, 1.0*lower_y),
-                        cv::Point2f(1.0*upper_x, 1.0*upper_y));
-}
-
-
-bool tfk::Section::tile_in_render_box_affine(cv::Mat A, Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox) {
-
-  //return tile->overlaps_with(bbox);
-
-  std::pair<cv::Point2f, cv::Point2f> tile_bbox = tile->get_bbox();
-
-  cv::Point2f corners[4];
-  corners[0] = cv::Point2f(tile_bbox.first.x, tile_bbox.first.y);
-  corners[1] = cv::Point2f(tile_bbox.second.x, tile_bbox.first.y);
-  corners[2] = cv::Point2f(tile_bbox.first.x, tile_bbox.second.y);
-  corners[3] = cv::Point2f(tile_bbox.second.x, tile_bbox.second.y);
-
-  for (int i = 0; i < 4; i++) {
-    corners[i] = this->affine_transform_plusA(corners[i], A);
-  }
-
-  float tile_min_x = corners[0].x;
-  float tile_max_x = corners[0].x;
-  float tile_min_y = corners[0].y;
-  float tile_max_y = corners[0].y;
-  for (int i = 1; i < 4; i++) {
-    if (corners[i].x < tile_min_x) tile_min_x = corners[i].x;
-    if (corners[i].y < tile_min_y) tile_min_y = corners[i].y;
-
-    if (corners[i].x > tile_max_x) tile_max_x = corners[i].x;
-    if (corners[i].y > tile_max_y) tile_max_y = corners[i].y;
-  }
-
-  if (tile_max_x < bbox.first.x) return false;
-  if (tile_max_y < bbox.first.y) return false;
-  if (tile_min_x > bbox.second.x) return false;
-  if (tile_min_y > bbox.second.y) return false;
-
-  return true;
-}
-
-
-
-//MAKE AFFINE VERSION!!
-bool tfk::Section::tile_in_render_box(Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox) {
-
-  //return tile->overlaps_with(bbox);
-
-  std::pair<cv::Point2f, cv::Point2f> tile_bbox = tile->get_bbox();
-
-  cv::Point2f corners[4];
-  corners[0] = cv::Point2f(tile_bbox.first.x, tile_bbox.first.y);
-  corners[1] = cv::Point2f(tile_bbox.second.x, tile_bbox.first.y);
-  corners[2] = cv::Point2f(tile_bbox.first.x, tile_bbox.second.y);
-  corners[3] = cv::Point2f(tile_bbox.second.x, tile_bbox.second.y);
-
-  for (int i = 0; i < 4; i++) {
-    corners[i] = this->affine_transform(corners[i]);
-    corners[i] = this->elastic_transform(corners[i]);
-  }
-
-  float tile_min_x = corners[0].x;
-  float tile_max_x = corners[0].x;
-  float tile_min_y = corners[0].y;
-  float tile_max_y = corners[0].y;
-  for (int i = 1; i < 4; i++) {
-    if (corners[i].x < tile_min_x) tile_min_x = corners[i].x;
-    if (corners[i].y < tile_min_y) tile_min_y = corners[i].y;
-
-    if (corners[i].x > tile_max_x) tile_max_x = corners[i].x;
-    if (corners[i].y > tile_max_y) tile_max_y = corners[i].y;
-  }
-
-  if (tile_max_x < bbox.first.x) return false;
-  if (tile_max_y < bbox.first.y) return false;
-  if (tile_min_x > bbox.second.x) return false;
-  if (tile_min_y > bbox.second.y) return false;
-
-  return true;
-}
-
-
-//cv::Mat* tfk::Section::read_tile(std::string filepath, Resolution res) {
-//  cv::Mat* tile_p_image = new cv::Mat();
-//  if(res == THUMBNAIL) {
-//    std::string path = std::string(filepath);
-//    path = path.replace(path.find(".bmp"), 4,".jpg");
-//    path = path.insert(path.find_last_of("/") + 1, "thumbnail_");
-//    (*tile_p_image) = cv::imread(path, CV_LOAD_IMAGE_GRAYSCALE);
-//  }
-//  if(res == FULL) {
-//    (*tile_p_image) = cv::imread(filepath, CV_LOAD_IMAGE_UNCHANGED);
-//  }
-//  return tile_p_image;
-//}
-
-renderTriangle tfk::Section::getRenderTriangle(tfkTriangle tri) {
-  renderTriangle rTri;
-  rTri.p[0] = (*(this->mesh_orig))[tri.index1];
-  rTri.p[1] = (*(this->mesh_orig))[tri.index2];
-  rTri.p[2] = (*(this->mesh_orig))[tri.index3];
-
-  rTri.q[0] = (*(this->mesh))[tri.index1];
-  rTri.q[1] = (*(this->mesh))[tri.index2];
-  rTri.q[2] = (*(this->mesh))[tri.index3];
-  return rTri;
-}
-
-std::tuple<bool, float, float, float> tfk::Section::get_triangle_for_point(cv::Point2f pt) {
-  int wid = __cilkrts_get_worker_number();
-  for (int i = 0; i < this->triangles[wid]->size(); i++) {
-    renderTriangle rTri = this->getRenderTriangle((*this->triangles[wid])[i]);
-    float u,v,w;
-    cv::Point2f a,b,c;
-    a = rTri.p[0];
-    b = rTri.p[1];
-    c = rTri.p[2];
-
-    Barycentric(pt, a,b,c,u,v,w);
-    if (u >=0 && v>=0 && w >= 0) {
-      int j = i;
-      while (j > 0) {
-        tfkTriangle tmp = (*this->triangles[wid])[j-1];
-        (*this->triangles[wid])[j-1] = (*this->triangles[wid])[j];
-        (*this->triangles[wid])[j] = tmp;
-        j--;
-      }
-      //printf("found the triangle\n");
-      return std::make_tuple(true, u,v,w);
-    }
-  }
-  //printf("didn't find the triangle\n");
-  return std::make_tuple(false, -1, -1, -1);
-}
-
-// assumes point p is post section-global affine.
-cv::Point2f tfk::Section::elastic_transform(cv::Point2f p) {
-  std::tuple<bool, float, float, float> info = this->get_triangle_for_point(p);
-  if (!std::get<0>(info)) return p;
-
-  int wid = __cilkrts_get_worker_number();
-  renderTriangle tri = this->getRenderTriangle((*this->triangles[wid])[0]);
-  float u = std::get<1>(info);
-  float v = std::get<2>(info);
-  float w = std::get<3>(info);
-  float new_x = u*tri.q[0].x + v*tri.q[1].x + w*tri.q[2].x;
-  float new_y = u*tri.q[0].y + v*tri.q[1].y + w*tri.q[2].y;
-  return cv::Point2f(new_x, new_y);
-}
-
-
-
 
 #define TFKMAT(matrix_ptr, rows, cols, row, col, type) ((type *) matrix_ptr->ptr(row))[col]
 
@@ -1296,8 +1160,6 @@ cv::Mat tfk::Section::render_affine(cv::Mat A, std::pair<cv::Point2f, cv::Point2
 }
 
 
-
-
 // bbox is in unscaled (i.e. full resolution) transformed coordinate system.
 cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
     tfk::Resolution resolution) {
@@ -1447,6 +1309,141 @@ std::pair<cv::Point2f, cv::Point2f> tfk::Section::elastic_transform_bbox(
   }
   return std::make_pair(cv::Point2f(min_x,min_y), cv::Point2f(max_x, max_y));
 }
+
+
+
+// END rendering functions
+
+
+
+
+
+std::pair<cv::Point2f, cv::Point2f> tfk::Section::scale_bbox(
+    std::pair<cv::Point2f, cv::Point2f> bbox, cv::Point2f scale) {
+  int lower_x = (int) (bbox.first.x/scale.x + 0.5);
+  int lower_y = (int) (bbox.first.y/scale.y + 0.5);
+  int upper_x = (int) (bbox.second.x/scale.x + 0.5);
+  int upper_y = (int) (bbox.second.y/scale.y + 0.5);
+  return std::make_pair(cv::Point2f(1.0*lower_x, 1.0*lower_y),
+                        cv::Point2f(1.0*upper_x, 1.0*upper_y));
+}
+
+
+bool tfk::Section::tile_in_render_box_affine(cv::Mat A, Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox) {
+
+  //return tile->overlaps_with(bbox);
+
+  std::pair<cv::Point2f, cv::Point2f> tile_bbox = tile->get_bbox();
+
+  cv::Point2f corners[4];
+  corners[0] = cv::Point2f(tile_bbox.first.x, tile_bbox.first.y);
+  corners[1] = cv::Point2f(tile_bbox.second.x, tile_bbox.first.y);
+  corners[2] = cv::Point2f(tile_bbox.first.x, tile_bbox.second.y);
+  corners[3] = cv::Point2f(tile_bbox.second.x, tile_bbox.second.y);
+
+  for (int i = 0; i < 4; i++) {
+    corners[i] = this->affine_transform_plusA(corners[i], A);
+  }
+
+  float tile_min_x = corners[0].x;
+  float tile_max_x = corners[0].x;
+  float tile_min_y = corners[0].y;
+  float tile_max_y = corners[0].y;
+  for (int i = 1; i < 4; i++) {
+    if (corners[i].x < tile_min_x) tile_min_x = corners[i].x;
+    if (corners[i].y < tile_min_y) tile_min_y = corners[i].y;
+
+    if (corners[i].x > tile_max_x) tile_max_x = corners[i].x;
+    if (corners[i].y > tile_max_y) tile_max_y = corners[i].y;
+  }
+
+  if (tile_max_x < bbox.first.x) return false;
+  if (tile_max_y < bbox.first.y) return false;
+  if (tile_min_x > bbox.second.x) return false;
+  if (tile_min_y > bbox.second.y) return false;
+
+  return true;
+}
+
+
+
+//MAKE AFFINE VERSION!!
+bool tfk::Section::tile_in_render_box(Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox) {
+
+  //return tile->overlaps_with(bbox);
+
+  std::pair<cv::Point2f, cv::Point2f> tile_bbox = tile->get_bbox();
+
+  cv::Point2f corners[4];
+  corners[0] = cv::Point2f(tile_bbox.first.x, tile_bbox.first.y);
+  corners[1] = cv::Point2f(tile_bbox.second.x, tile_bbox.first.y);
+  corners[2] = cv::Point2f(tile_bbox.first.x, tile_bbox.second.y);
+  corners[3] = cv::Point2f(tile_bbox.second.x, tile_bbox.second.y);
+
+  for (int i = 0; i < 4; i++) {
+    corners[i] = this->affine_transform(corners[i]);
+    corners[i] = this->elastic_transform(corners[i]);
+  }
+
+  float tile_min_x = corners[0].x;
+  float tile_max_x = corners[0].x;
+  float tile_min_y = corners[0].y;
+  float tile_max_y = corners[0].y;
+  for (int i = 1; i < 4; i++) {
+    if (corners[i].x < tile_min_x) tile_min_x = corners[i].x;
+    if (corners[i].y < tile_min_y) tile_min_y = corners[i].y;
+
+    if (corners[i].x > tile_max_x) tile_max_x = corners[i].x;
+    if (corners[i].y > tile_max_y) tile_max_y = corners[i].y;
+  }
+
+  if (tile_max_x < bbox.first.x) return false;
+  if (tile_max_y < bbox.first.y) return false;
+  if (tile_min_x > bbox.second.x) return false;
+  if (tile_min_y > bbox.second.y) return false;
+
+  return true;
+}
+
+renderTriangle tfk::Section::getRenderTriangle(tfkTriangle tri) {
+  renderTriangle rTri;
+  rTri.p[0] = (*(this->mesh_orig))[tri.index1];
+  rTri.p[1] = (*(this->mesh_orig))[tri.index2];
+  rTri.p[2] = (*(this->mesh_orig))[tri.index3];
+
+  rTri.q[0] = (*(this->mesh))[tri.index1];
+  rTri.q[1] = (*(this->mesh))[tri.index2];
+  rTri.q[2] = (*(this->mesh))[tri.index3];
+  return rTri;
+}
+
+std::tuple<bool, float, float, float> tfk::Section::get_triangle_for_point(cv::Point2f pt) {
+  int wid = __cilkrts_get_worker_number();
+  for (int i = 0; i < this->triangles[wid]->size(); i++) {
+    renderTriangle rTri = this->getRenderTriangle((*this->triangles[wid])[i]);
+    float u,v,w;
+    cv::Point2f a,b,c;
+    a = rTri.p[0];
+    b = rTri.p[1];
+    c = rTri.p[2];
+
+    Barycentric(pt, a,b,c,u,v,w);
+    if (u >=0 && v>=0 && w >= 0) {
+      int j = i;
+      while (j > 0) {
+        tfkTriangle tmp = (*this->triangles[wid])[j-1];
+        (*this->triangles[wid])[j-1] = (*this->triangles[wid])[j];
+        (*this->triangles[wid])[j] = tmp;
+        j--;
+      }
+      //printf("found the triangle\n");
+      return std::make_tuple(true, u,v,w);
+    }
+  }
+  //printf("didn't find the triangle\n");
+  return std::make_tuple(false, -1, -1, -1);
+}
+
 
 
 
@@ -1826,86 +1823,6 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
 
   free(mask);
 }
-
-//double tfk::Section::compute_3d_error_in_box(Section* neighbor,
-//    std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
-//    std::vector<cv::Point2f>& test_filtered_match_points_a,
-//    std::vector<cv::Point2f>& test_filtered_match_points_b, std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex) {
-//
-//
-//    if (test_filtered_match_points_a.size() == 0) return 2.0;
-//
-//    cv::Mat section_transform;
-//    cv::computeAffineTFK(test_filtered_match_points_a, test_filtered_match_points_b, section_transform);
-//
-//    cv::Mat A(3, 3, cv::DataType<double>::type);
-//
-//    A.at<double>(0,0) = section_transform.at<double>(0,0);
-//    A.at<double>(0,1) = section_transform.at<double>(0,1);
-//    A.at<double>(0,2) = section_transform.at<double>(0,2);
-//    A.at<double>(1,0) = section_transform.at<double>(1,0);
-//    A.at<double>(1,1) = section_transform.at<double>(1,1);
-//    A.at<double>(1,2) = section_transform.at<double>(1,2);
-//    A.at<double>(2,0) = 0.0;
-//    A.at<double>(2,1) = 0.0;
-//    A.at<double>(2,2) = 1.0;
-//
-//    //printf("Printing out A\n");
-//    //std::cout << A << std::endl;
-//
-//
-//    double box_iter_x = sliding_bbox.first.x;
-//    double box_iter_y = sliding_bbox.first.y;
-//
-//    cv::Mat I(3, 3, cv::DataType<double>::type);
-//    I.at<double>(0,0) = 1.0;
-//    I.at<double>(0,1) = 0.0;
-//    I.at<double>(0,2) = 0.0;
-//    I.at<double>(1,0) = 0.0;
-//    I.at<double>(1,1) = 1.0;
-//    I.at<double>(1,2) = 0.0;
-//    I.at<double>(2,0) = 0.0;
-//    I.at<double>(2,1) = 0.0;
-//    I.at<double>(2,2) = 1.0;
-//
-//    std::pair<cv::Point2f, cv::Point2f> bbox = sliding_bbox;
-//    //cv::Mat this1 = this->render_affine(A,bbox,THUMBNAIL2);
-//    //cv::Mat neighbor1 = neighbor->render_affine(I,bbox,THUMBNAIL2);
-//    //cv::Mat this2 = this->render_affine(I,bbox,THUMBNAIL2);
-//
-//    //std::string id = std::to_string(box_iter_x) + "-" + std::to_string(box_iter_y);
-//    //std::string filename0 =  id + "-" + "section" + std::to_string(0) + ".tif";
-//    //std::string filename1 =  id + "-" + "section" + std::to_string(1) + ".tif";
-//    //std::string filename2 =  id + "-" + "section" + std::to_string(2) + ".tif";
-//
-//    //imwrite(filename0, this1);
-//    //imwrite(filename1, neighbor1);
-//    //imwrite(filename2, this2);
-//
-//    // call render error to do error detection
-//    //What to make the other neightbor??
-//    int n_id = neighbor->section_id;
-//    std::string id = std::to_string(box_iter_x) + "-" + std::to_string(box_iter_y);
-//    std::string filename =  id + "-" + "section" + std::to_string(n_id) + ".png";
-//    //std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> res = 
-//    double bad_fraction = this->render_error_affine(neighbor, bbox, filename, A, tiles_loaded, tiles_loaded_mutex);
-//
-//    //int num_bad = res.first.size();
-//    std::cout << "Section " << n_id << " " << id << " " << " num_bad: " << bad_fraction << std::endl;
-//
-//        std::ofstream myfile;
-//    myfile.open ("affine.csv", std::ios_base::app);
-//    myfile << n_id << "," << "," << bad_fraction << "," << "\n";
-//    myfile.close();
-//
-//
-//    //std::string filename_identity =  id + "-" + "section" + std::to_string(n_id) + "identity.png";
-//    //this->render_error_affine(neighbor, bbox, filename_identity, I);
-//
-//    //count = count + 1;
-//    return bad_fraction;
-//}
-
 
 std::pair<cv::Point2f, cv::Point2f> tfk::Section::affine_transform_bbox(
     std::pair<cv::Point2f, cv::Point2f> bbox) {
@@ -2839,8 +2756,6 @@ void tfk::Section::align_3d(Section* neighbor) {
 
 
 // Find affine transform for this section that aligns it to neighbor.
-
-//coarse affine align or elastic??
 void tfk::Section::coarse_affine_align(Section* neighbor) {
 
   if (neighbor == NULL) {
@@ -2858,12 +2773,9 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
     printf("Printing out A\n");
     std::cout << A << std::endl;
 
-    //neighbor->affine_transforms.push_back(A);
-    //this->coarse_transform = new cv::Mat();
     this->coarse_transform = A.clone();
     return;
   }
-
 
   // a = neighbor.
   std::vector <cv::KeyPoint > atile_kps_in_overlap;
@@ -2883,10 +2795,6 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
     neighbor->tiles[i]->get_3d_keypoints(btile_kps_in_overlap, btile_kps_desc_in_overlap_list);
   }
 
-
-  //printf("Total size of a tile (%d) kps is %lu\n", neighbor->section_id, atile_kps_in_overlap.size());
-  //printf("Total size of b tile (%d) kps is %lu\n", this->section_id, btile_kps_in_overlap.size());
-
   cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
   cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
   cv::vconcat(btile_kps_desc_in_overlap_list, (btile_kps_desc_in_overlap));
@@ -2897,8 +2805,6 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
                  btile_kps_desc_in_overlap,
                  0.92);
 
-  //printf("Done with the matching. Num matches is %lu\n", matches.size());
-
   // Filter the matches with RANSAC
   std::vector<cv::Point2f> match_points_a, match_points_b;
 
@@ -2906,12 +2812,9 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
     match_points_a.push_back(atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
     match_points_b.push_back(btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
-    //p_align_data->sec_data[section_a].p_kps->push_back(atile_kps_in_overlap[matches[tmpi].queryIdx]);
-    //p_align_data->sec_data[section_b].p_kps->push_back(btile_kps_in_overlap[matches[tmpi].trainIdx]);
   }
 
   bool* mask = (bool*)calloc(matches.size()+1, 1);
-  //std::pair<double,double> offset_pair;
 
   // pre-filter matches with very forgiving ransac threshold.
   vdata v = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 1024, mask);
@@ -2952,7 +2855,6 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
           filtered_match_points_b_pre[c]);
     }
   }
-  //printf("Second pass filter got %d matches\n", num_filtered);
 
   if (num_filtered < 12) {
     //printf("Not enough matches %d for section %d with thresh\n", num_filtered, this->section_id);
@@ -2965,20 +2867,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
 
   cv::computeAffineTFK(filtered_match_points_a, filtered_match_points_b, section_transform);
 
-  //std::cout << section_transform << std::endl;
-
-  // push this affine transform onto the neighbor.
-
   cv::Mat A(3, 3, cv::DataType<double>::type);
-
-  //cv::Mat& B = section_transform;
-
-  //neighbor->a00 = B.at<double>(0,0);
-  //neighbor->a01 = B.at<double>(0,1);
-  //neighbor->a10 = B.at<double>(1,0);
-  //neighbor->a11 = B.at<double>(1,1);
-  //neighbor->offset_x = B.at<double>(0,2);
-  //neighbor->offset_y = B.at<double>(1,2);
 
   A.at<double>(0,0) = section_transform.at<double>(0,0);
   A.at<double>(0,1) = section_transform.at<double>(0,1);
@@ -2993,16 +2882,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   printf("Printing out A\n");
   std::cout << A << std::endl;
 
-  //neighbor->affine_transforms.push_back(A);
-  //this->coarse_transform = new cv::Mat();
   this->coarse_transform = A.clone();
-
-  //this->a00 = 1.0;
-  //this->a01 = 0.0;
-  //this->a10 = 0.0;
-  //this->a11 = 1.0;
-  //this->offset_x = 0.0;
-  //this->offset_y = 0.0;
 
   std::string path = "/efs/home/tfk/maprecurse/sift_features4/coarse_transform_" +
       std::to_string(this->real_section_id) + "_" + std::to_string(neighbor->real_section_id);
@@ -3142,25 +3022,6 @@ void tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
     }
   }
 
-  //if (filtered_match_points_a.size() == 0) {
-  //  filtered_match_points_a.push_back(cv::Point( - a_tile->x_start,
-  //                                              - a_tile->y_start));
-
-  //  filtered_match_points_b.push_back(cv::Point(- b_tile->x_start,
-  //                                              - b_tile->y_start));
-
-  //  //filtered_match_points_a.push_back(cv::Point(b_tile->x_start - a_tile->x_start,
-  //  //                                            b_tile->x_finish - a_tile->y_finish));
-
-  //  //filtered_match_points_b.push_back(cv::Point(b_tile->x_start, b_tile->y_finish));
-
-  //  //filtered_match_points_a.push_back(cv::Point(a_tile->x_finish, a_tile->y_start));
-  //  //filtered_match_points_b.push_back(cv::Point(b_tile->x_finish, b_tile->y_start));
-
-  //  //filtered_match_points_a.push_back(cv::Point(a_tile->x_finish, a_tile->y_finish));
-  //  //filtered_match_points_b.push_back(cv::Point(b_tile->x_finish, b_tile->y_finish));
-  //}
-
 }
 
 void tfk::Section::compute_tile_matches2(Tile* a_tile) {
@@ -3170,8 +3031,6 @@ void tfk::Section::compute_tile_matches2(Tile* a_tile) {
   for (int i = 0; i < _neighbors.size(); i++) {
     neighbors.push_back(_neighbors[i]->tile_id);
   }
-
-
 
   std::set<int> good_neighbors;
   for (int i = 0; i < a_tile->edges.size(); i++) {
@@ -3275,10 +3134,6 @@ void tfk::Section::compute_tile_matches2(Tile* a_tile) {
     printf("Bad 2D match! %d\n", res);
     a_tile->bad_2d_alignment = true;
     a_tile->edges.clear();
-    //if (res == 2) {
-    //  imwrite("tmpa_tile.tif", a_tile->get_tile_data(Resolution::FULL));
-    //  imwrite("tmpb_tile.tif", b_tile->get_tile_data(Resolution::FULL));
-    //}
   } else {
     a_tile->bad_2d_alignment = false;
   }
@@ -3289,13 +3144,9 @@ void tfk::Section::compute_tile_matches(Tile* a_tile) {
 
   std::vector<int> neighbors = get_all_close_tiles(a_tile->tile_id);
 
-  //Tile* a_tile = this->tiles[tile_id];
-
-
   int neighbor_success_count = 0;
   std::vector<int> bad_indices(0);
   for (int i = 0; i < neighbors.size(); i++) {
-    //int atile_id = tile_id;
 
     int btile_id = neighbors[i];
     Tile* b_tile = this->tiles[btile_id];
@@ -3348,85 +3199,6 @@ void tfk::Section::compute_tile_matches(Tile* a_tile) {
       bad_indices.push_back(i);
     }
    // lock.unlock();
-
-  }
-
-  return;
-
-  if (neighbor_success_count < neighbors.size()/2) {
-
-    std::vector<cv::KeyPoint> a_tile_keypoints;
-    cv::Mat a_tile_desc;
-
-    tfk::params new_params;
-    new_params.scale_x = 1.0;
-    new_params.scale_y = 1.0;
-    new_params.num_features = 1;
-    new_params.num_octaves = 6;
-    new_params.contrast_threshold = 0.01;
-    new_params.edge_threshold = 20;
-    new_params.sigma = 1.2;
-
-    a_tile->compute_sift_keypoints2d_params(new_params, a_tile_keypoints, a_tile_desc, a_tile);
-
-    for (int k = 0; k < bad_indices.size(); k++) {
-      int i = bad_indices[k];
-      int btile_id = neighbors[i];
-      Tile* b_tile = this->tiles[btile_id];
-
-      // need to compute keypoints for both of these tiles.
-      std::vector<cv::KeyPoint> b_tile_keypoints;
-      cv::Mat b_tile_desc;
-
-      b_tile->compute_sift_keypoints2d_params(new_params, b_tile_keypoints, b_tile_desc, a_tile);
-
-      if (a_tile_keypoints.size() < MIN_FEATURES_NUM) continue;
-      if (b_tile_keypoints.size() < MIN_FEATURES_NUM) continue;
-      std::vector< cv::Point2f > filtered_match_points_a(0);
-      std::vector< cv::Point2f > filtered_match_points_b(0);
-
-      this->compute_tile_matches_pair(a_tile, b_tile,
-        a_tile_keypoints, b_tile_keypoints,
-        a_tile_desc, b_tile_desc,
-        filtered_match_points_a,
-        filtered_match_points_b, 16.0);
-
-      Tile tmp_a_tile = *a_tile;
-
-      // put b at 0,0
-      if (filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
-        for (int _i = 0; _i < 1000; _i++) {
-          float dx = 0.0;
-          float dy = 0.0;
-          for (int j = 0; j < filtered_match_points_a.size(); j++) {
-            cv::Point2f dp = b_tile->rigid_transform(filtered_match_points_b[j]) - tmp_a_tile.rigid_transform(filtered_match_points_a[j]);
-            dx += 2*dp.x * 1.0 / (filtered_match_points_a.size());
-            dy += 2*dp.y * 1.0 / (filtered_match_points_a.size());
-          }
-          tmp_a_tile.offset_x += 0.4*dx;
-          tmp_a_tile.offset_y += 0.4*dy;
-        }
-      }
-
-      float val = tmp_a_tile.error_tile_pair(b_tile);
-      if (val >= 0.5) {
-        neighbor_success_count++;
-        a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
-      }
-      //lock.lock();
-      //lock.unlock();
-    }
-  }
-  if (neighbor_success_count < neighbors.size()/2) {
-    int res = __sync_fetch_and_add(&num_bad_2d_matches, 1);
-    printf("Bad 2D match! %d\n", res);
-    a_tile->bad_2d_alignment = true;
-    //if (res == 2) {
-    //  imwrite("tmpa_tile.tif", a_tile->get_tile_data(Resolution::FULL));
-    //  imwrite("tmpb_tile.tif", b_tile->get_tile_data(Resolution::FULL));
-    //}
-  } else {
-    a_tile->bad_2d_alignment = false;
   }
 }
 
@@ -3586,8 +3358,6 @@ void tfk::Section::recompute_keypoints() {
   for (int i = 0; i < this->tiles.size(); i++) {
     Tile* tile = this->tiles[i];
     if (tile->image_data_replaced) {
-      //tile->compute_sift_keypoints2d();
-      //tile->compute_sift_keypoints3d(true);
       tile->image_data_replaced = false;
     }
   }
@@ -3721,17 +3491,6 @@ void tfk::Section::compute_keypoints_and_matches() {
         }
       }
 
-    //cilk_for (int i = 0; i < this->tiles.size(); i++) {
-    //  Tile* tile = this->tiles[i];
-    //  tile->compute_sift_keypoints2d();
-    //  tile->compute_sift_keypoints3d();
-    //}
-
-
-    //cilk_for (int i = 0; i < this->tiles.size(); i++) {
-    //  this->compute_tile_matches(i, graph);
-    //}
-
     this->save_tile_matches();
   } else {
     this->read_tile_matches();
@@ -3758,7 +3517,6 @@ void tfk::Section::compute_keypoints_and_matches() {
       graph->edgeData[i].push_back(this->tiles[i]->edges[j]);
     }
 
-    //_tile_data tdata = p_sec_data->tiles[i];
     Tile* tile = this->tiles[i];
     d->tile = tile;
     d->vertex_id = i;
@@ -3772,15 +3530,11 @@ void tfk::Section::compute_keypoints_and_matches() {
     d->offset_x = 0.0;
     d->offset_y = 0.0;
     d->iteration_count = 0;
-    //d->last_radius_value = 9.0;
     d->z = /*p_align_data->base_section + */this->section_id;
     d->a00 = 1.0;
     d->a01 = 0.0;
     d->a10 = 0.0;
     d->a11 = 1.0;
-    //d->neighbor_grad_x = 0.0;
-    //d->neighbor_grad_y = 0.0;
-    //d->converged = 0;
     d->original_center_point =
       cv::Point2f((tile->x_finish-tile->x_start)/2,
                   (tile->y_finish-tile->y_start)/2);
@@ -3792,11 +3546,6 @@ void tfk::Section::compute_keypoints_and_matches() {
   }
   printf("Num vertices is %d\n", graph->num_vertices());
   graph->section_id = this->section_id;
-
-  // now compute keypoint matches
-  //cilk_for (int i = 0; i < this->tiles.size(); i++) {
-  //    compute_tile_matches_active_set(p_align_data, sec_id, active_set, graph);
-  //}
 
 }
 
@@ -3817,8 +3566,6 @@ std::vector<tfk::Tile*> tfk::Section::get_all_close_tiles(Tile* a_tile) {
 
 std::vector<int> tfk::Section::get_all_close_tiles(int atile_id) {
   std::vector<int> neighbor_index_list(0);
-
-  //int indices_to_check_len = 0;
 
   Tile* a_tile = this->tiles[atile_id];
   for (int i = atile_id+1; i < this->tiles.size(); i++) {
@@ -3867,13 +3614,6 @@ tfk::Section::Section(SectionData& section_data) {
 
     std::string test_filepath = "new_tiles/thumbnail_sec_"+std::to_string(this->real_section_id) +
         "_tileid_"+std::to_string(tile->tile_id) + ".jpg";
-    //if (FILE *file = fopen(test_filepath.c_str(), "r")) {
-    //    fclose(file);
-    //  tile->filepath = std::string(new_filepath);
-    //  printf("Found replacement tile\n");
-    //} else {
-    //}
-
     this->tiles.push_back(tile);
   }
 
@@ -3924,10 +3664,6 @@ std::vector<std::tuple<int, double, int>> tfk::Section::parameter_optimization(i
     tile_b->compute_sift_keypoints_with_params(best_params);
     std::vector< cv::Point2f > filtered_match_points_a(0);
     std::vector< cv::Point2f > filtered_match_points_b(0);
-    //this->compute_tile_matches_pair(tile_a, tile_b, 
-    //  filtered_match_points_a, 
-    //  filtered_match_points_b);
-
 
     this->compute_tile_matches_pair(tile_a, tile_b,
       *(tile_a->p_kps), *(tile_b->p_kps),
