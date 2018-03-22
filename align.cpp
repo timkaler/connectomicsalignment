@@ -149,25 +149,25 @@ void align_execute(align_data_t *p_align_data) {
     //return;
     stack->align_2d();
 
-
-    stack->coarse_affine_align();
-    stack->elastic_align();
+    stack->align_3d();
+    //stack->coarse_affine_align();
+    //stack->elastic_align();
 
     for (int i = 0; i < stack->sections.size(); i++) {
       stack->sections[i]->elastic_transform_ready = true;
     }
 
-    int size = 50000;
+    int size = 75000;
     std::clock_t start;
     double duration;
 
     start = std::clock();
 
-    int _start_x = 50000;
-    int _start_y = 50000;
+    int _start_x = 25000;
+    int _start_y = 25000;
 
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderfull", tfk::FULL);
-    stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderthumb", tfk::THUMBNAIL);
+    stack->render(std::make_pair(cv::Point2f(_start_x,_start_y),cv::Point2f(_start_x + size, _start_y + size)), "renderthumb", tfk::THUMBNAIL);
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderthumb", tfk::PERCENT30);
     //stack->render(std::make_pair(cv::Point2f(_start_x,_start_y),cv::Point2f(_start_x + size, _start_y + size)), "renderbefore", tfk::PERCENT30);
 

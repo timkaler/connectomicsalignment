@@ -171,6 +171,10 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
   double stepsize = 0.0001;
   double momentum = 0.5;
 
+  if (this->real_section_id == _neighbor->real_section_id) {
+    max_iterations = 1;
+  }
+
   std::map<int, double> gradient_momentum;
 
   Section neighbor = *_neighbor;
@@ -421,10 +425,10 @@ void tfk::Section::save_elastic_mesh(Section* neighbor) {
   }
   cv::write(fs, "mesh_orig",
               (*(this->mesh_orig)));
-  cv::write(fs, "mesh_orig_save",
-              (*(this->mesh_orig_save)));
-  cv::write(fs, "mesh_old",
-              (*(this->mesh_old)));
+  //cv::write(fs, "mesh_orig_save",
+  //            (*(this->mesh_orig_save)));
+  //cv::write(fs, "mesh_old",
+  //            (*(this->mesh_old)));
   cv::write(fs, "mesh",
               (*(this->mesh)));
 
@@ -1939,7 +1943,8 @@ void tfk::Section::affine_transform_keypoints(std::vector<cv::KeyPoint>& keypoin
 
 void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
 
-
+  if (neighbor->real_section_id == this->real_section_id) return;
+ 
   auto bbox = this->get_bbox();
 
   // transforms section to align to neighbor.
@@ -2767,6 +2772,71 @@ void tfk::Section::apply_affine_transforms() {
   this->offset_y = A.at<double>(1,2);
 
 }
+
+bool tfk::Section::load_elastic_mesh(Section* neighbor) {
+  std::string path =
+      "/efs/home/tfk/maprecurse/sift_features4/emesh_"+std::to_string(this->real_section_id)+"_" +
+      std::to_string(neighbor->real_section_id);
+
+  cv::FileStorage fs(path,
+                     cv::FileStorage::READ);
+
+  if (!fs.isOpened()) return false;
+
+  int len;
+  fs["triangle_edges_len"] >> len;
+  this->triangle_edges->resize(len);
+  for (int i = 0; i < len; i++) {
+    fs["triangle_edges_first_"+std::to_string(i)] >> (*this->triangle_edges)[i].first;
+    fs["triangle_edges_second_"+std::to_string(i)] >> (*this->triangle_edges)[i].second;
+  }
+
+  fs["triangles_len"] >> len;
+  int nworkers = __cilkrts_get_nworkers();
+  this->triangles.resize(nworkers);
+  for (int i = 0; i < nworkers; i++) {
+    this->triangles[i]->resize(len);
+  }
+  for (int i = 0; i < len; i++) {
+    fs["triangles_i0_"+std::to_string(i)] >> (*this->triangles[0])[i].index1;
+    fs["triangles_i1_"+std::to_string(i)] >> (*this->triangles[0])[i].index2;
+    fs["triangles_i2_"+std::to_string(i)] >> (*this->triangles[0])[i].index3;
+    for (int j = 1; j < nworkers; j++) {
+      (*this->triangles[j])[i] = (*this->triangles[0])[i];
+    }
+  }
+
+  fs["mesh_orig"] >> (*this->mesh_orig);
+  fs["mesh"] >> (*this->mesh);
+
+
+  fs.release();
+  return true; 
+}
+
+
+
+void tfk::Section::align_3d(Section* neighbor) {
+
+  // check to see if the elastic transforms exist.
+  
+  if (!load_elastic_mesh(neighbor)) {
+    // do the affine align with the neighbor.
+    this->coarse_affine_align(neighbor);
+
+    // affine transform the mesh.
+    this->affine_transform_mesh();  
+
+
+    // do the elastic alignment.
+    this->get_elastic_matches_relative(neighbor);
+    this->elastic_gradient_descent_section(neighbor);
+  } else {
+    this->apply_affine_transforms();
+  }
+
+}
+
 
 // Find affine transform for this section that aligns it to neighbor.
 

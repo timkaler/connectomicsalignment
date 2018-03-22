@@ -202,6 +202,7 @@ class Section {
     cv::Mat coarse_transform;
 
 
+    bool load_elastic_mesh(Section* neighbor);
     void save_elastic_mesh(Section* neighbor);
 
 
@@ -212,6 +213,9 @@ class Section {
     void compute_keypoints_and_matches();
     void compute_tile_matches(Tile* a_tile);
     void compute_tile_matches2(Tile* a_tile);
+
+    void align_3d(Section* neighbor);
+
 
     void compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
       std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector <cv::KeyPoint>& b_tile_keypoints,
@@ -387,6 +391,8 @@ class Stack {
     void elastic_gradient_descent();
 
     void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix, Resolution res);
+
+    void align_3d();
 
     void render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix);
 };

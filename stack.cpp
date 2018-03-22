@@ -327,7 +327,7 @@ void tfk::Stack::render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string fi
     Resolution res) {
   cilk_for (int i = 0; i < this->sections.size(); i++) {
     Section* section = this->sections[i];
-    section->render(bbox, filename_prefix+std::to_string(i+this->base_section)+".tif", res);
+    section->render(bbox, filename_prefix+std::to_string(section->real_section_id)+".tif", res);
   }
 }
 
@@ -466,6 +466,41 @@ void tfk::Stack::get_elastic_matches() {
 }
 
 
+void tfk::Stack::align_3d() {
+  for (int i = 0; i < this->sections.size(); i++) {
+    cilk_spawn this->sections[i]->construct_triangles();
+  }
+  cilk_sync;
+
+  std::vector<Section*> filtered_sections;
+  for (int i = 0; i < this->sections.size(); i++) {
+    if (this->sections[i]->real_section_id == 28 || 
+        this->sections[i]->real_section_id == 29 || 
+        this->sections[i]->real_section_id == 31) continue;
+    filtered_sections.push_back(this->sections[i]);
+  }
+  this->sections = filtered_sections;
+
+  cilk_spawn this->sections[0]->align_3d(this->sections[0]);
+
+  for (int i = 1; i < this->sections.size(); i++) {
+    cilk_spawn this->sections[i]->align_3d(this->sections[i-1]);
+  }
+  cilk_sync; 
+
+  // section i is aligned to section i-1;
+  for (int i = 1; i < this->sections.size(); i++) {
+    Section* sec = this->sections[i];
+    //for (int j = i; --j > 0;) {
+    int j = i-1;
+      for (int k = 0; k < sec->mesh->size(); k++) {
+        (*sec->mesh)[k] = this->sections[j]->elastic_transform((*sec->mesh)[k]);
+      }
+    //}
+  }
+}
+
+
 //START
 // only do triangles with vertices in bad areas
 void tfk::Stack::elastic_align() {
@@ -494,6 +529,7 @@ void tfk::Stack::elastic_gradient_descent() {
     // NOTES(TFK): Need to remember to transform the meshes with the affine transforms.
 
     for (int i = 0; i < this->sections.size(); i++) {
+
       this->sections[i]->mesh_orig_save = this->sections[i]->mesh_orig;
       this->sections[i]->mesh_orig = new std::vector<cv::Point2f>();
       for (int j = 0; j < this->sections[i]->mesh_orig_save->size(); j++) {
