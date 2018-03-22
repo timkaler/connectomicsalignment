@@ -115,7 +115,7 @@ void tfk::Section::align_2d() {
       printf("ending run\n");
       //this->coarse_affine_align();
       //this->elastic_align();
-      int count = 0;
+      //int count = 0;
       for (int i = 0; i < this->tiles.size(); i++) {
         Tile* t = this->tiles[i];
         if (t->bad_2d_alignment) printf("Tile has bad 2d alignment\n");
@@ -131,7 +131,7 @@ void tfk::Section::align_2d() {
             //float val = t->compute_deviation(neighbor);
             //printf("after bad tile with deviation %f corr %f\n", val, t->neighbor_correlations[neighbor->tile_id]);
             //return;
-            auto bbox1 = t->get_bbox();
+            //auto bbox1 = t->get_bbox();
             t->bad_2d_alignment = true;
             neighbor->bad_2d_alignment = true; 
             //this->render(t->get_bbox(), "errortest"+std::to_string(count++), FULL);
@@ -643,7 +643,7 @@ double tfk::Section::render_error_affine(Section* neighbor, std::pair<cv::Point2
   }
 
 
-  cv::Point2f render_scale = this->get_render_scale(THUMBNAIL);
+  //cv::Point2f render_scale = this->get_render_scale(THUMBNAIL);
 
 
   std::mutex mtx;
@@ -722,14 +722,14 @@ double tfk::Section::render_error_affine(Section* neighbor, std::pair<cv::Point2
         }
         total_bad_boxes++;
 
-        int bad_min_x = bbox.first.x + (bx)*render_scale.x;
-        int bad_max_x = bbox.first.x + (bx+patch_3_size)*render_scale.x;
+        //int bad_min_x = bbox.first.x + (bx)*render_scale.x;
+        //int bad_max_x = bbox.first.x + (bx+patch_3_size)*render_scale.x;
 
-        int bad_min_y = bbox.first.y + (by)*render_scale.y;
-        int bad_max_y = bbox.first.y + (by+patch_3_size)*render_scale.y;
+        //int bad_min_y = bbox.first.y + (by)*render_scale.y;
+        //int bad_max_y = bbox.first.y + (by+patch_3_size)*render_scale.y;
 
-        auto bad_bbox = std::make_pair(cv::Point2f(bad_min_x, bad_min_y),
-                                   cv::Point2f(bad_max_x, bad_max_y));
+        //auto bad_bbox = std::make_pair(cv::Point2f(bad_min_x, bad_min_y),
+        //                           cv::Point2f(bad_max_x, bad_max_y));
 		//REPLACE BAD REGION
         //this->replace_bad_region(bad_bbox, other_neighbor);
       }
@@ -862,7 +862,7 @@ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pa
 
           cv::Mat other2_result;
           cv::matchTemplate(other2_n_patch, other_n_patch, other2_result, CV_TM_CCOEFF_NORMED);
-          float other2_corr = other2_result.at<float>(0,0);
+          //float other2_corr = other2_result.at<float>(0,0);
 
           float blur_thresh = 0.5;
 
@@ -1031,9 +1031,9 @@ cv::Mat tfk::Section::render_affine(cv::Mat A, std::pair<cv::Point2f, cv::Point2
 
 
 
-  unsigned char* section_p_out_ptr = (unsigned char*) section_p_out.data;
-  unsigned short* section_p_out_sum_ptr = (unsigned short*) section_p_out_sum->data;
-  unsigned short* section_p_out_ncount_ptr = (unsigned short*) section_p_out_sum->data;
+  //unsigned char* section_p_out_ptr = (unsigned char*) section_p_out.data;
+  //unsigned short* section_p_out_sum_ptr = (unsigned short*) section_p_out_sum->data;
+  //unsigned short* section_p_out_ncount_ptr = (unsigned short*) section_p_out_sum->data;
 
 
   for (int y = 0; y < nrows; y++) {
@@ -1087,9 +1087,9 @@ cv::Mat tfk::Section::render_affine(cv::Mat A, std::pair<cv::Point2f, cv::Point2
     //        });
     //}
 
-    unsigned char* tile_p_image_ptr = (unsigned char*) tile_p_image.data;
-    int tp_rows = tile_p_image.rows;
-    int tp_cols = tile_p_image.cols;
+    //unsigned char* tile_p_image_ptr = (unsigned char*) tile_p_image.data;
+    //int tp_rows = tile_p_image.rows;
+    //int tp_cols = tile_p_image.cols;
 
     for (int _y = 0; _y < (tile_p_image).size().height; _y++) {
       for (int _x = 0; _x < (tile_p_image).size().width; _x++) {
@@ -1548,7 +1548,7 @@ void tfk::Section::get_3d_keypoints_for_box(std::pair<cv::Point2f, cv::Point2f> 
 
 
 
-    int num_filtered = 0;
+    //int num_filtered = 0;
     std::vector<cv::Point2f> match_points_a, match_points_b;
     double box_min_x = bbox.first.x;
     double box_max_x = bbox.second.x;
@@ -1626,7 +1626,7 @@ void tfk::Section::find_3d_matches_in_box_cache(Section* neighbor,
                  btile_kps_desc_in_overlap,
                  0.92);
 
-  printf("Num matches is %d\n", matches.size());
+  printf("Num matches is %zu\n", matches.size());
 
   // Bad don't add filtered matches.
   if (matches.size() < 120) return;
@@ -1640,7 +1640,7 @@ void tfk::Section::find_3d_matches_in_box_cache(Section* neighbor,
 
   bool* mask = (bool*)calloc(match_points_a.size()+1, 1);
       //HERE
-  vdata v = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, ransac_thresh, mask);
+  tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, ransac_thresh, mask);
 
 
   for (int c = 0; c < match_points_a.size(); c++) {
@@ -1788,7 +1788,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
                  btile_kps_desc_in_overlap,
                  0.92);
 
-  printf("Num matches is %d\n", matches.size());
+  printf("Num matches is %zu\n", matches.size());
 
   // Bad don't add filtered matches.
   if (matches.size() < 32) return;
@@ -1802,7 +1802,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
 
   bool* mask = (bool*)calloc(match_points_a.size()+1, 1);
       //HERE
-  vdata v = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, ransac_thresh, mask);
+  tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, ransac_thresh, mask);
 
 
   for (int c = 0; c < match_points_a.size(); c++) {
@@ -1879,10 +1879,10 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
   }
 
 
-  double ransac_thresh = 64.0;
+  //double ransac_thresh = 64.0;
 
 
-  int count = 0;
+  //int count = 0;
   std::mutex lock;
   cilk_for (int bbox_iter = 0; bbox_iter < valid_boxes.size(); bbox_iter++) {
     std::vector< cv::Point2f > filtered_match_points_a(0);
@@ -1895,7 +1895,7 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
 
     std::vector<Tile*> tiles_loaded;
     std::mutex tiles_loaded_mutex;
-      int num_filtered = 0;
+      //int num_filtered = 0;
       std::pair<cv::Point2f, cv::Point2f> sliding_bbox =
           std::make_pair(cv::Point2f(box_iter_x, box_iter_y),
                          cv::Point2f(box_iter_x+24000, box_iter_y+24000));
@@ -2050,12 +2050,12 @@ void tfk::Section::get_elastic_matches_one_next_bbox(Section* neighbor,
     std::vector<cv::KeyPoint>& my_keypoints,
     cv::Mat& my_desc) {
 
-  double ransac_thresh = 64.0;
+  //double ransac_thresh = 64.0;
 
   std::vector< cv::Point2f > filtered_match_points_a(0);
   std::vector< cv::Point2f > filtered_match_points_b(0);
 
-  int count = 0;
+  //int count = 0;
   std::mutex lock;
 
   //cilk_for (double box_iter_x = min_x; box_iter_x < max_x + 12000; box_iter_x += 12000) {
@@ -2065,7 +2065,7 @@ void tfk::Section::get_elastic_matches_one_next_bbox(Section* neighbor,
 
     std::vector<Tile*> tiles_loaded;
     std::mutex tiles_loaded_mutex;
-      int num_filtered = 0;
+      //int num_filtered = 0;
       std::pair<cv::Point2f, cv::Point2f> sliding_bbox =
           std::make_pair(cv::Point2f(box_iter_x, box_iter_y),
                          cv::Point2f(box_iter_x+24000, box_iter_y+24000));
@@ -2215,7 +2215,7 @@ void tfk::Section::get_elastic_matches_one_next_bbox(Section* neighbor,
 
 void tfk::Section::get_elastic_matches_one(Section* neighbor) {
 
-  double ransac_thresh = 64.0;
+  //double ransac_thresh = 64.0;
 
 
   this->section_mesh_matches.clear();
@@ -2253,7 +2253,7 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
   std::vector< cv::Point2f > filtered_match_points_a(0);
   std::vector< cv::Point2f > filtered_match_points_b(0);
 
-  int count = 0;
+  //int count = 0;
   std::mutex lock;
 
   std::vector<std::pair<double, double> > valid_boxes;
@@ -2271,7 +2271,7 @@ void tfk::Section::get_elastic_matches_one(Section* neighbor) {
 
     std::vector<Tile*> tiles_loaded;
     std::mutex tiles_loaded_mutex;
-      int num_filtered = 0;
+      //int num_filtered = 0;
       std::pair<cv::Point2f, cv::Point2f> sliding_bbox =
           std::make_pair(cv::Point2f(box_iter_x, box_iter_y),
                          cv::Point2f(box_iter_x+12000, box_iter_y+12000));
@@ -2817,7 +2817,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   bool* mask = (bool*)calloc(matches.size()+1, 1);
 
   // pre-filter matches with very forgiving ransac threshold.
-  vdata v = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 1024, mask);
+  tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 1024, mask);
   std::vector< cv::Point2f > filtered_match_points_a_pre(0);
   std::vector< cv::Point2f > filtered_match_points_b_pre(0);
   int num_filtered = 0;
@@ -2891,7 +2891,8 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   fs.release();
 }
 
-void tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
+//returns the offset vector between the images in the scale of the images
+cv::Point2f tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
   std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
   cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
   std::vector< cv::Point2f > &filtered_match_points_a,
@@ -2899,8 +2900,10 @@ void tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
 
   std::vector<int> neighbors = get_all_close_tiles(a_tile->tile_id);
 
-  if (a_tile_keypoints.size() < MIN_FEATURES_NUM) return;
-  if (b_tile_keypoints.size() < MIN_FEATURES_NUM) return;
+  cv::Point2f ZERO = cv::Point2f(0.0,0.0);
+
+  if (a_tile_keypoints.size() < MIN_FEATURES_NUM) return ZERO;
+  if (b_tile_keypoints.size() < MIN_FEATURES_NUM) return ZERO;
 
   // Filter the features, so that only features that are in the
   //   overlapping tile will be matches.
@@ -2964,8 +2967,8 @@ void tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
         (btile_kps_desc_in_overlap));
   } // End scoped block A
 
-  if (atile_kps_in_overlap.size() < MIN_FEATURES_NUM) return;
-  if (btile_kps_in_overlap.size() < MIN_FEATURES_NUM) return;
+  if (atile_kps_in_overlap.size() < MIN_FEATURES_NUM) return ZERO;
+  if (btile_kps_in_overlap.size() < MIN_FEATURES_NUM) return ZERO;
 
   float trial_rod;
   for (int trial = 0; trial < 4; trial++) {
@@ -2995,7 +2998,7 @@ void tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
 
     bool* mask = (bool*) calloc(match_points_a.size(), 1);
     double thresh = ransac_thresh;//5.0;
-    tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
+    cv::Point2f relative_offset = tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
 
 
     filtered_match_points_a.clear();
@@ -3015,13 +3018,14 @@ void tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
     free(mask);
     if (num_matches_filtered >= MIN_FEATURES_NUM && num_matches_filtered > 0.1*match_points_a.size()) {
       //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
-      break;
+      return relative_offset;
     } else {
       filtered_match_points_a.clear();
       filtered_match_points_b.clear();
     }
   }
 
+  return ZERO;
 }
 
 void tfk::Section::compute_tile_matches2(Tile* a_tile) {
@@ -3619,120 +3623,6 @@ tfk::Section::Section(SectionData& section_data) {
 
 }
 
-// returns a vector
-// the first item is how many were within the threshold
-// the second item is the time it took
-// the third item is the total number of matches
-std::vector<std::tuple<int, double, int>> tfk::Section::parameter_optimization(int trials, double threshold, std::vector<params> &ps) {
-
-  std::vector<std::tuple<int, double, int>> results;
-  results.reserve(ps.size());
-
-  //printf("section has %d tiles\n", this->n_tiles);
-  Tile* tile_pairs[trials][2];
-  // choose all the random pairs of overlapping tiles
-  for (int i = 0; i < trials; i++) {
-    // pick a random tile
-    Tile* tile_a = this->tiles[rand()%this->n_tiles];
-    std::vector<int> neighbor_ids = this->get_all_close_tiles(tile_a->tile_id);
-    //pick a random neighbor of that tile
-    while (neighbor_ids.size() == 0) {
-      tile_a = this->tiles[rand()%this->n_tiles];
-      neighbor_ids = this->get_all_close_tiles(tile_a->tile_id);
-    }
-    Tile* tile_b = this->tiles[neighbor_ids[rand()%neighbor_ids.size()]];
-    tile_pairs[i][0] = tile_a;
-    tile_pairs[i][1] = tile_b;
-  }
-  //printf("found pairs for testing\n");
-  
-  double correct_movement[trials][2];
-  params best_params;
-  best_params.num_features = 1;
-  best_params.num_octaves = 6;
-  best_params.contrast_threshold = CONTRAST_THRESH;
-  best_params.edge_threshold = EDGE_THRESH_2D;
-  best_params.sigma = 1.6;
-  best_params.res = FULL;
 
 
-  // find the best movement for each pair using the best params
-  for (int i = 0; i < trials; i++) {
-    Tile* tile_a = tile_pairs[i][0];
-    Tile* tile_b = tile_pairs[i][1];
-    tile_a->compute_sift_keypoints_with_params(best_params);
-    tile_b->compute_sift_keypoints_with_params(best_params);
-    std::vector< cv::Point2f > filtered_match_points_a(0);
-    std::vector< cv::Point2f > filtered_match_points_b(0);
-
-    this->compute_tile_matches_pair(tile_a, tile_b,
-      *(tile_a->p_kps), *(tile_b->p_kps),
-      *(tile_a->p_kps_desc), *(tile_b->p_kps_desc),
-      filtered_match_points_a,
-      filtered_match_points_b, 16.0);
-
-
-    correct_movement[i][0] = 0.0;
-    correct_movement[i][1] = 0.0;
-    // get the average movement
-    for (int j = 0; j < filtered_match_points_a.size(); j++) {
-      correct_movement[i][0] += filtered_match_points_b[j].x - filtered_match_points_a[j].x;
-      correct_movement[i][1] += filtered_match_points_b[j].y - filtered_match_points_a[j].y;
-    }
-    if (filtered_match_points_a.size() > 0) {
-      correct_movement[i][0] /= filtered_match_points_a.size();
-      correct_movement[i][1] /= filtered_match_points_a.size();
-    }
-    printf("%f, %f, ", correct_movement[i][0], correct_movement[i][1]);
-  }
-  printf("\n");
-  //printf("found correct movements\n");
-
-  std::clock_t start;
-  double duration;
-  for (int k = 0; k < ps.size(); k++) {
-    start = std::clock();
-    int valid_moves = 0;
-    int matches_count = 0;
-    for (int i = 0; i < trials; i++) {
-      Tile* tile_a = tile_pairs[i][0];
-      Tile* tile_b = tile_pairs[i][1];
-      tile_a->compute_sift_keypoints_with_params(ps[k]);
-      tile_b->compute_sift_keypoints_with_params(ps[k]);
-      std::vector< cv::Point2f > filtered_match_points_a(0);
-      std::vector< cv::Point2f > filtered_match_points_b(0);
-      //this->compute_tile_matches_pair(tile_a, tile_b, 
-      //  filtered_match_points_a, 
-      //  filtered_match_points_b);
-      this->compute_tile_matches_pair(tile_a, tile_b,
-        *(tile_a->p_kps), *(tile_b->p_kps),
-        *(tile_a->p_kps_desc), *(tile_b->p_kps_desc),
-        filtered_match_points_a,
-        filtered_match_points_b, 16.0);
-
-      double move_x = 0.0;
-      double move_y = 0.0;
-      // get the average movement
-      for (int j = 0; j < filtered_match_points_a.size(); j++) {
-        move_x += filtered_match_points_b[j].x - filtered_match_points_a[j].x;
-        move_y += filtered_match_points_b[j].y - filtered_match_points_a[j].y;
-      }
-      if (filtered_match_points_a.size() > 0) {
-        move_x /= filtered_match_points_a.size();
-        move_y /= filtered_match_points_a.size();
-      }
-      printf("%f, %f, ", move_x, move_y);
-      if (std::abs(move_x - correct_movement[i][0]) <= threshold && std::abs(move_y - correct_movement[i][1]) <= threshold) {
-        valid_moves++;
-      }
-      matches_count+= (tile_a->p_kps->size() + tile_b->p_kps->size());
-
-    }
-    printf("\n");
-    duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-    results.push_back(std::make_tuple(valid_moves, duration, matches_count));
-  }
-  return results;
-  
-}
 

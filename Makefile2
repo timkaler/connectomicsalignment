@@ -71,7 +71,7 @@ else
 	#-Ofast
 endif
 
-LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_flann -lopencv_video -lopencv_videostab -lopencv_calib3d 
+LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_flann -lopencv_video -lopencv_videostab -lopencv_calib3d -lopencv_ml 
 #LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_video -lopencv_videostab -lopencv_calib3d -lhdf5 -lgomp
 
 

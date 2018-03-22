@@ -40,8 +40,10 @@ namespace cv {
 
 
 
-static std::string matchPadTo(std::string str, const size_t num, const char paddingChar = '0')
+static inline std::string matchPadTo(std::string str, const size_t num, const char paddingChar = '0')
 {
+    // suppress unused function warning.
+    (void) matchPadTo;
     if(num > str.size())
         str.insert(0, num - str.size(), paddingChar);
     return str;

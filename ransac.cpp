@@ -674,7 +674,7 @@ void tfk_simple_ransac_strict(std::vector<cv::Point2f>& match_points_a,
 }
 
 
-int tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
+cv::Point2f tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
     std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask) {
 
   double best_dx = 0.0;
@@ -714,7 +714,7 @@ int tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
           mask[j]=true;
         }
       }
-      return maxInliers;
+      return cv::Point2f(best_dx, best_dy);
 }
 
 void tfk_simple_ransac_old(std::vector<cv::Point2f>& match_points_a,

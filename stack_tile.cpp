@@ -104,6 +104,200 @@ float tfk::Tile::error_tile_pair(Tile *other) {
   return result_CCOEFF_NORMED.at<float>(0,0);
 }
 
+/*
+gets the feature vector for a pair of tiles
+type == 1 gives the irst element of the size of the overlapping region followed by the mean and stddev for each tile for each of the subsections
+type == 2 gives the size of the subsection followed by the pixel corralation or each subsection
+*/
+cv::Mat tfk::Tile::get_feature_vector(Tile *other, int boxes, int type) {
+  if (type == 1) {
+    cv::Mat vector = cv::Mat::zeros(1, boxes*boxes*4+1, CV_32F);
+    if (!(this->overlaps_with(other))) {
+      return vector;
+    }
+
+
+    cv::Mat tile_p_image_1;
+    cv::Mat tile_p_image_2;
+    tile_p_image_1 = this->get_tile_data(Resolution::FULL); //cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+    tile_p_image_2 = other->get_tile_data(Resolution::FULL); //cv::imread(other->filepath, CV_LOAD_IMAGE_UNCHANGED);
+
+
+    std::pair<cv::Point2f, cv::Point2f> tile_1_bounds = this->get_bbox();
+    std::pair<cv::Point2f, cv::Point2f> tile_2_bounds = other->get_bbox();
+
+    int nrows = std::min(tile_1_bounds.second.y, tile_2_bounds.second.y) - std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
+    int ncols = std::min(tile_1_bounds.second.x, tile_2_bounds.second.x) - std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
+    //printf("rows = %d, cols = %d\n", nrows, ncols);
+    if ((nrows <= 0) || (ncols <= 0) ) {
+      return vector;
+    }
+    int offset_x = std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
+    int offset_y = std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
+    cv::Mat transform_1 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
+    cv::Mat transform_2 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
+
+    // make the transformed images in the same size with the same cells in the same locations
+    for (int _y = 0; _y < tile_p_image_1.rows; _y++) {
+      for (int _x = 0; _x < tile_p_image_1.cols; _x++) {
+        cv::Point2f p = cv::Point2f(_x, _y);
+        cv::Point2f transformed_p = this->rigid_transform(p);
+
+        int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+        int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+        if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
+          transform_1.at<unsigned char>(y_c, x_c) +=
+             tile_p_image_1.at<unsigned char>(_y, _x);
+        }
+      }
+    }
+
+    for (int _y = 0; _y < tile_p_image_2.rows; _y++) {
+      for (int _x = 0; _x < tile_p_image_2.cols; _x++) {
+        cv::Point2f p = cv::Point2f(_x, _y);
+        cv::Point2f transformed_p = other->rigid_transform(p);
+
+        int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+        int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+        if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
+          transform_2.at<unsigned char>(y_c, x_c) +=
+             tile_p_image_2.at<unsigned char>(_y, _x);
+        }
+      }
+    }
+
+    // clear any location which only has a value for one of them
+    // note that the transforms are the same size
+    for (int _y = 0; _y < transform_1.rows; _y++) {
+      for (int _x = 0; _x < transform_1.cols; _x++) {
+        if (transform_2.at<unsigned char>(_y, _x) == 0) {
+         transform_1.at<unsigned char>(_y, _x) = 0;
+        }
+        else if (transform_1.at<unsigned char>(_y, _x) == 0) {
+         transform_2.at<unsigned char>(_y, _x) = 0;
+        }
+      }
+    }
+
+    vector.at<int>(0) = nrows*ncols;
+
+    for (int i = 0; i < boxes; i++) {
+      for (int j = 0; j < boxes; j++) {
+        cv::Scalar m1;
+        cv::Scalar m2;
+        cv::Scalar stdv1;
+        cv::Scalar stdv2;
+        int start_x = i*ncols/boxes;
+        int start_y = j*nrows/boxes;
+        int end_x = std::min((i+1)*ncols/boxes, ncols-1);
+        int end_y = std::min((j+1)*nrows/boxes, nrows-1);
+        cv::Mat tmp1 = transform_1(cv::Rect(start_x,start_y,end_x-start_x,end_y-start_y));
+        cv::Mat tmp2 = transform_2(cv::Rect(start_x,start_y,end_x-start_x,end_y-start_y));
+        cv::meanStdDev(tmp1, m1, stdv1);
+        cv::meanStdDev(tmp2, m2, stdv2);
+        //std::cout << "M = "<< std::endl << " "  << tmp1 << std::endl << std::endl;
+        //printf("%f, %f\n", m1[0],  stdv1[0]);
+        vector.at<float>(1+4*(i*boxes+j)) = (float)m1[0];
+        vector.at<float>(2+4*(i*boxes+j)) = (float)m2[0];
+        vector.at<float>(3+4*(i*boxes+j)) = (float)stdv1[0];
+        vector.at<float>(4+4*(i*boxes+j)) = (float)stdv2[0];
+
+
+      }
+    }
+    return vector;
+  }
+  if (type == 2) {
+    cv::Mat vector = cv::Mat::zeros(1, boxes*boxes+1, CV_32F);
+    if (!(this->overlaps_with(other))) {
+      return vector;
+    }
+
+
+    cv::Mat tile_p_image_1;
+    cv::Mat tile_p_image_2;
+    tile_p_image_1 = this->get_tile_data(Resolution::FULL); //cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+    tile_p_image_2 = other->get_tile_data(Resolution::FULL); //cv::imread(other->filepath, CV_LOAD_IMAGE_UNCHANGED);
+
+
+    std::pair<cv::Point2f, cv::Point2f> tile_1_bounds = this->get_bbox();
+    std::pair<cv::Point2f, cv::Point2f> tile_2_bounds = other->get_bbox();
+
+    int nrows = std::min(tile_1_bounds.second.y, tile_2_bounds.second.y) - std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
+    int ncols = std::min(tile_1_bounds.second.x, tile_2_bounds.second.x) - std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
+    //printf("rows = %d, cols = %d\n", nrows, ncols);
+    if ((nrows <= 0) || (ncols <= 0) ) {
+      return vector;
+    }
+    int offset_x = std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
+    int offset_y = std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
+    cv::Mat transform_1 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
+    cv::Mat transform_2 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
+
+    // make the transformed images in the same size with the same cells in the same locations
+    for (int _y = 0; _y < tile_p_image_1.rows; _y++) {
+      for (int _x = 0; _x < tile_p_image_1.cols; _x++) {
+        cv::Point2f p = cv::Point2f(_x, _y);
+        cv::Point2f transformed_p = this->rigid_transform(p);
+
+        int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+        int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+        if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
+          transform_1.at<unsigned char>(y_c, x_c) +=
+             tile_p_image_1.at<unsigned char>(_y, _x);
+        }
+      }
+    }
+
+    for (int _y = 0; _y < tile_p_image_2.rows; _y++) {
+      for (int _x = 0; _x < tile_p_image_2.cols; _x++) {
+        cv::Point2f p = cv::Point2f(_x, _y);
+        cv::Point2f transformed_p = other->rigid_transform(p);
+
+        int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+        int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+        if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
+          transform_2.at<unsigned char>(y_c, x_c) +=
+             tile_p_image_2.at<unsigned char>(_y, _x);
+        }
+      }
+    }
+
+    // clear any location which only has a value for one of them
+    // note that the transforms are the same size
+    for (int _y = 0; _y < transform_1.rows; _y++) {
+      for (int _x = 0; _x < transform_1.cols; _x++) {
+        if (transform_2.at<unsigned char>(_y, _x) == 0) {
+         transform_1.at<unsigned char>(_y, _x) = 0;
+        }
+        else if (transform_1.at<unsigned char>(_y, _x) == 0) {
+         transform_2.at<unsigned char>(_y, _x) = 0;
+        }
+      }
+    }
+
+    vector.at<float>(0) = ((float)nrows*ncols)/(boxes*boxes);
+
+    for (int i = 0; i < boxes; i++) {
+      for (int j = 0; j < boxes; j++) {
+        int start_x = i*ncols/boxes;
+        int start_y = j*nrows/boxes;
+        int end_x = std::min((i+1)*ncols/boxes, ncols-1);
+        int end_y = std::min((j+1)*nrows/boxes, nrows-1);
+        cv::Mat tmp1 = transform_1(cv::Rect(start_x,start_y,end_x-start_x,end_y-start_y));
+        cv::Mat tmp2 = transform_2(cv::Rect(start_x,start_y,end_x-start_x,end_y-start_y));
+        cv::Mat result_CCOEFF_NORMED;
+        cv::matchTemplate(tmp1, tmp2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
+        vector.at<float>(1+(i*boxes+j)) = result_CCOEFF_NORMED.at<float>(0,0);
+      }
+    }
+    return vector;
+  }
+
+  printf("Error reached end of get_feature_vector without returning anything\n");
+  exit(0);
+}
+
 void tfk::Tile::release_full_image() {
     full_image_lock->lock();
     full_image.release();
@@ -520,6 +714,8 @@ tfk::Tile::Tile(TileData& tile_data) {
     this->a01 = 0.0;
     this->a11 = 1.0;
 
+    this->tile_data = tile_data;
+
 
     if (tile_data.has_ignore()) {
       bool *ignore = (bool *) malloc(sizeof(bool));
@@ -633,8 +829,8 @@ void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
 
   this->p_kps_3d = new std::vector<cv::KeyPoint>();
 
-  int rows = this->p_image->rows;
-  int cols = this->p_image->cols;
+  //int rows = this->p_image->rows;
+  //int cols = this->p_image->cols;
   //ASSERT((rows % SIFT_D1_SHIFT_3D) == 0);
   //ASSERT((cols % SIFT_D2_SHIFT_3D) == 0);
   cv::Ptr<cv::Feature2D> p_sift;
@@ -814,7 +1010,7 @@ void tfk::Tile::compute_sift_keypoints2d_params(tfk::params params,
 }
 
 void tfk::Tile::compute_sift_keypoints2d_params(tfk::params params,
-    std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile) {
+std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile) {
   //printf("computing sift keypoints 2d with params\n");
 
   cv::Mat _tmp_image = this->get_tile_data(FULL);
@@ -866,6 +1062,7 @@ void tfk::Tile::compute_sift_keypoints2d_params(tfk::params params,
   float scale_x = params.scale_x;
   float scale_y = params.scale_y;
   cv::resize(tmp_image, local_p_image, cv::Size(), scale_x,scale_y,CV_INTER_AREA);
+  _tmp_image.release();
 
   int rows = local_p_image.rows;
   int cols = local_p_image.cols;
@@ -875,7 +1072,7 @@ void tfk::Tile::compute_sift_keypoints2d_params(tfk::params params,
   std::vector<cv::KeyPoint> v_kps[SIFT_MAX_SUB_IMAGES];
   cv::Mat m_kps_desc[SIFT_MAX_SUB_IMAGES];
 
-  int n_sub_images;
+  int n_sub_images = 1;
   if ((this->tile_id > MFOV_BOUNDARY_THRESH)) {
     p_sift = new cv::xfeatures2d::SIFT_Impl(
             params.num_features,  // num_features --- unsupported.
@@ -905,8 +1102,8 @@ void tfk::Tile::compute_sift_keypoints2d_params(tfk::params params,
 
         // Compute a subimage ID, refering to a tile within larger
         //   2d image.
-        int cur_d1_id = 0;//cur_d1 / SIFT_D1_SHIFT;
-        int cur_d2_id = 0;//cur_d2 / SIFT_D2_SHIFT;
+        //int cur_d1_id = 0;//cur_d1 / SIFT_D1_SHIFT;
+        //int cur_d2_id = 0;//cur_d2 / SIFT_D2_SHIFT;
         int sub_im_id = 0;//cur_d1_id * max_cols + cur_d2_id;
 
         // Detect the SIFT features within the subimage.
@@ -1014,8 +1211,8 @@ void tfk::Tile::compute_sift_keypoints2d() {
 
         // Compute a subimage ID, refering to a tile within larger
         //   2d image.
-        int cur_d1_id = 0;//cur_d1 / SIFT_D1_SHIFT;
-        int cur_d2_id = 0;//cur_d2 / SIFT_D2_SHIFT;
+        //int cur_d1_id = 0;//cur_d1 / SIFT_D1_SHIFT;
+        //int cur_d2_id = 0;//cur_d2 / SIFT_D2_SHIFT;
         int sub_im_id = 0;//cur_d1_id * max_cols + cur_d2_id;
 
         // Detect the SIFT features within the subimage.
@@ -1163,203 +1360,3 @@ void tfk::Tile::compute_sift_keypoints2d() {
   cv::vconcat(m_kps_desc, n_sub_images, *(this->p_kps_desc));
   this->p_image->release();
 }
-
-
-
-
-
-void tfk::Tile::compute_sift_keypoints_with_params(params p) {
-  (*this->p_image) = get_tile_data(p.res);
-
-  (*this->p_kps).clear();
-
-  //printf("Dimensiosn are %d %d\n", this->p_image->rows, this->p_image->cols);
-
-
-  int rows = this->p_image->rows;
-  int cols = this->p_image->cols;
-
-  ASSERT((rows % SIFT_D1_SHIFT) == 0);
-  ASSERT((cols % SIFT_D2_SHIFT) == 0);
-
-  cv::Ptr<cv::Feature2D> p_sift;
-
-  std::vector<cv::KeyPoint> v_kps[SIFT_MAX_SUB_IMAGES];
-  cv::Mat m_kps_desc[SIFT_MAX_SUB_IMAGES];
-
-  int n_sub_images;
-  if ((this->tile_id > MFOV_BOUNDARY_THRESH)) {
-    p_sift = new cv::xfeatures2d::SIFT_Impl(
-            p.num_features,  // num_features --- unsupported.
-            p.num_octaves,  // number of octaves
-            p.contrast_threshold,  // contrast threshold.
-            p.edge_threshold,  // edge threshold.
-            p.sigma);  // sigma.
-
-    // THEN: This tile is on the boundary, we need to compute SIFT features
-    // on the entire section.
-    int max_rows = rows / SIFT_D1_SHIFT;
-    int max_cols = cols / SIFT_D2_SHIFT;
-    n_sub_images = max_rows * max_cols;
-
-    cilk_for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
-      cilk_for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
-        //printf("cur_d2 is %d cur_d1 is %d\n", cur_d2, cur_d1);
-        // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
-        cv::Mat sub_im = (*this->p_image)(cv::Rect(cur_d2, cur_d1,
-            SIFT_D2_SHIFT, SIFT_D1_SHIFT));
-
-        // Mask for subimage
-        cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT, SIFT_D2_SHIFT,
-            CV_8UC1);
-
-        // Compute a subimage ID, refering to a tile within larger
-        //   2d image.
-        int cur_d1_id = cur_d1 / SIFT_D1_SHIFT;
-        int cur_d2_id = cur_d2 / SIFT_D2_SHIFT;
-        int sub_im_id = cur_d1_id * max_cols + cur_d2_id;
-
-        // Detect the SIFT features within the subimage.
-        fasttime_t tstart = gettime();
-        p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-            m_kps_desc[sub_im_id]);
-
-        fasttime_t tend = gettime();
-        totalTime += tdiff(tstart, tend);
-
-        for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
-          v_kps[sub_im_id][i].pt.x += cur_d2;
-          v_kps[sub_im_id][i].pt.y += cur_d1;
-        }
-      }
-    }
-    // Regardless of whether we were on or off MFOV boundary, we concat
-    //   the keypoints and their descriptors here.
-    for (int i = 0; i < n_sub_images; i++) {
-        for (int j = 0; j < v_kps[i].size(); j++) {
-            (*this->p_kps).push_back(v_kps[i][j]);
-        }
-    }
-
-  } else {
-    p_sift = new cv::xfeatures2d::SIFT_Impl(
-            p.num_features,  // num_features --- unsupported.
-            p.num_octaves,  // number of octaves
-            p.contrast_threshold,  // contrast threshold.
-            p.edge_threshold,  // edge threshold.
-            p.sigma);  // sigma.
-
-    // ELSE THEN: This tile is in the interior of the MFOV. Only need to
-    //     compute features along the boundary.
-    n_sub_images = 4;
-
-    // BEGIN TOP SLICE
-    {
-      // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
-      cv::Mat sub_im = (*this->p_image)(cv::Rect(
-          0, 0, SIFT_D2_SHIFT_3D, OVERLAP_2D));
-
-      // Mask for subimage
-      cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, SIFT_D2_SHIFT_3D, CV_8UC1);
-      int sub_im_id = 0;
-
-      // Detect the SIFT features within the subimage.
-      fasttime_t tstart = gettime();
-      p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-          m_kps_desc[sub_im_id]);
-      fasttime_t tend = gettime();
-      totalTime += tdiff(tstart, tend);
-      for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
-          v_kps[sub_im_id][i].pt.x += 0;  // cur_d2;
-          v_kps[sub_im_id][i].pt.y += 0;  // cur_d1;
-      }
-    }
-    // END TOP SLICE
-
-    // BEGIN LEFT SLICE
-    {
-      // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
-      cv::Mat sub_im = (*this->p_image)(cv::Rect(
-          0, OVERLAP_2D, OVERLAP_2D, SIFT_D1_SHIFT_3D-OVERLAP_2D));
-
-      // Mask for subimage
-      cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT_3D-OVERLAP_2D, OVERLAP_2D,
-          CV_8UC1);
-      int sub_im_id = 1;
-      // Detect the SIFT features within the subimage.
-      fasttime_t tstart = gettime();
-      p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-         m_kps_desc[sub_im_id]);
-      fasttime_t tend = gettime();
-      totalTime += tdiff(tstart, tend);
-      for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
-          v_kps[sub_im_id][i].pt.x += 0;  // cur_d2;
-          v_kps[sub_im_id][i].pt.y += OVERLAP_2D;  // cur_d1;
-      }
-    }
-    // END LEFT SLICE
-
-    // BEGIN RIGHT SLICE
-    {
-      // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
-      cv::Mat sub_im = (*this->p_image)(cv::Rect(
-          SIFT_D2_SHIFT_3D-OVERLAP_2D, OVERLAP_2D, OVERLAP_2D, SIFT_D1_SHIFT_3D-OVERLAP_2D));
-
-      // Mask for subimage
-      cv::Mat sum_im_mask = cv::Mat::ones(SIFT_D1_SHIFT_3D-OVERLAP_2D, OVERLAP_2D,
-          CV_8UC1);
-      int sub_im_id = 2;
-      // Detect the SIFT features within the subimage.
-      fasttime_t tstart = gettime();
-
-      p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-          m_kps_desc[sub_im_id]);
-      fasttime_t tend = gettime();
-      totalTime += tdiff(tstart, tend);
-      for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
-          v_kps[sub_im_id][i].pt.x += SIFT_D2_SHIFT_3D-OVERLAP_2D;  // cur_d2;
-          v_kps[sub_im_id][i].pt.y += OVERLAP_2D;  // cur_d1;
-      }
-    }
-    // END RIGHT SLICE
-
-    // BEGIN BOTTOM SLICE
-    {
-      // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
-      cv::Mat sub_im = (*this->p_image)(cv::Rect(
-          OVERLAP_2D, SIFT_D1_SHIFT_3D-OVERLAP_2D, SIFT_D2_SHIFT_3D-OVERLAP_2D, OVERLAP_2D));
-
-      // Mask for subimage
-      cv::Mat sum_im_mask = cv::Mat::ones(OVERLAP_2D, SIFT_D2_SHIFT_3D-OVERLAP_2D,
-          CV_8UC1);
-      // Compute a subimage ID, refering to a tile within larger
-      //   2d image.
-      int sub_im_id = 3;
-      // Detect the SIFT features within the subimage.
-      fasttime_t tstart = gettime();
-
-      p_sift->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
-          m_kps_desc[sub_im_id]);
-      fasttime_t tend = gettime();
-      totalTime += tdiff(tstart, tend);
-      for (int i = 0; i < v_kps[sub_im_id].size(); i++) {
-          v_kps[sub_im_id][i].pt.x += OVERLAP_2D;  // cur_d2;
-          v_kps[sub_im_id][i].pt.y += (SIFT_D1_SHIFT_3D-OVERLAP_2D);  // cur_d1;
-      }
-    }
-    // END BOTTOM SLICE
-
-    // Regardless of whether we were on or off MFOV boundary, we concat
-    //   the keypoints and their descriptors here.
-    for (int i = 0; i < n_sub_images; i++) {
-        for (size_t j = 0; j < v_kps[i].size(); j++) {
-            (*this->p_kps).push_back(v_kps[i][j]);
-        }
-    }
-  }
-
-  cv::vconcat(m_kps_desc, n_sub_images, *(this->p_kps_desc));
-  this->p_image->release();
-}
-
-

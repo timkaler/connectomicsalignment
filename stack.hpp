@@ -9,6 +9,7 @@
 #include "opencv2/opencv.hpp"
 #include "opencv2/features2d.hpp"
 #include <opencv2/xfeatures2d.hpp>
+#include <opencv2/ml.hpp>
 #include <opencv2/imgproc/types_c.h>
 #include "cilk_tools/Graph.h"
 //#include "cilk_tools/engine.h"
@@ -97,6 +98,8 @@ class Tile {
    int level;
    bool bad;
 
+   TileData tile_data;
+
 
    bool has_full_image;
    cv::Mat full_image;
@@ -144,6 +147,7 @@ class Tile {
    std::vector<cv::Point2f> get_corners();
 
    cv::Mat get_tile_data(Resolution res);
+   cv::Mat get_feature_vector(Tile *other, int boxes, int type);
 };
 
 
@@ -217,7 +221,7 @@ class Section {
     void align_3d(Section* neighbor);
 
 
-    void compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
+    cv::Point2f compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
       std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector <cv::KeyPoint>& b_tile_keypoints,
       cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
       std::vector< cv::Point2f > &filtered_match_points_a,
@@ -389,6 +393,11 @@ class Stack {
     // Alignment algorithms
     void align_2d();
     void align_3d();
+
+    //void render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix);
+    void parameter_optimization(int trials, double threshold, std::vector<params> ps, std::vector<std::tuple<int, double, int>>& results);
+    void test_learning(int trials, int vector_grid_size, int vector_mode);
+
 };
 
 
@@ -396,7 +405,6 @@ class Stack {
 
 class MatchTilesTask : MRTask {
   public:
-
     std::vector<int> param_adjustments;
     std::vector<int> param_train_deltas;
 
