@@ -26,7 +26,7 @@ void tfk_simple_ransac_strict(std::vector<cv::Point2f>& match_points_a,
     std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask);
 
 
-int tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
+cv::Point2f tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
     std::vector<cv::Point2f>& match_points_b, double _thresh, bool* mask);
 
 void tfk_simple_ransac_old(std::vector<cv::Point2f>& match_points_a,

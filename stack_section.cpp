@@ -1489,7 +1489,7 @@ void tfk::Section::find_3d_matches_in_box_cache(Section* neighbor,
                  btile_kps_desc_in_overlap,
                  0.65);
 
-  printf("Num matches is %d\n", matches.size());
+  printf("Num matches is %zu\n", matches.size());
 
   // Bad don't add filtered matches.
   if (matches.size() < 120) return;
@@ -1651,7 +1651,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
                  btile_kps_desc_in_overlap,
                  0.65);
 
-  printf("Num matches is %d\n", matches.size());
+  printf("Num matches is %zu\n", matches.size());
 
   // Bad don't add filtered matches.
   if (matches.size() < 120) return;
@@ -2569,7 +2569,8 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
 
 }
 
-void tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
+//returns the offset vector between the images in the scale of the images
+cv::Point2f tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
   std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
   cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
   std::vector< cv::Point2f > &filtered_match_points_a,
@@ -2577,8 +2578,10 @@ void tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
 
   std::vector<int> neighbors = get_all_close_tiles(a_tile->tile_id);
 
-  if (a_tile_keypoints.size() < MIN_FEATURES_NUM) return;
-  if (b_tile_keypoints.size() < MIN_FEATURES_NUM) return;
+  cv::Point2f ZERO = cv::Point2f(0.0,0.0);
+
+  if (a_tile_keypoints.size() < MIN_FEATURES_NUM) return ZERO;
+  if (b_tile_keypoints.size() < MIN_FEATURES_NUM) return ZERO;
 
   // Filter the features, so that only features that are in the
   //   overlapping tile will be matches.
@@ -2642,8 +2645,8 @@ void tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
         (btile_kps_desc_in_overlap));
   } // End scoped block A
 
-  if (atile_kps_in_overlap.size() < MIN_FEATURES_NUM) return;
-  if (btile_kps_in_overlap.size() < MIN_FEATURES_NUM) return;
+  if (atile_kps_in_overlap.size() < MIN_FEATURES_NUM) return ZERO;
+  if (btile_kps_in_overlap.size() < MIN_FEATURES_NUM) return ZERO;
 
   float trial_rod;
   for (int trial = 0; trial < 4; trial++) {
@@ -2673,7 +2676,7 @@ void tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
 
     bool* mask = (bool*) calloc(match_points_a.size(), 1);
     double thresh = ransac_thresh;//5.0;
-    tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
+    cv::Point2f relative_offset = tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
 
 
     filtered_match_points_a.clear();
@@ -2693,7 +2696,7 @@ void tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
     free(mask);
     if (num_matches_filtered >= MIN_FEATURES_NUM) {
       //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
-      break;
+      return relative_offset;
     } else {
       filtered_match_points_a.clear();
       filtered_match_points_b.clear();
@@ -2718,7 +2721,7 @@ void tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
   //  //filtered_match_points_a.push_back(cv::Point(a_tile->x_finish, a_tile->y_finish));
   //  //filtered_match_points_b.push_back(cv::Point(b_tile->x_finish, b_tile->y_finish));
   //}
-
+  return ZERO;
 }
 
 void tfk::Section::compute_tile_matches2(Tile* a_tile) {
@@ -3248,6 +3251,7 @@ void tfk::Section::compute_keypoints_and_matches() {
     for (int j = 0; j < this->tiles[i]->edges.size(); j++) {
       graph->edgeData[i].push_back(this->tiles[i]->edges[j]);
     }
+
 
     //_tile_data tdata = p_sec_data->tiles[i];
     Tile* tile = this->tiles[i];

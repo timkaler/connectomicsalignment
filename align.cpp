@@ -126,33 +126,32 @@ void param_optimize(align_data_t *p_align_data) {
 
     for (int nf = 0; nf < 3; nf++) {
         int num_features = 1 << nf;
-        for (int no = 5; no < 20; no++) {
+        for (int no = 8; no < 16; no++) {
             int num_octaves = no;
-            for (float sigma = 1; sigma < 2; sigma+=.1) {
-                for (float ct = .001; ct < .025; ct+=.001) {
-                    for (float et = 4; et < 15; et+=3) {
+            //for (float sigma = 1; sigma < 2; sigma+=.1) {
+            
+                //for (float ct = .001; ct < .025; ct+=.001) {
+            
+                    //for (float et = 4; et < 15; et+=3) {
+                          float sigma = 1.6;
+                          float ct = .015;
+                          float et = 6;
+                          for (float scale = .1; scale < 1.03; scale+=.1) {
+                              tfk::params p;
+                              p.num_features = num_features;//num_features;
+                              p.num_octaves = num_octaves;
+                              p.contrast_threshold = ct;//CONTRAST_THRESH;//10.0;
+                              p.edge_threshold = et;//EDGE_THRESH_2D;
+                              p.sigma = sigma;//sigma;
+                              p.res = tfk::FULL;
+                              p.scale_x = scale;
+                              p.scale_y = scale;
+                              ps.push_back(p);
+                          }
+                    //}
+                //}
 
-                          tfk::params p;
-                          p.num_features = num_features;//num_features;
-                          p.num_octaves = num_octaves;
-                          p.contrast_threshold = ct;//CONTRAST_THRESH;//10.0;
-                          p.edge_threshold = et;//EDGE_THRESH_2D;
-                          p.sigma = sigma;//sigma;
-                          p.res = tfk::FULL;
-                          ps.push_back(p);
-
-                          tfk::params p2;
-                          p2.num_features = num_features;//num_features;
-                          p2.num_octaves = num_octaves;
-                          p2.contrast_threshold = ct;//CONTRAST_THRESH;//10.0;
-                          p2.edge_threshold = et;//EDGE_THRESH_2D;
-                          p2.sigma = sigma;//sigma;
-                                                p2.res = tfk::PERCENT50;
-                          ps.push_back(p2);
-                    }
-                }
-
-            }
+            //}
         }
     }
     std::random_shuffle ( ps.begin(), ps.end() );
@@ -160,7 +159,7 @@ void param_optimize(align_data_t *p_align_data) {
     std::vector<std::tuple<int, double, int>> current;
 
     double threshold = 5;
-    int trials = 500;
+    int trials = 100;
     stack->parameter_optimization(trials, threshold, ps, current);
     /*for (int j = 0; j < ps.size(); j++) {
       printf("%d, %d, %f, %f, %f, %d, %d, %f, %f, %d\n",
@@ -170,4 +169,30 @@ void param_optimize(align_data_t *p_align_data) {
     return;
 }
 
+void test_learning(align_data_t *p_align_data) {
+
+    tfk::Stack* stack = new tfk::Stack(p_align_data->base_section,
+                                       p_align_data->n_sections,
+                                       p_align_data->input_filepath,
+                                       p_align_data->output_dirpath);
+
+
+    stack->mode = p_align_data->mode;
+    stack->output_dirpath = p_align_data->output_dirpath;
+    stack->base_section = p_align_data->base_section;
+    stack->n_sections = p_align_data->n_sections;
+    stack->do_subvolume = p_align_data->do_subvolume;
+    stack->input_filepath = p_align_data->input_filepath;
+    stack->min_x = p_align_data->min_x;
+    stack->min_y = p_align_data->min_y;
+    stack->max_x = p_align_data->max_x;
+    stack->max_y = p_align_data->max_y;
+    stack->init();
+    printf("stack has sections %zu\n", stack->sections.size());
+    std::vector<tfk::params> ps;
+    int trials = 10000;
+
+    stack->test_learning(trials, 5, 2);
+    return;
+}
 

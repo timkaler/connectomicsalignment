@@ -88,6 +88,8 @@ int main(int argc, char **argv) {
       align_execute(p_align_data);
     } else if (mode == 2) {
       param_optimize(p_align_data);
+    } else if (mode == 3) {
+      test_learning(p_align_data);
     } else {
       std::cout << "Invalid mode, stopping program" << std::endl;
     }
