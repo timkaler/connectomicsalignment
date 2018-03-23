@@ -134,6 +134,9 @@ Graph.o: cilk_tools/Graph.cpp cilk_tools/scheduler.cpp cilk_tools/Graph.cpp
 mrparams.o: mrparams.cpp mrparams.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
+paramdb.o: paramdb.cpp paramdb.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
 #engine.o: cilk_tools/Graph.cpp cilk_tools/engine.cpp cilk_tools/scheduler.cpp
 #	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
@@ -145,7 +148,7 @@ mrparams.o: mrparams.cpp mrparams.hpp
 run.S: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: Graph.o scheduler.o engine.o common.o align.o match.o ransac.o run.o stack.o mrparams.o
+run_align: Graph.o scheduler.o engine.o common.o align.o match.o ransac.o run.o stack.o mrparams.o paramdb.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:

@@ -38,5 +38,16 @@ namespace tfk {
     return ret;
   }
 
+  float MRParams::get_accuracy() {return accuracy;}
+  float MRParams::get_cost() {return cost;}
+
+  void MRParams::set_accuracy(float val) {
+    accuracy = val;
+  }
+
+  void MRParams::set_cost(float val) {
+    cost = val;
+  }
+
 // end namespace tfk
 }
