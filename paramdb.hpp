@@ -25,6 +25,7 @@ namespace tfk {
       MRParams* get_default_params();
 
       void import_params(MRParams* params);
+      void init_ParamsDB();
   };
 }
 
