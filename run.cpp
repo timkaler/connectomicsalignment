@@ -8,9 +8,31 @@
 #include "fasttime.h"
 #include "./cxxopts.hpp"
 
+#include <string>
+#include <vector>
+
 #ifdef PROFILE
 #include <gperftools/profiler.h>
 #endif
+
+std::pair<cv::Point2f, cv::Point2f> process_bounding_box_string(std::string bounding_box_string) {
+
+  std::stringstream ss(bounding_box_string);
+  std::string token;
+  char delim = ',';
+  std::vector<float> items;
+  while (std::getline(ss,token,delim)) {
+    items.push_back(stof(token));
+  }
+
+  if (items.size() == 4) {
+    printf("Got a bounding box.\n");
+    for (int i =0; i < items.size(); i++) {
+      printf("item %d %f\n", i, items[i]);
+    }
+  }
+  return std::make_pair(cv::Point2f(items[0], items[1]), cv::Point2f(items[2], items[3]));
+}
 
 int main(int argc, char **argv) {
 
@@ -34,6 +56,8 @@ int main(int argc, char **argv) {
          "datafile",
          "outputdir"};
 
+    std::string bounding_box_string = "";
+
     cxxopts::Options options(argv[0], " - testing command line options.");
     options.positional_help("Positional Help Text");
     options.add_options()
@@ -42,9 +66,11 @@ int main(int argc, char **argv) {
       ("d,datafile", "The protobuf containing the tilespec information.", cxxopts::value<std::string>(datafile_path))
       ("o,outputdir", "The directory used to output results.", cxxopts::value<std::string>(outputdir_path))
       ("m,mode", "what mode to run in 1 to run the alignment 2 to run the paramter optimization", cxxopts::value<int>(mode))
-      ("help", "Print help");
+      ("help", "Print help")
+      ("b,bbox", "Bounding box", cxxopts::value<std::string>(bounding_box_string));
 
     options.parse(argc, argv);
+
     if (options.count("help")) {
       std::cout << options.help({"", "Group"}) << std::endl;
     }
@@ -74,6 +100,7 @@ int main(int argc, char **argv) {
     p_align_data->work_dirpath = (char*)outputdir_path.c_str(); // use same path for both.
     p_align_data->output_dirpath = (char*)outputdir_path.c_str();
     p_align_data->do_subvolume = false;
+    p_align_data->bounding_box = process_bounding_box_string(bounding_box_string);
 
   } catch (const cxxopts::OptionException& e) {
     std::cout << "Error parsing options: " << e.what() << std::endl;

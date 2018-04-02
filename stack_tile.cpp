@@ -13,7 +13,7 @@ void updateTile2DAlign(int vid, void* scheduler_void) {
 
   tile->local2DAlignUpdate();
 
-  if (vertex_data->iteration_count < 5000) {
+  if (vertex_data->iteration_count < 100000) {
     scheduler->add_task(vid, updateTile2DAlign);
   }
   vertex_data->iteration_count++;
@@ -640,15 +640,15 @@ cv::Point2f tfk::Tile::rigid_transform(cv::Point2f pt) {
 }
 
 bool tfk::Tile::overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox) {
-    int x1_start = this->x_start;
-    int x1_finish = this->x_finish;
-    int y1_start = this->y_start;
-    int y1_finish = this->y_finish;
+    float x1_start = this->x_start;
+    float x1_finish = this->x_finish;
+    float y1_start = this->y_start;
+    float y1_finish = this->y_finish;
 
-    int x2_start = bbox.first.x;
-    int x2_finish = bbox.second.x;
-    int y2_start = bbox.first.y;
-    int y2_finish = bbox.second.y;
+    float x2_start = bbox.first.x;
+    float x2_finish = bbox.second.x;
+    float y2_start = bbox.first.y;
+    float y2_finish = bbox.second.y;
 
     bool res = false;
     if ((x1_start < x2_finish) && (x1_finish > x2_start) &&
@@ -897,7 +897,7 @@ void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
 cv::Mat tfk::Tile::get_tile_data(Resolution res) {
 
   std::string thumbnailpath = std::string(this->filepath);
-  thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".bmp"), 4,".jpg");
+  thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".jp2"), 4,".jpg");
   thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
 
   switch(res) {
@@ -943,7 +943,7 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
         new_path = this->filepath.replace(0,5, "/efs/");
       //}
       new_path = this->filepath + "_.jpg";
-      printf("New %s\n", new_path.c_str());
+      //printf("New %s\n", new_path.c_str());
 
       cv::Mat full_image = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
       cv::imwrite(new_path, full_image, params);
@@ -965,10 +965,13 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       //} else if (this->tile_id % 3 == 1) {
       //  new_path = this->filepath.replace(0,5, "/ebs2/");
       //} else if (this->tile_id % 3 == 2) {
-        new_path = this->filepath.replace(0,5, "/efs/");
+      //new_path = this->filepath.replace(0,5, "/efs/");
       //}
-      new_path = this->filepath + "_.jpg";
-
+      //new_path = this->filepath + "_.jpg";
+      new_path = this->filepath;
+      new_path = new_path.replace(new_path.find("_compressed_10percent"),21,"");
+      new_path = new_path.replace(new_path.find(".jp2"), 4, ".bmp");
+      //printf("new_path %s\n", new_path.c_str());
         //printf("%s\n", path.c_str());
         //std::string new_path = this->filepath + "_.jpg";
         //printf("%s\n", new_path.c_str());
@@ -981,6 +984,7 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
         has_full_image = true; //uncomment for cashing
       }
       cv::Mat ret = full_image.clone();
+      //printf("rows %d, cols %d\n", ret.rows, ret.cols);
       full_image_lock->unlock();
       //full_image.release(); // remove for caching
       //printf("image rows %d and cols %d\n", ret.rows, ret.cols);
@@ -1151,8 +1155,8 @@ void tfk::Tile::compute_sift_keypoints2d() {
 
   //(*this->p_image).create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
 
-  float scale_x = 0.2;
-  float scale_y = 0.2;
+  float scale_x = 0.25;
+  float scale_y = 0.25;
   cv::resize(tmp_image, (*this->p_image), cv::Size(), scale_x,scale_y,CV_INTER_AREA);
 
   //(*this->p_image) = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
@@ -1183,11 +1187,11 @@ void tfk::Tile::compute_sift_keypoints2d() {
     //        1.2);  // sigma.
 
     p_sift = new cv::xfeatures2d::SIFT_Impl(
-            2,  // num_features --- unsupported.
-            2,  // number of octaves
+            1,  // num_features --- unsupported.
+            6,  // number of octaves
             //0.04,  // contrast threshold.
-            0.02,  // contrast threshold.
-            5,  // edge threshold.
+            0.01,  // contrast threshold.
+            10,  // edge threshold.
             1.2);  // sigma.
 
     // THEN: This tile is on the boundary, we need to compute SIFT features

@@ -1,10 +1,9 @@
 namespace tfk {
 
-    MatchTilesTask::MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors) {
+    MatchTilesTask::MatchTilesTask (ParamDB* paramDB, Tile* tile, std::vector<Tile*> neighbors) {
+      this->paramDB = paramDB;
       this->tile = tile;
       this->neighbors = neighbors;
-      //this->param_adjustments.resize(7);
-      //this->param_train_deltas.resize(7);
     }
 
     void MatchTilesTask::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
@@ -139,60 +138,24 @@ namespace tfk {
       }
     }
 
-
-    void MatchTilesTask::set_random_train() {
-       int index = rand()%param_train_deltas.size();
-       for (int i = 0; i < param_train_deltas.size(); i++) {
-         param_train_deltas[i] = 0;
-       }
-       int sign = rand()%2 ? -1 : 1;
-       param_train_deltas[index] = sign;
-    }
-
-    //jvoid MatchTilesTask::update_result(float last_correct, float next_correct,
-    //j    std::vector<int>& param_adjustments, std::vector<int>& param_train_deltas) {
-    //j  if (next_correct > last_correct) {
-    //j    for (int i = 0; i < param_train_deltas.size(); i++) {
-    //j      param_adjustments[i] += param_train_deltas[i];
-    //j      param_train_deltas[i] = 0;
-    //j    }
-    //j  }
-    //j  printf("params:\n");
-    //j  printf("scale_x %f\n", 0.25 + param_adjustments[0]*0.05);
-    //j  printf("scale_y %f\n", 0.25 + param_adjustments[1]*0.05);
-    //j  printf("num_features %f\n", 1.0 + param_adjustments[2]);
-    //j  printf("num_octaves %f\n", 6.0 + param_adjustments[3]);
-    //j  printf("contrast_thresh %f\n", 0.01 + param_adjustments[4]*0.001);
-    //j  printf("edge_thresh %f\n", 20.0 + param_adjustments[5]);
-    //j  printf("edge_thresh %f\n", 1.2 + param_adjustments[6]*0.05);
-    //j}
-
-    void MatchTilesTask::compute(float probability_correct, std::vector<int>& param_adjustments,
-        std::vector<int>& param_train_deltas) {
+    void MatchTilesTask::compute(float probability_correct) {
       Tile* a_tile = tile;
       std::vector<cv::KeyPoint> a_tile_keypoints;
       cv::Mat a_tile_desc;
-/*
-scale_x 0.150000
-scale_y -0.050000
-num_features -1.000000
-num_octaves 8.000000
-contrast_thresh 0.011000
-edge_thresh 17.000000
-edge_thresh 1.000000
-Result is 0.570000
 
 
-*/
+      this->mr_params = paramDB->get_params_for_accuracy(probability_correct);
+
       tfk::params new_params;
-      new_params.scale_x = 0.15;// + param_adjustments[0]*0.05 + param_train_deltas[0]*0.05;
-      new_params.scale_y = 0.15;// + param_adjustments[1]*0.05 + param_train_deltas[1]*0.05;
-      new_params.num_features = -1 + param_adjustments[2] + param_train_deltas[2];
-      if (new_params.num_features < 0) new_params.num_features = 0;
-      new_params.num_octaves = 8 + param_adjustments[3] + param_train_deltas[3];
-      new_params.contrast_threshold = 0.011 + param_adjustments[4]*0.001 + param_train_deltas[4]*0.001;
-      new_params.edge_threshold = 17 + param_adjustments[5] + param_train_deltas[5];
-      new_params.sigma = 1.0 + param_adjustments[6]*0.05 + param_train_deltas[6]*0.05;
+      new_params.scale_x = mr_params->get_float_param("scale_x");
+      new_params.scale_y = mr_params->get_float_param("scale_y");
+
+      //printf("scale x %f scale y %f\n", new_params.scale_x, new_params.scale_y);
+      new_params.num_features = mr_params->get_int_param("num_features");
+      new_params.num_octaves = mr_params->get_int_param("num_octaves");
+      new_params.contrast_threshold = mr_params->get_float_param("contrast_threshold"); 
+      new_params.edge_threshold = mr_params->get_float_param("edge_threshold"); 
+      new_params.sigma = mr_params->get_float_param("sigma"); 
 
       a_tile->compute_sift_keypoints2d_params(new_params, a_tile_keypoints,
                                               a_tile_desc, a_tile);
@@ -260,8 +223,10 @@ Result is 0.570000
         }
       }
       if (neighbor_success_count >= neighbors.size()*4.0/5.0) {
+        paramDB->record_success(mr_params);
         return true;
       } else { 
+        paramDB->record_failure(mr_params);
         return false;
       }
     }

@@ -267,7 +267,7 @@ typedef struct _align_data {
     int max_x;
     int max_y;
     section_data_t sec_data[MAX_SECTIONS];
-    
+    std::pair<cv::Point2f, cv::Point2f> bounding_box;  
     //cv::Mat *p_section_transforms[MAX_SECTIONS];
     
     

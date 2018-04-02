@@ -22,6 +22,8 @@
 
 #include "cilk_tools/engine.h"
 #include "mrtask.hpp"
+#include "mrparams.hpp"
+#include "paramdb.hpp"
 //#include "./meshoptimize.h"
 #ifndef ALIGNSTACK
 #define ALIGNSTACK
@@ -161,6 +163,7 @@ class Section {
     bool elastic_transform_ready;
     int num_tiles_replaced;
     int num_bad_2d_matches;
+    std::pair<cv::Point2f, cv::Point2f> _bounding_box;
     cv::Mat* p_out;
     std::vector<cv::KeyPoint>* p_kps;
     std::string cached_2d_matches;
@@ -211,7 +214,7 @@ class Section {
 
 
     Section(int section_id);
-    Section(SectionData& section_data);
+    Section(SectionData& section_data, std::pair<cv::Point2f, cv::Point2f> bounding_box);
     std::vector<int> get_all_close_tiles(int atile_id);
     std::vector<Tile*> get_all_close_tiles(Tile* atile_id);
     void compute_keypoints_and_matches();
@@ -368,7 +371,7 @@ class Stack {
     int min_y;
     int max_x;
     int max_y;
-
+    std::pair<cv::Point2f, cv::Point2f> _bounding_box;
     // list of sections
     std::vector<Section*> sections;
 
@@ -408,6 +411,8 @@ class MatchTilesTask : MRTask {
     std::vector<int> param_adjustments;
     std::vector<int> param_train_deltas;
 
+    MRParams* mr_params;
+    ParamDB* paramDB;
     void set_random_train();
     //void update_result(float last_correct, float next_correct);
 
@@ -421,9 +426,9 @@ class MatchTilesTask : MRTask {
       std::vector< cv::Point2f > &filtered_match_points_a,
       std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh);
 
-    MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors);
+    MatchTilesTask (ParamDB* paramDB, Tile* tile, std::vector<Tile*> neighbors);
 
-    void compute(float probability_correct, std::vector<int>& param_adjustments, std::vector<int>& param_train_deltas);
+    void compute(float probability_correct);
     void commit();
     bool error_check(float false_negative_rate);
 };

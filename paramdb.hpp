@@ -2,6 +2,8 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <mutex>
+#include <cmath>
 #include "mrparams.hpp"
 
 #ifndef PARAMDB
@@ -14,6 +16,8 @@ namespace tfk {
       MRParams* min_params;
       MRParams* max_params;
 
+      std::mutex* mutex;
+
       std::vector<MRParams*> possible_params;
 
       ParamDB (MRParams* default_params, MRParams* min_params, MRParams* max_params);
@@ -24,7 +28,11 @@ namespace tfk {
       MRParams* get_min_params();
       MRParams* get_default_params();
 
+      void record_success(MRParams* params);
+      void record_failure(MRParams* params);
+
       void import_params(MRParams* params);
+      void print_possible_params();
   };
 }
 

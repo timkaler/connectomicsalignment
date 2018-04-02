@@ -41,7 +41,7 @@ class MRTask {
 
     // compute --- returns false if it cannot satisfy the necessary correctness probability.
     //         --- returns true if it believes it can provide the desired correctness probability. 
-    virtual void compute(float probability_correct, std::vector<int>& param_adjustments, std::vector<int>& param_train_deltas) = 0;
+    virtual void compute(float probability_correct) = 0;
 
     // error_check --- returns true if 
     virtual bool error_check(float false_negative_rate) = 0;

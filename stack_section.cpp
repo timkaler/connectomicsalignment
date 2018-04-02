@@ -125,7 +125,10 @@ void tfk::Section::align_2d() {
           if (neighbor->bad_2d_alignment) continue;
           if (t->ideal_offsets.find(neighbor->tile_id) == t->ideal_offsets.end()) continue;
           float val = t->compute_deviation(neighbor);
-          if (val > 10.0) {
+          if (val > 10.0 && val <= 15.0) {
+            printf("bad tile with deviation %f corr %f\n", val, t->neighbor_correlations[neighbor->tile_id]);
+          }
+          if (val > 15.0) {
             printf("bad tile with deviation %f corr %f\n", val, t->neighbor_correlations[neighbor->tile_id]);
             //compute_on_tile_neighborhood(this->sections[section_index],t);
             //float val = t->compute_deviation(neighbor);
@@ -156,7 +159,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
   double stepsize = 0.0001;
   double momentum = 0.5;
 
-  if (this->real_section_id == _neighbor->real_section_id) {
+  if (_neighbor==NULL || this->real_section_id == _neighbor->real_section_id) {
     max_iterations = 1;
   }
 
@@ -383,7 +386,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
       }
     }
 
-    save_elastic_mesh(_neighbor);
+    //save_elastic_mesh(_neighbor);
 
 }
 
@@ -393,7 +396,6 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
 // BEGIN utility functions
 
 bool tfk::Section::section_data_exists() {
-  return false;
 
   std::string filename =
       std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
@@ -963,9 +965,9 @@ cv::Point2f tfk::Section::get_render_scale(Resolution resolution) {
   if (resolution == THUMBNAIL || resolution == THUMBNAIL2) {
     Tile* first_tile = this->tiles[0];
 
-    std::string thumbnailpath = std::string(first_tile->filepath);
-    thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".bmp"), 4,".jpg");
-    thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
+    //std::string thumbnailpath = std::string(first_tile->filepath);
+    //thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".bmp"), 4,".jpg");
+    //thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
 
     cv::Mat thumbnail_img = first_tile->get_tile_data(THUMBNAIL);
     cv::Mat img = first_tile->get_tile_data(FULL);
@@ -1163,6 +1165,13 @@ cv::Mat tfk::Section::render_affine(cv::Mat A, std::pair<cv::Point2f, cv::Point2
 // bbox is in unscaled (i.e. full resolution) transformed coordinate system.
 cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
     tfk::Resolution resolution) {
+
+  int bad_2d_alignment = 0;
+  for (int i = 0; i < this->tiles.size(); i++) {
+    if (this->tiles[i]->bad_2d_alignment) bad_2d_alignment++;
+  }
+  printf("total tiles %d, bad 2d count %d\n", this->tiles.size(), bad_2d_alignment);
+
   //printf("Called render on bounding box %f %f %f %f\n", bbox.first.x, bbox.first.y, bbox.second.x, bbox.second.y);
   cv::Point2f render_scale = this->get_render_scale(resolution);
 
@@ -2475,7 +2484,7 @@ void tfk::Section::affine_transform_mesh() {
 
 
 void tfk::Section::construct_triangles() {
-  double hex_spacing = 1500.0;
+  double hex_spacing = 150000.0;
 
   std::pair<cv::Point2f, cv::Point2f> bbox = this->get_bbox();
 
@@ -2691,6 +2700,7 @@ void tfk::Section::apply_affine_transforms() {
 }
 
 bool tfk::Section::load_elastic_mesh(Section* neighbor) {
+  return false;
   std::string path =
       "/efs/home/tfk/maprecurse/sift_features4/emesh_"+std::to_string(this->real_section_id)+"_" +
       std::to_string(neighbor->real_section_id);
@@ -2758,7 +2768,7 @@ void tfk::Section::align_3d(Section* neighbor) {
 // Find affine transform for this section that aligns it to neighbor.
 void tfk::Section::coarse_affine_align(Section* neighbor) {
 
-  if (neighbor == NULL) {
+  if (neighbor == NULL || neighbor->real_section_id == this->real_section_id) {
     cv::Mat A(3, 3, cv::DataType<double>::type);
     A.at<double>(0,0) = 1.0;
     A.at<double>(0,1) = 0.0;
@@ -2926,7 +2936,7 @@ cv::Point2f tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
     int overlap_y_finish = a_tile->y_finish < b_tile->y_finish ?
                               a_tile->y_finish : b_tile->y_finish;
     // Add 50-pixel offset
-    const int OFFSET = 50;
+    const int OFFSET = 100; // CHANGED FROM 50.
     overlap_x_start -= OFFSET;
     overlap_x_finish += OFFSET;
     overlap_y_start -= OFFSET;
@@ -3059,14 +3069,14 @@ void tfk::Section::compute_tile_matches2(Tile* a_tile) {
     }
   }
 
-  if (neighbor_success_count <= neighbors.size()*2.0/4.0) {
+  if (neighbor_success_count < neighbors.size()*2.0/4.0) {
 
     std::vector<cv::KeyPoint> a_tile_keypoints;
     cv::Mat a_tile_desc;
     std::mutex lock;
     tfk::params new_params;
-    new_params.scale_x = 0.5;
-    new_params.scale_y = 0.5;
+    new_params.scale_x = 1.0;
+    new_params.scale_y = 1.0;
     new_params.num_features = 1;
     new_params.num_octaves = 6;
     new_params.contrast_threshold = 0.01;
@@ -3116,7 +3126,7 @@ void tfk::Section::compute_tile_matches2(Tile* a_tile) {
 
       float val = tmp_a_tile.error_tile_pair(b_tile);
       lock.lock();
-      if (val >= 0.7 && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
+      if (val >= 0.45 && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
         neighbor_success_count++;
         a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
 
@@ -3133,7 +3143,7 @@ void tfk::Section::compute_tile_matches2(Tile* a_tile) {
       lock.unlock();
     }
   }
-  if (neighbor_success_count <= neighbors.size()*2.0/4.0) {
+  if (neighbor_success_count < neighbors.size()*2.0/4.0) {
     int res = __sync_fetch_and_add(&num_bad_2d_matches, 1);
     printf("Bad 2D match! %d\n", res);
     a_tile->bad_2d_alignment = true;
@@ -3186,7 +3196,7 @@ void tfk::Section::compute_tile_matches(Tile* a_tile) {
 
     float val = tmp_a_tile.error_tile_pair(b_tile);
   //  lock.lock();
-    if (val >= 0.7 && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
+    if (val >= 0.45 && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
       neighbor_success_count++;
       a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
 
@@ -3583,7 +3593,7 @@ std::vector<int> tfk::Section::get_all_close_tiles(int atile_id) {
 }
 
 // Section from protobuf
-tfk::Section::Section(SectionData& section_data) {
+tfk::Section::Section(SectionData& section_data, std::pair<cv::Point2f, cv::Point2f> bounding_box) {
   //section_data_t *p_sec_data = &(p_tile_data->sec_data[i - p_tile_data->base_section]);
   this->elastic_transform_ready = false;
   this->section_id = section_data.section_id();
@@ -3606,7 +3616,12 @@ tfk::Section::Section(SectionData& section_data) {
 
   this->section_mesh_matches_mutex = new std::mutex();
 
+  //this->tiles.resize(section_data.tiles_size());
+  std::vector<Tile*> tmp_tiles;
+  tmp_tiles.resize(section_data.tiles_size());
+ 
 
+  int added_count = 0; 
   for (int j = 0; j < section_data.tiles_size(); j++) {
     TileData tile_data = section_data.tiles(j);
 
@@ -3618,7 +3633,17 @@ tfk::Section::Section(SectionData& section_data) {
 
     std::string test_filepath = "new_tiles/thumbnail_sec_"+std::to_string(this->real_section_id) +
         "_tileid_"+std::to_string(tile->tile_id) + ".jpg";
-    this->tiles.push_back(tile);
+    if (tile->overlaps_with(bounding_box)) {
+      printf("Tile overlaps.");
+      this->tiles.push_back(tile);
+      tile->tile_id = added_count++;
+    } else {
+      auto bbox = tile->get_bbox();
+      //printf("Doesn't overlap bounding box is %f %f %f %f\n", bbox.first.x, bbox.first.y, bbox.second.x, bbox.second.y);
+      //printf("other bbox overlap bounding box is %f %f %f %f\n", bounding_box.first.x, bounding_box.first.y, bounding_box.second.x, bounding_box.second.y);
+    }
+
+    //this->tiles.push_back(tile);
   }
 
 }

@@ -54,12 +54,17 @@ void tfk::Stack::init() {
     this->max_x = align_data.max_x();
     this->max_y = align_data.max_y();
   }
-
+  printf("got this far\n");
   // then do the section data
   for (int i = this->base_section; i < (this->base_section + this->n_sections); i++) {
+    printf("doing section %d\n", i);
     SectionData section_data = align_data.sec_data(i);
-    Section* sec = new Section(section_data);
+    printf("doing section %d\n", i);
+    printf("bounding box is %f %f %f %f\n", _bounding_box.first.x, _bounding_box.first.y, _bounding_box.second.x, _bounding_box.second.y);
+    Section* sec = new Section(section_data, _bounding_box);
+    printf("doing section %d\n", i);
     sec->section_id = this->sections.size();
+    printf("doing section %d\n", i);
     this->sections.push_back(sec);
   }
 }
@@ -145,6 +150,7 @@ void tfk::Stack::align_3d() {
       (*sec->mesh)[k] = this->sections[j]->elastic_transform((*sec->mesh)[k]);
     }
   }
+  printf("Done with align 3d\n");
 }
 
 void tfk::Stack::align_2d() {

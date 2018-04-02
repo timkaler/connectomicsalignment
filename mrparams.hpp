@@ -15,6 +15,9 @@ namespace tfk {
       float cost;
       float accuracy;
 
+      int success_count;
+      int failure_count;
+
       MRParams ();
       float get_float_param(std::string name); 
       int get_int_param(std::string name);
@@ -25,11 +28,14 @@ namespace tfk {
       std::vector<std::string> float_params();
       std::vector<std::string> int_params();
 
+      void increment_success();
+      void increment_failure();
+
       float get_accuracy();
       float get_cost();
       void set_accuracy(float val);
       void set_cost(float val); 
-
+      void print();
   };
 }
 
