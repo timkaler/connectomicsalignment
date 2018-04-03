@@ -5,7 +5,6 @@
 #include "./stack_section.cpp"
 
 
-
 // Contains the initial code for mr stuff.
 #include "stack_mr.cpp"
 

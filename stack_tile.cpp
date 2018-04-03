@@ -589,12 +589,17 @@ void tfk::Tile::insert_matches(Tile* neighbor, std::vector<cv::Point2f>& points_
   std::vector<cv::Point2f>* vedges = new std::vector<cv::Point2f>();
   std::vector<cv::Point2f>* nedges = new std::vector<cv::Point2f>();
 
+
+  // NOTE(TFK): This count thing is just quick hack to reduce space since we use ideal-offsets now...
+  int count = 0;
   for (int i = 0; i < points_a.size(); i++) {
     vedges->push_back(cv::Point2f(points_a[i]));
+    if (count++ > 4) break;
   }
-
+  count = 0;
   for (int i = 0; i < points_b.size(); i++) {
     nedges->push_back(cv::Point2f(points_b[i]));
+    if (count++ > 4) break;
   }
 
   edata edge1;
@@ -897,8 +902,8 @@ void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
 cv::Mat tfk::Tile::get_tile_data(Resolution res) {
 
   std::string thumbnailpath = std::string(this->filepath);
-  thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".jp2"), 4,".jpg");
-  thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
+  //thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".jp2"), 4,".jpg");
+  //thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
 
   switch(res) {
 
@@ -918,6 +923,7 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       break;
     }
     case THUMBNAIL2: {
+      return get_tile_data(Resolution::THUMBNAIL);
       cv::Mat src = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
       return src;
       //cv::Mat dst;
@@ -968,9 +974,9 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       //new_path = this->filepath.replace(0,5, "/efs/");
       //}
       //new_path = this->filepath + "_.jpg";
-      new_path = this->filepath;
-      new_path = new_path.replace(new_path.find("_compressed_10percent"),21,"");
-      new_path = new_path.replace(new_path.find(".jp2"), 4, ".bmp");
+      new_path = this->filepath+".jp2";
+      //new_path = new_path.replace(new_path.find("_compressed_10percent"),21,"");
+      //new_path = new_path.replace(new_path.find(".jp2"), 4, ".bmp");
       //printf("new_path %s\n", new_path.c_str());
         //printf("%s\n", path.c_str());
         //std::string new_path = this->filepath + "_.jpg";
@@ -1187,7 +1193,7 @@ void tfk::Tile::compute_sift_keypoints2d() {
     //        1.2);  // sigma.
 
     p_sift = new cv::xfeatures2d::SIFT_Impl(
-            1,  // num_features --- unsupported.
+            2,  // num_features --- unsupported.
             6,  // number of octaves
             //0.04,  // contrast threshold.
             0.01,  // contrast threshold.

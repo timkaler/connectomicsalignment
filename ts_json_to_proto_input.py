@@ -76,31 +76,31 @@ def filter_tilespecs(tilespecs_json_dir, tiles_to_process):
     
 def write_txt_input(output_filename, tilespecs):
     
-    txt_data = ''
-    txt_data += '%s %d\n' % (MAGIC_STR_TOTAL_TILES, len(tilespecs))
+    #txt_data = ''
+    #txt_data += '%s %d\n' % (MAGIC_STR_TOTAL_TILES, len(tilespecs))
 
     sections = {}
          
     for i, ts in enumerate(tilespecs):
-        tile_data = ''
-        
-        tile_data += '%s [%d]\n' % (MAGIC_STR_TILE_START, i)
-        
-        tile_data += '\t%s %d\n' % (MAGIC_STR_TILE_SECTION, ts['layer'])
-        tile_data += '\t%s %d\n' % (MAGIC_STR_TILE_MFOV, ts['mfov'])
-        tile_data += '\t%s %d\n' % (MAGIC_STR_TILE_INDEX, ts['tile_index'])        
+        #tile_data = ''
+        #
+        #tile_data += '%s [%d]\n' % (MAGIC_STR_TILE_START, i)
+        #
+        #tile_data += '\t%s %d\n' % (MAGIC_STR_TILE_SECTION, ts['layer'])
+        #tile_data += '\t%s %d\n' % (MAGIC_STR_TILE_MFOV, ts['mfov'])
+        #tile_data += '\t%s %d\n' % (MAGIC_STR_TILE_INDEX, ts['tile_index'])        
 
-        (x_start, x_finish, y_start, y_finish) = ts['bbox']
-        tile_data += '\t%s [%d][%d][%d][%d]\n' % (MAGIC_STR_TILE_BBOX, 
-            x_start, x_finish, y_start, y_finish)
+        #(x_start, x_finish, y_start, y_finish) = ts['bbox']
+        #tile_data += '\t%s [%d][%d][%d][%d]\n' % (MAGIC_STR_TILE_BBOX, 
+        #    x_start, x_finish, y_start, y_finish)
                 
-        tile_path = ts["mipmapLevels"]["0"]["imageUrl"]
-        tile_path = tile_path.replace('file://', '')
-        tile_data += '\t%s %s\n' % (MAGIC_STR_TILE_FILEPATH, tile_path)
+        #tile_path = ts["mipmapLevels"]["0"]["imageUrl"]
+        #tile_path = tile_path.replace('file://', '')
+        #tile_data += '\t%s %s\n' % (MAGIC_STR_TILE_FILEPATH, tile_path)
         
-        tile_data += '%s [%d]\n' % (MAGIC_STR_TILE_END, i)
+        #tile_data += '%s [%d]\n' % (MAGIC_STR_TILE_END, i)
         
-        txt_data += tile_data
+        #txt_data += tile_data
         ts["id"] = i
 
         if ts['layer'] not in sections:

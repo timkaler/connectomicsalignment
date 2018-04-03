@@ -3,6 +3,12 @@
 #include <fstream>
 #include "stack_helpers.cpp"
 
+#include <cstdio>
+#include <ctime>
+
+#include "fasttime.h"
+
+extern fasttime_t global_start; 
 
 // Init functions
 tfk::Section::Section(int section_id) {
@@ -64,7 +70,7 @@ void tfk::Section::align_2d() {
       std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
 
       this->load_2d_alignment();
-      this->read_3d_keypoints(filename);
+      //this->read_3d_keypoints(filename);
       return;
     }
 
@@ -1214,48 +1220,58 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
     }
   }
 
-  for (int i = 0; i < this->tiles.size(); i++) {
-    Tile* tile = this->tiles[i];
-    if (tile->bad_2d_alignment) continue;
-    if (!this->tile_in_render_box(tile, bbox)) continue;
 
-    //cv::Mat* tile_p_image = this->read_tile(tile->filepath, resolution);
-    cv::Mat tile_p_image = tile->get_tile_data(resolution);
 
-    for (int _y = 0; _y < (tile_p_image).size().height; _y++) {
-      for (int _x = 0; _x < (tile_p_image).size().width; _x++) {
-        cv::Point2f p = cv::Point2f(_x*render_scale.x, _y*render_scale.y);
+  for (int block = 0; block < this->tiles.size() + 10000; block += 10000) {
+    int end = block + 10000;
+    if (end > this->tiles.size()) end = this->tiles.size();
+    cilk_spawn {
+      for (int i = block; i < end; i++) {
+        Tile* tile = this->tiles[i];
+        if (tile->bad_2d_alignment) continue;
+        if (!this->tile_in_render_box(tile, bbox)) continue;
 
-        cv::Point2f post_rigid_p = tile->rigid_transform(p);
+        //cv::Mat* tile_p_image = this->read_tile(tile->filepath, resolution);
+        cv::Mat tile_p_image = tile->get_tile_data(resolution);
 
-        cv::Point2f post_affine_p = this->affine_transform(post_rigid_p);
+        for (int _y = 0; _y < (tile_p_image).size().height; _y++) {
+          for (int _x = 0; _x < (tile_p_image).size().width; _x++) {
+            cv::Point2f p = cv::Point2f(_x*render_scale.x, _y*render_scale.y);
 
-        cv::Point2f transformed_p = this->elastic_transform(post_affine_p);
+            cv::Point2f post_rigid_p = tile->rigid_transform(p);
 
-        //cv::Point2f transformed_p = affine_transform(&tile, p);
-        //transformed_p = elastic_transform(&tile, &triangles, transformed_p);
+            cv::Point2f post_affine_p = this->affine_transform(post_rigid_p);
 
-        int x_c = (int)(transformed_p.x/render_scale.x + 0.5);
-        int y_c = (int)(transformed_p.y/render_scale.y + 0.5);
-        for (int k = -1; k < 2; k++) {
-          for (int m = -1; m < 2; m++) {
-            //if (k != 0 || m!=0) continue;
-            unsigned char val = tile_p_image.at<unsigned char>(_y, _x);
-            int x = x_c+k;
-            int y = y_c+m;
-            if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
-              section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) += val;
-              section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) += 1;
+            cv::Point2f transformed_p = this->elastic_transform(post_affine_p);
+
+            //cv::Point2f transformed_p = affine_transform(&tile, p);
+            //transformed_p = elastic_transform(&tile, &triangles, transformed_p);
+
+            int x_c = (int)(transformed_p.x/render_scale.x + 0.5);
+            int y_c = (int)(transformed_p.y/render_scale.y + 0.5);
+            for (int k = -1; k < 2; k++) {
+              for (int m = -1; m < 2; m++) {
+                //if (k != 0 || m!=0) continue;
+                unsigned char val = tile_p_image.at<unsigned char>(_y, _x);
+                int x = x_c+k;
+                int y = y_c+m;
+                if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
+                  __sync_fetch_and_add(&section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x), val);
+                  __sync_fetch_and_add(&section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x),1);
+                  //section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) += val;
+                  //section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) += 1;
+                }
+              }
             }
           }
         }
+        tile_p_image.release();
+        tile->release_full_image();
       }
     }
-    tile_p_image.release();
-    tile->release_full_image();
   }
-
-  for (int y = 0; y < section_p_out.size().height; y++) {
+  cilk_sync;
+  cilk_for (int y = 0; y < section_p_out.size().height; y++) {
     for (int x = 0; x < section_p_out.size().width; x++) {
       if (section_p_out_ncount->at<unsigned short>(y,x) == 0) {
         continue;
@@ -2638,6 +2654,7 @@ std::pair<cv::Point2f, cv::Point2f> tfk::Section::get_bbox() {
 
   for (int i = 0; i < this->tiles.size(); i++) {
     Tile* tile = this->tiles[i];
+    if (tile->bad_2d_alignment) continue;
     std::pair<cv::Point2f, cv::Point2f> bbox = tile->get_bbox();
     if (i == 0) {
       min_x = bbox.first.x;
@@ -3075,8 +3092,8 @@ void tfk::Section::compute_tile_matches2(Tile* a_tile) {
     cv::Mat a_tile_desc;
     std::mutex lock;
     tfk::params new_params;
-    new_params.scale_x = 1.0;
-    new_params.scale_y = 1.0;
+    new_params.scale_x = 0.5;
+    new_params.scale_y = 0.5;
     new_params.num_features = 1;
     new_params.num_octaves = 6;
     new_params.contrast_threshold = 0.01;
@@ -3249,7 +3266,7 @@ void tfk::Section::read_3d_keypoints(std::string filename) {
 void tfk::Section::load_2d_alignment() {
   cv::FileStorage fs(std::string("2d_alignment_"+std::to_string(this->real_section_id)),
                      cv::FileStorage::READ);
-  for (int i = 0; i < this->tiles.size(); i++) {
+  cilk_for (int i = 0; i < this->tiles.size(); i++) {
     Tile* tile = this->tiles[i];
     fs["bad_2d_alignment_"+std::to_string(i)] >> tile->bad_2d_alignment;
     fs["x_start_"+std::to_string(i)] >> tile->x_start;
@@ -3456,7 +3473,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       cilk_for (int i = 0; i < tiles_to_process_keypoints.size(); i++) {
         Tile* tile = tiles_to_process_keypoints[i];
         tile->compute_sift_keypoints2d();
-        tile->compute_sift_keypoints3d();
+        //tile->compute_sift_keypoints3d();
       }
 
       for (int i = 0; i < tiles_to_process_matches.size(); i++) {
@@ -3479,7 +3496,10 @@ void tfk::Section::compute_keypoints_and_matches() {
       // clear the active and neighbor set.
       active_set.clear();
       neighbor_set.clear();
-
+      
+      //double duration = ( std::clock() - global_start ) / (double) CLOCKS_PER_SEC;
+      float duration = tdiff(global_start, gettime());
+      printf("presently done with %f %%  duration %f estimated completion time: %f\n", (100.0*pivot_search_start) / sorted_tiles.size(), duration, (duration)/((60*60*1.0*pivot_search_start)/sorted_tiles.size()));
       pivot_good = false;
       for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
         if (sorted_tiles[i].second->x_start > pivot->x_finish + 12000) {

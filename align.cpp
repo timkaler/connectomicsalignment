@@ -26,6 +26,9 @@
 #include <iostream>
 #include <cstdio>
 #include <ctime>
+#include "fasttime.h"
+
+fasttime_t global_start; 
 
 namespace tfk {
   void train_match_tiles_task(Stack* stack) {
@@ -129,13 +132,16 @@ void align_execute(align_data_t *p_align_data) {
     stack->init();
     printf("Got past the init\n");
     printf("stack has sections %zu\n", stack->sections.size());
+    global_start = gettime();
     //tfk::train_match_tiles_task(stack);
     //return;
     //stack->test_io();
+    printf("starting align 2d\n");
     //return;
     stack->align_2d();
-
+    printf("Done with align 2d\n");
     stack->align_3d();
+    printf("Done with align 3d\n");
     //stack->coarse_affine_align();
     //stack->elastic_align();
 
@@ -148,19 +154,18 @@ void align_execute(align_data_t *p_align_data) {
     double duration;
 
     start = std::clock();
-
     int _start_x = 100000;
     int _start_y = 100000;
 
 
     auto entire_bbox = stack->sections[0]->get_bbox();
 
-    //float x1 = (entire_bbox.first.x + entire_bbox.second.x);
-    float x1 = (entire_bbox.first.x);
-    float x2 = x1+500000;
-    //float y1 = (entire_bbox.first.y+entire_bbox.second.y);
-    float y1 = (entire_bbox.first.y);
-    float y2 = y1+500000;
+    float x1 = (entire_bbox.first.x + entire_bbox.second.x)/2;
+    //float x1 = (entire_bbox.first.x);
+    float x2 = x1+50000;
+    float y1 = (entire_bbox.first.y+entire_bbox.second.y)/2;
+    //float y1 = (entire_bbox.first.y);
+    float y2 = y1+50000;
     auto smaller_bbox = std::make_pair(cv::Point2f(x1,y1), cv::Point2f(x2,y2)); 
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderfull", tfk::FULL);
     printf("Right before render\n");
