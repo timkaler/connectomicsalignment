@@ -3,8 +3,9 @@
 #NOTE(TFK): You'll need this if you use GCC.
 
 #export TAPIR_PREFIX=/efs/home/neboat/tapir-ex/src/build-release
-export TAPIR_PREFIX=/efs/tapir-new-install/tapir-install
-#export TAPIR_PREFIX=/efs/2018-tapir/Parallel-IR/build2
+#export TAPIR_PREFIX=/efs/tapir-new-install/tapir-install
+#export TAPIR_PREFIX=/efs/2018-tapir/Parallel-IR/build4
+export TAPIR_PREFIX=/efs/2018-tapir/Tapir-LLVM/build3
 
 #export TAPIR_PREFIX=/efs/2018-tapir/Tapir-LLVM/build2
 

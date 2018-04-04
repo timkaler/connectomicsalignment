@@ -24,6 +24,23 @@ message PairDouble {
     required double x = 1;
     required double y = 2;
 }
+
+message Saved2DAlignmentTile {
+  required uint64 tile_id = 1;
+  required bool bad_2d_alignment = 10;
+  required float x_start = 20;
+  required float x_finish = 30;
+  required float y_start = 40;
+  required float y_finish = 50;
+  required float offset_x = 60;
+  required float offset_y = 70;
+}
+
+message Saved2DAlignmentSection {
+  repeated Saved2DAlignmentTile tiles = 1; 
+}
+
+
 message RenderTriangle {
     repeated PairDouble p = 1;
     repeated PairDouble q = 2;

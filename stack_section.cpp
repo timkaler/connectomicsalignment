@@ -16,16 +16,12 @@ tfk::Section::Section(int section_id) {
   this->num_tiles_replaced = 0;
 }
 
-
-
 // BEGIN transformation functions
 cv::Point2f tfk::Section::affine_transform(cv::Point2f pt) {
   float new_x = pt.x*this->a00 + pt.y * this->a01 + this->offset_x;
   float new_y = pt.x*this->a10 + pt.y * this->a11 + this->offset_y;
   return cv::Point2f(new_x, new_y);
 }
-
-
 
 cv::Point2f tfk::Section::affine_transform_plusA(cv::Point2f pt, cv::Mat A) {
   float pre_new_x = pt.x*this->a00 + pt.y * this->a01 + this->offset_x;
@@ -58,8 +54,6 @@ cv::Point2f tfk::Section::elastic_transform(cv::Point2f p) {
   float new_y = u*tri.q[0].y + v*tri.q[1].y + w*tri.q[2].y;
   return cv::Point2f(new_x, new_y);
 }
-
-
 // END transformation functions
 
 
@@ -441,7 +435,6 @@ bool tfk::Section::transformed_tile_overlaps_with(Tile* tile,
       res = true;
   }
   return res;
-
 }
 
 void tfk::Section::save_elastic_mesh(Section* neighbor) {
@@ -1221,13 +1214,18 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
   }
 
 
+  std::vector<Tile*> tiles_in_box;
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* tile = this->tiles[i];
+    if (tile->bad_2d_alignment) continue;
+    if (!this->tile_in_render_box(tile,bbox)) continue;
+    tiles_in_box.push_back(tile);
+  }
+  
 
-  for (int block = 0; block < this->tiles.size() + 10000; block += 10000) {
-    int end = block + 10000;
-    if (end > this->tiles.size()) end = this->tiles.size();
-    cilk_spawn {
-      for (int i = block; i < end; i++) {
-        Tile* tile = this->tiles[i];
+
+      cilk_for (int i = 0; i < tiles_in_box.size(); i++) {
+        Tile* tile = tiles_in_box[i];
         if (tile->bad_2d_alignment) continue;
         if (!this->tile_in_render_box(tile, bbox)) continue;
 
@@ -1268,11 +1266,11 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
         tile_p_image.release();
         tile->release_full_image();
       }
-    }
-  }
-  cilk_sync;
-  cilk_for (int y = 0; y < section_p_out.size().height; y++) {
-    for (int x = 0; x < section_p_out.size().width; x++) {
+
+  int __height = section_p_out.size().height;
+  int __width  = section_p_out.size().width;
+  cilk_for (int y = 0; y < __height; y++) {
+    cilk_for (int x = 0; x < __width; x++) {
       if (section_p_out_ncount->at<unsigned short>(y,x) == 0) {
         continue;
       }
@@ -3236,15 +3234,18 @@ void tfk::Section::compute_tile_matches(Tile* a_tile) {
 
 
 bool tfk::Section::alignment2d_exists() {
-  std::string filename =
-      std::string("2d_alignment_"+std::to_string(this->real_section_id));
+  std::ifstream f("2d_alignment_"+std::to_string(this->real_section_id)+".pbuf");
+  return f.good();
 
-  cv::FileStorage fs(filename, cv::FileStorage::READ);
-  if (!fs.isOpened()) {
-    return false;
-  } else {
-    return true;
-  }
+  //std::string filename =
+  //    std::string("2d_alignment_"+std::to_string(this->real_section_id));
+
+  //cv::FileStorage fs(filename, cv::FileStorage::READ);
+  //if (!fs.isOpened()) {
+  //  return false;
+  //} else {
+  //  return true;
+  //}
 
 }
 
@@ -3264,36 +3265,62 @@ void tfk::Section::read_3d_keypoints(std::string filename) {
 }
 
 void tfk::Section::load_2d_alignment() {
-  cv::FileStorage fs(std::string("2d_alignment_"+std::to_string(this->real_section_id)),
-                     cv::FileStorage::READ);
-  cilk_for (int i = 0; i < this->tiles.size(); i++) {
+  printf("Loading 2d alignment\n");
+  //cv::FileStorage fs(std::string("2d_alignment_"+std::to_string(this->real_section_id)),
+  //                   cv::FileStorage::READ);
+  //cilk_for (int i = 0; i < this->tiles.size(); i++) {
+  //  Tile* tile = this->tiles[i];
+  //  fs["bad_2d_alignment_"+std::to_string(i)] >> tile->bad_2d_alignment;
+  //  fs["x_start_"+std::to_string(i)] >> tile->x_start;
+  //  fs["x_finish_"+std::to_string(i)] >> tile->x_finish;
+  //  fs["y_start_"+std::to_string(i)] >> tile->y_start;
+  //  fs["y_finish_"+std::to_string(i)] >> tile->y_finish;
+  //  fs["offset_x_"+std::to_string(i)] >> tile->offset_x;
+  //  fs["offset_y_"+std::to_string(i)] >> tile->offset_y;
+  //}
+  //fs.release();
+
+
+  Saved2DAlignmentSection sectiondata;
+  std::fstream input("2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
+
+  sectiondata.ParseFromIstream(&input);
+
+  for (int i = 0; i < sectiondata.tiles_size(); i++) {
     Tile* tile = this->tiles[i];
-    fs["bad_2d_alignment_"+std::to_string(i)] >> tile->bad_2d_alignment;
-    fs["x_start_"+std::to_string(i)] >> tile->x_start;
-    fs["x_finish_"+std::to_string(i)] >> tile->x_finish;
-    fs["y_start_"+std::to_string(i)] >> tile->y_start;
-    fs["y_finish_"+std::to_string(i)] >> tile->y_finish;
-    fs["offset_x_"+std::to_string(i)] >> tile->offset_x;
-    fs["offset_y_"+std::to_string(i)] >> tile->offset_y;
+    Saved2DAlignmentTile tiledata = sectiondata.tiles(i);
+    tile->bad_2d_alignment = tiledata.bad_2d_alignment();
+    tile->x_start = tiledata.x_start();
+    tile->x_finish = tiledata.x_finish();
+    tile->y_start = tiledata.y_start();
+    tile->y_finish = tiledata.y_finish();
+    tile->offset_x = tiledata.offset_x();
+    tile->offset_y = tiledata.offset_y();
   }
-  fs.release();
+  input.close();
 }
 
 
 void tfk::Section::save_2d_alignment() {
-  cv::FileStorage fs(std::string("2d_alignment_"+std::to_string(this->real_section_id)),
-                     cv::FileStorage::WRITE);
+  printf("saving 2d alignment\n");
+  Saved2DAlignmentSection sectiondata;
   for (int i = 0; i < this->tiles.size(); i++) {
     Tile* tile = this->tiles[i];
-    cv::write(fs, "bad_2d_alignment_"+std::to_string(i), tile->bad_2d_alignment);
-    cv::write(fs, "x_start_"+std::to_string(i), tile->x_start);
-    cv::write(fs, "x_finish_"+std::to_string(i), tile->x_finish);
-    cv::write(fs, "y_start_"+std::to_string(i), tile->y_start);
-    cv::write(fs, "y_finish_"+std::to_string(i), tile->y_finish);
-    cv::write(fs, "offset_x_"+std::to_string(i), tile->offset_x);
-    cv::write(fs, "offset_y_"+std::to_string(i), tile->offset_y);
+    Saved2DAlignmentTile tiledata;
+    tiledata.set_tile_id(i);
+    tiledata.set_bad_2d_alignment(tile->bad_2d_alignment); 
+    tiledata.set_x_start(1.0*tile->x_start);
+    tiledata.set_x_finish(1.0*tile->x_finish);
+    tiledata.set_y_start(1.0*tile->y_start);
+    tiledata.set_y_finish(1.0*tile->y_finish);
+    tiledata.set_offset_x(1.0*tile->offset_x);
+    tiledata.set_offset_y(1.0*tile->offset_y);
+    sectiondata.add_tiles();
+    *(sectiondata.mutable_tiles(i)) = tiledata; 
   }
-  fs.release();
+  std::fstream output("2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::out | std::ios::trunc | std::ios::binary);
+  sectiondata.SerializeToOstream(&output); 
+  output.close();
 }
 
 void tfk::Section::save_3d_keypoints(std::string filename) {

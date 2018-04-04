@@ -14,7 +14,7 @@ OPENCV_LIB=$(OPENCV_ROOT)/lib
 #>>>>>>> 84dd39cb1a6e33998c46f5e549f732adc98b358f
 
 #CFLAGS += -fcilkplus -m64 -ffast-math -mfma
-CFLAGS += -std=c++17 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=native -pthread -I/efs/tools/protobuf_c4/include
+CFLAGS += -std=c++11 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=native -pthread -I/efs/tools/protobuf_c4/include
 #CFLAGS += -Wall
 #-Winline
 CFLAGS += -I$(OPENCV_INCLUDE)
@@ -137,6 +137,8 @@ mrparams.o: mrparams.cpp mrparams.hpp
 paramdb.o: paramdb.cpp paramdb.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
+render.o: render.cpp render.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 #engine.o: cilk_tools/Graph.cpp cilk_tools/engine.cpp cilk_tools/scheduler.cpp
 #	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
@@ -148,7 +150,7 @@ paramdb.o: paramdb.cpp paramdb.hpp
 run.S: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: Graph.o scheduler.o engine.o common.o align.o match.o ransac.o run.o stack.o mrparams.o paramdb.o
+run_align: Graph.o scheduler.o engine.o common.o align.o match.o ransac.o run.o stack.o mrparams.o paramdb.o render.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:
