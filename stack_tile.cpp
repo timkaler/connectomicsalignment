@@ -974,7 +974,8 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       //new_path = this->filepath.replace(0,5, "/efs/");
       //}
       //new_path = this->filepath + "_.jpg";
-      new_path = this->filepath+".jp2";
+      //new_path = this->filepath+".jp2";
+      new_path = this->filepath;
       //new_path = this->filepath;
       //new_path = new_path.replace(new_path.find("_compressed_10percent"),21,"");
       //new_path = new_path.replace(new_path.find(".jp2"), 4, ".bmp");
