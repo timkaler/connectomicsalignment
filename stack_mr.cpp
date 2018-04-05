@@ -138,13 +138,12 @@ namespace tfk {
       }
     }
 
-    void MatchTilesTask::compute(float probability_correct) {
+    void MatchTilesTask::compute_with_params(MRParams* mr_params_local) {
       Tile* a_tile = tile;
       std::vector<cv::KeyPoint> a_tile_keypoints;
       cv::Mat a_tile_desc;
 
-
-      this->mr_params = paramDB->get_params_for_accuracy(probability_correct);
+      this->mr_params = mr_params_local;
 
       tfk::params new_params;
       new_params.scale_x = mr_params->get_float_param("scale_x");
@@ -153,9 +152,9 @@ namespace tfk {
       //printf("scale x %f scale y %f\n", new_params.scale_x, new_params.scale_y);
       new_params.num_features = mr_params->get_int_param("num_features");
       new_params.num_octaves = mr_params->get_int_param("num_octaves");
-      new_params.contrast_threshold = mr_params->get_float_param("contrast_threshold"); 
-      new_params.edge_threshold = mr_params->get_float_param("edge_threshold"); 
-      new_params.sigma = mr_params->get_float_param("sigma"); 
+      new_params.contrast_threshold = mr_params->get_float_param("contrast_threshold");
+      new_params.edge_threshold = mr_params->get_float_param("edge_threshold");
+      new_params.sigma = mr_params->get_float_param("sigma");
 
       a_tile->compute_sift_keypoints2d_params(new_params, a_tile_keypoints,
                                               a_tile_desc, a_tile);
@@ -242,6 +241,11 @@ namespace tfk {
           tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
         }
       }
+    }
+
+    std::vector<tfk::MRParams> MatchTilesTask::get_parameter_options() {
+      std::vector<tfk::MRParams> vec;
+      return vec;
     }
 
 }

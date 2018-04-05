@@ -5,6 +5,7 @@ namespace tfk {
   MRParams::MRParams() {
     success_count = 0;
     failure_count = 0;
+    cost = 0;
   }
 
   float MRParams::get_float_param(std::string name) {
