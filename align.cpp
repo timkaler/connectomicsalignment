@@ -27,7 +27,7 @@
 #include <cstdio>
 #include <ctime>
 #include "fasttime.h"
-
+#include "render.hpp"
 fasttime_t global_start; 
 
 namespace tfk {
@@ -168,9 +168,13 @@ void align_execute(align_data_t *p_align_data) {
     float y2 = y1+50000;
     auto smaller_bbox = std::make_pair(cv::Point2f(x1,y1), cv::Point2f(x2,y2)); 
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderfull", tfk::FULL);
+
+    tfk::Render* render = new tfk::Render();
+    render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, "renderthumb");
+
     printf("Right before render\n");
     //stack->render(std::make_pair(cv::Point2f(_start_x,_start_y),cv::Point2f(_start_x + size, _start_y + size)), "renderthumb", tfk::THUMBNAIL);
-    stack->render(entire_bbox, "renderthumb", tfk::THUMBNAIL);
+    //stack->render(entire_bbox, "renderthumb", tfk::THUMBNAIL);
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderthumb", tfk::PERCENT30);
     //stack->render(std::make_pair(cv::Point2f(_start_x,_start_y),cv::Point2f(_start_x + size, _start_y + size)), "renderbefore", tfk::PERCENT30);
 

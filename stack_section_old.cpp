@@ -477,6 +477,489 @@ void tfk::Section::save_elastic_mesh(Section* neighbor) {
 
 // BEGIN rendering functions
 
+void tfk::Section::replace_bad_region(std::pair<cv::Point2f, cv::Point2f> bad_bbox,
+                                     Section* other_neighbor) {
+  if (num_tiles_replaced > 100) {
+    printf("Don't replace bad region in sec %d (max treplaced reached)\n", this->section_id);
+    return;
+  }
+
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* tile = this->tiles[i];
+    //if (tile->overlaps_with(bad_bbox)) {
+    if (this->transformed_tile_overlaps_with(tile, bad_bbox)) {
+      // check to make sure this tile hasn't already been replaced.
+      if (this->replaced_tile_ids.find(i) == this->replaced_tile_ids.end()) {
+        num_tiles_replaced++;
+        this->replaced_tile_ids.insert(i);
+        printf("Replacing tile in section %d with tile_id %d\n", this->real_section_id, i);
+        this->replace_bad_tile(tile, other_neighbor);
+      }
+      tile->release_full_image();
+    }
+  }
+}
+
+void tfk::Section::replace_bad_tile(Tile* tile, Section* other_neighbor) {
+
+  auto bbox = tile->get_bbox();
+  bbox = this->affine_transform_bbox(bbox);
+  bbox = this->elastic_transform_bbox(bbox);
+
+  float slack = 10.0;
+  bbox.first.x -= slack;
+  bbox.first.y -= slack;
+  bbox.second.x += slack;
+  bbox.second.y += slack;
+
+{
+  // full resolution
+  cv::Mat halo = other_neighbor->render(bbox, FULL);
+
+  printf("Tile image is %s\n", tile->filepath.c_str());
+  cv::Mat tile_img = cv::imread(tile->filepath, CV_LOAD_IMAGE_UNCHANGED);
+  printf("Tile image is %s\n", tile->filepath.c_str());
+  imwrite("orig_tiles/sec_"+std::to_string(this->real_section_id) +
+          "_tileid_" + std::to_string(tile->tile_id) +".bmp", tile_img);
+
+  for (int y = 0; y < tile_img.rows; y++) {
+    for (int x = 0; x < tile_img.cols; x++) {
+      cv::Point2f pt = cv::Point2f(x,y);
+      pt = tile->rigid_transform(pt);
+      pt = this->affine_transform(pt);
+      pt = this->elastic_transform(pt);
+      uint8_t halo_val = halo.at<uint8_t>((int)(pt.y - bbox.first.y), (int)(pt.x - bbox.first.x));
+      if (false && halo_val == 0) {
+        printf("Halo value 0 detected, skipping this one.\n");
+        halo.release();
+        tile_img.release();
+        return;
+      }
+      tile_img.at<uint8_t>(y,x) = halo_val;
+    }
+  }
+
+  imwrite("new_tiles/sec_"+std::to_string(this->real_section_id) +
+          "_tileid_" + std::to_string(tile->tile_id) +".bmp", tile_img);
+  halo.release();
+  tile_img.release();
+}
+
+{
+  cv::Point2f render_scale = this->get_render_scale(THUMBNAIL2);
+
+  std::string thumbnailpath = std::string(tile->filepath);
+  thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".bmp"), 4,".jpg");
+  thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
+
+  // thumbnail resolution
+  cv::Mat halo = other_neighbor->render(bbox, THUMBNAIL2);
+
+  cv::Mat tile_img = tile->get_tile_data(THUMBNAIL2);
+  //cv::Mat tile_img = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
+
+  imwrite("orig_tiles/thumbnail_sec_"+std::to_string(this->real_section_id) +
+          "_tileid_" + std::to_string(tile->tile_id) +".jpg", tile_img);
+
+  for (int y = 0; y < tile_img.rows; y++) {
+    for (int x = 0; x < tile_img.cols; x++) {
+      cv::Point2f pt = cv::Point2f(x*render_scale.x,y*render_scale.y);
+      pt = tile->rigid_transform(pt);
+      pt = this->affine_transform(pt);
+      pt = this->elastic_transform(pt);
+      uint8_t halo_val = halo.at<uint8_t>((int)((pt.y - bbox.first.y)/render_scale.y), (int)((pt.x - bbox.first.x)/render_scale.x));
+      if (false && halo_val == 0) {
+        printf("Halo value 0 detected, skipping this one.\n");
+         halo.release();
+         tile_img.release();
+        return;
+      }
+      tile_img.at<uint8_t>(y,x) = halo_val;
+    }
+  }
+
+  imwrite("new_tiles/thumbnail_sec_"+std::to_string(this->real_section_id) +
+          "_tileid_" + std::to_string(tile->tile_id) +".jpg", tile_img);
+  halo.release();
+  tile_img.release();
+}
+
+  tile->filepath = "new_tiles/sec_"+std::to_string(this->real_section_id) +
+          "_tileid_" + std::to_string(tile->tile_id) +".bmp";
+  tile->image_data_replaced = true;
+}
+
+
+
+//std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>>
+
+double tfk::Section::render_error_affine(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix, cv::Mat A,
+  std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex) {
+//get rid of neighbors!!!
+
+  std::cout << "CALLING RENDER_ERROR_AFFINE" << std::endl;
+
+  //pass in identity?  
+
+  cv::Mat I(3, 3, cv::DataType<double>::type);
+  I.at<double>(0,0) = 1.0;
+  I.at<double>(0,1) = 0.0;
+  I.at<double>(0,2) = 0.0;
+  I.at<double>(1,0) = 0.0;
+  I.at<double>(1,1) = 1.0;
+  I.at<double>(1,2) = 0.0;
+  I.at<double>(2,0) = 0.0;
+  I.at<double>(2,1) = 0.0;
+  I.at<double>(2,2) = 1.0;
+
+
+  cv::Mat n_image = neighbor->render_affine(I, bbox, THUMBNAIL, tiles_loaded, tiles_loaded_mutex);  //neighbor being rendered normally? I guess that's ok?
+  cv::Mat my_image = this->render_affine(A, bbox, THUMBNAIL, tiles_loaded, tiles_loaded_mutex);
+
+  int nrows = n_image.rows;
+  int ncols = n_image.cols;
+
+  cv::Mat heat_map;
+  cv::Mat n_patch;
+  cv::Mat other_n_patch;
+  cv::Mat other2_n_patch;
+  cv::Mat my_patch;
+
+
+  int patch_3_size = 100;
+  int patch_2_size = 20;
+
+
+  int slack = 5;
+  n_patch.create(patch_2_size+2*slack, patch_2_size+2*slack, CV_8UC1);
+  my_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+  heat_map.create(nrows, ncols, CV_32F);
+
+  std::vector<std::pair<cv::Point2f, float> > patch_results;
+
+  for (int y = 0; y < nrows; y++) {
+    for (int x = 0; x < ncols; x++) {
+      heat_map.at<float>(y,x) = 0.0;
+    }
+  }
+
+
+  //cv::Point2f render_scale = this->get_render_scale(THUMBNAIL);
+
+
+  std::mutex mtx;
+
+  std::vector<std::pair<cv::Point2f, cv::Point2f>> below;
+  std::vector<std::pair<cv::Point2f, cv::Point2f>> above;
+
+  int total_boxes = 0;
+  int total_bad_boxes = 0;
+  //parallelize going through patches... ? 
+  /*cilk_*/for (int by = 0; by + patch_3_size < nrows; by += patch_3_size/2) {
+    /*cilk_*/for (int bx = 0; bx + patch_3_size < ncols; bx += patch_3_size/2) {
+      int bad = 0;
+      int total = 0;
+      bool skip = false;
+      int bad_above = 0;
+      for (int y = 0; y + patch_2_size + 2*slack < patch_3_size; y += patch_2_size/2) {
+        for (int x = 0; x + patch_2_size + 2*slack < patch_3_size; x += patch_2_size/2) {
+          for (int _y = slack; _y < patch_2_size+slack; _y++) {
+            for (int _x = slack; _x < patch_2_size+slack; _x++) {
+              my_patch.at<uint8_t>(_y-slack, _x-slack) = my_image.at<uint8_t>(by+y+_y, bx+x+_x);
+              if (my_patch.at<uint8_t>(_y-slack,_x-slack) == 0) {
+                skip = true;
+              }
+            }
+          }
+
+          for (int _y = 0; _y < patch_2_size+2*slack; _y++) {
+            for (int _x = 0; _x < patch_2_size+2*slack; _x++) {
+              n_patch.at<uint8_t>(_y, _x) = n_image.at<uint8_t>(by+y+_y, bx+x+_x);
+              if (n_patch.at<uint8_t>(_y,_x) == 0) {
+                skip = true;
+              }
+            }
+          }
+          /* baseline by comparing to gaussian blur */
+          cv::Mat my_patch_blur;
+          GaussianBlur(my_patch, my_patch_blur, cv::Size(0, 0), 10.0); // was 10.0
+
+          cv::Mat result_blur;
+          cv::matchTemplate(my_patch, my_patch_blur, result_blur, CV_TM_CCOEFF_NORMED);
+          float corr_blur = result_blur.at<float>(0,0);
+
+
+          cv::Mat result;
+
+          cv::matchTemplate(n_patch, my_patch, result, CV_TM_CCOEFF_NORMED);
+          float corr = result.at<float>(0,0);
+
+          for (int r = 0; r < result.rows; r++) {
+            for (int c = 0; c < result.cols; c++) {
+              float tmp_corr = result.at<float>(r,c);
+              if (tmp_corr > corr) corr = tmp_corr;
+            }
+          }
+
+
+          float blur_thresh = 0.5;
+
+          if(corr < blur_thresh*corr_blur) {
+            //mtx.lock();
+            //below.push_back(std::make_pair(cv::Point2f(y, x), cv::Point2f(y + patch_2_size, x + patch_2_size)));
+            //mtx.unlock();
+	    bad++;
+          }
+          total++;
+        }
+      }
+
+      total_boxes++;
+      if (bad > 1 && !skip && bad_above < bad) {
+        for (int y = 0; y < patch_3_size; y++) {
+          for (int x = 0; x < patch_3_size; x++) {
+            heat_map.at<float>(by+y, bx+x) = 1.0;
+          }
+        }
+        total_bad_boxes++;
+
+        //int bad_min_x = bbox.first.x + (bx)*render_scale.x;
+        //int bad_max_x = bbox.first.x + (bx+patch_3_size)*render_scale.x;
+
+        //int bad_min_y = bbox.first.y + (by)*render_scale.y;
+        //int bad_max_y = bbox.first.y + (by+patch_3_size)*render_scale.y;
+
+        //auto bad_bbox = std::make_pair(cv::Point2f(bad_min_x, bad_min_y),
+        //                           cv::Point2f(bad_max_x, bad_max_y));
+		//REPLACE BAD REGION
+        //this->replace_bad_region(bad_bbox, other_neighbor);
+      }
+    }
+  }
+
+  std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> result;
+  result.first = below;
+  result.second = above;
+
+  cv::Mat heatmap = apply_heatmap_to_grayscale(&my_image, &heat_map, nrows, ncols);
+  //imwrite(filename_prefix, heatmap);
+  
+  n_image.release();
+  my_image.release();
+  heatmap.release();
+
+   
+  return 1.0*total_bad_boxes / (1.0+total_boxes);
+  //return result;
+}
+
+std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> tfk::Section::render_error(Section* neighbor, Section* other_neighbor, Section* other2_neighbor,
+    std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix) {
+
+  std::cout << "CALLING RENDER_ERROR " << std::endl;
+  cv::Mat n_image = neighbor->render(bbox, THUMBNAIL);
+  cv::Mat other_n_image = other_neighbor->render(bbox, THUMBNAIL);
+  cv::Mat other2_n_image = other2_neighbor->render(bbox, THUMBNAIL);
+  cv::Mat my_image = this->render(bbox, THUMBNAIL);
+
+  int nrows = n_image.rows;
+  int ncols = n_image.cols;
+
+  cv::Mat heat_map;
+
+
+
+  int patch_3_size = 400;
+  int patch_2_size = 100;
+
+  //cv::Mat n_patch;
+  //cv::Mat other_n_patch;
+  //cv::Mat other2_n_patch;
+  //cv::Mat my_patch;
+
+  //n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+  //other_n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+  //other2_n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+  //my_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+
+  heat_map.create(nrows, ncols, CV_32F);
+
+  std::vector<std::pair<cv::Point2f, float> > patch_results;
+
+  for (int y = 0; y < nrows; y++) {
+    for (int x = 0; x < ncols; x++) {
+      heat_map.at<float>(y,x) = 0.0;
+    }
+  }
+
+
+  cv::Point2f render_scale = this->get_render_scale(THUMBNAIL);
+
+
+  std::mutex mtx;
+
+  std::vector<std::pair<cv::Point2f, cv::Point2f>> below;
+  std::vector<std::pair<cv::Point2f, cv::Point2f>> above;
+
+  //parallelize going through patches... ? 
+  cilk_for (int by = 0; by + patch_3_size < nrows; by += patch_3_size/2) {
+    cilk_for (int bx = 0; bx + patch_3_size < ncols; bx += patch_3_size/2) {
+      int bad = 0;
+      int total = 0;
+      bool skip = false;
+      int bad_above = 0;
+      cilk_for (int y = 0; y + patch_2_size < patch_3_size; y += patch_2_size/2) {
+        cilk_for (int x = 0; x + patch_2_size < patch_3_size; x += patch_2_size/2) {
+
+          cv::Mat n_patch;
+          cv::Mat other_n_patch;
+          cv::Mat other2_n_patch;
+          cv::Mat my_patch;
+
+          n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+          other_n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+          other2_n_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+          my_patch.create(patch_2_size, patch_2_size, CV_8UC1);
+
+
+
+          for (int _y = 0; _y < patch_2_size; _y++) {
+            for (int _x = 0; _x < patch_2_size; _x++) {
+
+              //mtx.lock(); //this is really dumb
+              other_n_patch.at<uint8_t>(_y, _x) = other_n_image.at<uint8_t>(by+y+_y, bx+x+_x);
+              other2_n_patch.at<uint8_t>(_y, _x) = other2_n_image.at<uint8_t>(by+y+_y, bx+x+_x);
+              n_patch.at<uint8_t>(_y, _x) = n_image.at<uint8_t>(by+y+_y, bx+x+_x);
+              my_patch.at<uint8_t>(_y, _x) = my_image.at<uint8_t>(by+y+_y, bx+x+_x);
+              //mtx.unlock();
+
+
+              if (n_patch.at<uint8_t>(_y,_x) == 0 ||
+                  my_patch.at<uint8_t>(_y,_x) == 0 ||
+                  other_n_patch.at<uint8_t>(_y,_x) == 0 ||
+                  other2_n_patch.at<uint8_t>(_y,_x) == 0) {
+                skip = true;
+              }
+            }
+          }
+
+          /* baseline by comparing to gaussian blur */
+          cv::Mat my_patch_blur;
+          GaussianBlur(my_patch, my_patch_blur, cv::Size(0, 0), 1.0);
+
+          cv::Mat result_blur;
+          cv::matchTemplate(my_patch, my_patch_blur, result_blur, CV_TM_CCOEFF_NORMED);
+          float corr_blur = result_blur.at<float>(0,0);
+		  std::cout << "blur val " << corr_blur << std::endl;
+
+          cv::Mat result;
+
+          cv::matchTemplate(n_patch, my_patch, result, CV_TM_CCOEFF_NORMED);
+          float corr = result.at<float>(0,0);
+
+          cv::Mat other_result;
+          cv::matchTemplate(other_n_patch, my_patch, other_result, CV_TM_CCOEFF_NORMED);
+          float other_corr = other_result.at<float>(0,0);
+
+          cv::Mat other2_result;
+          cv::matchTemplate(other2_n_patch, other_n_patch, other2_result, CV_TM_CCOEFF_NORMED);
+          //float other2_corr = other2_result.at<float>(0,0);
+
+          float blur_thresh = 0.5;
+
+          if(corr < blur_thresh*corr_blur) {
+            mtx.lock();
+            below.push_back(std::make_pair(cv::Point2f(y, x), cv::Point2f(y + patch_2_size, x + patch_2_size)));
+            mtx.unlock();
+          }
+          if(other_corr < blur_thresh*corr_blur){
+            mtx.lock();
+            above.push_back(std::make_pair(cv::Point2f(y, x), cv::Point2f(y + patch_2_size, x + patch_2_size)));
+            mtx.unlock();
+          }
+
+          if(corr < corr_blur*blur_thresh) {
+	        bad++;
+          }
+
+
+//         if(corr < corr_blur * 0.5) {
+//		   bad++;
+//         }
+
+
+		  // GET RID OF THIS
+          //if (corr < other2_corr*0.25 and other_corr < other2_corr*0.5) {
+          //  std::cout << "Condition " << corr << " " << other_corr << " " << other2_corr << std::endl;
+          //  if(corr < corr_blur) {
+          //  	bad++;
+		  //   } else{
+	      //     std::cout << "Correlation NOT bad enough " << corr << " " << corr_blur << std::endl;
+          //  }
+          //} else {
+		  //  std::cout << "Patch ok" << corr << " " << corr_blur << std::endl;
+          //}
+
+          //if (corr < 0.1 && other_corr < 0.1 && other2_corr > 0.1) {
+          //  bad++;
+          //}
+
+          //if (other2_corr < 0.1) {
+          //  bad_above++;
+          //}
+          total++;
+
+          //for (int _y = 0; _y < 10; _y++) {
+          //  for (int _x = 0; _x < 10; _x++) {
+          //    if (corr < 0.1) {
+          //      heat_map.at<float>(y+_y, x+_x) = 1.0;
+          //    } else {
+          //      //heat_map.at<float>(y+_y, x+_x) = 0.0;
+          //    }
+          //  }
+          //}
+        }
+      }
+
+      if (bad > 1 && !skip && bad_above < bad) {
+
+        mtx.lock(); //this is really dumb
+        for (int y = 0; y < patch_3_size; y++) {
+          for (int x = 0; x < patch_3_size; x++) {
+            heat_map.at<float>(by+y, bx+x) = 1.0;
+          }
+        }
+        mtx.unlock();
+        int bad_min_x = bbox.first.x + (bx)*render_scale.x;
+        int bad_max_x = bbox.first.x + (bx+patch_3_size)*render_scale.x;
+
+        int bad_min_y = bbox.first.y + (by)*render_scale.y;
+        int bad_max_y = bbox.first.y + (by+patch_3_size)*render_scale.y;
+
+        auto bad_bbox = std::make_pair(cv::Point2f(bad_min_x, bad_min_y),
+                                   cv::Point2f(bad_max_x, bad_max_y));
+		//REPLACE BAD REGION
+        this->replace_bad_region(bad_bbox, other_neighbor);
+      }
+    }
+  }
+
+ std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> result;
+  result.first = below;
+  result.second = above;
+
+  cv::Mat heatmap = apply_heatmap_to_grayscale(&my_image, &heat_map, nrows, ncols);
+  imwrite(filename_prefix, heatmap);
+  
+  n_image.release();
+  other_n_image.release();
+  other2_n_image.release();
+  my_image.release();
+  heatmap.release();
+
+  return result;
+}
+
 cv::Point2f tfk::Section::get_render_scale(Resolution resolution) {
   if (resolution == THUMBNAIL || resolution == THUMBNAIL2) {
     Tile* first_tile = this->tiles[0];
@@ -507,6 +990,176 @@ cv::Point2f tfk::Section::get_render_scale(Resolution resolution) {
 
   return cv::Point2f(1.0,1.0);
 }
+
+#define TFKMAT(matrix_ptr, rows, cols, row, col, type) ((type *) matrix_ptr->ptr(row))[col]
+
+// bbox is in unscaled (i.e. full resolution) transformed coordinate system.
+cv::Mat tfk::Section::render_affine(cv::Mat A, std::pair<cv::Point2f, cv::Point2f> bbox,
+    tfk::Resolution resolution, std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex) {
+  //printf("Called render on bounding box %d %d %d %d\n", bbox.first.x, bbox.first.y, bbox.second.x, bbox.second.y);
+  cv::Point2f render_scale = this->get_render_scale(resolution);
+
+  // scaled_bbox is in transformed coordinate system
+  std::pair<cv::Point2f, cv::Point2f> scaled_bbox = this->scale_bbox(bbox, render_scale);
+
+  int input_lower_x = bbox.first.x;
+  int input_lower_y = bbox.first.y;
+  int input_upper_x = bbox.second.x;
+  int input_upper_y = bbox.second.y;
+
+  int lower_x = scaled_bbox.first.x;
+  int lower_y = scaled_bbox.first.y;
+  //int upper_x = scaled_bbox.second.x;
+  //int upper_y = scaled_bbox.second.y;
+
+  int nrows = (input_upper_y-input_lower_y)/render_scale.y;
+  int ncols = (input_upper_x-input_lower_x)/render_scale.x;
+
+  // temporary matrix for the section.
+  cv::Mat section_p_out;// = new cv::Mat();
+  //section->p_out = new cv::Mat();
+  (section_p_out).create(nrows, ncols, CV_8UC1);
+
+  // temporary matrix for the section.
+  cv::Mat* section_p_out_sum = new cv::Mat();
+  //section->p_out = new cv::Mat();
+  (*section_p_out_sum).create(nrows, ncols, CV_16UC1);
+
+  // temporary matrix for the section.
+  cv::Mat* section_p_out_ncount = new cv::Mat();
+  //section->p_out = new cv::Mat();
+  (*section_p_out_ncount).create(nrows, ncols, CV_16UC1);
+
+
+
+  //unsigned char* section_p_out_ptr = (unsigned char*) section_p_out.data;
+  //unsigned short* section_p_out_sum_ptr = (unsigned short*) section_p_out_sum->data;
+  //unsigned short* section_p_out_ncount_ptr = (unsigned short*) section_p_out_sum->data;
+
+
+  for (int y = 0; y < nrows; y++) {
+    for (int x = 0; x < ncols; x++) {
+      //section_p_out.at<unsigned char>(y,x) = 0;
+      TFKMAT((&section_p_out), nrows, ncols, y,x, unsigned char) = 0;
+      //section_p_out_sum->at<unsigned short>(y,x) = 0;
+      TFKMAT(section_p_out_sum, nrows, ncols, y,x, unsigned short) = 0;
+      //section_p_out_ncount->at<unsigned short>(y,x) = 0;
+      TFKMAT(section_p_out_ncount, nrows, ncols, y,x, unsigned short) = 0;
+    }
+  }
+
+
+
+  //std::vector<std::future<cv::Mat> > tile_futures(this->tiles.size());
+  //for (int i = 0; i < this->tiles.size(); i++) {
+  //  Tile* tile = this->tiles[i];
+  //  if (!this->tile_in_render_box_affine(A, tile, bbox)) continue;
+
+  //  tile_futures[i] = std::async(std::launch::async, [tile, resolution]{
+  //            return tile->get_tile_data(resolution);
+  //        });
+  //}
+
+
+  //std::future<cv::Mat > next_tile_future;
+
+  //if (this->tiles.size() > 0) {
+  //  Tile* next_tile = this->tiles[0];
+  //  next_tile_future = std::async(std::launch::async, [next_tile, resolution]{
+  //            return next_tile->get_tile_data(resolution);
+  //        });
+  //}
+
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* tile = this->tiles[i];
+    if (tile->bad_2d_alignment) continue;
+    if (!this->tile_in_render_box_affine(A, tile, bbox)) continue;
+
+    //cv::Mat* tile_p_image = this->read_tile(tile->filepath, resolution);
+
+    cv::Mat tile_p_image = tile->get_tile_data(resolution);
+
+    //cv::Mat tile_p_image = tile_futures[i].get(); 
+
+    //if (i+1 < this->tiles.size()) {
+    //  Tile* next_tile = this->tiles[i+1];
+    //  next_tile_future = std::async(std::launch::async, [next_tile, resolution]{
+    //            return next_tile->get_tile_data(resolution);
+    //        });
+    //}
+
+    //unsigned char* tile_p_image_ptr = (unsigned char*) tile_p_image.data;
+    //int tp_rows = tile_p_image.rows;
+    //int tp_cols = tile_p_image.cols;
+
+    for (int _y = 0; _y < (tile_p_image).size().height; _y++) {
+      for (int _x = 0; _x < (tile_p_image).size().width; _x++) {
+        cv::Point2f p = cv::Point2f(_x*render_scale.x, _y*render_scale.y);
+
+        cv::Point2f post_rigid_p = tile->rigid_transform(p);
+
+        cv::Point2f transformed_p = this->affine_transform_plusA(post_rigid_p, A);
+
+        int x_c = (int)(transformed_p.x/render_scale.x + 0.5);
+        int y_c = (int)(transformed_p.y/render_scale.y + 0.5);
+        for (int k = -1; k < 2; k++) {
+          for (int m = -1; m < 2; m++) {
+            //unsigned char val = tile_p_image.at<unsigned char>(_y, _x);
+            unsigned char val = TFKMAT((&tile_p_image), tp_rows, tp_cols, _y,_x, unsigned char);
+            int x = x_c+k;
+            int y = y_c+m;
+            if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
+              //section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) += val;
+              TFKMAT(section_p_out_sum, nrows, ncols, y-lower_y,x-lower_x, unsigned short) += val;
+              //section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) += 1;
+              TFKMAT(section_p_out_ncount, nrows, ncols, y-lower_y,x-lower_x, unsigned short) += 1;
+            }
+          }
+        }
+      }
+    }
+    tile_p_image.release();
+    tiles_loaded_mutex.lock();
+    tiles_loaded.push_back(tile);
+    tiles_loaded_mutex.unlock();
+    //tile->release_full_image();
+  }
+
+  for (int y = 0; y < section_p_out.size().height; y++) {
+    for (int x = 0; x < section_p_out.size().width; x++) {
+      //if (section_p_out_ncount->at<unsigned short>(y,x) == 0) {
+      if(TFKMAT(section_p_out_ncount, nrows, ncols, y,x, unsigned short) == 0) {
+        continue;
+      }
+      //section_p_out.at<unsigned char>(y, x) =
+      //    section_p_out_sum->at<unsigned short>(y, x) / section_p_out_ncount->at<unsigned short>(y,x);
+
+      TFKMAT((&section_p_out), nrows, ncols, y,x, unsigned char) =
+          TFKMAT(section_p_out_sum, nrows, ncols, y, x, unsigned short) /
+              TFKMAT(section_p_out_ncount, nrows, ncols, y, x, unsigned short);
+      // force the min value to be at least 1 so that we can check for out-of-range pixels.
+      //if (section_p_out.at<unsigned char>(y, x) == 0) {
+      if (TFKMAT((&section_p_out), nrows, ncols, y, x, unsigned char) == 0) {
+        //section_p_out.at<unsigned char>(y, x) = 1;
+        TFKMAT((&section_p_out), nrows, ncols, y, x, unsigned char) = 1;
+      }
+    }
+  }
+
+  //if (write) {
+  //  cv::imwrite(filename, (*section_p_out));
+  //}
+  section_p_out_sum->release();
+  section_p_out_ncount->release();
+  delete section_p_out_sum;
+  delete section_p_out_ncount;
+  //delete section_p_out;
+  //delete section_p_out_ncount;
+
+
+  return (section_p_out);
+}
+
 
 // bbox is in unscaled (i.e. full resolution) transformed coordinate system.
 cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
@@ -645,6 +1298,14 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
 }
 
 
+
+
+void tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename,
+    Resolution res) {
+  cv::Mat img = this->render(bbox, res);
+  cv::imwrite(filename, img);
+  //img.release(); 
+}
 
 std::pair<cv::Point2f, cv::Point2f> tfk::Section::elastic_transform_bbox(
     std::pair<cv::Point2f, cv::Point2f> bbox) {
@@ -839,11 +1500,10 @@ void tfk::Section::get_3d_keypoints_for_box(std::pair<cv::Point2f, cv::Point2f> 
   
       
       cv::Mat tmp_image;
-      // TODO(TFK): THESE LINES CANNOT STAY COMMENTED OUT NEED TO FIX
       if (apply_transform) {
-       //tmp_image = this->render(bbox, Resolution::PERCENT30);
+       tmp_image = this->render(bbox, Resolution::PERCENT30);
       } else {
-       //tmp_image = this->render_affine(A,bbox, Resolution::PERCENT30, tiles_loaded, tiles_loaded_mutex);
+       tmp_image = this->render_affine(A,bbox, Resolution::PERCENT30, tiles_loaded, tiles_loaded_mutex);
       }
   
       int black_pixels = 0;
@@ -1024,6 +1684,87 @@ void tfk::Section::find_3d_matches_in_box_cache(Section* neighbor,
 
   free(mask);
 }
+
+double tfk::Section::compute_3d_error_in_box(Section* neighbor,
+    std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
+    std::vector<cv::Point2f>& test_filtered_match_points_a,
+    std::vector<cv::Point2f>& test_filtered_match_points_b, std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex) {
+
+
+    if (test_filtered_match_points_a.size() == 0) return 2.0;
+
+    cv::Mat section_transform;
+    cv::computeAffineTFK(test_filtered_match_points_a, test_filtered_match_points_b, section_transform);
+
+    cv::Mat A(3, 3, cv::DataType<double>::type);
+
+    A.at<double>(0,0) = section_transform.at<double>(0,0);
+    A.at<double>(0,1) = section_transform.at<double>(0,1);
+    A.at<double>(0,2) = section_transform.at<double>(0,2);
+    A.at<double>(1,0) = section_transform.at<double>(1,0);
+    A.at<double>(1,1) = section_transform.at<double>(1,1);
+    A.at<double>(1,2) = section_transform.at<double>(1,2);
+    A.at<double>(2,0) = 0.0;
+    A.at<double>(2,1) = 0.0;
+    A.at<double>(2,2) = 1.0;
+
+    //printf("Printing out A\n");
+    //std::cout << A << std::endl;
+
+
+    double box_iter_x = sliding_bbox.first.x;
+    double box_iter_y = sliding_bbox.first.y;
+
+    cv::Mat I(3, 3, cv::DataType<double>::type);
+    I.at<double>(0,0) = 1.0;
+    I.at<double>(0,1) = 0.0;
+    I.at<double>(0,2) = 0.0;
+    I.at<double>(1,0) = 0.0;
+    I.at<double>(1,1) = 1.0;
+    I.at<double>(1,2) = 0.0;
+    I.at<double>(2,0) = 0.0;
+    I.at<double>(2,1) = 0.0;
+    I.at<double>(2,2) = 1.0;
+
+    std::pair<cv::Point2f, cv::Point2f> bbox = sliding_bbox;
+    //cv::Mat this1 = this->render_affine(A,bbox,THUMBNAIL2);
+    //cv::Mat neighbor1 = neighbor->render_affine(I,bbox,THUMBNAIL2);
+    //cv::Mat this2 = this->render_affine(I,bbox,THUMBNAIL2);
+
+    //std::string id = std::to_string(box_iter_x) + "-" + std::to_string(box_iter_y);
+    //std::string filename0 =  id + "-" + "section" + std::to_string(0) + ".tif";
+    //std::string filename1 =  id + "-" + "section" + std::to_string(1) + ".tif";
+    //std::string filename2 =  id + "-" + "section" + std::to_string(2) + ".tif";
+
+    //imwrite(filename0, this1);
+    //imwrite(filename1, neighbor1);
+    //imwrite(filename2, this2);
+
+    // call render error to do error detection
+    //What to make the other neightbor??
+    int n_id = neighbor->section_id;
+    std::string id = std::to_string(box_iter_x) + "-" + std::to_string(box_iter_y);
+    std::string filename =  id + "-" + "section" + std::to_string(n_id) + ".png";
+    //std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> res = 
+    double bad_fraction = this->render_error_affine(neighbor, bbox, filename, A, tiles_loaded, tiles_loaded_mutex);
+
+    //int num_bad = res.first.size();
+    std::cout << "Section " << n_id << " " << id << " " << " num_bad: " << bad_fraction << std::endl;
+
+        std::ofstream myfile;
+    myfile.open ("affine.csv", std::ios_base::app);
+    myfile << n_id << "," << "," << bad_fraction << "," << "\n";
+    myfile.close();
+
+
+    //std::string filename_identity =  id + "-" + "section" + std::to_string(n_id) + "identity.png";
+    //this->render_error_affine(neighbor, bbox, filename_identity, I);
+
+    //count = count + 1;
+    return bad_fraction;
+}
+
+
 
 void tfk::Section::find_3d_matches_in_box(Section* neighbor,
     std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
@@ -2027,6 +2768,7 @@ void tfk::Section::align_3d(Section* neighbor) {
 
     // affine transform the mesh.
     this->affine_transform_mesh();  
+
 
     // do the elastic alignment.
     this->get_elastic_matches_relative(neighbor);
