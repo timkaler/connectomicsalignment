@@ -655,6 +655,9 @@ void tfk::Stack::test_learning(int trials, int vector_grid_size, int vector_mode
       } else { // i == 0
         ann->train(tdata);
       }
+    //std::cout << ann->getWeights(0);
+    //std::cout << ann->getWeights(1);
+    //printf("\n");
     }
 
 
