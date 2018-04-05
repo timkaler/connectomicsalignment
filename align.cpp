@@ -218,6 +218,7 @@ void param_optimize(align_data_t *p_align_data) {
     stack->min_y = p_align_data->min_y;
     stack->max_x = p_align_data->max_x;
     stack->max_y = p_align_data->max_y;
+    stack->_bounding_box = p_align_data->bounding_box;
     stack->init();
     printf("Got past the init\n");
     printf("stack has sections %zu\n", stack->sections.size());
@@ -287,6 +288,7 @@ void test_learning(align_data_t *p_align_data) {
     stack->min_y = p_align_data->min_y;
     stack->max_x = p_align_data->max_x;
     stack->max_y = p_align_data->max_y;
+    stack->_bounding_box = p_align_data->bounding_box;
     stack->init();
     printf("stack has sections %zu\n", stack->sections.size());
     std::vector<tfk::params> ps;
