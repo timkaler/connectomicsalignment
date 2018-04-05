@@ -33,6 +33,7 @@ namespace tfk {
 
       void import_params(MRParams* params);
       void print_possible_params();
+      void init_ParamsDB();
   };
 }
 
