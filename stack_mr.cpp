@@ -245,6 +245,27 @@ namespace tfk {
 
     std::vector<tfk::MRParams> MatchTilesTask::get_parameter_options() {
       std::vector<tfk::MRParams> vec;
+      for (float scale = .1; scale < 1.05; scale +=1) {
+        for (int num_features = 1; num_features <=8; num_features *=2) {
+          for (int num_octaves = 5; num_octaves <= 15; num_octaves ++) {
+            for (float contrast_threshold = .01; contrast_threshold <.03; contrast_threshold +=.05) {
+              for (float edge_threshold = 3; edge_threshold < 10; edge_threshold +=2) {
+                for (float sigma = 1.2; sigma < 2; sigma += .2) {
+                  MRParams new_param = MRParams();
+                  new_param.put_int_param("num_features", num_features);
+                  new_param.put_int_param("num_octaves", num_octaves);
+                  new_param.put_float_param("scale_x", scale);
+                  new_param.put_float_param("scale_y", scale);
+                  new_param.put_float_param("contrast_threshold", contrast_threshold);
+                  new_param.put_float_param("edge_threshold", edge_threshold);
+                  new_param.put_float_param("sigma", sigma);
+                  vec.push_back(new_param);
+                }
+              }
+            }
+          }
+        }
+      }
       return vec;
     }
 
