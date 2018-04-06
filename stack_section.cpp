@@ -1757,10 +1757,12 @@ void tfk::Section::affine_transform_mesh() {
 
 
 void tfk::Section::construct_triangles() {
-  double hex_spacing = 150000.0;
+  double hex_spacing = 1500.0;
+
 
   std::pair<cv::Point2f, cv::Point2f> bbox = this->get_bbox();
-
+  TriangleMesh* test = new TriangleMesh(hex_spacing, bbox);
+  exit(0);
   double min_x = bbox.first.x;
   double min_y = bbox.first.y;
   double max_x = bbox.second.x;

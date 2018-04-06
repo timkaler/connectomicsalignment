@@ -24,6 +24,7 @@
 #include "mrtask.hpp"
 #include "mrparams.hpp"
 #include "paramdb.hpp"
+#include "triangle_mesh.hpp"
 //#include "./meshoptimize.h"
 #ifndef ALIGNSTACK
 #define ALIGNSTACK
