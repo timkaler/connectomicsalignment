@@ -221,6 +221,8 @@ namespace tfk {
           neighbor_to_success[b_tile] = false;
         }
       }
+      // TODO should the recording be done in the user code or in the framework code? as in handled in mr_task
+      // also this would only be needed for online training
       if (neighbor_success_count >= neighbors.size()*4.0/5.0) {
         paramDB->record_success(mr_params);
         return true;
