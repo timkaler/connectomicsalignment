@@ -93,6 +93,7 @@ class MRTask {
         }
 
     }
+    virtual void commit () = 0;
 };
 
 } // end namespace tfk.

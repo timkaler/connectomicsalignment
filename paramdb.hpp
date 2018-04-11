@@ -20,6 +20,7 @@ namespace tfk {
 
       std::vector<MRParams*> possible_params;
 
+      ParamDB ();
       ParamDB (MRParams* default_params, MRParams* min_params, MRParams* max_params);
 
       MRParams* get_params_for_accuracy(float accuracy);

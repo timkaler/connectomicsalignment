@@ -160,7 +160,7 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
 
             cv::Point2f post_affine_p = section->affine_transform(post_rigid_p);
             cv::Point2f transformed_p = post_affine_p;
-            if (!nomesh) {
+            if (!nomesh && false) {
               transformed_p = section->elastic_transform(post_affine_p);
             }
 

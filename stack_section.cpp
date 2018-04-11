@@ -9,10 +9,12 @@
 #include "fasttime.h"
 
 #include "render.hpp"
+#include "matchtilestask.hpp"
 extern fasttime_t global_start; 
 
 
 #define CORR_THRESH 0.75
+
 
 // Init functions
 tfk::Section::Section(int section_id) {
@@ -73,6 +75,15 @@ void tfk::Section::align_2d() {
       this->load_2d_alignment();
       this->read_3d_keypoints(filename);
       return;
+    }
+
+
+    ParamDB* paramDB = new ParamDB();
+
+    // init the tiles MatchTilesTask
+    for (int i = 0; i < tiles.size(); i++) {
+      tiles[i]->match_tiles_task = new MatchTilesTask(paramDB, tiles[i],
+                                                      get_all_close_tiles(tiles[i]));
     }
 
     this->compute_keypoints_and_matches();
@@ -2352,21 +2363,35 @@ void tfk::Section::compute_keypoints_and_matches() {
         }
       }
 
-      cilk_for (int i = 0; i < tiles_to_process_keypoints.size(); i++) {
-        Tile* tile = tiles_to_process_keypoints[i];
-        tile->compute_sift_keypoints2d();
-        tile->compute_sift_keypoints3d();
-      }
+      //cilk_for (int i = 0; i < tiles_to_process_keypoints.size(); i++) {
+      //  Tile* tile = tiles_to_process_keypoints[i];
+      //  //tile->compute_sift_keypoints2d();
+      //  tile->match_tiles_task->compute(0.9);
+      //  //tile->compute_sift_keypoints3d();
+      //}
 
       for (int i = 0; i < tiles_to_process_matches.size(); i++) {
-        cilk_spawn this->compute_tile_matches(tiles_to_process_matches[i]);
+        //cilk_spawn this->compute_tile_matches(tiles_to_process_matches[i]);
+        cilk_spawn tiles_to_process_matches[i]->match_tiles_task->compute(0.6);
       }
       cilk_sync;
 
-      for (int i = 0; i < tiles_to_process_matches.size(); i++) {
-        cilk_spawn this->compute_tile_matches2(tiles_to_process_matches[i]);
+      cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
+        //cilk_spawn this->compute_tile_matches2(tiles_to_process_matches[i]);
+        if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.9)) {
+          printf("Tile failed first error check.\n");
+          tiles_to_process_matches[i]->match_tiles_task->compute(0.99);
+        }
       }
-      cilk_sync;
+
+      cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
+        //cilk_spawn this->compute_tile_matches2(tiles_to_process_matches[i]);
+        if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.9)) {
+          printf("Tile failed second error check.\n");
+        } else {
+          tiles_to_process_matches[i]->match_tiles_task->commit();
+        }
+      }
 
       opened_set.clear();
       for (auto it = active_set.begin(); it != active_set.end(); ++it) {
@@ -2378,7 +2403,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       // clear the active and neighbor set.
       active_set.clear();
       neighbor_set.clear();
-      
+
       //double duration = ( std::clock() - global_start ) / (double) CLOCKS_PER_SEC;
       float duration = tdiff(global_start, gettime());
       printf("presently done with %f %%  duration %f estimated completion time: %f\n", (100.0*pivot_search_start) / sorted_tiles.size(), duration, (duration)/((60*60*1.0*pivot_search_start)/sorted_tiles.size()));

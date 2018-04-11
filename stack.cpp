@@ -6,7 +6,6 @@
 
 
 // Contains the initial code for mr stuff.
-#include "stack_mr.cpp"
 
 // BEGIN init functions
 tfk::Stack::Stack(int base_section, int n_sections,

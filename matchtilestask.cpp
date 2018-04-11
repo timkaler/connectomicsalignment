@@ -1,4 +1,15 @@
+#include "matchtilestask.hpp"
 namespace tfk {
+    bool MatchTilesTask::bbox_contains(float pt_x, float pt_y,
+                              int x_start, int x_finish,
+                              int y_start, int y_finish) {
+      // TRACE_1("  -- pt: (%f, %f)\n", pt.x, pt.y);
+      // TRACE_1("  -- bbox: [(%d, %d), (%d, %d)]\n",
+      //         x_start, y_start,
+      //         x_finish, y_finish);
+      return (pt_x >= x_start && pt_x <= x_finish) &&
+        (pt_y >= y_start && pt_y <= y_finish);
+    }
 
     MatchTilesTask::MatchTilesTask (ParamDB* paramDB, Tile* tile, std::vector<Tile*> neighbors) {
       this->paramDB = paramDB;
@@ -11,22 +22,22 @@ namespace tfk {
       cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
       std::vector< cv::Point2f > &filtered_match_points_a,
       std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh) {
-    
+
       //std::vector<int> neighbors = get_all_close_tiles(a_tile->tile_id);
-    
+
       if (a_tile_keypoints.size() < MIN_FEATURES_NUM) return;
       if (b_tile_keypoints.size() < MIN_FEATURES_NUM) return;
-    
+
       // Filter the features, so that only features that are in the
       //   overlapping tile will be matches.
       std::vector< cv::KeyPoint > atile_kps_in_overlap, btile_kps_in_overlap;
-    
+
       atile_kps_in_overlap.reserve(a_tile_keypoints.size());
       btile_kps_in_overlap.reserve(b_tile_keypoints.size());
-    
+
       // atile_kps_in_overlap.clear(); btile_kps_in_overlap.clear();
       cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
-    
+
       { // Begin scoped block A.
         // Compute bounding box of overlap
         int overlap_x_start = a_tile->x_start > b_tile->x_start ?
@@ -43,7 +54,7 @@ namespace tfk {
         overlap_x_finish += OFFSET;
         overlap_y_start -= OFFSET;
         overlap_y_finish += OFFSET;
-    
+
         std::vector< cv::Mat > atile_kps_desc_in_overlap_list;
         atile_kps_desc_in_overlap_list.reserve(a_tile_keypoints.size());
         std::vector< cv::Mat > btile_kps_desc_in_overlap_list;
@@ -146,15 +157,15 @@ namespace tfk {
       this->mr_params = mr_params_local;
 
       tfk::params new_params;
-      new_params.scale_x = mr_params->get_float_param("scale_x");
-      new_params.scale_y = mr_params->get_float_param("scale_y");
+      new_params.scale_x = mr_params->get_float_param("scale");
+      new_params.scale_y = mr_params->get_float_param("scale");
 
       //printf("scale x %f scale y %f\n", new_params.scale_x, new_params.scale_y);
       new_params.num_features = mr_params->get_int_param("num_features");
       new_params.num_octaves = mr_params->get_int_param("num_octaves");
-      new_params.contrast_threshold = mr_params->get_float_param("contrast_threshold");
-      new_params.edge_threshold = mr_params->get_float_param("edge_threshold");
-      new_params.sigma = mr_params->get_float_param("sigma");
+      new_params.contrast_threshold = 0.015;//mr_params->get_float_param("contrast_threshold");
+      new_params.edge_threshold = 6;// mr_params->get_float_param("edge_threshold");
+      new_params.sigma = 1.2;//mr_params->get_float_param("sigma");
 
       a_tile->compute_sift_keypoints2d_params(new_params, a_tile_keypoints,
                                               a_tile_desc, a_tile);
@@ -217,11 +228,20 @@ namespace tfk {
         if (val >= 0.7) {
           neighbor_to_success[b_tile] = true;
           neighbor_success_count++;
+          cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
+                                            tmp_a_tile.y_start+tmp_a_tile.offset_y);
+          cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
+                                            b_tile->y_start+b_tile->offset_y);
+          cv::Point2f delta = a_point - b_point;
+
+          a_tile->ideal_offsets[b_tile->tile_id] = delta;
+          a_tile->neighbor_correlations[b_tile->tile_id] = val;
+
         } else {
           neighbor_to_success[b_tile] = false;
         }
       }
-      if (neighbor_success_count >= neighbors.size()*4.0/5.0) {
+      if (neighbor_success_count > neighbors.size()*2.0/4.0) {
         return true;
       } else { 
         return false;
