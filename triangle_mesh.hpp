@@ -14,6 +14,10 @@
 #include "cilk_tools/Graph.h"
 #include "triangle.h"
 #include "range_tree.hpp"
+
+#include "AlignData.pb.h"
+//#include "AlignData.pb.cc"
+
 #ifndef TFK_TRIANGLE_MESH
 #define TFK_TRIANGLE_MESH
 
@@ -24,6 +28,8 @@ namespace tfk {
       std::pair<cv::Point2f, cv::Point2f> bbox;
       //std::vector<cv::Point2f>* mesh_orig_save;
       //std::vector<cv::Point2f>* mesh_old;
+
+      TriangleMesh(TriangleMeshProto triangleMesh);
 
       TriangleMesh(double hex_spacing,
                    std::pair<cv::Point2f, cv::Point2f> bbox);

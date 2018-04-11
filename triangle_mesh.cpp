@@ -62,6 +62,10 @@ void TriangleMesh::build_index_post() {
 
 void TriangleMesh::build_index() {
 
+  bbox = std::make_pair(cv::Point2f(0.0,0.0),cv::Point2f(0.0,0.0));
+
+
+
   Triangle* items = new Triangle[triangles->size()];
   for (int i = 0; i < triangles->size(); i++) {
     Triangle t;
@@ -70,6 +74,15 @@ void TriangleMesh::build_index() {
     t.points[1] = (*mesh_orig)[(*triangles)[i].index2];
     t.points[2] = (*mesh_orig)[(*triangles)[i].index3];
     items[i] = t;
+
+    for (int j = 0; j < 3; j++) {
+      cv::Point2f pt = t.points[j];
+      if (pt.x < bbox.first.x) bbox.first.x = pt.x;
+      if (pt.x > bbox.second.x) bbox.second.x = pt.x;
+      if (pt.y < bbox.first.y) bbox.first.y = pt.y;
+      if (pt.y > bbox.second.y) bbox.second.y = pt.y;
+    }
+
   }
 
   printf("The total size of the triangles before is %d\n", triangles->size());
@@ -92,6 +105,39 @@ void TriangleMesh::build_index() {
     printf("bbox is %f %f %f %f\n", bbox.first.x, bbox.first.y, bbox.second.x, bbox.second.y);
     exit(0);
   }
+}
+
+TriangleMesh::TriangleMesh(TriangleMeshProto triangleMesh) {
+
+
+  mesh = new std::vector<cv::Point2f>();
+  mesh_orig = new std::vector<cv::Point2f>();
+
+  for (int i = 0; i < triangleMesh.mesh_size(); i++) {
+    mesh->push_back(cv::Point2f(triangleMesh.mesh(i).x(),
+                                triangleMesh.mesh(i).y()));
+    mesh_orig->push_back(cv::Point2f(triangleMesh.mesh_orig(i).x(),
+                                     triangleMesh.mesh_orig(i).y()));
+  }
+
+  triangle_edges = new std::vector<std::pair<int,int> >();
+  for (int i = 0; i < triangleMesh.triangle_edges_size(); i++) {
+    triangle_edges->push_back(std::make_pair(triangleMesh.triangle_edges(i).x(),
+                                             triangleMesh.triangle_edges(i).y()));
+  }
+
+  triangles = new std::vector<tfkTriangle>();
+  for (int i = 0; i < triangleMesh.triangles_size(); i++) {
+    tfkTriangle tri;
+    tri.index1 = triangleMesh.triangles(i).index1();
+    tri.index2 = triangleMesh.triangles(i).index2();
+    tri.index3 = triangleMesh.triangles(i).index3();
+    triangles->push_back(tri);
+  }
+
+  printf("building the index\n");
+  this->build_index();
+  this->build_index_post();
 }
 
 TriangleMesh::TriangleMesh(double hex_spacing,

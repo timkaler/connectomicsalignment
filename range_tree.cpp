@@ -137,7 +137,7 @@ RangeTree::RangeTree(Triangle* items,
 
   if ((std::abs(bbox.second.x-bbox.first.x) <= 300 &&
       std::abs(bbox.second.y-bbox.first.y) <= 300) ||
-      size <= 40) {
+      size <= 4) {
     leaf = true;
 
     return;

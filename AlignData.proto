@@ -40,6 +40,19 @@ message Saved2DAlignmentSection {
   repeated Saved2DAlignmentTile tiles = 1; 
 }
 
+message TriangleReference {
+  required uint64 index1 = 1;
+  required uint64 index2 = 2;
+  required uint64 index3 = 3; 
+}
+
+message TriangleMeshProto {
+  repeated PairDouble mesh = 1;
+  repeated PairDouble mesh_orig = 2;
+  repeated PairInt triangle_edges = 3;
+  repeated TriangleReference triangles = 4;
+}
+
 
 message RenderTriangle {
     repeated PairDouble p = 1;

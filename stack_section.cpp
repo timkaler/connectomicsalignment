@@ -158,12 +158,12 @@ void tfk::Section::align_2d() {
 }
 
 void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
-  double cross_slice_weight = 1.0;
+  double cross_slice_weight = 1.0*100;
   double cross_slice_winsor = 20.0;
   double intra_slice_weight = 1.0;
   double intra_slice_winsor = 200.0;
   int max_iterations = 10000; //ORIGINALL 5000
-  double stepsize = 0.0001;
+  double stepsize = 0.001;
   double momentum = 0.5;
 
   if (_neighbor==NULL || this->real_section_id == _neighbor->real_section_id) {
@@ -275,7 +275,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
         //// update all edges
         for (int j = 0; j < triangle_edges->size(); j++) {
           cost += internal_mesh_derivs(mesh, gradients, (*triangle_edges)[j], rest_lengths[j],
-                                       all_weight, sigma);
+                                       all_weight/triangle_edges->size(), sigma);
         }
 
         //// update all triangles
@@ -283,7 +283,8 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
           int triangle_indices[3] = {(*triangles)[j].index1,
                                      (*triangles)[j].index2,
                                      (*triangles)[j].index3};
-          cost += area_mesh_derivs(mesh, gradients, triangle_indices, rest_areas[j], all_weight);
+          cost += area_mesh_derivs(mesh, gradients, triangle_indices, rest_areas[j],
+                                   all_weight/triangles->size());
         }
       }
 
@@ -310,7 +311,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
           cv::Point2f* gradients2 = n_section->gradients;
           double* barys1 = mesh_matches[j].my_barys;
           double* barys2 = mesh_matches[j].n_barys;
-          double all_weight = 1000.0*cross_slice_weight / mesh_matches.size();
+          double all_weight = cross_slice_weight / mesh_matches.size();
           double sigma = cross_slice_winsor;
 
           int indices1[3] = {mesh_matches[j].my_tri.index1,
@@ -443,6 +444,51 @@ bool tfk::Section::transformed_tile_overlaps_with(Tile* tile,
 }
 
 void tfk::Section::save_elastic_mesh(Section* neighbor) {
+
+  TriangleMeshProto triangleMesh;
+
+  for (int i = 0; i < triangle_mesh->mesh->size(); i++) {
+    cv::Point2f pt = (*(triangle_mesh->mesh))[i];
+    PairDouble pair;
+    pair.set_x(pt.x);
+    pair.set_y(pt.y);
+    triangleMesh.add_mesh();
+    *(triangleMesh.mutable_mesh(i)) = pair;
+  }
+
+  for (int i = 0; i < triangle_mesh->mesh_orig->size(); i++) {
+    cv::Point2f pt = (*(triangle_mesh->mesh_orig))[i];
+    PairDouble pair;
+    pair.set_x(pt.x);
+    pair.set_y(pt.y);
+    triangleMesh.add_mesh_orig();
+    *(triangleMesh.mutable_mesh_orig(i)) = pair;
+  }
+
+  for (int i = 0; i < triangle_mesh->triangle_edges->size(); i++) {
+    std::pair<int, int> edge = (*(triangle_mesh->triangle_edges))[i];
+    PairInt pair;
+    pair.set_x(edge.first);
+    pair.set_y(edge.second);
+    triangleMesh.add_triangle_edges();
+    *(triangleMesh.mutable_triangle_edges(i)) = pair;
+  }
+
+  for (int i = 0; i < triangle_mesh->triangles->size(); i++) {
+    tfkTriangle tri = (*(triangle_mesh->triangles))[i];
+    TriangleReference ref;
+    ref.set_index1(tri.index1);
+    ref.set_index2(tri.index2);
+    ref.set_index3(tri.index3);
+    triangleMesh.add_triangles();
+    *(triangleMesh.mutable_triangles(i)) = ref;
+  }
+
+  std::fstream output("emesh_"+std::to_string(this->real_section_id)+"_"+
+                      std::to_string(neighbor->real_section_id)+".pbuf",
+                      std::ios::out | std::ios::trunc | std::ios::binary);
+  triangleMesh.SerializeToOstream(&output); 
+  output.close();
   //std::string path =
   //    "/efs/home/tfk/maprecurse/sift_features4/emesh_"+std::to_string(this->real_section_id)+"_" +
   //    std::to_string(neighbor->real_section_id);
@@ -1444,7 +1490,22 @@ void tfk::Section::apply_affine_transforms() {
 }
 
 bool tfk::Section::load_elastic_mesh(Section* neighbor) {
-  return false;
+
+
+  TriangleMeshProto triangleMesh;
+
+
+  std::fstream input("emesh_"+std::to_string(this->real_section_id)+"_"+
+                      std::to_string(neighbor->real_section_id)+".pbuf",
+                      std::ios::in | std::ios::binary);
+
+  if (!input.good()) return false;
+
+  triangleMesh.ParseFromIstream(&input);
+
+  triangle_mesh = new TriangleMesh(triangleMesh);
+
+  return true;
   //std::string path =
   //    "/efs/home/tfk/maprecurse/sift_features4/emesh_"+std::to_string(this->real_section_id)+"_" +
   //    std::to_string(neighbor->real_section_id);
@@ -1503,25 +1564,35 @@ void tfk::Section::align_3d(Section* neighbor) {
     this->elastic_gradient_descent_section(neighbor);
     this->triangle_mesh->build_index_post();
 
-    this->get_elastic_matches_relative(neighbor);
-    this->elastic_gradient_descent_section(neighbor);
-    this->triangle_mesh->build_index_post();
+    //this->get_elastic_matches_relative(neighbor);
+    //this->elastic_gradient_descent_section(neighbor);
+    //this->triangle_mesh->build_index_post();
 
-    this->get_elastic_matches_relative(neighbor);
-    this->elastic_gradient_descent_section(neighbor);
-    this->triangle_mesh->build_index_post();
+    //this->get_elastic_matches_relative(neighbor);
+    //this->elastic_gradient_descent_section(neighbor);
+    //this->triangle_mesh->build_index_post();
 
-    this->get_elastic_matches_relative(neighbor);
-    this->elastic_gradient_descent_section(neighbor);
-    this->triangle_mesh->build_index_post();
+    save_elastic_mesh(neighbor);
 
-    this->get_elastic_matches_relative(neighbor);
-    this->elastic_gradient_descent_section(neighbor);
-    this->triangle_mesh->build_index_post();
+    //this->get_elastic_matches_relative(neighbor);
+    //this->elastic_gradient_descent_section(neighbor);
+    //this->triangle_mesh->build_index_post();
 
-    this->get_elastic_matches_relative(neighbor);
-    this->elastic_gradient_descent_section(neighbor);
-    this->triangle_mesh->build_index_post();
+    //this->get_elastic_matches_relative(neighbor);
+    //this->elastic_gradient_descent_section(neighbor);
+    //this->triangle_mesh->build_index_post();
+
+    //this->get_elastic_matches_relative(neighbor);
+    //this->elastic_gradient_descent_section(neighbor);
+    //this->triangle_mesh->build_index_post();
+
+    //this->get_elastic_matches_relative(neighbor);
+    //this->elastic_gradient_descent_section(neighbor);
+    //this->triangle_mesh->build_index_post();
+
+    //this->get_elastic_matches_relative(neighbor);
+    //this->elastic_gradient_descent_section(neighbor);
+    //this->triangle_mesh->build_index_post();
 
 //    this->get_elastic_matches_relative(neighbor);
 //    this->elastic_gradient_descent_section(neighbor);
