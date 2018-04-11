@@ -146,6 +146,9 @@ triangle_mesh.o: triangle_mesh.cpp triangle_mesh.hpp
 range_tree.o: range_tree.cpp range_tree.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
+mlbase.o: mlbase.cpp mlbase.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
 #engine.o: cilk_tools/Graph.cpp cilk_tools/engine.cpp cilk_tools/scheduler.cpp
 #	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
@@ -157,7 +160,7 @@ range_tree.o: range_tree.cpp range_tree.hpp
 run.S: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: Graph.o scheduler.o engine.o common.o align.o match.o ransac.o run.o stack.o mrparams.o paramdb.o render.o triangle_mesh.o range_tree.o
+run_align: Graph.o scheduler.o engine.o common.o align.o match.o ransac.o run.o stack.o mrparams.o paramdb.o render.o triangle_mesh.o range_tree.o mlbase.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:
