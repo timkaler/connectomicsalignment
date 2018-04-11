@@ -138,13 +138,12 @@ namespace tfk {
       }
     }
 
-    void MatchTilesTask::compute(float probability_correct) {
+    void MatchTilesTask::compute_with_params(MRParams* mr_params_local) {
       Tile* a_tile = tile;
       std::vector<cv::KeyPoint> a_tile_keypoints;
       cv::Mat a_tile_desc;
 
-
-      this->mr_params = paramDB->get_params_for_accuracy(probability_correct);
+      this->mr_params = mr_params_local;
 
       tfk::params new_params;
       new_params.scale_x = mr_params->get_float_param("scale_x");
@@ -153,9 +152,9 @@ namespace tfk {
       //printf("scale x %f scale y %f\n", new_params.scale_x, new_params.scale_y);
       new_params.num_features = mr_params->get_int_param("num_features");
       new_params.num_octaves = mr_params->get_int_param("num_octaves");
-      new_params.contrast_threshold = mr_params->get_float_param("contrast_threshold"); 
-      new_params.edge_threshold = mr_params->get_float_param("edge_threshold"); 
-      new_params.sigma = mr_params->get_float_param("sigma"); 
+      new_params.contrast_threshold = mr_params->get_float_param("contrast_threshold");
+      new_params.edge_threshold = mr_params->get_float_param("edge_threshold");
+      new_params.sigma = mr_params->get_float_param("sigma");
 
       a_tile->compute_sift_keypoints2d_params(new_params, a_tile_keypoints,
                                               a_tile_desc, a_tile);
@@ -223,10 +222,8 @@ namespace tfk {
         }
       }
       if (neighbor_success_count >= neighbors.size()*4.0/5.0) {
-        paramDB->record_success(mr_params);
         return true;
       } else { 
-        paramDB->record_failure(mr_params);
         return false;
       }
     }
@@ -242,6 +239,32 @@ namespace tfk {
           tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
         }
       }
+    }
+
+    std::vector<tfk::MRParams> MatchTilesTask::get_parameter_options() {
+      std::vector<tfk::MRParams> vec;
+      for (float scale = .1; scale < 1.05; scale +=1) {
+        for (int num_features = 1; num_features <=8; num_features *=2) {
+          for (int num_octaves = 5; num_octaves <= 15; num_octaves ++) {
+            for (float contrast_threshold = .01; contrast_threshold <.03; contrast_threshold +=.05) {
+              for (float edge_threshold = 3; edge_threshold < 10; edge_threshold +=2) {
+                for (float sigma = 1.2; sigma < 2; sigma += .2) {
+                  MRParams new_param = MRParams();
+                  new_param.put_int_param("num_features", num_features);
+                  new_param.put_int_param("num_octaves", num_octaves);
+                  new_param.put_float_param("scale_x", scale);
+                  new_param.put_float_param("scale_y", scale);
+                  new_param.put_float_param("contrast_threshold", contrast_threshold);
+                  new_param.put_float_param("edge_threshold", edge_threshold);
+                  new_param.put_float_param("sigma", sigma);
+                  vec.push_back(new_param);
+                }
+              }
+            }
+          }
+        }
+      }
+      return vec;
     }
 
 }

@@ -401,13 +401,11 @@ class Stack {
 
 
 
-class MatchTilesTask : MRTask {
+class MatchTilesTask : public MRTask {
   public:
     std::vector<int> param_adjustments;
     std::vector<int> param_train_deltas;
 
-    MRParams* mr_params;
-    ParamDB* paramDB;
     void set_random_train();
     //void update_result(float last_correct, float next_correct);
 
@@ -423,9 +421,10 @@ class MatchTilesTask : MRTask {
 
     MatchTilesTask (ParamDB* paramDB, Tile* tile, std::vector<Tile*> neighbors);
 
-    void compute(float probability_correct);
+    void compute_with_params(tfk::MRParams* mr_params_local);
     void commit();
     bool error_check(float false_negative_rate);
+    std::vector<tfk::MRParams> get_parameter_options();
 };
 
 
