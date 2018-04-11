@@ -12,6 +12,7 @@
 #include <opencv2/ml.hpp>
 #include <opencv2/imgproc/types_c.h>
 #include <tuple>
+#include <set>
 #include "triangle.h"
 #ifndef TFK_RANGE_TREE
 #define TFK_RANGE_TREE
@@ -35,6 +36,7 @@ namespace tfk {
       Triangle find_triangle(cv::Point2f pt);
       bool point_in_triangle(cv::Point2f pt, Triangle tri);
       float Dot(cv::Point2f, cv::Point2f);
+      std::set<int> get_index_set();
   };
 }
 

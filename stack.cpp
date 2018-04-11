@@ -123,14 +123,18 @@ void tfk::Stack::align_3d() {
   for (int i = 1; i < this->sections.size(); i++) {
     Section* sec = this->sections[i];
     int j = i-1;
-    for (int k = 0; k < sec->mesh->size(); k++) {
-      (*sec->mesh)[k] = this->sections[j]->elastic_transform((*sec->mesh)[k]);
+    for (int k = 0; k < sec->triangle_mesh->mesh->size(); k++) {
+      (*sec->triangle_mesh->mesh)[k] = this->sections[j]->elastic_transform((*sec->triangle_mesh->mesh)[k]);
     }
   }
   printf("Done with align 3d\n");
 }
 
 void tfk::Stack::align_2d() {
+  for (int i = 0; i < this->sections.size(); i++) {
+    this->sections[i]->align_2d();
+  }
+  return;
   //int count = 0;
   int j = 0;
   int i = 0;

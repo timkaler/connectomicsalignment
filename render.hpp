@@ -21,7 +21,7 @@ namespace tfk {
       //cv::Mat render(Stack* stack, std::pair<cv::Point2f, cv::Point2f> bbox,
       //               Resolution resolution);
       cv::Mat render(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
-                     Resolution resolution);
+                     Resolution resolution, bool nomesh = false);
       void render(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
                   std::string filename, Resolution res);
 

@@ -13,6 +13,7 @@
 #include <opencv2/imgproc/types_c.h>
 #include "cilk_tools/Graph.h"
 #include "triangle.h"
+#include "range_tree.hpp"
 #ifndef TFK_TRIANGLE_MESH
 #define TFK_TRIANGLE_MESH
 
@@ -26,13 +27,18 @@ namespace tfk {
 
       TriangleMesh(double hex_spacing,
                    std::pair<cv::Point2f, cv::Point2f> bbox);
-      void build_index();
+      Triangle find_triangle(cv::Point2f pt);
+      Triangle find_triangle_post(cv::Point2f pt);
+      void build_index_post();
 
-    private:
       std::vector<cv::Point2f>* mesh_orig;
       std::vector<cv::Point2f>* mesh;
       std::vector<std::pair<int,int> >* triangle_edges;
       std::vector<tfkTriangle>* triangles;
+    private:
+      RangeTree* index;
+      RangeTree* index_post;
+      void build_index();
 
       std::vector<cv::Point2f>* generate_hex_grid(double* bounding_box, double spacing);
   };

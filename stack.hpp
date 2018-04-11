@@ -25,6 +25,7 @@
 #include "mrparams.hpp"
 #include "paramdb.hpp"
 #include "triangle_mesh.hpp"
+#include "triangle.h"
 //#include "./meshoptimize.h"
 #ifndef ALIGNSTACK
 #define ALIGNSTACK
@@ -188,13 +189,12 @@ class Section {
     void load_2d_alignment();
     void save_2d_alignment();
 
-    std::vector<cv::Point2f>* mesh_orig;
+    //std::vector<cv::Point2f>* mesh_orig;
     std::vector<cv::Point2f>* mesh_orig_save;
     std::vector<cv::Point2f>* mesh_old;
-    std::vector<cv::Point2f>* mesh;
-    std::vector<std::pair<int,int> >* triangle_edges;
+    //std::vector<cv::Point2f>* mesh;
 
-    std::vector<std::vector<tfkTriangle>* > triangles;
+    //std::vector<std::vector<tfkTriangle>* > triangles;
 
     //std::vector<tfkTriangle>* triangles;
 
@@ -258,15 +258,12 @@ class Section {
     bool use_cached, tfk::params sift_parameters, std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex, std::vector<cv::KeyPoint>& prev_keypoints, cv::Mat& prev_desc,
               std::vector<cv::KeyPoint>& my_keypoints, cv::Mat& my_desc);
 
-void get_elastic_matches_one_next_bbox(Section* neighbor,
-    std::pair<double, double> bbox,
-    std::vector<cv::KeyPoint>& prev_keypoints,
-    cv::Mat& prev_desc,
-    std::vector<cv::KeyPoint>& my_keypoints,
-    cv::Mat& my_desc);
-
 void get_elastic_matches_relative(Section* neighbor);
 
+
+
+
+   TriangleMesh* triangle_mesh;
 
 
    double compute_3d_error_in_box(Section* neighbor,
@@ -278,7 +275,6 @@ void get_elastic_matches_relative(Section* neighbor);
 
 
     void coarse_affine_align(Section* neighbor);
-    std::vector<cv::Point2f>* generate_hex_grid(double* bounding_box, double spacing);
     void construct_triangles();
 
     std::pair<cv::Point2f, cv::Point2f> get_bbox();
@@ -298,8 +294,6 @@ void get_elastic_matches_relative(Section* neighbor);
     std::pair<cv::Point2f, cv::Point2f> elastic_transform_bbox(
         std::pair<cv::Point2f, cv::Point2f> bbox);
     void affine_transform_keypoints(std::vector<cv::KeyPoint>& keypoints);
-    void get_elastic_matches_one(Section* neighbor);
-    void get_elastic_matches(std::vector<Section*> neighbors);
     //std::vector<cv::Point2f>* generate_hex_grid(double* bounding_box, double spacing);
     void affine_transform_mesh();
     //void construct_triangles();
@@ -330,7 +324,7 @@ void get_elastic_matches_relative(Section* neighbor);
                       std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
 
     renderTriangle getRenderTriangle(tfkTriangle tri);
-    std::tuple<bool, float, float, float> get_triangle_for_point(cv::Point2f pt);
+    std::tuple<bool, float, float, float, int> get_triangle_for_point(cv::Point2f pt);
 
     void apply_affine_transforms();
     void apply_affine_transforms(cv::Mat A);

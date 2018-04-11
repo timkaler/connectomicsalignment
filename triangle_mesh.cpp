@@ -3,30 +3,102 @@
 
 namespace tfk {
 
+
+
+Triangle TriangleMesh::find_triangle(cv::Point2f pt) {
+  return index->find_triangle(pt);
+}
+
+Triangle TriangleMesh::find_triangle_post(cv::Point2f pt) {
+  return index_post->find_triangle(pt);
+}
+
+
+void TriangleMesh::build_index_post() {
+
+
+  Triangle* items = new Triangle[triangles->size()];
+  //std::vector<Triangle> items;
+
+  auto new_bbox = bbox;
+
+  for (int i = 0; i < triangles->size(); i++) {
+    Triangle t;
+    t.index = i;
+    t.points[0] = (*mesh)[(*triangles)[i].index1];
+    t.points[1] = (*mesh)[(*triangles)[i].index2];
+    t.points[2] = (*mesh)[(*triangles)[i].index3];
+    items[i] = t;
+    for (int j = 0; j < 3; j++) {
+      cv::Point2f pt = t.points[j];
+      if (pt.x < new_bbox.first.x) new_bbox.first.x = pt.x;
+      if (pt.x > new_bbox.second.x) new_bbox.second.x = pt.x;
+      if (pt.y < new_bbox.first.y) new_bbox.first.y = pt.y;
+      if (pt.y > new_bbox.second.y) new_bbox.second.y = pt.y;
+    }
+  }
+
+  printf("Post The total size of the triangles before is %d\n", triangles->size());
+
+
+  new_bbox.first.x-=0.01;
+  new_bbox.first.y-=0.01;
+  new_bbox.second.x+=0.01;
+  new_bbox.second.y+=0.01;
+
+  index_post = new RangeTree(items,triangles->size(), new_bbox);
+  printf("The total size of the tree is %d\n", index->get_total_item_count());
+
+  std::set<int> index_set = index->get_index_set();
+  printf("The total size of the index set is %d\n", index_set.size());
+  //exit(0);
+  //Triangle tri = index->find_triangle(cv::Point2f(16806.0, 20157.0));
+  //if (tri.index==-1) {
+  //  printf("Failure!\n");
+  //  printf("bbox is %f %f %f %f\n", bbox.first.x, bbox.first.y, bbox.second.x, bbox.second.y);
+  //  exit(0);
+  //}
+}
+
 void TriangleMesh::build_index() {
 
-  std::vector<Triangle> items;
-
+  Triangle* items = new Triangle[triangles->size()];
   for (int i = 0; i < triangles->size(); i++) {
     Triangle t;
     t.index = i;
     t.points[0] = (*mesh_orig)[(*triangles)[i].index1];
     t.points[1] = (*mesh_orig)[(*triangles)[i].index2];
     t.points[2] = (*mesh_orig)[(*triangles)[i].index3];
-
-    items.push_back(t);
+    items[i] = t;
   }
 
   printf("The total size of the triangles before is %d\n", triangles->size());
-  RangeTree* tree = new RangeTree(&(items[0]),triangles->size(), bbox);
-  printf("The total size of the tree is %d\n", tree->get_total_item_count());
+
+
+  bbox.first.x-=0.01;
+  bbox.first.y-=0.01;
+  bbox.second.x+=0.01;
+  bbox.second.y+=0.01;
+
+  index = new RangeTree(items,triangles->size(), bbox);
+  printf("The total size of the tree is %d\n", index->get_total_item_count());
+
+  std::set<int> index_set = index->get_index_set();
+  printf("The total size of the index set is %d\n", index_set.size());
+  //exit(0);
+  Triangle tri = index->find_triangle(cv::Point2f(16806.0, 20157.0));
+  if (tri.index==-1) {
+    printf("Failure!\n");
+    printf("bbox is %f %f %f %f\n", bbox.first.x, bbox.first.y, bbox.second.x, bbox.second.y);
+    exit(0);
+  }
 }
 
 TriangleMesh::TriangleMesh(double hex_spacing,
-                           std::pair<cv::Point2f, cv::Point2f> bbox) {
+                           std::pair<cv::Point2f, cv::Point2f> _bbox) {
 
 
-  this->bbox = bbox;
+  this->bbox = _bbox;
   double min_x = bbox.first.x;
   double min_y = bbox.first.y;
   double max_x = bbox.second.x;
@@ -35,12 +107,12 @@ TriangleMesh::TriangleMesh(double hex_spacing,
   double bounding_box[4] = {min_x,max_x,min_y,max_y};
   std::vector<cv::Point2f>* hex_grid = this->generate_hex_grid(bounding_box, hex_spacing);
 
-  cv::Rect rect(min_x-hex_spacing*2,min_y-hex_spacing*2,max_x-min_x+hex_spacing*4, max_y-min_y + hex_spacing*4);
+  cv::Rect rect(min_x-hex_spacing*3,min_y-hex_spacing*3,max_x-min_x+hex_spacing*6, max_y-min_y + hex_spacing*6);
 
-  bbox.first.x-=hex_spacing*2+0.01;
-  bbox.first.y-=hex_spacing*2+0.01;
-  bbox.second.x+=hex_spacing*2+0.01;
-  bbox.second.y+=hex_spacing*2+0.01;
+  bbox.first.x-=hex_spacing*3+0.01;
+  bbox.first.y-=hex_spacing*3+0.01;
+  bbox.second.x+=hex_spacing*3+0.01;
+  bbox.second.y+=hex_spacing*3+0.01;
 
   cv::Subdiv2D subdiv(rect);
   subdiv.initDelaunay(rect);

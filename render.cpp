@@ -89,7 +89,7 @@ std::pair<cv::Point2f, cv::Point2f> Render::scale_bbox(
 
 
 cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
-    tfk::Resolution resolution) {
+    tfk::Resolution resolution, bool nomesh) {
 
   //int bad_2d_alignment = 0;
   //for (int i = 0; i < section->tiles.size(); i++) {
@@ -159,8 +159,10 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
             cv::Point2f post_rigid_p = tile->rigid_transform(p);
 
             cv::Point2f post_affine_p = section->affine_transform(post_rigid_p);
-
-            cv::Point2f transformed_p = section->elastic_transform(post_affine_p);
+            cv::Point2f transformed_p = post_affine_p;
+            if (!nomesh) {
+              transformed_p = section->elastic_transform(post_affine_p);
+            }
 
             //cv::Point2f transformed_p = affine_transform(&tile, p);
             //transformed_p = elastic_transform(&tile, &triangles, transformed_p);

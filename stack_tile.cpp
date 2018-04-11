@@ -1163,8 +1163,8 @@ void tfk::Tile::compute_sift_keypoints2d() {
 
   //(*this->p_image).create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
 
-  float scale_x = 0.25;
-  float scale_y = 0.25;
+  float scale_x = 0.5;
+  float scale_y = 0.5;
   cv::resize(tmp_image, (*this->p_image), cv::Size(), scale_x,scale_y,CV_INTER_AREA);
 
   //(*this->p_image) = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
