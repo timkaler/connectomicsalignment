@@ -60,41 +60,35 @@ class MRTask {
     void setup_param_db(int trials) {
         std::vector<tfk::MRParams> param_options = get_parameter_options();
         for (auto &param : param_options) {
-            std::clock_t start;
-            double duration;
-            start = std::clock();
+            double cost = 0;
+            fasttime_t start = gettime();
             compute_with_params(&param);
-            duration = ( std::clock() - start ) / (double) CLOCKS_PER_SEC;
-            param.set_cost(duration);
+            cost = tdiff(start, gettime());
+            param.set_cost(cost);
             paramDB->import_params(&param);
             bool correct = error_check(0);
-            // currently done in the error check but that seems wierd
-            /*
             if (correct) {
                 paramDB->record_success(&param);
             } else {
                 paramDB->record_failure(&param);
             }
-            */
-
-            cilk_for (int i = 0; i < trials - 1; i++) {
-                std::clock_t start2;
-                double duration2;
-                start2 = std::clock();
+            
+            
+            for (int i = 1; i < trials; i++) {
+                //TODO replace with better clock from fasttime
+                start = gettime();
                 compute_with_params(&param);
-                duration2 = ( std::clock() - start2 ) / (double) CLOCKS_PER_SEC;
+                double duration = tdiff(start, gettime());
                 bool correct2 = error_check(0);
-                // currently done in the error check but that seems wierd
-                /*
                 if (correct2) {
                     paramDB->record_success(&param);
                 } else {
                     paramDB->record_failure(&param);
                 }
-                */
-                //TODO not thread safe, but I am not sure if it really matters
-                param.set_cost((param.get_cost()*(param.success_count+param.failure_count-1)+duration)/ (param.success_count+param.failure_count));
+                cost += duration;
+                
             }
+            param.set_cost(cost / trials);
 
         }
 
