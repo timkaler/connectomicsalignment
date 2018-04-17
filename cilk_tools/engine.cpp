@@ -19,7 +19,7 @@ void engine::run() {
       scheduler->get_task_bag();
   while (subbags.size() > 0) {
     iterationCount++;
-    if (iterationCount%1000==0){
+    if (iterationCount%100000==0){
     printf("iteration count is %d\n", iterationCount);
     }
     parallel_process(subbags);

@@ -34,6 +34,10 @@ class MRTask {
   public:
     tfk::ParamDB* paramDB;
     tfk::MRParams* mr_params;
+
+    // used to keep track of the different task types to have single dbs and single mls
+    int task_type_id;
+    
     MRTask() {
 
     }

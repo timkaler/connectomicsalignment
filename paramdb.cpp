@@ -209,7 +209,7 @@ namespace tfk {
   */
     param_db_import(this);
     for (float acc = .01; acc <=1; acc+=.01) {
-      printf("acc = %f, cost =  %f\n",acc, this->get_params_for_accuracy(acc)->get_cost());
+      //printf("acc = %f, cost =  %f\n",acc, this->get_params_for_accuracy(acc)->get_cost());
     }
   }
 

@@ -24,6 +24,7 @@
 #include "mrtask.hpp"
 #include "mrparams.hpp"
 #include "paramdb.hpp"
+#include "mlbase.hpp"
 #include "triangle_mesh.hpp"
 #include "triangle.h"
 //#include "./meshoptimize.h"
@@ -119,6 +120,11 @@ class Tile {
    std::vector<edata> edges;
    std::vector<edata> add_edges; //temporary.
 
+   std::vector<MLBase*> *ml_models;
+   std::map<Tile*, std::vector<float>> feature_vectors;
+   std::map<Tile*, bool> ml_preds;
+
+
 
    Tile(int section_id, int tile_id, int index, std::string filepath,
             int x_start, int x_finish, int y_start, int y_finish);
@@ -213,6 +219,8 @@ class Section {
 
     std::vector<tfkMatch> section_mesh_matches;
     cv::Mat coarse_transform;
+
+    std::vector<MLBase*> *ml_models;
 
 
     bool load_elastic_mesh(Section* neighbor);
@@ -376,6 +384,8 @@ class Stack {
     std::vector<Section*> sections;
 
     Graph* merged_graph;
+
+    std::vector<MLBase*> ml_models;
 
 
     // Init functions
