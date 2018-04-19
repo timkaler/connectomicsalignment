@@ -30,6 +30,13 @@ namespace tfk {
       void render_stack(Stack* stack, std::pair<cv::Point2f, cv::Point2f> bbox,
           Resolution resolution, std::string filename_prefix); 
 
+      void render_tile_helper(cv::Mat& tile_p_image,
+          Section* section, Tile* tile,
+          cv::Point2f render_scale, cv::Mat* section_p_out_sum,
+          cv::Mat* section_p_out_ncount,
+          int nrows, int ncols, int lower_x, int lower_y, bool nomesh,
+          int start_x, int start_y, int end_x, int end_y);
+
 
   };
 }

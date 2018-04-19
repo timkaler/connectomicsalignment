@@ -160,12 +160,12 @@ void align_execute(align_data_t *p_align_data) {
 
     auto entire_bbox = stack->sections[0]->get_bbox();
 
-    float x1 = (entire_bbox.first.x + entire_bbox.second.x)/2;
+    float x1 = (entire_bbox.first.x + entire_bbox.second.x)/2 -2500 + 5000;
     //float x1 = (entire_bbox.first.x);
-    float x2 = x1+5000;
-    float y1 = (entire_bbox.first.y+entire_bbox.second.y)/2;
+    float x2 = x1+7500;
+    float y1 = (entire_bbox.first.y+entire_bbox.second.y)/2 -2500 + 5000;
     //float y1 = (entire_bbox.first.y);
-    float y2 = y1+5000;
+    float y2 = y1+7500;
     auto smaller_bbox = std::make_pair(cv::Point2f(x1,y1), cv::Point2f(x2,y2)); 
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderfull", tfk::FULL);
 

@@ -72,8 +72,7 @@ class MRTask {
             } else {
                 paramDB->record_failure(&param);
             }
-            
-            
+
             for (int i = 1; i < trials; i++) {
                 //TODO replace with better clock from fasttime
                 start = gettime();
@@ -86,7 +85,7 @@ class MRTask {
                     paramDB->record_failure(&param);
                 }
                 cost += duration;
-                
+
             }
             param.set_cost(cost / trials);
 

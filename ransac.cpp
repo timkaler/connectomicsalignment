@@ -336,7 +336,7 @@ vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points
 
   int num_iterations = 0;
   std::mt19937 g1 (1);  // mt19937 is a standard mersenne_twister_engine
-  std::uniform_int_distribution<int> distribution(0,match_points_a.size()); 
+  std::uniform_int_distribution<int> distribution(0,match_points_a.size()-1);
   //for (; thresh <= _thresh || maxInliers < 10; thresh += 1.0) {
   for (thresh = _thresh; num_iterations < 1;) {
     num_iterations++;

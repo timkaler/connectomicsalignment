@@ -286,6 +286,7 @@ void get_elastic_matches_relative(Section* neighbor);
 
     cv::Point2f affine_transform(cv::Point2f pt);
     cv::Point2f elastic_transform(cv::Point2f pt);
+    cv::Point2f elastic_transform(cv::Point2f pt, Triangle tri);
     cv::Point2f affine_transform(cv::Mat A, cv::Point2f pt);
     cv::Point2f affine_transform_plusA(cv::Point2f pt, cv::Mat A);
     
@@ -330,6 +331,7 @@ void get_elastic_matches_relative(Section* neighbor);
 
     renderTriangle getRenderTriangle(tfkTriangle tri);
     std::tuple<bool, float, float, float, int> get_triangle_for_point(cv::Point2f pt);
+    std::tuple<bool, float, float, float, int> get_triangle_for_point(cv::Point2f pt, Triangle tri);
 
     void apply_affine_transforms();
     void apply_affine_transforms(cv::Mat A);
@@ -351,7 +353,7 @@ void get_elastic_matches_relative(Section* neighbor);
     void replace_bad_tile(Tile* tile, Section* other_neighbor);
 
     bool transformed_tile_overlaps_with(Tile* tile,
-        std::pair<cv::Point2f, cv::Point2f> bbox);
+        std::pair<cv::Point2f, cv::Point2f> bbox, bool use_elastic);
     
     std::vector<std::tuple<int, double, int>> parameter_optimization(int trials, double threshold, std::vector<params> &ps);
 };

@@ -88,6 +88,111 @@ std::pair<cv::Point2f, cv::Point2f> Render::scale_bbox(
 }
 
 
+#define TFKMAT(matrix_ptr, rows, cols, row, col, type) ((type *) matrix_ptr->ptr(row))[col]
+void tfk::Render::render_tile_helper(cv::Mat& tile_p_image,
+    Section* section, Tile* tile,
+    cv::Point2f render_scale, cv::Mat* section_p_out_sum,
+    cv::Mat* section_p_out_ncount,
+    int nrows, int ncols, int lower_x, int lower_y, bool nomesh,
+    int start_x, int start_y, int end_x, int end_y) {
+
+
+  bool recurse = false;
+  bool fastpath = true;
+  Triangle tri;
+  if (end_x - start_x < 128 && end_y - start_y < 128) {
+    cv::Point2f corners[4];
+    corners[0] = cv::Point2f(start_x*render_scale.x, start_y*render_scale.y);
+    corners[1] = cv::Point2f(end_x*render_scale.x, start_y*render_scale.y);
+    corners[2] = cv::Point2f(start_x*render_scale.x, end_y*render_scale.y);
+    corners[3] = cv::Point2f(end_x*render_scale.x, end_y*render_scale.y);
+
+    tri = section->triangle_mesh->find_triangle(tile->rigid_transform(corners[0]));
+
+    for (int i = 1; i < 4; i++) {
+      bool in_tri = section->triangle_mesh->index->point_in_triangle(tile->rigid_transform(corners[i]), tri);
+      if (!in_tri) {
+        fastpath = false;
+        recurse = true;
+        break;
+      }
+    }
+  } else {
+    recurse = true;
+  }
+
+  if (recurse) {
+    if (end_x - start_x > end_y - start_y) {
+      if (end_x - start_x > 8) {
+        int offset_x = (end_x - start_x)/2;
+        render_tile_helper(tile_p_image, section, tile, render_scale, section_p_out_sum,
+                           section_p_out_ncount, nrows, ncols, lower_x, lower_y, nomesh,
+                           start_x, start_y, end_x-offset_x, end_y);
+        render_tile_helper(tile_p_image, section, tile, render_scale, section_p_out_sum,
+                           section_p_out_ncount, nrows, ncols, lower_x, lower_y, nomesh,
+                           start_x+offset_x, start_y, end_x, end_y);
+        return;
+      }
+    } else {
+      if (end_y - start_y > 8) {
+        int offset_y = (end_y - start_y)/2;
+        render_tile_helper(tile_p_image, section, tile, render_scale, section_p_out_sum,
+                           section_p_out_ncount, nrows, ncols, lower_x, lower_y, nomesh,
+                           start_x, start_y, end_x, end_y-offset_y);
+        render_tile_helper(tile_p_image, section, tile, render_scale, section_p_out_sum,
+                           section_p_out_ncount, nrows, ncols, lower_x, lower_y, nomesh,
+                           start_x, start_y+offset_y, end_x, end_y);
+        return;
+      }
+    }
+  }
+    //Triangle tri_test =
+    //    section->triangle_mesh->find_triangle(tile->rigid_transform(corners[i]));
+
+    //if (tri_test.index != tri.index) {
+    //  fastpath = false;
+    //  break;
+    //}
+  //}
+
+  for (int _y = start_y; _y < end_y; _y++) {
+    for (int _x = start_x; _x < end_x; _x++) {
+      cv::Point2f p = cv::Point2f(_x*render_scale.x, _y*render_scale.y);
+
+      cv::Point2f post_rigid_p = tile->rigid_transform(p);
+
+      cv::Point2f post_affine_p = section->affine_transform(post_rigid_p);
+      cv::Point2f transformed_p = post_affine_p;
+      if (!nomesh) {
+        if (fastpath) {
+          transformed_p = section->elastic_transform(post_affine_p, tri);
+        } else {
+          transformed_p = section->elastic_transform(post_affine_p);
+        }
+      }
+
+      int x_c = (int)(transformed_p.x/render_scale.x + 0.5);
+      int y_c = (int)(transformed_p.y/render_scale.y + 0.5);
+      for (int k = -1; k < 2; k++) {
+        for (int m = -1; m < 2; m++) {
+          //if (k != 0 || m!=0) continue;
+          unsigned char val = tile_p_image.at<unsigned char>(_y, _x);
+          int x = x_c+k;
+          int y = y_c+m;
+          if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
+            //section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) = val;
+            //section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) = 1;
+            __sync_fetch_and_add(&section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x), val);
+            __sync_fetch_and_add(&section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x),1);
+          }
+        }
+      }
+    }
+  }
+
+
+}
+
 cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
     tfk::Resolution resolution, bool nomesh) {
 
@@ -140,57 +245,85 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
 
 
 
-  for (int block = 0; block < section->tiles.size() + 10000; block += 10000) {
-    int end = block + 10000;
-    if (end > section->tiles.size()) end = section->tiles.size();
-    cilk_spawn {
-      for (int i = block; i < end; i++) {
+      cilk_for (int i = 0; i < section->tiles.size(); i++) {
         Tile* tile = section->tiles[i];
         if (tile->bad_2d_alignment) continue;
         if (!this->tile_in_render_box(section,tile, bbox)) continue;
 
+
         //cv::Mat* tile_p_image = this->read_tile(tile->filepath, resolution);
         cv::Mat tile_p_image = tile->get_tile_data(resolution);
 
-        for (int _y = 0; _y < (tile_p_image).size().height; _y++) {
-          for (int _x = 0; _x < (tile_p_image).size().width; _x++) {
-            cv::Point2f p = cv::Point2f(_x*render_scale.x, _y*render_scale.y);
 
-            cv::Point2f post_rigid_p = tile->rigid_transform(p);
+        render_tile_helper(tile_p_image, section, tile, render_scale, section_p_out_sum,
+                           section_p_out_ncount, nrows, ncols, lower_x, lower_y, nomesh,
+                           0,0,tile_p_image.size().width, tile_p_image.size().height);
 
-            cv::Point2f post_affine_p = section->affine_transform(post_rigid_p);
-            cv::Point2f transformed_p = post_affine_p;
-            if (!nomesh && false) {
-              transformed_p = section->elastic_transform(post_affine_p);
-            }
+        //for (int _y = 0; _y < (tile_p_image).size().height; _y++) {
+        //  for (int _x = 0; _x < (tile_p_image).size().width; _x++) {
+        //    if (_x > 10 && _x < tile_p_image.size().width-10 &&
+        //        _y > 10 && _y < tile_p_image.size().height-10) continue;
+        //    cv::Point2f p = cv::Point2f(_x*render_scale.x, _y*render_scale.y);
+        //    cv::Point2f post_rigid_p = tile->rigid_transform(p);
+        //    cv::Point2f transformed_p = post_rigid_p;
+        //    if (!nomesh) {
+        //      transformed_p = section->elastic_transform(post_rigid_p);
+        //    }
+        //    int x_c = (int)(transformed_p.x/render_scale.x + 0.5);
+        //    int y_c = (int)(transformed_p.y/render_scale.y + 0.5);
+        //    for (int k = -1; k < 2; k++) {
+        //      for (int m = -1; m < 2; m++) {
+        //        if (k != 0 || m!=0) continue;
+        //        unsigned char val = 0;//tile_p_image.at<unsigned char>(_y, _x);
+        //        int x = x_c+k;
+        //        int y = y_c+m;
+        //        if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
+        //          section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) = val;
+        //          section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) = 1;
+        //        }
+        //      }
+        //    }
+        //  }
+        //}
+        //for (int _y = 0; _y < (tile_p_image).size().height; _y++) {
+        //  for (int _x = 0; _x < (tile_p_image).size().width; _x++) {
+        //    cv::Point2f p = cv::Point2f(_x*render_scale.x, _y*render_scale.y);
 
-            //cv::Point2f transformed_p = affine_transform(&tile, p);
-            //transformed_p = elastic_transform(&tile, &triangles, transformed_p);
+        //    cv::Point2f post_rigid_p = tile->rigid_transform(p);
 
-            int x_c = (int)(transformed_p.x/render_scale.x + 0.5);
-            int y_c = (int)(transformed_p.y/render_scale.y + 0.5);
-            for (int k = -1; k < 2; k++) {
-              for (int m = -1; m < 2; m++) {
-                //if (k != 0 || m!=0) continue;
-                unsigned char val = tile_p_image.at<unsigned char>(_y, _x);
-                int x = x_c+k;
-                int y = y_c+m;
-                if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
-                  __sync_fetch_and_add(&section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x), val);
-                  __sync_fetch_and_add(&section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x),1);
-                  //section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) += val;
-                  //section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) += 1;
-                }
-              }
-            }
-          }
-        }
+        //    cv::Point2f post_affine_p = section->affine_transform(post_rigid_p);
+        //    cv::Point2f transformed_p = post_affine_p;
+        //    if (!nomesh) {
+        //      transformed_p = section->elastic_transform(post_affine_p);
+        //    }
+
+        //    //cv::Point2f transformed_p = affine_transform(&tile, p);
+        //    //transformed_p = elastic_transform(&tile, &triangles, transformed_p);
+
+        //    int x_c = (int)(transformed_p.x/render_scale.x + 0.5);
+        //    int y_c = (int)(transformed_p.y/render_scale.y + 0.5);
+        //    for (int k = -1; k < 2; k++) {
+        //      for (int m = -1; m < 2; m++) {
+        //        //if (k != 0 || m!=0) continue;
+        //        unsigned char val = tile_p_image.at<unsigned char>(_y, _x);
+        //        int x = x_c+k;
+        //        int y = y_c+m;
+        //        if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
+        //          __sync_fetch_and_add(&section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x), val);
+        //          __sync_fetch_and_add(&section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x),1);
+        //          //section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) += val;
+        //          //section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) += 1;
+        //        }
+        //      }
+        //    }
+        //  }
+        //}
         tile_p_image.release();
         tile->release_full_image();
       }
-    }
-  }
-  cilk_sync;
+  //}
+
+  //cilk_sync;
   cilk_for (int y = 0; y < section_p_out.size().height; y++) {
     for (int x = 0; x < section_p_out.size().width; x++) {
       if (section_p_out_ncount->at<unsigned short>(y,x) == 0) {

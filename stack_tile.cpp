@@ -13,7 +13,7 @@ void updateTile2DAlign(int vid, void* scheduler_void) {
 
   tile->local2DAlignUpdate();
 
-  if (vertex_data->iteration_count < 100000) {
+  if (vertex_data->iteration_count < 10000) {
     scheduler->add_task(vid, updateTile2DAlign);
   }
   vertex_data->iteration_count++;
@@ -641,6 +641,7 @@ tfk::Tile::Tile(int section_id, int tile_id, int index, std::string filepath,
 
 cv::Point2f tfk::Tile::rigid_transform(cv::Point2f pt) {
   cv::Point2f pt2 = cv::Point2f(pt.x+this->offset_x+this->x_start, pt.y+this->offset_y+this->y_start);
+  //cv::Point2f pt2 = cv::Point2f(pt.x+this->x_start, pt.y+this->y_start);
   return pt2;
 }
 
@@ -1163,8 +1164,8 @@ void tfk::Tile::compute_sift_keypoints2d() {
 
   //(*this->p_image).create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
 
-  float scale_x = 0.5;
-  float scale_y = 0.5;
+  float scale_x = 0.3;
+  float scale_y = 0.3;
   cv::resize(tmp_image, (*this->p_image), cv::Size(), scale_x,scale_y,CV_INTER_AREA);
 
   //(*this->p_image) = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
@@ -1194,12 +1195,20 @@ void tfk::Tile::compute_sift_keypoints2d() {
     //        10,  // edge threshold.
     //        1.2);  // sigma.
 
+    //p_sift = new cv::xfeatures2d::SIFT_Impl(
+    //        1,  // num_features --- unsupported.
+    //        6,  // number of octaves
+    //        //0.04,  // contrast threshold.
+    //        0.01,  // contrast threshold.
+    //        20,  // edge threshold.
+    //        1.2);  // sigma.
+
     p_sift = new cv::xfeatures2d::SIFT_Impl(
-            2,  // num_features --- unsupported.
+            1,  // num_features --- unsupported.
             6,  // number of octaves
             //0.04,  // contrast threshold.
             0.01,  // contrast threshold.
-            10,  // edge threshold.
+            20,  // edge threshold.
             1.2);  // sigma.
 
     // THEN: This tile is on the boundary, we need to compute SIFT features

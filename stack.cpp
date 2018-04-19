@@ -102,21 +102,66 @@ void tfk::Stack::align_3d() {
   }
   cilk_sync;
 
-  std::vector<Section*> filtered_sections;
+//  std::vector<Section*> filtered_sections;
+//  for (int i = 0; i < this->sections.size(); i++) {
+//    //if (this->sections[i]->real_section_id == 28 || 
+//    //    this->sections[i]->real_section_id == 29 || 
+//    //    this->sections[i]->real_section_id == 31) continue;
+//    filtered_sections.push_back(this->sections[i]);
+//  }
+
+  // find bad sections.
+  std::vector<std::pair<int,float> > bad_sections;
   for (int i = 0; i < this->sections.size(); i++) {
-    if (this->sections[i]->real_section_id == 28 || 
-        this->sections[i]->real_section_id == 29 || 
-        this->sections[i]->real_section_id == 31) continue;
-    filtered_sections.push_back(this->sections[i]);
+    int bad_count = 0;
+    for (int j = 0; j < this->sections[i]->tiles.size(); j++) {
+      if (this->sections[i]->tiles[j]->bad_2d_alignment) bad_count++;
+    }
+    float bad_fraction = (1.0*bad_count) / this->sections[i]->tiles.size();
+    bad_sections.push_back(std::make_pair(i, bad_fraction));
   }
-  this->sections = filtered_sections;
+
+  float sum_bad_fraction = 0.0;
+  for (int i = 0; i < bad_sections.size(); i++) {
+    sum_bad_fraction += bad_sections[i].second;
+  }
+  float avg_bad_fraction = sum_bad_fraction/bad_sections.size();
+
+  float variance = 0.0;
+  for (int i = 0; i < bad_sections.size(); i++) {
+    variance += std::pow(avg_bad_fraction-bad_sections[i].second, 2);
+  }
+  variance = variance / bad_sections.size();
+
+  float stddev = sqrt(variance);
+
+  std::vector<Section*> good_sections;
+  for (int i = 0; i < this->sections.size(); i++) {
+    bool bad = bad_sections[i].second > avg_bad_fraction+stddev;
+    if (bad) printf("Section %d is bad\n", i);
+    if (!bad) {
+      good_sections.push_back(this->sections[i]);
+    }
+  }
+  //exit(0);
+
+  this->sections = good_sections;
+
+
+
+
+
+
+
+  //this->sections = filtered_sections;
 
   cilk_spawn this->sections[0]->align_3d(this->sections[0]);
 
   for (int i = 1; i < this->sections.size(); i++) {
     cilk_spawn this->sections[i]->align_3d(this->sections[i-1]);
   }
-  cilk_sync; 
+  cilk_sync;
+
 
   // section i is aligned to section i-1;
   for (int i = 1; i < this->sections.size(); i++) {
@@ -131,6 +176,7 @@ void tfk::Stack::align_3d() {
 
 void tfk::Stack::align_2d() {
   for (int i = 0; i < this->sections.size(); i++) {
+    global_start = gettime();
     this->sections[i]->align_2d();
   }
   return;

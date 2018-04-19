@@ -41,9 +41,9 @@ namespace tfk {
       std::vector<cv::Point2f>* mesh;
       std::vector<std::pair<int,int> >* triangle_edges;
       std::vector<tfkTriangle>* triangles;
-    private:
       RangeTree* index;
       RangeTree* index_post;
+    private:
       void build_index();
 
       std::vector<cv::Point2f>* generate_hex_grid(double* bounding_box, double spacing);
