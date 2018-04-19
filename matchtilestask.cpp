@@ -199,7 +199,7 @@ namespace tfk {
             std::make_pair(filtered_match_points_a, filtered_match_points_b);  
       }
     }
-
+//TODO(wheatman) mark to neighbors as bad
     bool MatchTilesTask::error_check(float false_negative_rate) {
       Tile* a_tile = tile;
       int neighbor_success_count = 0;
@@ -231,7 +231,7 @@ namespace tfk {
         MLBase *model = (*(tile->ml_models))[this->task_type_id];
         bool guess_ml = model->predict(a_tile->feature_vectors[b_tile]);
         a_tile->ml_preds[b_tile] = guess_ml;
-        if (val >= 0.7) {
+        if (guess_ml /*val >= 0.7*/) {
           neighbor_to_success[b_tile] = true;
           neighbor_success_count++;
           cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,

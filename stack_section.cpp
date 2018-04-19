@@ -160,7 +160,7 @@ void tfk::Section::align_2d() {
             match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 0);
             //compute_on_tile_neighborhood(this->sections[section_index],t);
             //float val = t->compute_deviation(neighbor);
-            //printf("after bad tile with deviation %f corr %f\n", val, t->neighbor_correlations[neighbor->tile_id]);
+            printf("after bad tile with deviation %f corr %f\n", val, t->neighbor_correlations[neighbor->tile_id]);
             //return;
             //auto bbox1 = t->get_bbox();
             if (val > 15) {
@@ -2412,7 +2412,7 @@ void tfk::Section::compute_keypoints_and_matches() {
 
       for (int i = 0; i < tiles_to_process_matches.size(); i++) {
         //cilk_spawn this->compute_tile_matches(tiles_to_process_matches[i]);
-        cilk_spawn tiles_to_process_matches[i]->match_tiles_task->compute(0.8);
+        cilk_spawn tiles_to_process_matches[i]->match_tiles_task->compute(0.9);
       }
       cilk_sync;
 
@@ -2420,17 +2420,17 @@ void tfk::Section::compute_keypoints_and_matches() {
         //cilk_spawn this->compute_tile_matches2(tiles_to_process_matches[i]);
         if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.4)) { // low number tells error check to also check ml response
           //printf("Tile failed first error check.\n");
-          //tiles_to_process_matches[i]->match_tiles_task->compute(0.8);
+          tiles_to_process_matches[i]->match_tiles_task->compute(0.99);
         }
       }
 
       cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
         //cilk_spawn this->compute_tile_matches2(tiles_to_process_matches[i]);
-        //if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.9)) {
+        if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.9)) {
           //printf("Tile failed second error check.\n");
-        //} else {
+        } else {
           tiles_to_process_matches[i]->match_tiles_task->commit();
-        //}
+        }
       }
 
       opened_set.clear();
