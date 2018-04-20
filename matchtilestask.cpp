@@ -247,7 +247,7 @@ namespace tfk {
           neighbor_to_success[b_tile] = false;
         }
       }
-      if (neighbor_success_count > neighbors.size()*2.0/4.0) {
+      if (neighbor_success_count > neighbors.size()*2.0/4.0 && neighbor_success_count >= 3.0) {
         return true;
       } else { 
         return false;

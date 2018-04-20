@@ -47,9 +47,9 @@ class MLBase {
     int ml_fn = 0;
     bool training_active = true;
     int num_positive_examples = 0;
-    float fraction_positive_examples;
+    int num_negative_examples = 0;
 
-    MLBase(int num_features, float fraction_positive_examples = .5, std::string saved_model = "");
+    MLBase(int num_features, std::string saved_model = "");
     virtual void train(bool reinforcement) = 0;
     virtual void save(std::string filename) = 0;
     virtual void load(std::string filename) = 0;
@@ -58,7 +58,7 @@ class MLBase {
     void add_training_example(std::vector<float> new_vector, float new_label);
     bool predict(std::vector<float> vec);
     void flush_train_buffer();
-    void balence_and_flush_train_buffer();
+    void balance_and_flush_train_buffer();
     void clear_train_buffer();
     void clear_saved_buffer();
     void enable_training();
@@ -67,7 +67,7 @@ class MLBase {
 
 class MLAnn  : public MLBase{
   public:
-    MLAnn(int num_features, float fraction_positive_examples = .5, std::string saved_model = "");
+    MLAnn(int num_features, std::string saved_model = "");
     void train(bool reinforcement);
     void save(std::string filename);
     void load(std::string filename);
@@ -75,7 +75,7 @@ class MLAnn  : public MLBase{
 
 class MLRandomForest  : public MLBase{
   public:
-    MLRandomForest(int num_features, float fraction_positive_examples = .5, std::string saved_model = "");
+    MLRandomForest(int num_features, std::string saved_model = "");
     void train(bool reinforcement);
     void save(std::string filename);
     void load(std::string filename);

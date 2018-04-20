@@ -135,6 +135,8 @@ void tfk::Stack::align_3d() {
 }
 
 void tfk::Stack::align_2d() {
+  this->ml_models[0]->load("ml_model_after_section_7.ml");
+  //this->ml_models[0]->enable_training();
   for (int i = 0; i < this->sections.size(); i++) {
     this->sections[i]->align_2d();
     printf("ML Correct positive = %d, correct negatives = %d, false positives = %d, false negative = %d\n", this->ml_models[0]->ml_correct_pos, this->ml_models[0]->ml_correct_neg, this->ml_models[0]->ml_fp, this->ml_models[0]->ml_fn);
@@ -142,6 +144,7 @@ void tfk::Stack::align_2d() {
     this->ml_models[0]->ml_correct_neg = 0;
     this->ml_models[0]->ml_fp = 0;
     this->ml_models[0]->ml_fn = 0;
+    //this->ml_models[0]->save("ml_model_after_section_"+std::to_string(i)+".ml"); 
   }
   return;
   //int count = 0;

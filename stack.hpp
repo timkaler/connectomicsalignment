@@ -74,6 +74,7 @@ class Tile {
    double y_finish;
 
    bool bad_2d_alignment;
+   bool tmp_bad_2d_alignment;
    double shape_dx;
    double shape_dy;
 

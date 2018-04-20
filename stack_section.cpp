@@ -141,8 +141,17 @@ void tfk::Section::align_2d() {
       int bas_correct_neg = 0;
       int bas_fp = 0;
       int bas_fn = 0;
+     
+
+      // init tmp bad 2d alignment.
+      for (int i = 0; i < this->tiles.size(); i++) {
+        this->tiles[i]->tmp_bad_2d_alignment = this->tiles[i]->bad_2d_alignment;
+      }
+
+ 
       for (int i = 0; i < this->tiles.size(); i++) {
         Tile* t = this->tiles[i];
+
         if (t->bad_2d_alignment) {
           //printf("Tile has bad 2d alignment\n");
           continue;
@@ -163,9 +172,9 @@ void tfk::Section::align_2d() {
             printf("after bad tile with deviation %f corr %f\n", val, t->neighbor_correlations[neighbor->tile_id]);
             //return;
             //auto bbox1 = t->get_bbox();
-            if (val > 15) {
-              t->bad_2d_alignment = true;
-              neighbor->bad_2d_alignment = true; 
+            if (val > 10.0) {
+              t->tmp_bad_2d_alignment = true;
+              neighbor->tmp_bad_2d_alignment = true; 
               //this->render(t->get_bbox(), "errortest"+std::to_string(count++), FULL);
             }
             if (guess_ml) {
@@ -180,9 +189,9 @@ void tfk::Section::align_2d() {
             }
           } else {
             // make less positive training examples 
-            if (i%25==0) {
-              match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1);
-            }
+            //if (i%25==0) {
+            match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1);
+            //}
             if (guess_ml) {
               match_tile_task_model->ml_correct_pos++;
             } else {
@@ -198,6 +207,21 @@ void tfk::Section::align_2d() {
           
         }
       }
+      // set the bad alignment based on results.
+      for (int i = 0; i < this->tiles.size(); i++) {
+        Tile* t = this->tiles[i];
+        this->tiles[i]->bad_2d_alignment = this->tiles[i]->tmp_bad_2d_alignment;
+        if (t->bad_2d_alignment) continue;
+        bool broke = true;
+        for (int k = 0; k < t->edges.size(); k++) {
+          Tile* neighbor = this->tiles[t->edges[k].neighbor_id];
+          if (!neighbor->bad_2d_alignment) {
+            broke = false;
+          }
+        }
+        t->bad_2d_alignment = broke;
+      }
+
       printf("Basic Correct positive = %d, correct negatives = %d, false positives = %d, false negative = %d\n", bas_correct_pos, bas_correct_neg, bas_fp, bas_fn);
       match_tile_task_model->train(true);
       break;
@@ -932,14 +956,11 @@ void tfk::Section::get_3d_keypoints_for_box(std::pair<cv::Point2f, cv::Point2f> 
   
       
       cv::Mat tmp_image;
-      // TODO(TFK): THESE LINES CANNOT STAY COMMENTED OUT NEED TO FIX
       Render* render = new Render();
       if (apply_transform) {
        tmp_image = render->render(this, bbox, Resolution::PERCENT30);
-       //tmp_image = this->render(bbox, Resolution::PERCENT30);
       } else {
        tmp_image = render->render(this,bbox, Resolution::PERCENT30, true);
-       //this->render_affine(A,bbox, Resolution::PERCENT30, tiles_loaded, tiles_loaded_mutex);
       }
   
       int black_pixels = 0;
@@ -2428,6 +2449,7 @@ void tfk::Section::compute_keypoints_and_matches() {
         //cilk_spawn this->compute_tile_matches2(tiles_to_process_matches[i]);
         if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.9)) {
           //printf("Tile failed second error check.\n");
+          tiles_to_process_matches[i]->bad_2d_alignment = true;
         } else {
           tiles_to_process_matches[i]->match_tiles_task->commit();
         }
