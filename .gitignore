@@ -13,3 +13,4 @@ AlignData_pb2.py
 AlignData_pb2.pyc
 *.tif
 *.png
+*.pbuf

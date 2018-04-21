@@ -15,6 +15,7 @@ namespace tfk {
       this->paramDB = paramDB;
       this->tile = tile;
       this->neighbors = neighbors;
+      this->task_type_id = 0;
     }
 
     void MatchTilesTask::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
@@ -198,7 +199,7 @@ namespace tfk {
             std::make_pair(filtered_match_points_a, filtered_match_points_b);  
       }
     }
-
+//TODO(wheatman) mark to neighbors as bad
     bool MatchTilesTask::error_check(float false_negative_rate) {
       Tile* a_tile = tile;
       int neighbor_success_count = 0;
@@ -224,8 +225,13 @@ namespace tfk {
             tmp_a_tile.offset_y += 0.4*dy;
           }
         }
+
         float val = tmp_a_tile.error_tile_pair(b_tile);
-        if (val >= 0.7) {
+        tmp_a_tile.get_feature_vector(b_tile, 3, 2).copyTo(a_tile->feature_vectors[b_tile]);
+        MLBase *model = (*(tile->ml_models))[this->task_type_id];
+        bool guess_ml = model->predict(a_tile->feature_vectors[b_tile]);
+        a_tile->ml_preds[b_tile] = guess_ml;
+        if (guess_ml /*val >= 0.7*/) {
           neighbor_to_success[b_tile] = true;
           neighbor_success_count++;
           cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
@@ -241,7 +247,7 @@ namespace tfk {
           neighbor_to_success[b_tile] = false;
         }
       }
-      if (neighbor_success_count > neighbors.size()*2.0/4.0) {
+      if (neighbor_success_count > neighbors.size()*2.0/4.0 && neighbor_success_count >= 3.0) {
         return true;
       } else { 
         return false;

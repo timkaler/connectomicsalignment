@@ -14,6 +14,8 @@ tfk::Stack::Stack(int base_section, int n_sections,
   this->n_sections = n_sections;
   this->input_filepath = input_filepath;
   this->output_dirpath = output_dirpath;
+  this->ml_models.push_back(new MLAnn(10));
+  printf("ml models for stack %p\n", &this->ml_models);
 }
 
 void tfk::Stack::init() {
@@ -61,6 +63,9 @@ void tfk::Stack::init() {
     sec->section_id = this->sections.size();
     printf("doing section %d\n", i);
     this->sections.push_back(sec);
+    // passing down the pointer to ml_models
+    sec->ml_models = &this->ml_models;
+    //printf("ml models for section %p\n", sec->ml_models);
   }
 }
 // END init functions
@@ -175,9 +180,17 @@ void tfk::Stack::align_3d() {
 }
 
 void tfk::Stack::align_2d() {
+  this->ml_models[0]->load("ml_model_after_section_7.ml");
+  //this->ml_models[0]->enable_training();
   for (int i = 0; i < this->sections.size(); i++) {
     global_start = gettime();
     this->sections[i]->align_2d();
+    printf("ML Correct positive = %d, correct negatives = %d, false positives = %d, false negative = %d\n", this->ml_models[0]->ml_correct_pos, this->ml_models[0]->ml_correct_neg, this->ml_models[0]->ml_fp, this->ml_models[0]->ml_fn);
+    this->ml_models[0]->ml_correct_pos = 0;
+    this->ml_models[0]->ml_correct_neg = 0;
+    this->ml_models[0]->ml_fp = 0;
+    this->ml_models[0]->ml_fn = 0;
+    //this->ml_models[0]->save("ml_model_after_section_"+std::to_string(i)+".ml"); 
   }
   return;
   //int count = 0;
