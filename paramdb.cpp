@@ -1,5 +1,5 @@
 #include "paramdb.hpp"
-#include "make_paramsdb_gen.cpp"
+//#include "make_paramsdb_gen.cpp"
 
 namespace tfk {
 
@@ -8,7 +8,27 @@ namespace tfk {
     init_ParamsDB();
   }
 
+  ParamDB::ParamDB (ParamsDatabase pdb) {
+    this->mutex = new std::mutex();
+    for (int i = 0; i < pdb.params_size(); i++) {
+        MRParams *mr_params = new MRParams(pdb.params(i));
+        import_params(mr_params);
+    }
+    if (possible_params.size() > 0) {
+      for (float acc = .01; acc <=1; acc+=.01) {
+        //printf("acc = %f, cost =  %f\n",acc, this->get_params_for_accuracy(acc)->get_cost());
+      }
+    }
+  }
 
+  void ParamDB::to_proto( ParamsDatabase *pdb) {
+    for (int i = 0; i < possible_params.size(); i++) {
+      Params *p = pdb->add_params();
+      possible_params[i]->to_proto(p);
+    }
+  }
+
+  /*
   ParamDB::ParamDB (MRParams* default_params, MRParams* min_params, MRParams* max_params) {
     this->default_params = default_params;
     this->min_params = min_params;
@@ -18,19 +38,19 @@ namespace tfk {
     possible_params.push_back(min_params);
     possible_params.push_back(max_params);
   }
-
+  */
   MRParams* ParamDB::get_params_for_accuracy(float accuracy) {
     mutex->lock();
     MRParams* ret = this->possible_params[0];
 
     bool removed = false;
     for (int i = 0; i < possible_params.size(); i++) {
-      if (possible_params[i]->success_count+possible_params[i]->failure_count >= 200) {
+      if (possible_params[i]->get_count() >= 200) {
         float acc = possible_params[i]->get_accuracy();
         float cst = possible_params[i]->get_cost();
         for (int j = 0; j < possible_params.size(); j++) {
           if (j==i) continue;
-          if (possible_params[j]->success_count + possible_params[j]->failure_count < 200) continue;
+          if (possible_params[j]->get_count() < 200) continue;
           if (acc <= possible_params[j]->get_accuracy() && cst >= possible_params[j]->get_cost()) {
             possible_params[i] = possible_params[possible_params.size()-1];
             possible_params.pop_back();
@@ -162,52 +182,39 @@ namespace tfk {
     }
   }
 
+  std::vector<MRParams*>* ParamDB::get_all_params() {
+    return &possible_params;
+  }
+
   void ParamDB::import_params(MRParams* params) {
+    mutex->lock();
     possible_params.push_back(params);
+    mutex->unlock();
   }
 
   void ParamDB::record_success(MRParams* params) {
-    mutex->lock();
+    // deal with the locking inside of mrparams 
+    //mutex->lock();
     params->increment_success(); 
-    mutex->unlock();
+    //mutex->unlock();
   }
 
   void ParamDB::record_failure(MRParams* params) {
-    mutex->lock();
+    // deal with the locking inside of mrparams 
+    //mutex->lock();
     params->increment_failure();
-    mutex->unlock();
+    //mutex->unlock();
   }
 
 
 
+/*
   MRParams* ParamDB::get_max_params() {return max_params;}
   MRParams* ParamDB::get_min_params() {return min_params;}
   MRParams* ParamDB::get_default_params() {return default_params;}
-
+*/
   void ParamDB::init_ParamsDB() {
-    /* thrown in main in run.cpp to test
-            tfk::MRParams* mrp0 = new tfk::MRParams;
-        mrp0->put_int_param("num_features", 1);
-        mrp0->put_int_param("num_octaves", 5);
-        mrp0->put_float_param("scale", 0.100000);
-        mrp0->set_accuracy(0);
-        mrp0->set_cost(5.468917);
-        tfk::MRParams* mrp1 = new tfk::MRParams;
-        mrp1->put_int_param("num_features", 1);
-        mrp1->put_int_param("num_octaves", 5);
-        mrp1->put_float_param("scale", 0.15000);
-        mrp1->set_accuracy(1);
-        mrp1->set_cost(99999);
-        tfk::MRParams* mrp2 = new tfk::MRParams;
-        mrp2->put_int_param("num_features", 1);
-        mrp2->put_int_param("num_octaves", 5);
-        mrp2->put_float_param("scale", 0.200000);
-        mrp2->set_accuracy(0.5);
-        mrp2->set_cost(100);
-  tfk::ParamDB pdb = tfk::ParamDB(mrp2, mrp0, mrp1);
-  pdb.init_ParamsDB();
-  */
-    param_db_import(this);
+    //param_db_import(this);
     for (float acc = .01; acc <=1; acc+=.01) {
       //printf("acc = %f, cost =  %f\n",acc, this->get_params_for_accuracy(acc)->get_cost());
     }

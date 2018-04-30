@@ -227,11 +227,11 @@ namespace tfk {
         }
 
         float val = tmp_a_tile.error_tile_pair(b_tile);
-        tmp_a_tile.get_feature_vector(b_tile, 3, 2).copyTo(a_tile->feature_vectors[b_tile]);
-        MLBase *model = (*(tile->ml_models))[this->task_type_id];
-        bool guess_ml = model->predict(a_tile->feature_vectors[b_tile]);
-        a_tile->ml_preds[b_tile] = guess_ml;
-        if (guess_ml /*val >= 0.7*/) {
+        //tmp_a_tile.get_feature_vector(b_tile, 3, 2).copyTo(a_tile->feature_vectors[b_tile]);
+        //MLBase *model = (*(tile->ml_models))[this->task_type_id];
+        //bool guess_ml = model->predict(a_tile->feature_vectors[b_tile]);
+        //a_tile->ml_preds[b_tile] = guess_ml;
+        if (/*guess_ml*/ val >= 0.75) {
           neighbor_to_success[b_tile] = true;
           neighbor_success_count++;
           cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
@@ -241,7 +241,8 @@ namespace tfk {
           cv::Point2f delta = a_point - b_point;
 
           a_tile->ideal_offsets[b_tile->tile_id] = delta;
-          a_tile->neighbor_correlations[b_tile->tile_id] = val;
+          //TODO(wheatman) commented out since its not being used and taking time
+          //a_tile->neighbor_correlations[b_tile->tile_id] = val;
 
         } else {
           neighbor_to_success[b_tile] = false;
@@ -267,30 +268,27 @@ namespace tfk {
       }
     }
 
-    std::vector<tfk::MRParams> MatchTilesTask::get_parameter_options() {
-      std::vector<tfk::MRParams> vec;
-      for (float scale = .1; scale < 1.05; scale +=1) {
-        for (int num_features = 1; num_features <=8; num_features *=2) {
-          for (int num_octaves = 5; num_octaves <= 15; num_octaves ++) {
-            for (float contrast_threshold = .01; contrast_threshold <.03; contrast_threshold +=.05) {
-              for (float edge_threshold = 3; edge_threshold < 10; edge_threshold +=2) {
-                for (float sigma = 1.2; sigma < 2; sigma += .2) {
-                  MRParams new_param = MRParams();
-                  new_param.put_int_param("num_features", num_features);
-                  new_param.put_int_param("num_octaves", num_octaves);
-                  new_param.put_float_param("scale_x", scale);
-                  new_param.put_float_param("scale_y", scale);
-                  new_param.put_float_param("contrast_threshold", contrast_threshold);
-                  new_param.put_float_param("edge_threshold", edge_threshold);
-                  new_param.put_float_param("sigma", sigma);
-                  vec.push_back(new_param);
-                }
-              }
-            }
+    void MatchTilesTask::get_parameter_options(std::vector<tfk::MRParams*>* vec) {
+      for (float scale = .2; scale < 1.05; scale +=.2) {
+        for (int num_features = 1; num_features <=4; num_features *=2) {
+          for (int num_octaves = 5; num_octaves <= 15; num_octaves+=5) {
+            //for (float contrast_threshold = .01; contrast_threshold <.03; contrast_threshold +=.05) {
+              //for (float edge_threshold = 3; edge_threshold < 10; edge_threshold +=2) {
+                //for (float sigma = 1.2; sigma < 2; sigma += .2) {
+                  MRParams *new_param = new MRParams();
+                  new_param->put_int_param("num_features", num_features);
+                  new_param->put_int_param("num_octaves", num_octaves);
+                  new_param->put_float_param("scale", scale);
+                  //new_param.put_float_param("contrast_threshold", contrast_threshold);
+                  //new_param.put_float_param("edge_threshold", edge_threshold);
+                  //new_param.put_float_param("sigma", sigma);
+                  vec->push_back(new_param);
+                //}
+              //}
+            //}
           }
         }
       }
-      return vec;
     }
 
 }

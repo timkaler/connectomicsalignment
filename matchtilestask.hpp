@@ -30,7 +30,7 @@ class MatchTilesTask : public MRTask {
     void compute_with_params(tfk::MRParams* mr_params_local);
     void commit();
     bool error_check(float false_negative_rate);
-    std::vector<tfk::MRParams> get_parameter_options();
+    void get_parameter_options(std::vector<tfk::MRParams*>* vec);
     bool bbox_contains(float pt_x, float pt_y,
                               int x_start, int x_finish,
                               int y_start, int y_finish);

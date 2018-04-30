@@ -59,40 +59,53 @@ class MRTask {
     // error_check --- returns true if 
     virtual bool error_check(float false_negative_rate) = 0;
 
-    virtual std::vector<tfk::MRParams> get_parameter_options() = 0;
+    virtual void get_parameter_options(std::vector<tfk::MRParams*>* vec) = 0;
 
-    void setup_param_db(int trials) {
-        std::vector<tfk::MRParams> param_options = get_parameter_options();
-        for (auto &param : param_options) {
+    void setup_param_db_init(std::vector<tfk::MRParams*> *param_options) {
+        get_parameter_options(param_options);
+        for (int j = 0; j < param_options->size(); j++) {
+            tfk::MRParams *param = (*param_options)[j];
+            /*
             double cost = 0;
             fasttime_t start = gettime();
-            compute_with_params(&param);
+            compute_with_params(param);
             cost = tdiff(start, gettime());
-            param.set_cost(cost);
-            paramDB->import_params(&param);
+            param->set_cost(cost);
+            */
+            paramDB->import_params(param);
+            /*
             bool correct = error_check(0);
             if (correct) {
-                paramDB->record_success(&param);
+                paramDB->record_success(param);
             } else {
-                paramDB->record_failure(&param);
+                paramDB->record_failure(param);
             }
-            
-            
-            for (int i = 1; i < trials; i++) {
-                //TODO replace with better clock from fasttime
-                start = gettime();
-                compute_with_params(&param);
+            param->set_cost(cost);
+            */
+        }
+    }
+    void setup_param_db(int trials) {
+        std::vector<tfk::MRParams*> *param_options = paramDB->get_all_params();
+        for (int j = 0; j < param_options->size(); j++) {
+            tfk::MRParams *param = (*param_options)[j];
+            //printf("param option %d out of %zu\n", j, param_options->size());
+            int count = param->get_count();
+            double cost = 0;
+            for (int i = 0; i < trials; i++) {
+                fasttime_t start = gettime();
+                compute_with_params(param);
                 double duration = tdiff(start, gettime());
                 bool correct2 = error_check(0);
                 if (correct2) {
-                    paramDB->record_success(&param);
+                    paramDB->record_success(param);
                 } else {
-                    paramDB->record_failure(&param);
+                    paramDB->record_failure(param);
                 }
                 cost += duration;
                 
             }
-            param.set_cost(cost / trials);
+
+            param->set_cost(cost / trials);
 
         }
 

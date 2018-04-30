@@ -38,7 +38,7 @@ void TriangleMesh::build_index_post() {
     }
   }
 
-  printf("Post The total size of the triangles before is %d\n", triangles->size());
+  printf("Post The total size of the triangles before is %zu\n", triangles->size());
 
 
   new_bbox.first.x-=0.01;
@@ -50,7 +50,7 @@ void TriangleMesh::build_index_post() {
   printf("The total size of the tree is %d\n", index->get_total_item_count());
 
   std::set<int> index_set = index->get_index_set();
-  printf("The total size of the index set is %d\n", index_set.size());
+  printf("The total size of the index set is %zu\n", index_set.size());
   //exit(0);
   //Triangle tri = index->find_triangle(cv::Point2f(16806.0, 20157.0));
   //if (tri.index==-1) {
@@ -85,7 +85,7 @@ void TriangleMesh::build_index() {
 
   }
 
-  printf("The total size of the triangles before is %d\n", triangles->size());
+  printf("The total size of the triangles before is %zu\n", triangles->size());
 
 
   bbox.first.x-=0.01;
@@ -97,7 +97,7 @@ void TriangleMesh::build_index() {
   printf("The total size of the tree is %d\n", index->get_total_item_count());
 
   std::set<int> index_set = index->get_index_set();
-  printf("The total size of the index set is %d\n", index_set.size());
+  printf("The total size of the index set is %zu\n", index_set.size());
   //exit(0);
   Triangle tri = index->find_triangle(cv::Point2f(16806.0, 20157.0));
   if (tri.index==-1) {

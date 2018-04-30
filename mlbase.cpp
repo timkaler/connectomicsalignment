@@ -24,7 +24,7 @@ namespace tfk {
   // new data, new labels.
   // move the new data/labels into old labels. Then balance the positive and negative examples.
   void MLBase::balance_and_flush_train_buffer() {
-    printf("There are %d %d old data/labels and %d %d new data /labels\n",
+    printf("There are %zu %zu old data/labels and %zu %zu new data /labels\n",
            old_data.size(), old_labels.size(), new_data.size(), new_labels.size());
 
 
