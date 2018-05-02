@@ -79,10 +79,11 @@ void tfk::Section::align_2d() {
 
 
     ParamDB* paramDB = new ParamDB();
+    ParamDB paramDB_empty;
 
     // init the tiles MatchTilesTask
     for (int i = 0; i < tiles.size(); i++) {
-      tiles[i]->match_tiles_task = new MatchTilesTask(paramDB, tiles[i],
+      tiles[i]->match_tiles_task = new MatchTilesTask(&paramDB_empty, paramDB, tiles[i],
                                                       get_all_close_tiles(tiles[i]));
       //TODO(wheatman) put this in a better place
       tiles[i]->ml_models = this->ml_models;
@@ -136,7 +137,7 @@ void tfk::Section::align_2d() {
       //this->coarse_affine_align();
       //this->elastic_align();
       //int count = 0;
-      MLBase *match_tile_task_model = (*(this->ml_models))[tiles[0]->match_tiles_task->task_type_id];
+      MLBase *match_tile_pair_task_model = (*(this->ml_models))[MATCH_TILE_PAIR_TASK_ID];
       int bas_correct_pos = 0;
       int bas_correct_neg = 0;
       int bas_fp = 0;
@@ -166,7 +167,7 @@ void tfk::Section::align_2d() {
           float val = t->compute_deviation(neighbor);
           if (val > 10.0) {
             //printf("bad tile with deviation %f corr %f\n", val, t->neighbor_correlations[neighbor->tile_id]);
-            match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 0);
+            match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0);
             //compute_on_tile_neighborhood(this->sections[section_index],t);
             //float val = t->compute_deviation(neighbor);
             printf("after bad tile with deviation %f corr %f\n", val, t->neighbor_correlations[neighbor->tile_id]);
@@ -178,9 +179,9 @@ void tfk::Section::align_2d() {
               //this->render(t->get_bbox(), "errortest"+std::to_string(count++), FULL);
             }
             if (guess_ml) {
-              match_tile_task_model->ml_fp++;
+              match_tile_pair_task_model->ml_fp++;
             } else {
-              match_tile_task_model->ml_correct_neg++;
+              match_tile_pair_task_model->ml_correct_neg++;
             }
             if (guess_basic) {
               bas_fp++;
@@ -190,12 +191,12 @@ void tfk::Section::align_2d() {
           } else {
             // make less positive training examples 
             //if (i%25==0) {
-            match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1);
+            match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 1);
             //}
             if (guess_ml) {
-              match_tile_task_model->ml_correct_pos++;
+              match_tile_pair_task_model->ml_correct_pos++;
             } else {
-              match_tile_task_model->ml_fn++;
+              match_tile_pair_task_model->ml_fn++;
             }
             if (guess_basic) {
               bas_correct_pos++;
@@ -223,7 +224,7 @@ void tfk::Section::align_2d() {
       }
 
       printf("Basic Correct positive = %d, correct negatives = %d, false positives = %d, false negative = %d\n", bas_correct_pos, bas_correct_neg, bas_fp, bas_fn);
-      match_tile_task_model->train(true);
+      match_tile_pair_task_model->train(true);
       break;
     }
 

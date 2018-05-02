@@ -41,6 +41,8 @@ static float CONTRAST_THRESH = 0.04;
 static float CONTRAST_THRESH_3D = 0.04;
 static float EDGE_THRESH_3D = 5.0;
 static float EDGE_THRESH_2D = 5.0;
+static int MATCH_TILES_TASK_ID = 1;
+static int MATCH_TILE_PAIR_TASK_ID = 0;
 
 
 namespace tfk {

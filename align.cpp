@@ -71,6 +71,10 @@ fasttime_t global_start;
     stack->ml_models[0]->load("ml_model_after_section_7.ml");
 
 
+    ParamsDatabase pdb_empty;
+    tfk::ParamDB* paramDB_empty = new tfk::ParamDB(pdb_empty);
+
+
 
     ParamsDatabase pdb;
     tfk::ParamDB* paramDB = new tfk::ParamDB(pdb);
@@ -78,7 +82,7 @@ fasttime_t global_start;
     tfk::Section* section = stack->sections[0];
     tfk::Tile* tile = section->tiles[0];
     std::vector<tfk::Tile*> neighbors = section->get_all_close_tiles(tile);
-    tfk::MatchTilesTask* task = new tfk::MatchTilesTask(paramDB, tile, neighbors);
+    tfk::MatchTilesTask* task = new tfk::MatchTilesTask(paramDB_empty, paramDB, tile, neighbors);
     task->setup_param_db_init(&param_options);
 
 
@@ -92,7 +96,7 @@ fasttime_t global_start;
       // pick random section.
       tfk::Tile* tile = section->tiles[tile_id];
       std::vector<tfk::Tile*> neighbors = section->get_all_close_tiles(tile);
-      tfk::MatchTilesTask* task = new tfk::MatchTilesTask(paramDB, tile, neighbors);
+      tfk::MatchTilesTask* task = new tfk::MatchTilesTask(paramDB_empty, paramDB, tile, neighbors);
       tile->ml_models = &stack->ml_models;
       tile->get_tile_data(tfk::FULL);
       for (int k = 0; k < neighbors.size(); k++) {

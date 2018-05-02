@@ -1,5 +1,5 @@
 #include "paramdb.hpp"
-//#include "make_paramsdb_gen.cpp"
+#include "make_paramsdb_gen.cpp"
 
 namespace tfk {
 
@@ -214,9 +214,9 @@ namespace tfk {
   MRParams* ParamDB::get_default_params() {return default_params;}
 */
   void ParamDB::init_ParamsDB() {
-    //param_db_import(this);
+    param_db_import(this);
     for (float acc = .01; acc <=1; acc+=.01) {
-      //printf("acc = %f, cost =  %f\n",acc, this->get_params_for_accuracy(acc)->get_cost());
+      printf("acc = %f, cost =  %f\n",acc, this->get_params_for_accuracy(acc)->get_cost());
     }
   }
 
