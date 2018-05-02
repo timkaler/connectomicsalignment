@@ -25,6 +25,15 @@ message PairDouble {
     required double y = 2;
 }
 
+message MatchTilePairVector {
+  repeated float feature_vector = 1;
+  required float label = 2;
+}
+
+message MLAnnState {
+  repeated MatchTilePairVector match_tile_pair_vector = 1;
+}
+
 message Saved2DAlignmentTile {
   required uint64 tile_id = 1;
   required bool bad_2d_alignment = 10;

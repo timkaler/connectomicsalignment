@@ -4,13 +4,14 @@
 #define MATCHTILESTASK
 #include "mrtask.hpp"
 #include "stack.hpp"
-
+#include "tilesifttask.hpp"
 namespace tfk {
 
 class MatchTilesTask : public MRTask {
   public:
     std::vector<int> param_adjustments;
     std::vector<int> param_train_deltas;
+    std::map<int, TileSiftTask*> dependencies;
 
     void set_random_train();
     //void update_result(float last_correct, float next_correct);
@@ -26,6 +27,8 @@ class MatchTilesTask : public MRTask {
       std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh);
 
     MatchTilesTask (ParamDB* paramDB, Tile* tile, std::vector<Tile*> neighbors);
+    MatchTilesTask (ParamDB* paramDB, Tile* tile, std::vector<Tile*> neighbors,
+                    std::map<int, TileSiftTask*> dependencies);
 
     void compute_with_params(tfk::MRParams* mr_params_local);
     void commit();

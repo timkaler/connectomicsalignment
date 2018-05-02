@@ -46,7 +46,8 @@ void TriangleMesh::build_index_post() {
   new_bbox.second.x+=0.01;
   new_bbox.second.y+=0.01;
 
-  index_post = new RangeTree(items,triangles->size(), new_bbox);
+  this->index_post = new RangeTree(items,triangles->size(), new_bbox);
+  printf("index post pointer is %p, my pointer %p\n", this->index_post, this);
   printf("The total size of the tree is %d\n", index->get_total_item_count());
 
   std::set<int> index_set = index->get_index_set();
@@ -93,7 +94,8 @@ void TriangleMesh::build_index() {
   bbox.second.x+=0.01;
   bbox.second.y+=0.01;
 
-  index = new RangeTree(items,triangles->size(), bbox);
+  this->index = new RangeTree(items,triangles->size(), bbox);
+  printf("index pointer is %p, my pointer %p\n", this->index, this);
   printf("The total size of the tree is %d\n", index->get_total_item_count());
 
   std::set<int> index_set = index->get_index_set();

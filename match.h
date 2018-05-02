@@ -27,7 +27,7 @@
 
 #include "./cilk_tools/Graph.h"
 
-const int MIN_FEATURES_NUM = 12;
+const int MIN_FEATURES_NUM = 5;
 const int MAX_EPSILON = 10;
 
 void match_features(std::vector< cv::DMatch > &matches,

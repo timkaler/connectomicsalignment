@@ -34,6 +34,7 @@
 #ifndef ALIGNSTACK
 #define ALIGNSTACK
 
+
 void updateTile2DAlign(int vid, void* scheduler_void);
 static bool STORE_ALIGN_RESULTS = false;
 static double totalTime = 0;
@@ -61,6 +62,13 @@ typedef struct params {
 class Tile {
   public:
    std::map<int, cv::Point2f> ideal_offsets;
+
+
+
+   std::map<int, cv::Point2f> ideal_offsets_first;
+   std::map<int, cv::Point2f> ideal_offsets_second;
+   bool both_passes;
+
    std::map<int, float> neighbor_correlations;
    int section_id;
    int tile_id;
@@ -169,6 +177,7 @@ class Tile {
 
 class Section {
   public:
+    std::vector<Tile*> get_all_neighbor_tiles(tfk::Tile* tile);
     int section_id;
     int real_section_id;
     int n_tiles;
@@ -228,6 +237,7 @@ class Section {
     void save_elastic_mesh(Section* neighbor);
 
 
+    void compute_on_tile_neighborhood(tfk::Tile* tile);
     Section(int section_id);
     Section(SectionData& section_data, std::pair<cv::Point2f, cv::Point2f> bounding_box);
     std::vector<int> get_all_close_tiles(int atile_id);

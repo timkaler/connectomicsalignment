@@ -18,6 +18,15 @@ namespace tfk {
       this->task_type_id = 0;
     }
 
+    // init with dependencies.
+    MatchTilesTask::MatchTilesTask (ParamDB* paramDB, Tile* tile, std::vector<Tile*> neighbors, std::map<int, TileSiftTask*> dependencies) {
+      this->paramDB = paramDB;
+      this->tile = tile;
+      this->neighbors = neighbors;
+      this->task_type_id = 0;
+      this->dependencies = dependencies;
+    }
+
     void MatchTilesTask::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
       std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
       cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
@@ -168,26 +177,41 @@ namespace tfk {
       new_params.edge_threshold = 6;// mr_params->get_float_param("edge_threshold");
       new_params.sigma = 1.2;//mr_params->get_float_param("sigma");
 
-      a_tile->compute_sift_keypoints2d_params(new_params, a_tile_keypoints,
-                                              a_tile_desc, a_tile);
+
+
+
+      // first check if we've got the dependency satisfied.
+      if (dependencies.find(a_tile->tile_id) != dependencies.end()) {
+        a_tile_keypoints = dependencies[a_tile->tile_id]->tile_keypoints;
+        a_tile_desc = dependencies[a_tile->tile_id]->tile_desc;
+      } else {
+        //printf("didn't hit cache\n");
+        a_tile->compute_sift_keypoints2d_params(new_params, a_tile_keypoints,
+                                                a_tile_desc, a_tile);
+      }
 
       if (a_tile_keypoints.size() < MIN_FEATURES_NUM) return; // failure.
 
       //int neighbor_success_count = 0;
       for (int i = 0; i < neighbors.size(); i++) {
         Tile* b_tile = neighbors[i];
-         
+
         std::vector<cv::KeyPoint> b_tile_keypoints;
         cv::Mat b_tile_desc;
-        
-        b_tile->compute_sift_keypoints2d_params(new_params, b_tile_keypoints,
-                                                b_tile_desc, a_tile);
+        if (dependencies.find(b_tile->tile_id) != dependencies.end()) {
+          b_tile_keypoints = dependencies[b_tile->tile_id]->tile_keypoints;
+          b_tile_desc = dependencies[b_tile->tile_id]->tile_desc;
+        } else {
+          b_tile->compute_sift_keypoints2d_params(new_params, b_tile_keypoints,
+                                                  b_tile_desc, a_tile);
+          //printf("didn't hit cache\n");
+        }
         if (b_tile_keypoints.size() < MIN_FEATURES_NUM) continue;
-        
+
         std::vector< cv::Point2f > filtered_match_points_a(0);
         std::vector< cv::Point2f > filtered_match_points_b(0);
 
-       
+
         this->compute_tile_matches_pair(a_tile, b_tile,
           a_tile_keypoints, b_tile_keypoints,
           a_tile_desc, b_tile_desc,
@@ -200,9 +224,11 @@ namespace tfk {
       }
     }
 //TODO(wheatman) mark to neighbors as bad
+
     bool MatchTilesTask::error_check(float false_negative_rate) {
       Tile* a_tile = tile;
       int neighbor_success_count = 0;
+
       for (int i = 0; i < neighbors.size(); i++) {
         Tile* b_tile = neighbors[i];
         std::vector<cv::Point2f> filtered_match_points_a =
@@ -210,7 +236,7 @@ namespace tfk {
         std::vector<cv::Point2f> filtered_match_points_b =
             neighbor_to_matched_points[b_tile].second;
         Tile tmp_a_tile = *a_tile;
-        
+
         // put b at 0,0
         if (filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
           for (int _i = 0; _i < 1000; _i++) {
@@ -226,14 +252,15 @@ namespace tfk {
           }
         }
 
-        float val = tmp_a_tile.error_tile_pair(b_tile);
+        float val = 0.0;//tmp_a_tile.error_tile_pair(b_tile);
         tmp_a_tile.get_feature_vector(b_tile, 3, 2).copyTo(a_tile->feature_vectors[b_tile]);
         MLBase *model = (*(tile->ml_models))[this->task_type_id];
         bool guess_ml = model->predict(a_tile->feature_vectors[b_tile]);
         a_tile->ml_preds[b_tile] = guess_ml;
-        if (guess_ml /*val >= 0.7*/) {
+        if (/*guess_ml*/ val >= 0.75 /*&& filtered_match_points_a.size() >= MIN_FEATURES_NUM*/) {
           neighbor_to_success[b_tile] = true;
           neighbor_success_count++;
+
           cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
                                             tmp_a_tile.y_start+tmp_a_tile.offset_y);
           cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
@@ -244,12 +271,20 @@ namespace tfk {
           a_tile->neighbor_correlations[b_tile->tile_id] = val;
 
         } else {
+
+          cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
+                                            tmp_a_tile.y_start+tmp_a_tile.offset_y);
+          cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
+                                            b_tile->y_start+b_tile->offset_y);
+          cv::Point2f delta = a_point - b_point;
+
+          a_tile->ideal_offsets[b_tile->tile_id] = delta;
           neighbor_to_success[b_tile] = false;
         }
       }
-      if (neighbor_success_count > neighbors.size()*2.0/4.0 && neighbor_success_count >= 3.0) {
+      if (neighbor_success_count > neighbors.size()*3.0/4.0 && neighbor_success_count >= 3.0) {
         return true;
-      } else { 
+      } else {
         return false;
       }
     }

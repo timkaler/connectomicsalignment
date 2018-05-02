@@ -38,6 +38,7 @@ class MLBase {
 
     std::vector<std::vector<float>> new_data;
     std::vector<float> new_labels;
+    std::vector<float> new_errors;
     cv::Ptr<cv::ml::StatModel> model;
     int size_of_feature_vector;
     bool trained = false;
@@ -55,7 +56,7 @@ class MLBase {
     virtual void load(std::string filename) = 0;
 
 
-    void add_training_example(std::vector<float> new_vector, float new_label);
+    void add_training_example(std::vector<float> new_vector, float new_label, float error);
     bool predict(std::vector<float> vec);
     void flush_train_buffer();
     void balance_and_flush_train_buffer();
@@ -63,6 +64,7 @@ class MLBase {
     void clear_saved_buffer();
     void enable_training();
     void disable_training();
+    float feature_dist(std::vector<float> a, std::vector<float> b);
 };
 
 class MLAnn  : public MLBase{
