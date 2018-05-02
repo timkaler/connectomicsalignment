@@ -1,0 +1,29 @@
+syntax = "proto2";
+
+
+message FloatParam {
+    required string name = 1;
+    required float value = 2;
+}
+
+message IntParam {
+    required string name = 1;
+    required int32 value = 2;
+}
+
+message Params {
+    repeated FloatParam float_params = 1;
+    repeated IntParam int_params = 2;
+    required int32 cost_count = 3;
+    required float cost_mean = 4;
+    required float cost_m2 = 5;
+    required int32 accuracy_count = 6;
+    required float accuracy_mean = 7;
+    required float accuracy_m2 = 8;
+    required int32 new_success_count = 9;
+    required int32 new_failure_count = 10;
+}
+
+message ParamsDatabase {
+    repeated Params params = 1;
+}
