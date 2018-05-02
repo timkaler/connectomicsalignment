@@ -228,7 +228,7 @@ namespace tfk {
         }
       }
 
-      float val = tmp_a_tile.error_tile_pair(b_tile);
+      float val = 0.0;//tmp_a_tile.error_tile_pair(b_tile);
       tmp_a_tile.get_feature_vector(b_tile, 3, 2).copyTo(a_tile->feature_vectors[b_tile]);
       bool guess_ml = this->model->predict(a_tile->feature_vectors[b_tile]);
       a_tile->ml_preds[b_tile] = guess_ml;

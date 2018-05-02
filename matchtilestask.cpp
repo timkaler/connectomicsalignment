@@ -17,6 +17,8 @@ namespace tfk {
 
 
     void MatchTilesTask::compute_with_params(MRParams* mr_params_local) {
+      printf("UH OH?!?!\n");
+      exit(1);
       this->mr_params = mr_params_local;
 
       //int neighbor_success_count = 0;
@@ -27,6 +29,19 @@ namespace tfk {
         child_tasks[b_tile]->compute(.9);
       }
     }
+
+    void MatchTilesTask::compute(float accuracy) {
+      //int neighbor_success_count = 0;
+      for (int i = 0; i < neighbors.size(); i++) {
+        Tile* b_tile = neighbors[i];
+        //TODO(wheatman) something smarter here dealing with the parameters
+        dynamic_cast<MatchTilePairTask*>(child_tasks[b_tile])->dependencies = dependencies;
+        if (!neighbor_to_success[b_tile]) {
+          child_tasks[b_tile]->compute(accuracy);
+        }
+      }
+    }
+
 //TODO(wheatman) mark to neighbors as bad
 
     bool MatchTilesTask::error_check(float false_negative_rate) {
@@ -52,7 +67,8 @@ namespace tfk {
       }
       //TODO(wheatman) some thing smarter here
       // its own mlbase model to learn how to predict
-      if (neighbor_success_count > neighbors.size()*2.0/4.0 && neighbor_success_count >= 3.0) {
+      //if (neighbor_success_count > neighbors.size()*2.0/4.0 && neighbor_success_count >= 3.0) {
+      if (neighbor_success_count >= neighbors.size()*2.0/4.0 && neighbor_success_count >= 2.0) {
         return true;
       } else {
         return false;

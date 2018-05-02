@@ -26,6 +26,7 @@ class MatchTilesTask : public MRTask {
                     std::map<int, TileSiftTask*> dependencies);
 
     void compute_with_params(tfk::MRParams* mr_params_local);
+    void compute(float probability_correct);
     void commit();
     bool error_check(float false_negative_rate);
     void get_parameter_options(std::vector<tfk::MRParams*>* vec);

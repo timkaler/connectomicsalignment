@@ -2673,7 +2673,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       for (int i = 0; i < tiles_to_process_matches.size(); i++) {
         //cilk_spawn this->compute_tile_matches(tiles_to_process_matches[i]);
         dynamic_cast<MatchTilesTask*>(tiles_to_process_matches[i]->match_tiles_task)->dependencies = dependencies;
-        cilk_spawn tiles_to_process_matches[i]->match_tiles_task->compute(0.9);
+        cilk_spawn dynamic_cast<MatchTilesTask*>(tiles_to_process_matches[i]->match_tiles_task)->compute(0.9);
       }
       cilk_sync;
 
@@ -2689,7 +2689,7 @@ void tfk::Section::compute_keypoints_and_matches() {
           std::map<int, TileSiftTask*> empty_map;
           dynamic_cast<MatchTilesTask*>(tiles_to_process_matches[i]->match_tiles_task)->dependencies = empty_map;
           __sync_fetch_and_add(&tiles_in_error,1);
-          tiles_to_process_matches[i]->match_tiles_task->compute(0.99);
+          dynamic_cast<MatchTilesTask*>(tiles_to_process_matches[i]->match_tiles_task)->compute(0.99);
         }
       }
 
