@@ -174,8 +174,8 @@ namespace tfk {
         a_tile->compute_sift_keypoints2d_params(new_params, a_tile_keypoints,
                                                 a_tile_desc, a_tile);
       } else {
-        a_tile_desc = dependencies[a_tile->tile_id].tile_desc;
-        a_tile_keypoints = dependencies[a_tile->tile_id].tile_keypoints;
+        a_tile_desc = dependencies[a_tile->tile_id]->tile_desc;
+        a_tile_keypoints = dependencies[a_tile->tile_id]->tile_keypoints;
       }
 
       if (a_tile_keypoints.size() < MIN_FEATURES_NUM) return; // failure.
@@ -185,12 +185,12 @@ namespace tfk {
       std::vector<cv::KeyPoint> b_tile_keypoints;
       cv::Mat b_tile_desc;
 
-      if (dependecies.find(b_tile->tile_id) == dependencies.end()) {
+      if (dependencies.find(b_tile->tile_id) == dependencies.end()) {
         b_tile->compute_sift_keypoints2d_params(new_params, b_tile_keypoints,
                                                 b_tile_desc, a_tile);
       } else {
-        b_tile_desc = dependencies[b_tile->tile_id].tile_desc;
-        b_tile_keypoints = dependencies[b_tile->tile_id].tile_keypoints;
+        b_tile_desc = dependencies[b_tile->tile_id]->tile_desc;
+        b_tile_keypoints = dependencies[b_tile->tile_id]->tile_keypoints;
       }
       if (b_tile_keypoints.size() < MIN_FEATURES_NUM) return;
       

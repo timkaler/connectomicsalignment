@@ -165,7 +165,7 @@ void tfk::Section::align_2d() {
     scheduler->graph_void = (void*) this->graph;
     scheduler->roundNum = 0;
     e = new engine(this->graph, scheduler);
-      MLBase *match_tile_task_model = (*(this->ml_models))[tiles[0]->match_tiles_task->task_type_id];
+      MLBase *match_tile_task_model = this->ml_models[MATCH_TILE_PAIR_TASK_ID];
       int bas_correct_pos = 0;
       int bas_correct_neg = 0;
       int bas_fp = 0;
@@ -335,7 +335,7 @@ void tfk::Section::align_2d() {
           float val = t->compute_deviation(neighbor);
 
           if (val > 10.0) {
-            match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0);
+            match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
               t->tmp_bad_2d_alignment = true;
               neighbor->tmp_bad_2d_alignment = true; 
             if (guess_ml) {
@@ -349,7 +349,7 @@ void tfk::Section::align_2d() {
               bas_correct_neg++;
             }
           } else {
-            match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 1);
+            match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
             if (guess_ml) {
               match_tile_pair_task_model->ml_correct_pos++;
             } else {
@@ -2658,7 +2658,7 @@ void tfk::Section::compute_keypoints_and_matches() {
 
       for (int i = 0; i < tiles_to_process_keypoints.size(); i++) {
         Tile* tile = tiles_to_process_keypoints[i];
-        TileSiftTask* sift_task = new TileSiftTask(tile->match_tiles_task->paramDB, tile);
+        TileSiftTask* sift_task = new TileSiftTask(this->paramdbs[MATCH_TILE_PAIR_TASK_ID], tile);
         dependencies[tile->tile_id] = sift_task;
       }
 

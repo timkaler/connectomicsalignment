@@ -23,7 +23,7 @@ namespace tfk {
       for (int i = 0; i < neighbors.size(); i++) {
         Tile* b_tile = neighbors[i];
         //TODO(wheatman) something smarter here dealing with the parameters
-        child_tasks[b_tile]->dependencies = dependencies;
+        dynamic_cast<MatchTilePairTask*>(child_tasks[b_tile])->dependencies = dependencies;
         child_tasks[b_tile]->compute(.9);
       }
     }
@@ -40,13 +40,13 @@ namespace tfk {
           neighbor_to_success[b_tile] = true;
           neighbor_success_count++;
         } else {
-          cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
-                                            tmp_a_tile.y_start+tmp_a_tile.offset_y);
-          cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
-                                            b_tile->y_start+b_tile->offset_y);
-          cv::Point2f delta = a_point - b_point;
+          //cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
+          //                                  tmp_a_tile.y_start+tmp_a_tile.offset_y);
+          //cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
+          //                                  b_tile->y_start+b_tile->offset_y);
+          //cv::Point2f delta = a_point - b_point;
 
-          a_tile->ideal_offsets[b_tile->tile_id] = delta;
+          //a_tile->ideal_offsets[b_tile->tile_id] = delta;
           neighbor_to_success[b_tile] = false;
         }
       }
