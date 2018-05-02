@@ -1,12 +1,15 @@
 #include "paramdb.hpp"
-#include "make_paramsdb_gen.cpp"
+#include "ParamsDatabase.pb.h"
+//#include "make_paramsdb_gen.cpp"
 
 namespace tfk {
-
+  
+  /*
   ParamDB::ParamDB () {
     this->mutex = new std::mutex();
     init_ParamsDB();
   }
+  */
 
   ParamDB::ParamDB (ParamsDatabase pdb) {
     this->mutex = new std::mutex();
@@ -40,6 +43,9 @@ namespace tfk {
   }
   */
   MRParams* ParamDB::get_params_for_accuracy(float accuracy) {
+    if (possible_params.size() == 0) {
+      return NULL;
+    }
     mutex->lock();
     MRParams* ret = this->possible_params[0];
 
@@ -213,13 +219,27 @@ namespace tfk {
   MRParams* ParamDB::get_min_params() {return min_params;}
   MRParams* ParamDB::get_default_params() {return default_params;}
 */
+  /*
   void ParamDB::init_ParamsDB() {
-    param_db_import(this);
-    for (float acc = .01; acc <=1; acc+=.01) {
-      printf("acc = %f, cost =  %f\n",acc, this->get_params_for_accuracy(acc)->get_cost());
+    //param_db_import(this);
+    ParamsDatabase pdb;
+    std::fstream input("match_tiles_task_pdb_gen_data.pb", std::ios::in | std::ios::binary);
+    printf("here\n");
+    if (!pdb.ParseFromIstream(&input)) {
+      std::cerr << "Failed to parse protocal buffer." << std::endl;
+      return;
+    }
+    for (int i = 0; i < pdb.params_size(); i++) {
+        MRParams *mr_params = new MRParams(pdb.params(i));
+        import_params(mr_params);
+    }
+    if (possible_params.size() > 0) {
+      for (float acc = .01; acc <=1; acc+=.01) {
+        //printf("acc = %f, cost =  %f\n",acc, this->get_params_for_accuracy(acc)->get_cost());
+      }
     }
   }
-
+  */
 
 
 // end namespace tfk

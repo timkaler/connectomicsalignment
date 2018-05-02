@@ -2,15 +2,16 @@
 #include "matchtilepairtask.hpp"
 namespace tfk {
 
-    MatchTilesTask::MatchTilesTask (ParamDB* paramDB, ParamDB* paramDB_for_children, Tile* tile, std::vector<Tile*> neighbors) {
+    MatchTilesTask::MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors) {
         //TODO(wheatman) should be a different paramdb, but we aren't using it yet
-      this->paramDB = paramDB_for_children;
       this->tile = tile;
       this->neighbors = neighbors;
       this->task_type_id = MATCH_TILES_TASK_ID;
+      this->paramDB = tile->paramdbs[this->task_type_id];
+      this->model = tile->ml_models[this->task_type_id];
       for (int i = 0; i < neighbors.size(); i++) {
         Tile* b_tile = neighbors[i];
-        child_tasks[b_tile] = new MatchTilePairTask(paramDB_for_children, tile, b_tile);
+        child_tasks[b_tile] = new MatchTilePairTask(tile, b_tile);
       }
     }
 

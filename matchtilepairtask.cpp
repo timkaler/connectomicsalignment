@@ -11,11 +11,12 @@ namespace tfk {
         (pt_y >= y_start && pt_y <= y_finish);
     }
 
-    MatchTilePairTask::MatchTilePairTask (ParamDB* paramDB, Tile* a_tile, Tile* b_tile) {
-      this->paramDB = paramDB;
+    MatchTilePairTask::MatchTilePairTask (Tile* a_tile, Tile* b_tile) {
       this->a_tile = a_tile;
       this->b_tile = b_tile;
       this->task_type_id = MATCH_TILE_PAIR_TASK_ID;
+      this->paramDB = a_tile->paramdbs[this->task_type_id];
+      this->model = a_tile->ml_models[this->task_type_id];
     }
 
     void MatchTilePairTask::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
@@ -217,8 +218,7 @@ namespace tfk {
 
       float val = tmp_a_tile.error_tile_pair(b_tile);
       tmp_a_tile.get_feature_vector(b_tile, 3, 2).copyTo(a_tile->feature_vectors[b_tile]);
-      MLBase *model = (*(a_tile->ml_models))[this->task_type_id];
-      bool guess_ml = model->predict(a_tile->feature_vectors[b_tile]);
+      bool guess_ml = this->model->predict(a_tile->feature_vectors[b_tile]);
       a_tile->ml_preds[b_tile] = guess_ml;
       if (guess_ml /*val >= 0.75*/) {
         cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,

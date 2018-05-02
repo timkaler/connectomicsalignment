@@ -20,7 +20,7 @@ class MatchTilesTask : public MRTask {
     std::map<Tile*, bool> neighbor_to_success;
     std::map<Tile*, MRTask*> child_tasks;
 
-    MatchTilesTask (ParamDB* paramDB, ParamDB* paramDB_for_children, Tile* tile, std::vector<Tile*> neighbors);
+    MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors);
 
     void compute_with_params(tfk::MRParams* mr_params_local);
     void commit();

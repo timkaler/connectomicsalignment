@@ -21,6 +21,7 @@
 
 #include "mrparams.hpp"
 #include "paramdb.hpp"
+#include "mlbase.hpp"
 
 #include "cilk_tools/engine.h"
 //#include "./meshoptimize.h"
@@ -34,6 +35,7 @@ class MRTask {
   public:
     tfk::ParamDB* paramDB;
     tfk::MRParams* mr_params;
+    tfk::MLBase* model;
 
     // used to keep track of the different task types to have single dbs and single mls
     int task_type_id;
@@ -89,7 +91,7 @@ class MRTask {
         for (int j = 0; j < param_options->size(); j++) {
             tfk::MRParams *param = (*param_options)[j];
             //printf("param option %d out of %zu\n", j, param_options->size());
-            int count = param->get_count();
+            //int count = param->get_count();
             double cost = 0;
             for (int i = 0; i < trials; i++) {
                 fasttime_t start = gettime();

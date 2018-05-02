@@ -33,9 +33,9 @@ fasttime_t global_start;
 
   void fill_match_tiles_task_pdb(align_data_t *p_align_data) {
 
-    /*
+    
     ParamsDatabase pdb;
-    std::fstream input("match_tiles_task_pdb_500.pb", std::ios::in | std::ios::binary);
+    std::fstream input("match_tiles_task_pdb_gen_data.pb", std::ios::in | std::ios::binary);
     printf("here\n");
     if (!pdb.ParseFromIstream(&input)) {
       std::cerr << "Failed to parse protocal buffer." << std::endl;
@@ -46,7 +46,7 @@ fasttime_t global_start;
     printf("read old paramsDB\n");
     paramDB->print_possible_params();
     printf("have %d diferent parameters in old\n",pdb.params_size());
-    */
+    
 
 
     tfk::Stack* stack = new tfk::Stack(p_align_data->base_section,
@@ -70,12 +70,7 @@ fasttime_t global_start;
     stack->init();
     stack->ml_models[0]->load("ml_model_after_section_7.ml");
 
-
-    ParamsDatabase pdb_empty;
-    tfk::ParamDB* paramDB_empty = new tfk::ParamDB(pdb_empty);
-
-
-
+    /*
     ParamsDatabase pdb;
     tfk::ParamDB* paramDB = new tfk::ParamDB(pdb);
     std::vector<tfk::MRParams*> param_options;
@@ -84,10 +79,11 @@ fasttime_t global_start;
     std::vector<tfk::Tile*> neighbors = section->get_all_close_tiles(tile);
     tfk::MatchTilesTask* task = new tfk::MatchTilesTask(paramDB_empty, paramDB, tile, neighbors);
     task->setup_param_db_init(&param_options);
+    */
 
 
     //paramDB->print_possible_params();
-    cilk_for (int i = 0; i < 500; i++) {
+    cilk_for (int i = 0; i < 100; i++) {
       printf("working on random tile %d\n", i);
       //paramDB->print_possible_params();
       int section_id = rand()%stack->sections.size();
@@ -96,8 +92,8 @@ fasttime_t global_start;
       // pick random section.
       tfk::Tile* tile = section->tiles[tile_id];
       std::vector<tfk::Tile*> neighbors = section->get_all_close_tiles(tile);
-      tfk::MatchTilesTask* task = new tfk::MatchTilesTask(paramDB_empty, paramDB, tile, neighbors);
-      tile->ml_models = &stack->ml_models;
+      tfk::MatchTilesTask* task = new tfk::MatchTilesTask(tile, neighbors);
+      tile->ml_models = stack->ml_models;
       tile->get_tile_data(tfk::FULL);
       for (int k = 0; k < neighbors.size(); k++) {
         neighbors[k]->get_tile_data(tfk::FULL);
@@ -115,7 +111,7 @@ fasttime_t global_start;
     ParamsDatabase pdb_new;
     paramDB->to_proto(&pdb_new);
     printf("have %d diferent parameters in new\n",pdb_new.params_size());
-    std::fstream output("match_tiles_task_pdb_500_10.pb", std::ios::out | std::ios::trunc | std::ios::binary);
+    std::fstream output("match_tiles_task_pdb_big.pb", std::ios::out | std::ios::trunc | std::ios::binary);
     if (!pdb_new.SerializeToOstream(&output)) {
       std::cerr << "Failed to write pdb proto." << std::endl;
     }

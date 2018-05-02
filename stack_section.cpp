@@ -77,16 +77,12 @@ void tfk::Section::align_2d() {
       return;
     }
 
-
-    ParamDB* paramDB = new ParamDB();
-    ParamDB paramDB_empty;
-
     // init the tiles MatchTilesTask
     for (int i = 0; i < tiles.size(); i++) {
-      tiles[i]->match_tiles_task = new MatchTilesTask(&paramDB_empty, paramDB, tiles[i],
-                                                      get_all_close_tiles(tiles[i]));
       //TODO(wheatman) put this in a better place
       tiles[i]->ml_models = this->ml_models;
+      tiles[i]->paramdbs = this->paramdbs;
+      tiles[i]->match_tiles_task = new MatchTilesTask(tiles[i], get_all_close_tiles(tiles[i]));
     }
 
     this->compute_keypoints_and_matches();
@@ -137,7 +133,7 @@ void tfk::Section::align_2d() {
       //this->coarse_affine_align();
       //this->elastic_align();
       //int count = 0;
-      MLBase *match_tile_pair_task_model = (*(this->ml_models))[MATCH_TILE_PAIR_TASK_ID];
+      MLBase *match_tile_pair_task_model = this->ml_models[MATCH_TILE_PAIR_TASK_ID];
       int bas_correct_pos = 0;
       int bas_correct_neg = 0;
       int bas_fp = 0;
@@ -643,7 +639,7 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
   for (int i = 0; i < this->tiles.size(); i++) {
     if (this->tiles[i]->bad_2d_alignment) bad_2d_alignment++;
   }
-  printf("total tiles %d, bad 2d count %d\n", this->tiles.size(), bad_2d_alignment);
+  printf("total tiles %zu, bad 2d count %d\n", this->tiles.size(), bad_2d_alignment);
 
   //printf("Called render on bounding box %f %f %f %f\n", bbox.first.x, bbox.first.y, bbox.second.x, bbox.second.y);
   cv::Point2f render_scale = this->get_render_scale(resolution);

@@ -21,7 +21,7 @@ namespace tfk {
 
       std::vector<MRParams*> possible_params;
 
-      ParamDB ();
+      //ParamDB ();
       //ParamDB (MRParams* default_params, MRParams* min_params, MRParams* max_params);
       ParamDB (ParamsDatabase pdb);
       void to_proto(ParamsDatabase  *pdb);
