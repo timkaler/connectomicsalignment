@@ -14,8 +14,6 @@ tfk::Stack::Stack(int base_section, int n_sections,
   this->n_sections = n_sections;
   this->input_filepath = input_filepath;
   this->output_dirpath = output_dirpath;
-  this->ml_models.push_back(new MLAnn(10));
-  printf("ml models for stack %p\n", &this->ml_models);
 }
 
 void tfk::Stack::init() {
@@ -52,19 +50,43 @@ void tfk::Stack::init() {
     this->max_y = align_data.max_y();
   }
   printf("got this far\n");
+
+  printf("setting up the ml models and the paramsdb\n");
+
+  this->ml_models[MATCH_TILE_PAIR_TASK_ID] = new MLAnn(10);
+  this->ml_models[MATCH_TILES_TASK_ID] = new MLAnn(1);
+  std::string ml_model_location = "ml_model_after_section_7.ml";
+  printf("the ml model for task MATCH_TILE_PAIR is at %s\n", ml_model_location.c_str());
+  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load("ml_model_after_section_7.ml");
+
+  std::string paramdb_location = "match_tiles_task_pdb_gen_data.pb";
+  printf("The paramdb for task MATCH_TILE_PAIR is being loaded from %s\n", paramdb_location.c_str());
+
+  ParamsDatabase pdb;
+  std::fstream input2(paramdb_location, std::ios::in | std::ios::binary);
+  if (!pdb.ParseFromIstream(&input2)) {
+    std::cerr << "Failed to parse protocal buffer for paramdb in stack_init." << std::endl;
+    return;
+  }
+    
+  this->paramdbs[MATCH_TILE_PAIR_TASK_ID] = new tfk::ParamDB(pdb);
+  ParamsDatabase pdb2;
+  this->paramdbs[MATCH_TILES_TASK_ID] = new tfk::ParamDB(pdb2);
+
   // then do the section data
   for (int i = this->base_section; i < (this->base_section + this->n_sections); i++) {
-    printf("doing section %d\n", i);
+    //printf("doing section %d\n", i);
     SectionData section_data = align_data.sec_data(i);
-    printf("doing section %d\n", i);
-    printf("bounding box is %f %f %f %f\n", _bounding_box.first.x, _bounding_box.first.y, _bounding_box.second.x, _bounding_box.second.y);
+    //printf("doing section %d\n", i);
+    //printf("bounding box is %f %f %f %f\n", _bounding_box.first.x, _bounding_box.first.y, _bounding_box.second.x, _bounding_box.second.y);
     Section* sec = new Section(section_data, _bounding_box);
-    printf("doing section %d\n", i);
+    //printf("doing section %d\n", i);
     sec->section_id = this->sections.size();
-    printf("doing section %d\n", i);
+    //printf("doing section %d\n", i);
     this->sections.push_back(sec);
     // passing down the pointer to ml_models
-    sec->ml_models = &this->ml_models;
+    sec->ml_models = this->ml_models;
+    sec->paramdbs = this->paramdbs;
     //printf("ml models for section %p\n", sec->ml_models);
   }
 }
@@ -180,17 +202,15 @@ void tfk::Stack::align_3d() {
 }
 
 void tfk::Stack::align_2d() {
-  this->ml_models[0]->load("ml_model_after_section_0.ml");
-  this->ml_models[0]->enable_training();
   for (int i = 0; i < this->sections.size(); i++) {
     global_start = gettime();
     this->sections[i]->align_2d();
     printf("ML Correct positive = %d, correct negatives = %d, false positives = %d, false negative = %d\n", this->ml_models[0]->ml_correct_pos, this->ml_models[0]->ml_correct_neg, this->ml_models[0]->ml_fp, this->ml_models[0]->ml_fn);
-    this->ml_models[0]->ml_correct_pos = 0;
-    this->ml_models[0]->ml_correct_neg = 0;
-    this->ml_models[0]->ml_fp = 0;
-    this->ml_models[0]->ml_fn = 0;
-    this->ml_models[0]->save("ml_model_after_section_"+std::to_string(i)+".ml");
+    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_correct_pos = 0;
+    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_correct_neg = 0;
+    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_fp = 0;
+    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_fn = 0;
+    //this->ml_models[0]->save("ml_model_after_section_"+std::to_string(i)+".ml"); 
   }
   return;
   //int count = 0;

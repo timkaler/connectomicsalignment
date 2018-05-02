@@ -18,25 +18,17 @@ class MatchTilesTask : public MRTask {
 
     Tile* tile;
     std::vector<Tile*> neighbors;
-    std::map<Tile*, std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f> > > neighbor_to_matched_points;
     std::map<Tile*, bool> neighbor_to_success;
-     void compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
-      std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
-      cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
-      std::vector< cv::Point2f > &filtered_match_points_a,
-      std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh);
+    std::map<Tile*, MRTask*> child_tasks;
 
-    MatchTilesTask (ParamDB* paramDB, Tile* tile, std::vector<Tile*> neighbors);
-    MatchTilesTask (ParamDB* paramDB, Tile* tile, std::vector<Tile*> neighbors,
+    MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors);
+    MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors,
                     std::map<int, TileSiftTask*> dependencies);
 
     void compute_with_params(tfk::MRParams* mr_params_local);
     void commit();
     bool error_check(float false_negative_rate);
-    std::vector<tfk::MRParams> get_parameter_options();
-    bool bbox_contains(float pt_x, float pt_y,
-                              int x_start, int x_finish,
-                              int y_start, int y_finish);
+    void get_parameter_options(std::vector<tfk::MRParams*>* vec);
 };
 
 } // end namespace tfk

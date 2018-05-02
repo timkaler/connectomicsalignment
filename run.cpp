@@ -117,6 +117,8 @@ int main(int argc, char **argv) {
       param_optimize(p_align_data);
     } else if (mode == 3) {
       test_learning(p_align_data);
+    } else if (mode == 4) {
+      fill_match_tiles_task_pdb(p_align_data);
     } else {
       std::cout << "Invalid mode, stopping program" << std::endl;
     }

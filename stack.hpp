@@ -44,6 +44,11 @@ static float EDGE_THRESH_3D = 5.0;
 static float EDGE_THRESH_2D = 5.0;
 
 
+#define NUM_MRTASKS 2
+#define MATCH_TILE_PAIR_TASK_ID 0
+#define MATCH_TILES_TASK_ID 1
+
+
 namespace tfk {
 
 enum Resolution {THUMBNAIL, FULL, PERCENT30, THUMBNAIL2, FILEIOTEST};
@@ -129,7 +134,10 @@ class Tile {
    std::vector<edata> edges;
    std::vector<edata> add_edges; //temporary.
 
-   std::vector<MLBase*> *ml_models;
+   // an array of pointers
+   MLBase* *ml_models;
+   ParamDB* *paramdbs;
+
    std::map<Tile*, std::vector<float>> feature_vectors;
    std::map<Tile*, bool> ml_preds;
 
@@ -230,7 +238,9 @@ class Section {
     std::vector<tfkMatch> section_mesh_matches;
     cv::Mat coarse_transform;
 
-    std::vector<MLBase*> *ml_models;
+    // an array of pointers
+    MLBase* *ml_models;
+    ParamDB* *paramdbs;
 
 
     bool load_elastic_mesh(Section* neighbor);
@@ -398,7 +408,8 @@ class Stack {
 
     Graph* merged_graph;
 
-    std::vector<MLBase*> ml_models;
+    MLBase* ml_models[NUM_MRTASKS];
+    ParamDB* paramdbs[NUM_MRTASKS];
 
 
     // Init functions

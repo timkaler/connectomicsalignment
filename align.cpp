@@ -28,81 +28,94 @@
 #include <ctime>
 #include "fasttime.h"
 #include "render.hpp"
+#include "ParamsDatabase.pb.h"
 fasttime_t global_start; 
 
-namespace tfk {
-  void train_match_tiles_task(Stack* stack) {
-    int success = 0;
-    int trials = 0;
+  void fill_match_tiles_task_pdb(align_data_t *p_align_data) {
 
-
-
-    MRParams* min_params = new MRParams();
-    min_params->set_accuracy(0.1);
-    min_params->set_cost(0.1);
-    min_params->put_float_param("scale_x", 0.1);
-    min_params->put_float_param("scale_y", 0.1);
-    min_params->put_int_param("num_features", 1);
-    min_params->put_int_param("num_octaves", 1);
-    min_params->put_float_param("contrast_threshold", 0.01);
-    min_params->put_float_param("edge_threshold", 0.01);
-    min_params->put_float_param("sigma", 1.0);
- 
-    MRParams* max_params = new MRParams();
-    max_params->set_accuracy(0.0);
-    max_params->set_cost(1.0);
-    max_params->put_float_param("scale_x", 1.0);
-    max_params->put_float_param("scale_y", 1.0);
-    max_params->put_int_param("num_features", 16);
-    max_params->put_int_param("num_octaves", 16);
-    max_params->put_float_param("contrast_threshold", 0.1);
-    max_params->put_float_param("edge_threshold", 50.0);
-    max_params->put_float_param("sigma", 10.0);
     
-  
-    MRParams* default_params = new MRParams();
-    default_params->set_accuracy(1.0);
-    default_params->set_cost(1.0);
-    default_params->put_float_param("scale_x", 1.0);
-    default_params->put_float_param("scale_y", 1.0);
-    default_params->put_int_param("num_features", 1);
-    default_params->put_int_param("num_octaves", 6);
-    default_params->put_float_param("contrast_threshold", 0.04);
-    default_params->put_float_param("edge_threshold", 5.0);
-    default_params->put_float_param("sigma", 1.2);  
-
-    ParamDB* paramDB = new ParamDB(default_params, min_params, max_params);
-
-    float last_correct = (1.0*success)/trials;
-
-    for (int j = 0; j < 100; j++) {
-       success = 0;
-       trials = 0;
-       cilk_for (int i = 0; i < 500; i++) {
-        // pick random section.
-        int section_id = rand()%stack->sections.size();
-        Section* section = stack->sections[section_id];
-        int tile_id = rand()%section->tiles.size();
-        Tile* tile = section->tiles[tile_id];
-        std::vector<Tile*> neighbors = section->get_all_close_tiles(tile);
-        MatchTilesTask* task = new MatchTilesTask(paramDB, tile, neighbors);
-        task->compute(0.9);
-        bool res = task->error_check(0.9);
-        if (res) {
-          __sync_fetch_and_add(&success, 1);
-        }
-        __sync_fetch_and_add(&trials, 1);
-        tile->release_full_image();
-        for (int k = 0; k < neighbors.size(); k++) {
-          neighbors[k]->release_full_image();
-        }
-      }
-      printf("Result is %f\n", (1.0*success)/trials);
-      paramDB->print_possible_params();
+    ParamsDatabase pdb;
+    std::fstream input("match_tiles_task_pdb_gen_data.pb", std::ios::in | std::ios::binary);
+    printf("here\n");
+    if (!pdb.ParseFromIstream(&input)) {
+      std::cerr << "Failed to parse protocal buffer." << std::endl;
+      return;
     }
+    
+    tfk::ParamDB* paramDB = new tfk::ParamDB(pdb);
+    printf("read old paramsDB\n");
+    paramDB->print_possible_params();
+    printf("have %d diferent parameters in old\n",pdb.params_size());
+    
 
+
+    tfk::Stack* stack = new tfk::Stack(p_align_data->base_section,
+                                       p_align_data->n_sections,
+                                       p_align_data->input_filepath,
+                                       p_align_data->output_dirpath);
+
+
+    stack->mode = p_align_data->mode;
+    stack->output_dirpath = p_align_data->output_dirpath;
+    stack->base_section = p_align_data->base_section;
+    stack->n_sections = p_align_data->n_sections;
+    stack->do_subvolume = p_align_data->do_subvolume;
+    stack->input_filepath = p_align_data->input_filepath;
+    stack->min_x = p_align_data->min_x;
+    stack->min_y = p_align_data->min_y;
+    stack->max_x = p_align_data->max_x;
+    stack->max_y = p_align_data->max_y;
+    printf("2 bounding box is %f %f %f %f\n", p_align_data->bounding_box.first.x, p_align_data->bounding_box.first.y, p_align_data->bounding_box.second.x, p_align_data->bounding_box.second.y);
+    stack->_bounding_box = p_align_data->bounding_box;
+    stack->init();
+    stack->ml_models[0]->load("ml_model_after_section_7.ml");
+
+    /*
+    ParamsDatabase pdb;
+    tfk::ParamDB* paramDB = new tfk::ParamDB(pdb);
+    std::vector<tfk::MRParams*> param_options;
+    tfk::Section* section = stack->sections[0];
+    tfk::Tile* tile = section->tiles[0];
+    std::vector<tfk::Tile*> neighbors = section->get_all_close_tiles(tile);
+    tfk::MatchTilesTask* task = new tfk::MatchTilesTask(paramDB_empty, paramDB, tile, neighbors);
+    task->setup_param_db_init(&param_options);
+    */
+
+
+    //paramDB->print_possible_params();
+    cilk_for (int i = 0; i < 100; i++) {
+      printf("working on random tile %d\n", i);
+      //paramDB->print_possible_params();
+      int section_id = rand()%stack->sections.size();
+      tfk::Section* section = stack->sections[section_id];
+      int tile_id = rand()%section->tiles.size();
+      // pick random section.
+      tfk::Tile* tile = section->tiles[tile_id];
+      std::vector<tfk::Tile*> neighbors = section->get_all_close_tiles(tile);
+      tfk::MatchTilesTask* task = new tfk::MatchTilesTask(tile, neighbors);
+      tile->ml_models = stack->ml_models;
+      tile->get_tile_data(tfk::FULL);
+      for (int k = 0; k < neighbors.size(); k++) {
+        neighbors[k]->get_tile_data(tfk::FULL);
+      }
+      task->setup_param_db(1);
+      tile->release_full_image();
+      tile->release_2d_keypoints();
+      for (int k = 0; k < neighbors.size(); k++) {
+        neighbors[k]->release_full_image();
+        neighbors[k]->release_2d_keypoints();
+      }
+      printf("Tile %d finished\n", i);
+    }
+    paramDB->print_possible_params();
+    ParamsDatabase pdb_new;
+    paramDB->to_proto(&pdb_new);
+    printf("have %d diferent parameters in new\n",pdb_new.params_size());
+    std::fstream output("match_tiles_task_pdb_big.pb", std::ios::out | std::ios::trunc | std::ios::binary);
+    if (!pdb_new.SerializeToOstream(&output)) {
+      std::cerr << "Failed to write pdb proto." << std::endl;
+    }
   }
-}
 
 
 void align_execute(align_data_t *p_align_data) {

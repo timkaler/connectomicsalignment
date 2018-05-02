@@ -154,6 +154,10 @@ matchtilestask.o: matchtilestask.cpp matchtilestask.hpp
 
 tilesifttask.o: tilesifttask.cpp tilesifttask.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+matchtilepairtask.o: matchtilepairtask.cpp matchtilepairtask.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
 #engine.o: cilk_tools/Graph.cpp cilk_tools/engine.cpp cilk_tools/scheduler.cpp
 #	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
@@ -165,7 +169,7 @@ tilesifttask.o: tilesifttask.cpp tilesifttask.hpp
 run.S: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: Graph.o scheduler.o engine.o common.o align.o match.o ransac.o run.o stack.o mrparams.o paramdb.o render.o triangle_mesh.o range_tree.o mlbase.o matchtilestask.o tilesifttask.o
+run_align: Graph.o scheduler.o engine.o common.o align.o match.o ransac.o run.o stack.o mrparams.o paramdb.o render.o triangle_mesh.o range_tree.o mlbase.o matchtilestask.o tilesifttask.o matchtilepairtask.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:

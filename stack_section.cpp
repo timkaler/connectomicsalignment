@@ -146,15 +146,12 @@ void tfk::Section::align_2d() {
       return;
     }
 
-
-    ParamDB* paramDB = new ParamDB();
-
     // init the tiles MatchTilesTask
     for (int i = 0; i < tiles.size(); i++) {
-      tiles[i]->match_tiles_task = new MatchTilesTask(paramDB, tiles[i],
-                                                      get_all_close_tiles(tiles[i]));
       //TODO(wheatman) put this in a better place
       tiles[i]->ml_models = this->ml_models;
+      tiles[i]->paramdbs = this->paramdbs;
+      tiles[i]->match_tiles_task = new MatchTilesTask(tiles[i], get_all_close_tiles(tiles[i]));
     }
 
     this->compute_keypoints_and_matches();
@@ -181,103 +178,105 @@ void tfk::Section::align_2d() {
         vertex_ids.push_back(i);
       }
 
-      for (int i = 0; i < this->tiles.size(); i++) {
-        Tile* t = this->tiles[i];
-        if (t->bad_2d_alignment) continue;
-        compute_on_tile_neighborhood(t);
+      //for (int i = 0; i < this->tiles.size(); i++) {
+      //  Tile* t = this->tiles[i];
+      //  if (t->bad_2d_alignment) continue;
+      //  compute_on_tile_neighborhood(t);
 
-        for (int k = 0; k < t->edges.size(); k++) {
-          Tile* neighbor = this->tiles[t->edges[k].neighbor_id];
-          bool guess_ml = t->ml_preds[neighbor];
-          MatchTilesTask *task = (MatchTilesTask *) t->match_tiles_task;
-          bool guess_basic = task->neighbor_to_success[neighbor];
-          if (guess_ml != guess_basic) {
-            printf("wtf, guess_ml and guess basic don't agree\n");
-          }
-          if (neighbor->bad_2d_alignment) continue;
-          if (t->ideal_offsets.find(neighbor->tile_id) == t->ideal_offsets.end()) continue;
-
-
-          float val = t->compute_deviation(neighbor);
+      //  for (int k = 0; k < t->edges.size(); k++) {
+      //    Tile* neighbor = this->tiles[t->edges[k].neighbor_id];
+      //    bool guess_ml = t->ml_preds[neighbor];
+      //    MatchTilesTask *task = (MatchTilesTask *) t->match_tiles_task;
+      //    bool guess_basic = task->neighbor_to_success[neighbor];
+      //    if (guess_ml != guess_basic) {
+      //      printf("wtf, guess_ml and guess basic don't agree\n");
+      //    }
+      //    if (neighbor->bad_2d_alignment) continue;
+      //    if (t->ideal_offsets.find(neighbor->tile_id) == t->ideal_offsets.end()) continue;
 
 
-          float THRESHOLD_FOR_CHECK = 2.0;
+      //    float val = t->compute_deviation(neighbor);
 
-          if (val > THRESHOLD_FOR_CHECK) {
-              if (task->neighbor_to_success[neighbor] == true) {
-                // thought it was good, was actually bad.
-                task->neighbor_to_success[neighbor] = false;
-                compute_on_tile_neighborhood(t);
-                float val2 = t->compute_deviation(neighbor);
-                task->neighbor_to_success[neighbor] = true;
-                if (val2 < THRESHOLD_FOR_CHECK/2) {
-                  // confirmed as bad.
-                  match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
-                }
-              } else {
-                // thought it was bad, see if still bad when we add back the edge.
-                task->neighbor_to_success[neighbor] = true;
-                compute_on_tile_neighborhood(t);
-                float val2 = t->compute_deviation(neighbor);
-                task->neighbor_to_success[neighbor] = false;
-                if (val2 < THRESHOLD_FOR_CHECK/2) {
-                  // it was actually good!
-                  match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
-                }
-              }
 
-            if (guess_ml) {
-              match_tile_task_model->ml_fp++;
-            } else {
-              match_tile_task_model->ml_correct_neg++;
-            }
-            if (guess_basic) {
-              bas_fp++;
-            } else {
-              bas_correct_neg++;
-            }
-          } else {
-            // its good, no training.
-            //// it is good.
-            //if (task->neighbor_to_success[neighbor] == true) {
-            //  // 
-            //} else {
+      //    float THRESHOLD_FOR_CHECK = 2.0;
 
-            //}
-            if (task->neighbor_to_success[neighbor] == true && val < THRESHOLD_FOR_CHECK/2) {
-              // this turned out to be correct, go ahead and add it.
-              match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
-            } else if (task->neighbor_to_success[neighbor]==false) {
-              task->neighbor_to_success[neighbor] = true;
-              compute_on_tile_neighborhood(t);
-              task->neighbor_to_success[neighbor] = false;
-              float val2 = t->compute_deviation(neighbor);
-              if (val2 < THRESHOLD_FOR_CHECK/2) {
-                // thought it was bad, but it was actually okay.
-                match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
-              }
-              // unknown if this is right or wrong. so don't add it.
-            }
-            if (guess_ml) {
-              match_tile_task_model->ml_correct_pos++;
-            } else {
-              match_tile_task_model->ml_fn++;
-            }
-            if (guess_basic) {
-              bas_correct_pos++;
-            } else {
-              bas_fn++;
-            }
-          }
+      //    if (val > THRESHOLD_FOR_CHECK) {
+      //        if (task->neighbor_to_success[neighbor] == true) {
+      //          // thought it was good, was actually bad.
+      //          task->neighbor_to_success[neighbor] = false;
+      //          compute_on_tile_neighborhood(t);
+      //          float val2 = t->compute_deviation(neighbor);
+      //          task->neighbor_to_success[neighbor] = true;
+      //          if (val2 < THRESHOLD_FOR_CHECK/2) {
+      //            // confirmed as bad.
+      //            match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
+      //          }
+      //        } else {
+      //          // thought it was bad, see if still bad when we add back the edge.
+      //          task->neighbor_to_success[neighbor] = true;
+      //          compute_on_tile_neighborhood(t);
+      //          float val2 = t->compute_deviation(neighbor);
+      //          task->neighbor_to_success[neighbor] = false;
+      //          if (val2 < THRESHOLD_FOR_CHECK/2) {
+      //            // it was actually good!
+      //            match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
+      //          }
+      //        }
 
-        }
-      }
+      //      if (guess_ml) {
+      //        match_tile_task_model->ml_fp++;
+      //      } else {
+      //        match_tile_task_model->ml_correct_neg++;
+      //      }
+      //      if (guess_basic) {
+      //        bas_fp++;
+      //      } else {
+      //        bas_correct_neg++;
+      //      }
+      //    } else {
+      //      // its good, no training.
+      //      //// it is good.
+      //      //if (task->neighbor_to_success[neighbor] == true) {
+      //      //  // 
+      //      //} else {
+
+      //      //}
+      //      if (task->neighbor_to_success[neighbor] == true && val < THRESHOLD_FOR_CHECK/2) {
+      //        // this turned out to be correct, go ahead and add it.
+      //        match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
+      //      } else if (task->neighbor_to_success[neighbor]==false) {
+      //        task->neighbor_to_success[neighbor] = true;
+      //        compute_on_tile_neighborhood(t);
+      //        task->neighbor_to_success[neighbor] = false;
+      //        float val2 = t->compute_deviation(neighbor);
+      //        if (val2 < THRESHOLD_FOR_CHECK/2) {
+      //          // thought it was bad, but it was actually okay.
+      //          match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
+      //        }
+      //        // unknown if this is right or wrong. so don't add it.
+      //      }
+      //      if (guess_ml) {
+      //        match_tile_task_model->ml_correct_pos++;
+      //      } else {
+      //        match_tile_task_model->ml_fn++;
+      //      }
+      //      if (guess_basic) {
+      //        bas_correct_pos++;
+      //      } else {
+      //        bas_fn++;
+      //      }
+      //    }
+
+      //  }
+      //}
 
 
       for (int i = 0; i < this->graph->num_vertices(); i++) {
         this->graph->getVertexData(i)->iteration_count = 0;
       }
+
       std::set<int> section_list;
+
       for (int _i = 0; _i < this->graph->num_vertices(); _i++) {
         int i = _i;//vertex_ids[_i];
         int z = this->graph->getVertexData(i)->z;
@@ -301,8 +300,11 @@ void tfk::Section::align_2d() {
       //this->coarse_affine_align();
       //this->elastic_align();
       //int count = 0;
-
-    
+      MLBase *match_tile_pair_task_model = this->ml_models[MATCH_TILE_PAIR_TASK_ID];
+      int bas_correct_pos = 0;
+      int bas_correct_neg = 0;
+      int bas_fp = 0;
+      int bas_fn = 0;
 
       // init tmp bad 2d alignment.
       for (int i = 0; i < this->tiles.size(); i++) {
@@ -320,9 +322,8 @@ void tfk::Section::align_2d() {
           continue;
         }
 
-        
-        for (int k = 0; k < t->edges.size(); k++) {
 
+        for (int k = 0; k < t->edges.size(); k++) {
           Tile* neighbor = this->tiles[t->edges[k].neighbor_id];
           bool guess_ml = t->ml_preds[neighbor];
           MatchTilesTask *task = (MatchTilesTask *) t->match_tiles_task;
@@ -330,53 +331,39 @@ void tfk::Section::align_2d() {
           if (neighbor->bad_2d_alignment) continue;
           //if (guess_basic == false) continue;
           if (t->ideal_offsets.find(neighbor->tile_id) == t->ideal_offsets.end()) continue;
+
           float val = t->compute_deviation(neighbor);
 
-
           if (val > 10.0) {
-            //printf("bad tile with deviation %f corr %f\n", val, t->neighbor_correlations[neighbor->tile_id]);
-              //match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
-            //compute_on_tile_neighborhood(this->sections[section_index],t);
-            //float val = t->compute_deviation(neighbor);
-            //printf("after bad tile with deviation %f corr %f\n", val, t->neighbor_correlations[neighbor->tile_id]);
-            //return;
-            //auto bbox1 = t->get_bbox();
-            if (val > 10.0) {
+            match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0);
               t->tmp_bad_2d_alignment = true;
               neighbor->tmp_bad_2d_alignment = true; 
-              //this->render(t->get_bbox(), "errortest"+std::to_string(count++), FULL);
+            if (guess_ml) {
+              match_tile_pair_task_model->ml_fp++;
+            } else {
+              match_tile_pair_task_model->ml_correct_neg++;
             }
-            //if (guess_ml) {
-            //  match_tile_task_model->ml_fp++;
-            //} else {
-            //  match_tile_task_model->ml_correct_neg++;
-            //}
-            //if (guess_basic) {
-            //  bas_fp++;
-            //} else {
-            //  bas_correct_neg++;
-            //}
+            if (guess_basic) {
+              bas_fp++;
+            } else {
+              bas_correct_neg++;
+            }
           } else {
-            // make less positive training examples 
-            //if (i%25==0) {
-            //match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
-            //}
-            //if (guess_ml) {
-            //  match_tile_task_model->ml_correct_pos++;
-            //} else {
-            //  match_tile_task_model->ml_fn++;
-            //  //match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
-            //}
-            //if (guess_basic) {
-            //  bas_correct_pos++;
-            //} else {
-            //  bas_fn++;
-            //}
-            
+            match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 1);
+            if (guess_ml) {
+              match_tile_pair_task_model->ml_correct_pos++;
+            } else {
+              match_tile_pair_task_model->ml_fn++;
+            }
+            if (guess_basic) {
+              bas_correct_pos++;
+            } else {
+              bas_fn++;
+            }
           }
-          
         }
       }
+
       // set the bad alignment based on results.
       for (int i = 0; i < this->tiles.size(); i++) {
         Tile* t = this->tiles[i];
@@ -393,7 +380,7 @@ void tfk::Section::align_2d() {
       }
 
       printf("Basic Correct positive = %d, correct negatives = %d, false positives = %d, false negative = %d\n", bas_correct_pos, bas_correct_neg, bas_fp, bas_fn);
-      match_tile_task_model->train(true);
+      match_tile_pair_task_model->train(true);
       break;
     }
 
@@ -820,7 +807,7 @@ cv::Mat tfk::Section::render(std::pair<cv::Point2f, cv::Point2f> bbox,
   for (int i = 0; i < this->tiles.size(); i++) {
     if (this->tiles[i]->bad_2d_alignment) bad_2d_alignment++;
   }
-  printf("total tiles %d, bad 2d count %d\n", this->tiles.size(), bad_2d_alignment);
+  printf("total tiles %zu, bad 2d count %d\n", this->tiles.size(), bad_2d_alignment);
 
   //printf("Called render on bounding box %f %f %f %f\n", bbox.first.x, bbox.first.y, bbox.second.x, bbox.second.y);
   cv::Point2f render_scale = this->get_render_scale(resolution);
