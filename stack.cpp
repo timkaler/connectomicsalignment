@@ -55,9 +55,10 @@ void tfk::Stack::init() {
 
   this->ml_models[MATCH_TILE_PAIR_TASK_ID] = new MLAnn(10);
   this->ml_models[MATCH_TILES_TASK_ID] = new MLAnn(1);
-  std::string ml_model_location = "ml_model_after_section_7.ml";
+  std::string ml_model_location = "ml_model_after_section_0.ml";
   printf("the ml model for task MATCH_TILE_PAIR is at %s\n", ml_model_location.c_str());
-  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load("ml_model_after_section_7.ml");
+  //this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load("ml_model_after_section_7.ml");
+  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load("ml_model_after_section_0.ml");
 
   std::string paramdb_location = "match_tiles_task_pdb_gen_data.pb";
   printf("The paramdb for task MATCH_TILE_PAIR is being loaded from %s\n", paramdb_location.c_str());
@@ -202,6 +203,7 @@ void tfk::Stack::align_3d() {
 }
 
 void tfk::Stack::align_2d() {
+  this->ml_models[0]->enable_training();
   for (int i = 0; i < this->sections.size(); i++) {
     global_start = gettime();
     this->sections[i]->align_2d();
@@ -210,7 +212,7 @@ void tfk::Stack::align_2d() {
     this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_correct_neg = 0;
     this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_fp = 0;
     this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_fn = 0;
-    //this->ml_models[0]->save("ml_model_after_section_"+std::to_string(i)+".ml"); 
+    this->ml_models[0]->save("ml_model_after_section_"+std::to_string(i)+".ml"); 
   }
   return;
   //int count = 0;
