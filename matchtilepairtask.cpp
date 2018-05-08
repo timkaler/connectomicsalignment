@@ -169,10 +169,10 @@ namespace tfk {
       new_params.sigma = 1.2;//mr_params->get_float_param("sigma");
 
 
-
+      //TODO(wheatman) doing extra work here, but makes it the same as the cached version
       if (dependencies.find(a_tile->tile_id) == dependencies.end()) {
         a_tile->compute_sift_keypoints2d_params(new_params, a_tile_keypoints,
-                                                a_tile_desc, a_tile);
+                                                a_tile_desc, b_tile);
       } else {
         a_tile_desc = dependencies[a_tile->tile_id]->tile_desc;
         a_tile_keypoints = dependencies[a_tile->tile_id]->tile_keypoints;
@@ -227,25 +227,30 @@ namespace tfk {
           tmp_a_tile.offset_y += 0.4*dy;
         }
       }
-
-      float val = 0.0;//tmp_a_tile.error_tile_pair(b_tile);
-      tmp_a_tile.get_feature_vector(b_tile, 3, 2).copyTo(a_tile->feature_vectors[b_tile]);
-      bool guess_ml = this->model->predict(a_tile->feature_vectors[b_tile]);
-      a_tile->ml_preds[b_tile] = guess_ml;
-      if (guess_ml /*val >= 0.75*/) {
-        cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
+      cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
                                           tmp_a_tile.y_start+tmp_a_tile.offset_y);
-        cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
-                                          b_tile->y_start+b_tile->offset_y);
-        cv::Point2f delta = a_point - b_point;
+      //TODO(wheatman) tell tim I have this done even if it failed
+      cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
+                                        b_tile->y_start+b_tile->offset_y);
+      current_offset = a_point - b_point;
 
-        a_tile->ideal_offsets[b_tile->tile_id] = delta;
-        a_tile->neighbor_correlations[b_tile->tile_id] = val;
-        success = true;
-        return true;
+      tmp_a_tile.get_feature_vector(b_tile, 3, 2).copyTo(a_tile->feature_vectors[b_tile]);
+      // for fast path computation
+      if (false_negative_rate > 0) {
+        float val = tmp_a_tile.error_tile_pair(b_tile);
+        bool guess_ml = this->model->predict(a_tile->feature_vectors[b_tile]);
+        a_tile->ml_preds[b_tile] = guess_ml;
+        if (/*guess_ml*/ val >= 0.75) {
+          a_tile->ideal_offsets[b_tile->tile_id] = current_offset;
+          a_tile->neighbor_correlations[b_tile->tile_id] = val;
+          success = true;
+          return true;
 
+        } else {
+          success = false;
+          return false;
+        }
       } else {
-        success = false;
         return false;
       }
     }
@@ -259,7 +264,7 @@ namespace tfk {
     }
 
     void MatchTilePairTask::get_parameter_options(std::vector<tfk::MRParams*>* vec) {
-      for (float scale = .2; scale < 1.05; scale +=.2) {
+      for (float scale = .2; scale < 1.05; scale +=.1) {
         for (int num_features = 1; num_features <=4; num_features *=2) {
           for (int num_octaves = 5; num_octaves <= 15; num_octaves+=5) {
             //for (float contrast_threshold = .01; contrast_threshold <.03; contrast_threshold +=.05) {
@@ -278,6 +283,18 @@ namespace tfk {
             //}
           }
         }
+      }
+    }
+
+    bool MatchTilePairTask::compare_results_and_update_model(MRTask * known_good, float accuracy) {
+      MatchTilePairTask* other = dynamic_cast<MatchTilePairTask*>(known_good);
+      double res = cv::norm(this->current_offset - other->current_offset);
+      if (res < accuracy) {
+        model->add_training_example(a_tile->feature_vectors[b_tile], 1, res);
+        return true;
+      }  else {
+        model->add_training_example(a_tile->feature_vectors[b_tile], 0, res);
+        return false;
       }
     }
 

@@ -30,6 +30,7 @@
 //#include "./meshoptimize.h"
 
 #include "matchtilestask.hpp"
+#include "matchtilepairtask.hpp"
 
 #ifndef ALIGNSTACK
 #define ALIGNSTACK

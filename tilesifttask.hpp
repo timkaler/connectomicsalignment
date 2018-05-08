@@ -19,6 +19,7 @@ class TileSiftTask : public MRTask {
     void commit();
     bool error_check(float false_negative_rate);
     void get_parameter_options(std::vector<tfk::MRParams*>* vec);
+    bool compare_results_and_update_model(MRTask* known_good, float accuracy) {return false;}
 };
 
 } // end namespace tfk

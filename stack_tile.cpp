@@ -1107,9 +1107,18 @@ std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_til
   int new_y_start = my_y_start - ((int)this->y_start);
   int new_y_finish = ((int)this->y_finish) - my_y_finish;
 
-  if (new_x_start < 0 || new_y_start < 0) printf("The starts are less than zero!\n");
-  if (_tmp_image.cols-new_x_finish < 0 || _tmp_image.rows - new_y_finish < 0) printf("The ends are less than zero!\n");
-  if (_tmp_image.cols-new_x_finish > _tmp_image.cols || _tmp_image.rows - new_y_finish > _tmp_image.rows) printf("The ends are greater than dims!\n");
+  if (new_x_start < 0 || new_y_start < 0) {
+    printf("The starts are less than zero!\n");
+    return;
+  }
+  if (_tmp_image.cols-new_x_finish < 0 || _tmp_image.rows - new_y_finish < 0) {
+    printf("The ends are less than zero!\n");
+    return;
+  }
+  if (_tmp_image.cols-new_x_finish > _tmp_image.cols || _tmp_image.rows - new_y_finish > _tmp_image.rows) {
+    printf("The ends are greater than dims!\n");
+    return;
+  }
 
   cv::Mat tmp_image = _tmp_image(cv::Rect(new_x_start, new_y_start,
                                           _tmp_image.cols - new_x_finish-new_x_start,

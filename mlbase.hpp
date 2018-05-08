@@ -31,6 +31,8 @@ namespace tfk {
 
 class MLBase {
   public:
+    //TODO(wheatman) either read write locking or threadsafe structures
+    std::recursive_mutex* mutex;
 
     // not needed for reinforcement learning
     std::vector<std::vector<float>> old_data;
@@ -53,7 +55,7 @@ class MLBase {
     MLBase(int num_features, std::string saved_model = "");
     virtual void train(bool reinforcement) = 0;
     virtual void save(std::string filename) = 0;
-    virtual void load(std::string filename) = 0;
+    virtual void load(std::string filename, bool data_only = false) = 0;
 
 
     void add_training_example(std::vector<float> new_vector, float new_label, float error);
@@ -65,6 +67,7 @@ class MLBase {
     void enable_training();
     void disable_training();
     float feature_dist(std::vector<float> a, std::vector<float> b);
+    
 };
 
 class MLAnn  : public MLBase{
@@ -72,7 +75,7 @@ class MLAnn  : public MLBase{
     MLAnn(int num_features, std::string saved_model = "");
     void train(bool reinforcement);
     void save(std::string filename);
-    void load(std::string filename);
+    void load(std::string filename, bool data_only = false);
 };
 
 class MLRandomForest  : public MLBase{
@@ -80,7 +83,7 @@ class MLRandomForest  : public MLBase{
     MLRandomForest(int num_features, std::string saved_model = "");
     void train(bool reinforcement);
     void save(std::string filename);
-    void load(std::string filename);
+    void load(std::string filename, bool data_only = false);
 };
 
 

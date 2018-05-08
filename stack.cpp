@@ -55,19 +55,22 @@ void tfk::Stack::init() {
 
   this->ml_models[MATCH_TILE_PAIR_TASK_ID] = new MLAnn(10);
   this->ml_models[MATCH_TILES_TASK_ID] = new MLAnn(1);
-  std::string ml_model_location = "ml_model_after_section_7.ml";
+  
+  std::string ml_model_location = "ml_after_param_opt.ml";
   printf("the ml model for task MATCH_TILE_PAIR is at %s\n", ml_model_location.c_str());
-  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load("ml_model_after_section_7.ml");
-
+  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load(ml_model_location, true);
+  /*
   std::string paramdb_location = "match_tiles_task_pdb_gen_data.pb";
   printf("The paramdb for task MATCH_TILE_PAIR is being loaded from %s\n", paramdb_location.c_str());
-
+  */
   ParamsDatabase pdb;
+  /*
   std::fstream input2(paramdb_location, std::ios::in | std::ios::binary);
   if (!pdb.ParseFromIstream(&input2)) {
     std::cerr << "Failed to parse protocal buffer for paramdb in stack_init." << std::endl;
     return;
   }
+  */
     
   this->paramdbs[MATCH_TILE_PAIR_TASK_ID] = new tfk::ParamDB(pdb);
   ParamsDatabase pdb2;

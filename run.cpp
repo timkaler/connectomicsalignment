@@ -26,9 +26,9 @@ std::pair<cv::Point2f, cv::Point2f> process_bounding_box_string(std::string boun
   }
 
   if (items.size() == 4) {
-    printf("Got a bounding box.\n");
+    //printf("Got a bounding box.\n");
     for (int i =0; i < items.size(); i++) {
-      printf("item %d %f\n", i, items[i]);
+      //printf("item %d %f\n", i, items[i]);
     }
   }
   return std::make_pair(cv::Point2f(items[0], items[1]), cv::Point2f(items[2], items[3]));
