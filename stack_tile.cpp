@@ -100,7 +100,12 @@ float tfk::Tile::error_tile_pair(Tile *other) {
     }
   }
   cv::Mat result_CCOEFF_NORMED;
-  cv::matchTemplate(transform_1, transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
+
+  cv::Mat _transform_1, _transform_2;
+  cv::resize(transform_1, _transform_1, cv::Size(), 0.5,0.5, CV_INTER_AREA);
+  cv::resize(transform_2, _transform_2, cv::Size(), 0.5,0.5, CV_INTER_AREA);
+
+  cv::matchTemplate(_transform_1, _transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
   return result_CCOEFF_NORMED.at<float>(0,0);
 }
 
@@ -165,6 +170,10 @@ cv::Mat tfk::Tile::get_feature_vector(Tile *other, int boxes, int type) {
         }
       }
     }
+
+    tile_p_image_1.release();
+    tile_p_image_2.release();
+
 
     // clear any location which only has a value for one of them
     // note that the transforms are the same size
@@ -262,7 +271,8 @@ cv::Mat tfk::Tile::get_feature_vector(Tile *other, int boxes, int type) {
         }
       }
     }
-
+    tile_p_image_1.release();
+    tile_p_image_2.release();
     // clear any location which only has a value for one of them
     // note that the transforms are the same size
     for (int _y = 0; _y < transform_1.rows; _y++) {
@@ -536,7 +546,7 @@ void tfk::Tile::local2DAlignUpdate() {
     //vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
     Tile* neighbor = (Tile*) this->edges[i].neighbor_tile;
     if (neighbor->bad_2d_alignment) continue;
-    if (!(dynamic_cast<MatchTilesTask*>(this->match_tiles_task))->neighbor_to_success[neighbor]) continue;
+    //if (!(dynamic_cast<MatchTilesTask*>(this->match_tiles_task))->neighbor_to_success[neighbor]) continue;
     if (this->ideal_offsets.find(neighbor->tile_id) == this->ideal_offsets.end() &&
         neighbor->ideal_offsets.find(this->tile_id) == neighbor->ideal_offsets.end()) continue;
     
@@ -874,7 +884,7 @@ void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
   cv::resize(tmp_image, (*this->p_image), cv::Size(), scale_x,scale_y,CV_INTER_AREA);
 
 
-  this->p_kps_3d = new std::vector<cv::KeyPoint>();
+  this->p_kps_3d->clear();// = new std::vector<cv::KeyPoint>();
 
   //int rows = this->p_image->rows;
   //int cols = this->p_image->cols;
@@ -952,10 +962,10 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
     case THUMBNAIL: {
       cv::Mat tmp = this->get_tile_data(Resolution::FULL);//cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
       cv::Mat ret;
-      cv::resize(tmp, ret, cv::Size(), 0.1,0.1,CV_INTER_AREA);
       //cv::Mat src = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
-      //cv::Mat dst;
-      ////cv::equalizeHist( src, dst );
+      cv::Mat dst;
+      cv::equalizeHist( tmp, dst );
+      cv::resize(dst, ret, cv::Size(), 0.1,0.1,CV_INTER_AREA);
       
       //int scale = 1;
       //cv::Laplacian(src, dst, CV_8U, 3, scale, 0, cv::BORDER_DEFAULT);

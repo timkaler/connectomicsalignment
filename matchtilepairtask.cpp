@@ -11,6 +11,8 @@ namespace tfk {
         (pt_y >= y_start && pt_y <= y_finish);
     }
 
+    MatchTilePairTask::~MatchTilePairTask() {}
+
     MatchTilePairTask::MatchTilePairTask (Tile* a_tile, Tile* b_tile) {
       this->a_tile = a_tile;
       this->b_tile = b_tile;
@@ -141,7 +143,7 @@ namespace tfk {
           }
         }
         free(mask);
-        if (num_matches_filtered >= MIN_FEATURES_NUM) {
+        if (num_matches_filtered >= MIN_FEATURES_NUM && filtered_match_points_a.size() >= 0.1*matches.size()) {
           //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
           break;
         } else {
@@ -150,6 +152,9 @@ namespace tfk {
         }
       }
     }
+
+
+
 
     void MatchTilePairTask::compute_with_params(MRParams* mr_params_local) {
       std::vector<cv::KeyPoint> a_tile_keypoints;
@@ -228,11 +233,11 @@ namespace tfk {
         }
       }
 
-      float val = 0.0;//tmp_a_tile.error_tile_pair(b_tile);
-      tmp_a_tile.get_feature_vector(b_tile, 3, 2).copyTo(a_tile->feature_vectors[b_tile]);
-      bool guess_ml = this->model->predict(a_tile->feature_vectors[b_tile]);
+      float val = tmp_a_tile.error_tile_pair(b_tile);
+      //tmp_a_tile.get_feature_vector(b_tile, 3, 2).copyTo(a_tile->feature_vectors[b_tile]);
+      bool guess_ml = true;//this->model->predict(a_tile->feature_vectors[b_tile]);
       a_tile->ml_preds[b_tile] = guess_ml;
-      if (guess_ml /*val >= 0.75*/) {
+      if (/*guess_ml*/ val >= 0.75 && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
         cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
                                           tmp_a_tile.y_start+tmp_a_tile.offset_y);
         cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,

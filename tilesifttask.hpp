@@ -14,7 +14,7 @@ class TileSiftTask : public MRTask {
     cv::Mat tile_desc;
 
     TileSiftTask (ParamDB* paramDB, Tile* tile);
-    ~TileSiftTask ();
+    virtual ~TileSiftTask () final ;
     void compute_with_params(tfk::MRParams* mr_params_local);
     void commit();
     bool error_check(float false_negative_rate);

@@ -2,6 +2,9 @@
 namespace tfk {
 
     TileSiftTask::~TileSiftTask () {
+      this->tile_keypoints.clear();
+      std::vector<cv::KeyPoint>().swap(this->tile_keypoints);
+      this->tile_desc.release();
     }
 
     TileSiftTask::TileSiftTask (ParamDB* paramDB, Tile* tile) {

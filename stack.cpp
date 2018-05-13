@@ -4,6 +4,9 @@
 #include "./stack_tile.cpp"
 #include "./stack_section.cpp"
 
+#include "matchtilestask.hpp"
+
+
 
 // Contains the initial code for mr stuff.
 
@@ -58,7 +61,7 @@ void tfk::Stack::init() {
   std::string ml_model_location = "ml_model_after_section_0.ml";
   printf("the ml model for task MATCH_TILE_PAIR is at %s\n", ml_model_location.c_str());
   //this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load("ml_model_after_section_7.ml");
-  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load("ml_model_after_section_0.ml");
+  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load("ml_model_after_section_7.ml");
 
   std::string paramdb_location = "match_tiles_task_pdb_gen_data.pb";
   printf("The paramdb for task MATCH_TILE_PAIR is being loaded from %s\n", paramdb_location.c_str());
@@ -80,7 +83,7 @@ void tfk::Stack::init() {
     SectionData section_data = align_data.sec_data(i);
     //printf("doing section %d\n", i);
     //printf("bounding box is %f %f %f %f\n", _bounding_box.first.x, _bounding_box.first.y, _bounding_box.second.x, _bounding_box.second.y);
-    Section* sec = new Section(section_data, _bounding_box);
+    Section* sec = new Section(section_data, _bounding_box, use_bbox_prefilter);
     //printf("doing section %d\n", i);
     sec->section_id = this->sections.size();
     //printf("doing section %d\n", i);
@@ -125,10 +128,6 @@ void tfk::Stack::compute_on_tile_neighborhood(tfk::Section* section, tfk::Tile* 
 
 // BEGIN Alignment algorithms.
 void tfk::Stack::align_3d() {
-  for (int i = 0; i < this->sections.size(); i++) {
-    cilk_spawn this->sections[i]->construct_triangles();
-  }
-  cilk_sync;
 
 //  std::vector<Section*> filtered_sections;
 //  for (int i = 0; i < this->sections.size(); i++) {
@@ -177,6 +176,10 @@ void tfk::Stack::align_3d() {
 
 
 
+  for (int i = 0; i < this->sections.size(); i++) {
+    cilk_spawn this->sections[i]->construct_triangles();
+  }
+  cilk_sync;
 
 
 
@@ -203,7 +206,7 @@ void tfk::Stack::align_3d() {
 }
 
 void tfk::Stack::align_2d() {
-  this->ml_models[0]->enable_training();
+  //this->ml_models[0]->enable_training();
   for (int i = 0; i < this->sections.size(); i++) {
     global_start = gettime();
     this->sections[i]->align_2d();
@@ -212,7 +215,7 @@ void tfk::Stack::align_2d() {
     this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_correct_neg = 0;
     this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_fp = 0;
     this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_fn = 0;
-    this->ml_models[0]->save("ml_model_after_section_"+std::to_string(i)+".ml"); 
+    //this->ml_models[0]->save("ml_model_after_section_"+std::to_string(i)+".ml"); 
   }
   return;
   //int count = 0;

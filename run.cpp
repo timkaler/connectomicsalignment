@@ -100,7 +100,9 @@ int main(int argc, char **argv) {
     p_align_data->work_dirpath = (char*)outputdir_path.c_str(); // use same path for both.
     p_align_data->output_dirpath = (char*)outputdir_path.c_str();
     p_align_data->do_subvolume = false;
-    p_align_data->bounding_box = process_bounding_box_string(bounding_box_string);
+    if (options.count("bbox")) {
+      p_align_data->bounding_box = process_bounding_box_string(bounding_box_string);
+    }
 
   } catch (const cxxopts::OptionException& e) {
     std::cout << "Error parsing options: " << e.what() << std::endl;

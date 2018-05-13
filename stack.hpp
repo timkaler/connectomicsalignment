@@ -34,7 +34,6 @@
 #ifndef ALIGNSTACK
 #define ALIGNSTACK
 
-
 void updateTile2DAlign(int vid, void* scheduler_void);
 static bool STORE_ALIGN_RESULTS = false;
 static double totalTime = 0;
@@ -51,6 +50,8 @@ static float EDGE_THRESH_2D = 5.0;
 
 namespace tfk {
 
+// forward declaration.
+class MatchTilesTask;
 enum Resolution {THUMBNAIL, FULL, PERCENT30, THUMBNAIL2, FILEIOTEST};
 
 typedef struct params {
@@ -92,7 +93,10 @@ class Tile {
    double shape_dy;
 
 
-   MRTask* match_tiles_task;
+   //MRTask* match_tiles_task;
+
+   MatchTilesTask* match_tiles_task;
+
 
    std::vector<cv::KeyPoint>* p_kps;
    cv::Mat* p_kps_desc;
@@ -194,6 +198,7 @@ class Section {
     bool elastic_transform_ready;
     int num_tiles_replaced;
     int num_bad_2d_matches;
+    bool use_bbox_prefilter;
     std::pair<cv::Point2f, cv::Point2f> _bounding_box;
     cv::Mat* p_out;
     std::vector<cv::KeyPoint>* p_kps;
@@ -249,7 +254,7 @@ class Section {
 
     void compute_on_tile_neighborhood(tfk::Tile* tile);
     Section(int section_id);
-    Section(SectionData& section_data, std::pair<cv::Point2f, cv::Point2f> bounding_box);
+    Section(SectionData& section_data, std::pair<cv::Point2f, cv::Point2f> bounding_box, bool use_bbox_prefilter);
     std::vector<int> get_all_close_tiles(int atile_id);
     std::vector<Tile*> get_all_close_tiles(Tile* atile_id);
     void compute_keypoints_and_matches();
@@ -402,6 +407,7 @@ class Stack {
     int min_y;
     int max_x;
     int max_y;
+    bool use_bbox_prefilter;
     std::pair<cv::Point2f, cv::Point2f> _bounding_box;
     // list of sections
     std::vector<Section*> sections;

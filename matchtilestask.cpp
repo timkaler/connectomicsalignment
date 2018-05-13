@@ -15,6 +15,11 @@ namespace tfk {
       }
     }
 
+    MatchTilesTask::~MatchTilesTask() {
+      for (auto iter = child_tasks.begin(); iter != child_tasks.end(); ++iter) {
+        delete dynamic_cast<MatchTilePairTask*>(iter->second);
+      }
+    }
 
     void MatchTilesTask::compute_with_params(MRParams* mr_params_local) {
       printf("UH OH?!?!\n");
@@ -68,6 +73,54 @@ namespace tfk {
       //TODO(wheatman) some thing smarter here
       // its own mlbase model to learn how to predict
       //if (neighbor_success_count > neighbors.size()*2.0/4.0 && neighbor_success_count >= 3.0) {
+
+
+      // require in addition that there be a neighbor up,down,left,right.
+
+      bool required[4];
+      bool has[4];
+      for (int i = 0; i < 4; i++) {
+        required[i] = false;
+        has[i] = false;
+      }
+
+      int mx = tile->x_start+tile->offset_x;
+      int my = tile->y_start+tile->offset_y;
+      for (int j = 0; j < neighbors.size(); j++) {
+        int nx = neighbors[j]->x_start + neighbors[j]->offset_x;
+        int ny = neighbors[j]->y_start + neighbors[j]->offset_y;
+        for (int i = 0; i < 4; i++) {
+          if (nx > mx + 1000) {
+            required[0] = true;
+            if (neighbor_to_success[neighbors[j]]) {
+              has[0] = true;
+            }
+          }
+          if (ny > my + 1000) {
+            required[1] = true;
+            if (neighbor_to_success[neighbors[j]]) {
+              has[1] = true;
+            }
+          }
+          if (nx < mx - 1000) {
+            required[2] = true;
+            if (neighbor_to_success[neighbors[j]]) {
+              has[2] = true;
+            }
+          }
+          if (ny < my - 1000) {
+            required[3] = true;
+            if (neighbor_to_success[neighbors[j]]) {
+              has[3] = true;
+            }
+          }
+        }
+      }
+
+      for (int i = 0; i < 4; i++) {
+        if (required[i] && !has[i]) return false;
+      }
+
       if (neighbor_success_count >= neighbors.size()*2.0/4.0 && neighbor_success_count >= 2.0) {
         return true;
       } else {

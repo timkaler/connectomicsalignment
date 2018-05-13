@@ -34,6 +34,7 @@ export OMP_NUM_THREADS=1
 export EXTRA_CFLAGS="-fcilkplus -Wall"
 #export LD_PRELOAD=/usr/lib/libtcmalloc.so.4
 export LD_PRELOAD=/efs/tools/jemalloc/lib/libjemalloc.so
+
 #export LD_PRELOAD=/efs/home/tfk/maprecurse/sift_features/test.so
 export N_TEMPORARY_BYTES=500000000
 #/efs/home/neboat/tapir-ex/src/build-release/bin

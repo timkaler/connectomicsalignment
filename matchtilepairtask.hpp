@@ -22,13 +22,15 @@ class MatchTilePairTask : public MRTask {
     Tile* b_tile;
     std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f> > matched_points;
     bool success;
-     void compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
+
+    void compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
       std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
       cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
       std::vector< cv::Point2f > &filtered_match_points_a,
       std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh);
 
     MatchTilePairTask(Tile* a_tile, Tile* b_tile);
+    virtual ~MatchTilePairTask() final;
 
     void compute_with_params(tfk::MRParams* mr_params_local);
     void commit();

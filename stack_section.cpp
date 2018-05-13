@@ -146,6 +146,8 @@ void tfk::Section::align_2d() {
       return;
     }
 
+
+    // Begin compute keypoints task.
     // init the tiles MatchTilesTask
     for (int i = 0; i < tiles.size(); i++) {
       //TODO(wheatman) put this in a better place
@@ -153,8 +155,8 @@ void tfk::Section::align_2d() {
       tiles[i]->paramdbs = this->paramdbs;
       tiles[i]->match_tiles_task = new MatchTilesTask(tiles[i], get_all_close_tiles(tiles[i]));
     }
-
     this->compute_keypoints_and_matches();
+    // End Compute keypoints task.
 
     int ncolors = this->graph->compute_trivial_coloring();
     printf("ncolors is %d\n", ncolors);
@@ -326,7 +328,7 @@ void tfk::Section::align_2d() {
         for (int k = 0; k < t->edges.size(); k++) {
           Tile* neighbor = this->tiles[t->edges[k].neighbor_id];
           bool guess_ml = t->ml_preds[neighbor];
-          MatchTilesTask *task = (MatchTilesTask *) t->match_tiles_task;
+          MatchTilesTask *task = t->match_tiles_task;
           bool guess_basic = task->neighbor_to_success[neighbor];
           if (neighbor->bad_2d_alignment) continue;
           //if (guess_basic == false) continue;
@@ -335,7 +337,7 @@ void tfk::Section::align_2d() {
           float val = t->compute_deviation(neighbor);
 
           if (val > 10.0) {
-            match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
+            //match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
               t->tmp_bad_2d_alignment = true;
               neighbor->tmp_bad_2d_alignment = true; 
             if (guess_ml) {
@@ -349,7 +351,7 @@ void tfk::Section::align_2d() {
               bas_correct_neg++;
             }
           } else {
-            match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
+            //match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
             if (guess_ml) {
               match_tile_pair_task_model->ml_correct_pos++;
             } else {
@@ -380,13 +382,14 @@ void tfk::Section::align_2d() {
       }
 
       printf("Basic Correct positive = %d, correct negatives = %d, false positives = %d, false negative = %d\n", bas_correct_pos, bas_correct_neg, bas_fp, bas_fn);
-      match_tile_pair_task_model->train(true);
+      //match_tile_pair_task_model->train(true);
       break;
     }
 
 
     // save 2d alignment
     this->save_2d_alignment();
+    delete graph;
 }
 
 void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
@@ -632,7 +635,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
       }
     }
 
-    //save_elastic_mesh(_neighbor);
+    save_elastic_mesh(_neighbor);
 
 }
 
@@ -642,7 +645,6 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
 // BEGIN utility functions
 
 bool tfk::Section::section_data_exists() {
-  return false;
   std::string filename =
       std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
 
@@ -684,7 +686,7 @@ bool tfk::Section::transformed_tile_overlaps_with(Tile* tile,
 }
 
 void tfk::Section::save_elastic_mesh(Section* neighbor) {
-  return;
+  //return;
   TriangleMeshProto triangleMesh;
 
   for (int i = 0; i < triangle_mesh->mesh->size(); i++) {
@@ -2458,7 +2460,7 @@ void tfk::Section::load_2d_alignment() {
 
 
 void tfk::Section::save_2d_alignment() {
-  return;
+  //return;
   printf("saving 2d alignment\n");
   Saved2DAlignmentSection sectiondata;
   for (int i = 0; i < this->tiles.size(); i++) {
@@ -2603,7 +2605,7 @@ void tfk::Section::compute_keypoints_and_matches() {
     bool pivot_good = false;
     int pivot_search_start = 0;
     for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-      if (sorted_tiles[i].second->x_start > pivot->x_finish + 12000) {
+      if (sorted_tiles[i].second->x_start > pivot->x_finish/* + 12000*/) {
         pivot = sorted_tiles[i].second;
         pivot_search_start = i;
         pivot_good = true;
@@ -2633,6 +2635,8 @@ void tfk::Section::compute_keypoints_and_matches() {
             neighbor_set.find(tile) == neighbor_set.end()) {
           closed_set.insert(tile);
           tile->release_2d_keypoints();
+          delete dependencies[tile->tile_id];
+          dependencies.erase(tile->tile_id);
           tile->release_full_image();
         }
       }
@@ -2667,13 +2671,13 @@ void tfk::Section::compute_keypoints_and_matches() {
          //tile->compute_sift_keypoints2d();
          dependencies[tile->tile_id]->compute(0.9);
          tile->compute_sift_keypoints3d();
-         (dynamic_cast<MatchTilesTask*>(tile->match_tiles_task))->dependencies = dependencies;
+         tile->match_tiles_task->dependencies = dependencies;
       }
 
       for (int i = 0; i < tiles_to_process_matches.size(); i++) {
         //cilk_spawn this->compute_tile_matches(tiles_to_process_matches[i]);
-        dynamic_cast<MatchTilesTask*>(tiles_to_process_matches[i]->match_tiles_task)->dependencies = dependencies;
-        cilk_spawn dynamic_cast<MatchTilesTask*>(tiles_to_process_matches[i]->match_tiles_task)->compute(0.9);
+        tiles_to_process_matches[i]->match_tiles_task->dependencies = dependencies;
+        cilk_spawn tiles_to_process_matches[i]->match_tiles_task->compute(0.9);
       }
       cilk_sync;
 
@@ -2687,9 +2691,9 @@ void tfk::Section::compute_keypoints_and_matches() {
         if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.4)) { // low number tells error check to also check ml response
           //printf("Tile failed first error check.\n");
           std::map<int, TileSiftTask*> empty_map;
-          dynamic_cast<MatchTilesTask*>(tiles_to_process_matches[i]->match_tiles_task)->dependencies = empty_map;
+          tiles_to_process_matches[i]->match_tiles_task->dependencies = empty_map;
           __sync_fetch_and_add(&tiles_in_error,1);
-          dynamic_cast<MatchTilesTask*>(tiles_to_process_matches[i]->match_tiles_task)->compute(0.999);
+          tiles_to_process_matches[i]->match_tiles_task->compute(0.99);
         }
       }
 
@@ -2720,7 +2724,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       //printf("presently done with %f %%  duration %f estimated completion time: %f\n", (100.0*pivot_search_start) / sorted_tiles.size(), duration, (duration)/((60*60*1.0*pivot_search_start)/sorted_tiles.size()));
       pivot_good = false;
       for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-        if (sorted_tiles[i].second->x_start > pivot->x_finish+12000) {
+        if (sorted_tiles[i].second->x_start > pivot->x_finish/*+12000*/) {
           pivot = sorted_tiles[i].second;
           pivot_search_start = i;
           pivot_good = true;
@@ -2739,12 +2743,16 @@ void tfk::Section::compute_keypoints_and_matches() {
             neighbor_set.find(tile) == neighbor_set.end()) {
           closed_set.insert(tile);
           tile->release_2d_keypoints();
-          delete dynamic_cast<TileSiftTask*>(dependencies[tile->tile_id]);
+
+          delete dependencies[tile->tile_id];
           dependencies.erase(tile->tile_id);
           tile->release_full_image();
         }
       }
-
+    for (int i = 0; i < this->tiles.size(); i++) {
+      this->tiles[i]->release_full_image();
+      this->tiles[i]->release_2d_keypoints();
+    }
     this->save_tile_matches();
   } else {
     this->read_tile_matches();
@@ -2834,7 +2842,7 @@ std::vector<int> tfk::Section::get_all_close_tiles(int atile_id) {
 }
 
 // Section from protobuf
-tfk::Section::Section(SectionData& section_data, std::pair<cv::Point2f, cv::Point2f> bounding_box) {
+tfk::Section::Section(SectionData& section_data, std::pair<cv::Point2f, cv::Point2f> bounding_box, bool use_bbox_prefilter) {
   //section_data_t *p_sec_data = &(p_tile_data->sec_data[i - p_tile_data->base_section]);
   this->elastic_transform_ready = false;
   this->section_id = section_data.section_id();
@@ -2874,7 +2882,7 @@ tfk::Section::Section(SectionData& section_data, std::pair<cv::Point2f, cv::Poin
 
     std::string test_filepath = "new_tiles/thumbnail_sec_"+std::to_string(this->real_section_id) +
         "_tileid_"+std::to_string(tile->tile_id) + ".jpg";
-    if (tile->overlaps_with(bounding_box)) {
+    if (!use_bbox_prefilter || tile->overlaps_with(bounding_box)) {
       //printf("Tile overlaps.");
       this->tiles.push_back(tile);
       tile->tile_id = added_count++;

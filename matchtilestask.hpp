@@ -2,9 +2,11 @@
 
 #ifndef MATCHTILESTASK
 #define MATCHTILESTASK
+
 #include "mrtask.hpp"
 #include "stack.hpp"
 #include "tilesifttask.hpp"
+
 namespace tfk {
 
 class MatchTilesTask : public MRTask {
@@ -21,6 +23,7 @@ class MatchTilesTask : public MRTask {
     std::map<Tile*, bool> neighbor_to_success;
     std::map<Tile*, MRTask*> child_tasks;
 
+    virtual ~MatchTilesTask () final;
     MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors);
     MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors,
                     std::map<int, TileSiftTask*> dependencies);
