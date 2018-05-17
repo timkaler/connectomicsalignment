@@ -43,6 +43,7 @@ class MRTask {
     MRTask() {
 
     }
+    virtual ~MRTask() {}
 
     //virtual std::vector<std::map<> get_compute_params();
     //virtual std::vector<int> get_error_check_params();

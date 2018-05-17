@@ -18,6 +18,8 @@ namespace tfk {
       this->paramDB = a_tile->paramdbs[this->task_type_id];
       this->model = a_tile->ml_models[this->task_type_id];
     }
+    
+    MatchTilePairTask::~MatchTilePairTask () {}
 
     void MatchTilePairTask::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
       std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
@@ -234,7 +236,7 @@ namespace tfk {
                                         b_tile->y_start+b_tile->offset_y);
       current_offset = a_point - b_point;
 
-      tmp_a_tile.get_feature_vector(b_tile, 3, 2).copyTo(a_tile->feature_vectors[b_tile]);
+      tmp_a_tile.get_feature_vector(b_tile, 5, 3).copyTo(a_tile->feature_vectors[b_tile]);
       // for fast path computation
       if (false_negative_rate > 0) {
         float val = tmp_a_tile.error_tile_pair(b_tile);

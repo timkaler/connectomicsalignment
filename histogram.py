@@ -4,7 +4,7 @@ sys.path = ["/efs/home/wheatman/.local/lib/python2.7/site-packages"] + sys.path
 import numpy
 from matplotlib import pyplot
 
-with open("for_hist.csv", "r") as f:
+with open("for_hist_testing.csv", "r") as f:
     pos = [float(item) for item in f.readline().split(",")[:-1]]
     neg = [float(item) for item in f.readline().split(",")[:-1]]
 

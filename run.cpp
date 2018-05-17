@@ -119,6 +119,8 @@ int main(int argc, char **argv) {
       test_learning(p_align_data);
     } else if (mode == 4) {
       fill_match_tiles_task_pdb(p_align_data);
+    } else if (mode == 5) {
+      testing_corralation_test(p_align_data);
     } else {
       std::cout << "Invalid mode, stopping program" << std::endl;
     }

@@ -31,6 +31,7 @@ class MatchTilePairTask : public MRTask {
       std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh);
 
     MatchTilePairTask(Tile* a_tile, Tile* b_tile);
+    ~MatchTilePairTask();
 
     void compute_with_params(tfk::MRParams* mr_params_local);
     void commit();

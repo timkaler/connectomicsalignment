@@ -24,6 +24,7 @@ class MatchTilesTask : public MRTask {
     MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors);
     MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors,
                     std::map<int, TileSiftTask*> dependencies);
+    ~MatchTilesTask ();
 
     void compute_with_params(tfk::MRParams* mr_params_local);
     void compute(float probability_correct);

@@ -64,7 +64,7 @@ namespace tfk {
            old_data.size(), old_labels.size(), new_data.size(), new_labels.size());
 
     if (new_data.size() == 0) {
-      mutex->lock();
+      mutex->unlock();
       return;
     }
     float sum_error = 0.0;
@@ -107,6 +107,7 @@ namespace tfk {
 
     for (int i = 0; i < tmp_data.size(); i++) {
       bool add = true;
+      /*
       for (int j = i+1; j < tmp_data.size(); j++) {
         float dist = feature_dist(tmp_data[i], tmp_data[j]);
         if (dist < 0.001) {
@@ -114,6 +115,7 @@ namespace tfk {
           break;
         }
       }
+      */
       if (add) {
         tmp_data2.push_back(tmp_data[i]);
         tmp_labels2.push_back(tmp_labels[i]);
@@ -127,6 +129,7 @@ namespace tfk {
     // now deduplicate with old data
     for (int i = 0; i < tmp_data2.size(); i++) {
       bool add = true;
+      /*
       for (int j = 0; j < old_data.size(); j++) {
         float dist = feature_dist(tmp_data2[i], old_data[j]);
         if (dist < 0.001) {
@@ -135,6 +138,7 @@ namespace tfk {
           add = false;
         }
       }
+      */
       tmp_data3.push_back(tmp_data2[i]);
       tmp_labels3.push_back(tmp_labels2[i]);
     }
@@ -324,10 +328,92 @@ namespace tfk {
           }
       }
       cv::Ptr<cv::ml::TrainData> tdata = cv::ml::TrainData::create(data, cv::ml::ROW_SAMPLE, labels);
+      tdata->setTrainTestSplitRatio(.9, false);
       //if (reinforcement && trained) {
       //    model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS | cv::ml::ANN_MLP::NO_INPUT_SCALE);
       //} else {
+      printf("training the model\n");
           model->train(tdata);
+          
+          /*
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);           
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+           model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+          */
+      printf("finished training the model\n");
+           
       //}
       clear_saved_buffer();
       trained = true;
@@ -343,12 +429,17 @@ namespace tfk {
       std::vector<float> pos_preds;
       std::vector<float> neg_preds;
 
-      for (int i = 0; i < old_labels.size(); i++) {
+      cv::Mat trainSamples = tdata->getTrainSamples();
+      cv::Mat trainLabels = tdata->getTrainResponses();
+      printf("samples rows %d, samples cols %d, label rows %d, label cols %d\n\n",trainSamples.rows, trainSamples.cols, trainLabels.rows, trainLabels.cols );
+
+      // for training set
+      for (int i = 0; i < trainSamples.rows; i++) {
         cv::Mat results = cv::Mat::zeros(1, 2, CV_32F);
-        model->predict(old_data[i], results);
+        model->predict(trainSamples.row(i), results);
         bool prediction = results.at<float>(1) > results.at<float>(0);
         float pred_f = (results.at<float>(1) + 1.716) / (results.at<float>(0)+1.716);
-        bool actual = old_labels[i] > 0.5;
+        bool actual = trainLabels.at<float>(i,1) > trainLabels.at<float>(i,0);
         if (prediction == actual) {
           filtered_data.push_back(old_data[i]);
           filtered_labels.push_back(old_labels[i]);
@@ -370,7 +461,58 @@ namespace tfk {
         } 
       }
       FILE * pFile;
-      pFile = fopen ("for_hist.csv","w");
+      pFile = fopen ("for_hist_training.csv","w");
+      for (int i = 0; i < pos_preds.size(); i++) {
+        fprintf(pFile, "%.2f, ", pos_preds[i]);
+      }
+      fprintf(pFile, "\n");
+      for (int i = 0; i < neg_preds.size(); i++) {
+        fprintf(pFile, "%.2f, ", neg_preds[i]);
+      }
+      fprintf(pFile, "\n");
+      if (old_labels.size() == 0) {
+        printf("no training examples\n");
+      } else {
+        printf("After training with %d data points, accuracy = %f%%, true positives: %d, false positives: %d, true negatives: %d, false negatives: %d\n", trainSamples.rows, 100.0*(tp+tn)/ trainSamples.rows, tp, fp, tn, fn);
+      }
+      tp = 0;
+      tn = 0;
+      fp = 0;
+      fn = 0;
+      // check error on training.
+      pos_preds.clear();
+      neg_preds.clear();
+      cv::Mat testSamples = tdata->getTestSamples();
+      cv::Mat testLabels = tdata->getTestResponses();
+
+      // for test set
+      for (int i = 0; i < testSamples.rows; i++) {
+        cv::Mat results = cv::Mat::zeros(1, 2, CV_32F);
+        model->predict(testSamples.row(i), results);
+        bool prediction = results.at<float>(1) > results.at<float>(0);
+        float pred_f = (results.at<float>(1) + 1.716) / (results.at<float>(0)+1.716);
+        bool actual = testLabels.at<float>(i,1) > testLabels.at<float>(i,0);
+        if (prediction == actual) {
+          filtered_data.push_back(old_data[i]);
+          filtered_labels.push_back(old_labels[i]);
+          if (prediction) {
+            tp++;
+            pos_preds.push_back(pred_f);
+          } else {
+            tn++;
+            neg_preds.push_back(pred_f);
+          }
+        } else {
+          if (prediction) {
+            fp++;
+            neg_preds.push_back(pred_f);
+          } else {
+            fn++;
+            pos_preds.push_back(pred_f);
+          }
+        } 
+      }
+      pFile = fopen ("for_hist_testing.csv","w");
       for (int i = 0; i < pos_preds.size(); i++) {
         fprintf(pFile, "%.2f, ", pos_preds[i]);
       }
@@ -384,7 +526,7 @@ namespace tfk {
       if (old_labels.size() == 0) {
         printf("no training examples\n");
       } else {
-        printf("After training with %zu data points, accuracy = %f%%, true positives: %d, false positives: %d, true negatives: %d, false negatives: %d\n", old_labels.size(), 100.0*(tp+tn)/ old_labels.size(), tp, fp, tn, fn);
+        printf("on test set we got, accuracy = %f%%, true positives: %d, false positives: %d, true negatives: %d, false negatives: %d\n", 100.0*(tp+tn)/testSamples.rows, tp, fp, tn, fn);
       }
       //float percent = correct*100.0/(correct+wrong);
       //if (percent < 98.0) {
