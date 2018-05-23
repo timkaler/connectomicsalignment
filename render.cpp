@@ -369,5 +369,84 @@ void Render::render_stack(Stack* stack,
   }
 }
 
+void Render::render_stack_with_patch(Stack* stack,
+    std::pair<cv::Point2f, cv::Point2f> bbox, tfk::Resolution resolution,
+    std::string filename_prefix) {
+
+  if (stack->sections.size() < 2) {
+    printf("Less than two images, so we're going to just render the stack without patching.\n");
+    return render_stack(stack, bbox, resolution, filename_prefix);
+  }
+
+  // do the first section.
+  Section* next_section = stack->sections[1];
+  cv::Mat next_section_img = render(next_section, bbox, resolution);
+
+  cv::Mat img = this->render(stack->sections[0], bbox, resolution);
+  cv::Mat last_img;
+  // fill the buffer.
+  for (int i = 0; i < stack->sections.size(); i++) {
+    Section* section = stack->sections[i];
+    cv::Mat section_p_out_sum, section_p_out_count;
+    section_p_out_sum.create(img.rows, img.cols, CV_16UC1);
+    section_p_out_count.create(img.rows, img.cols, CV_16UC1);
+    cilk_for (int c = 0; c < img.cols; c++) {
+      for (int r = 0; r < img.rows; r++) {
+        section_p_out_sum.at<unsigned short>(r,c) = 0;
+        section_p_out_count.at<unsigned short>(r,c) = 0;
+      }
+    }
+    // now scan the img and get data from section above.
+    cilk_for (int c = 3; c < img.cols-3; c++) {
+      for (int r = 3; r < img.rows-3; r++) {
+        if (img.at<unsigned char>(r,c) == 0) {
+          for (int dc = -2; dc < 3; dc++) {
+            for (int dr = -2; dr < 3; dr++) {
+              if (next_section_img.at<unsigned char>(r+dr,c+dc) != 0) {
+                section_p_out_sum.at<unsigned short>(r,c) += next_section_img.at<unsigned char>(r+dr,c+dc);
+                section_p_out_count.at<unsigned short>(r,c) += 1;
+              }
+              if (i > 0 && last_img.at<unsigned char>(r+dr,c+dc) != 0) {
+                section_p_out_sum.at<unsigned short>(r,c) += last_img.at<unsigned char>(r+dr, c+dc);
+                section_p_out_count.at<unsigned short>(r,c) += 1;
+              }
+              if (img.at<unsigned char>(r,c) != 0) {
+                section_p_out_sum.at<unsigned short>(r,c) += img.at<unsigned char>(r+dr, c+dc);
+                section_p_out_count.at<unsigned short>(r,c) += 1;
+              }
+            }
+          }
+        }
+        if (i > 0 && img.at<unsigned char>(r,c) == 0) {
+          img.at<unsigned char>(r,c) = last_img.at<unsigned char>(r,c);
+        }
+      }
+    }
+    cilk_for (int c = 3; c < img.cols-3; c++) {
+      for (int r = 3; r < img.rows-3; r++) {
+        if (section_p_out_count.at<unsigned short>(r,c) > 0) {
+          img.at<unsigned char>(r,c) = section_p_out_sum.at<unsigned short>(r,c) / section_p_out_count.at<unsigned short>(r,c);
+        }
+      }
+    }
+    cv::imwrite(filename_prefix+"_"+std::to_string(section->real_section_id)+".tif", img);
+    last_img = img;
+    img = next_section_img;
+
+    if (i+1 < stack->sections.size()) {
+      next_section_img = render(stack->sections[i+1], bbox, resolution);
+    }
+
+    //render(section, bbox, resolution,
+    //       filename_prefix+"_"+std::to_string(section->real_section_id)+".tif"); 
+  }
+
+
+  for (int i = 0; i < stack->sections.size(); i++) {
+    Section* section = stack->sections[i];
+    render(section, bbox, resolution,
+           filename_prefix+"_"+std::to_string(section->real_section_id)+".tif"); 
+  }
+}
 // end namespace tfk
 }

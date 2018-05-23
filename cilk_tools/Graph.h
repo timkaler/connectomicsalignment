@@ -134,6 +134,7 @@ class Graph {
     vdata* vertexData;
  public:
     Graph();
+    ~Graph();
     int* vertexColors;
     simple_mutex_t* vertexLocks;
     int vertexCount;

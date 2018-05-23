@@ -180,99 +180,6 @@ void tfk::Section::align_2d() {
         vertex_ids.push_back(i);
       }
 
-      //for (int i = 0; i < this->tiles.size(); i++) {
-      //  Tile* t = this->tiles[i];
-      //  if (t->bad_2d_alignment) continue;
-      //  compute_on_tile_neighborhood(t);
-
-      //  for (int k = 0; k < t->edges.size(); k++) {
-      //    Tile* neighbor = this->tiles[t->edges[k].neighbor_id];
-      //    bool guess_ml = t->ml_preds[neighbor];
-      //    MatchTilesTask *task = (MatchTilesTask *) t->match_tiles_task;
-      //    bool guess_basic = task->neighbor_to_success[neighbor];
-      //    if (guess_ml != guess_basic) {
-      //      printf("wtf, guess_ml and guess basic don't agree\n");
-      //    }
-      //    if (neighbor->bad_2d_alignment) continue;
-      //    if (t->ideal_offsets.find(neighbor->tile_id) == t->ideal_offsets.end()) continue;
-
-
-      //    float val = t->compute_deviation(neighbor);
-
-
-      //    float THRESHOLD_FOR_CHECK = 2.0;
-
-      //    if (val > THRESHOLD_FOR_CHECK) {
-      //        if (task->neighbor_to_success[neighbor] == true) {
-      //          // thought it was good, was actually bad.
-      //          task->neighbor_to_success[neighbor] = false;
-      //          compute_on_tile_neighborhood(t);
-      //          float val2 = t->compute_deviation(neighbor);
-      //          task->neighbor_to_success[neighbor] = true;
-      //          if (val2 < THRESHOLD_FOR_CHECK/2) {
-      //            // confirmed as bad.
-      //            match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
-      //          }
-      //        } else {
-      //          // thought it was bad, see if still bad when we add back the edge.
-      //          task->neighbor_to_success[neighbor] = true;
-      //          compute_on_tile_neighborhood(t);
-      //          float val2 = t->compute_deviation(neighbor);
-      //          task->neighbor_to_success[neighbor] = false;
-      //          if (val2 < THRESHOLD_FOR_CHECK/2) {
-      //            // it was actually good!
-      //            match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
-      //          }
-      //        }
-
-      //      if (guess_ml) {
-      //        match_tile_task_model->ml_fp++;
-      //      } else {
-      //        match_tile_task_model->ml_correct_neg++;
-      //      }
-      //      if (guess_basic) {
-      //        bas_fp++;
-      //      } else {
-      //        bas_correct_neg++;
-      //      }
-      //    } else {
-      //      // its good, no training.
-      //      //// it is good.
-      //      //if (task->neighbor_to_success[neighbor] == true) {
-      //      //  // 
-      //      //} else {
-
-      //      //}
-      //      if (task->neighbor_to_success[neighbor] == true && val < THRESHOLD_FOR_CHECK/2) {
-      //        // this turned out to be correct, go ahead and add it.
-      //        match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
-      //      } else if (task->neighbor_to_success[neighbor]==false) {
-      //        task->neighbor_to_success[neighbor] = true;
-      //        compute_on_tile_neighborhood(t);
-      //        task->neighbor_to_success[neighbor] = false;
-      //        float val2 = t->compute_deviation(neighbor);
-      //        if (val2 < THRESHOLD_FOR_CHECK/2) {
-      //          // thought it was bad, but it was actually okay.
-      //          match_tile_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
-      //        }
-      //        // unknown if this is right or wrong. so don't add it.
-      //      }
-      //      if (guess_ml) {
-      //        match_tile_task_model->ml_correct_pos++;
-      //      } else {
-      //        match_tile_task_model->ml_fn++;
-      //      }
-      //      if (guess_basic) {
-      //        bas_correct_pos++;
-      //      } else {
-      //        bas_fn++;
-      //      }
-      //    }
-
-      //  }
-      //}
-
-
       for (int i = 0; i < this->graph->num_vertices(); i++) {
         this->graph->getVertexData(i)->iteration_count = 0;
       }
@@ -1331,7 +1238,7 @@ void tfk::Section::find_3d_matches_in_box_cache(Section* neighbor,
   }
 
   // Bad clear filtered matches.
-  if (num_filtered < 0.05*match_points_a.size() || num_filtered < 12) {
+  if (num_filtered < 0.1*match_points_a.size() || num_filtered < 12) {
      test_filtered_match_points_a.clear();
      test_filtered_match_points_b.clear();
   }
@@ -1525,6 +1432,7 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
 
           this->find_3d_matches_in_box(neighbor, sliding_bbox, test_filtered_match_points_a,
               test_filtered_match_points_b, true, sift_parameters, tiles_loaded, tiles_loaded_mutex);
+
           //this->find_3d_matches_in_box(neighbor, sliding_bbox, test_filtered_match_points_a,
           //    test_filtered_match_points_b, true, sift_parameters, tiles_loaded, tiles_loaded_mutex);
           if (test_filtered_match_points_a.size() > 12) _bad_fraction = 0.0;
@@ -1668,7 +1576,7 @@ void tfk::Section::affine_transform_mesh() {
 
 void tfk::Section::construct_triangles() {
   printf("called construct triangles\n");
-  float hex_spacing = 5000.0;
+  float hex_spacing = 3000.0;
   std::pair<cv::Point2f, cv::Point2f> bbox = this->get_bbox();
   triangle_mesh = new TriangleMesh(hex_spacing, bbox);
 }

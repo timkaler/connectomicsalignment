@@ -32,6 +32,22 @@ void Graph::resize(int size){
   vertexLocks = (simple_mutex_t*)calloc(vertexCount, sizeof(simple_mutex_t));
 }
 
+
+Graph::~Graph() {
+  free(vertexData);
+  free(vertexColors);
+  free(vertexLocks);
+  for (int i = 0; i < edgeData.size(); i++) {
+    //for (int j = 0; j < edgeData[i].size(); j++) {
+    //  delete edgeData[i][j].v_points;
+    //  delete edgeData[i][j].n_points;
+    //}
+    edgeData[i].clear();
+  }
+  edgeData.clear();
+}
+
+
 int Graph::compute_trivial_coloring(){
   vertexColors = (int*)calloc(sizeof(int), vertexCount);
   int maxColor = 0;
