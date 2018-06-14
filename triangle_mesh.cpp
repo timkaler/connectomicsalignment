@@ -157,10 +157,10 @@ TriangleMesh::TriangleMesh(double hex_spacing,
 
   cv::Rect rect(min_x-hex_spacing*3,min_y-hex_spacing*3,max_x-min_x+hex_spacing*6, max_y-min_y + hex_spacing*6);
 
-  bbox.first.x-=hex_spacing*3+0.01;
-  bbox.first.y-=hex_spacing*3+0.01;
-  bbox.second.x+=hex_spacing*3+0.01;
-  bbox.second.y+=hex_spacing*3+0.01;
+  bbox.first.x-=hex_spacing*3+0.01 + 50000;
+  bbox.first.y-=hex_spacing*3+0.01 + 50000;
+  bbox.second.x+=hex_spacing*3+0.01 + 50000;
+  bbox.second.y+=hex_spacing*3+0.01 + 50000;
 
   cv::Subdiv2D subdiv(rect);
   subdiv.initDelaunay(rect);

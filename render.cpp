@@ -362,7 +362,7 @@ void Render::render_stack(Stack* stack,
     std::pair<cv::Point2f, cv::Point2f> bbox, tfk::Resolution resolution,
     std::string filename_prefix) {
 
-  for (int i = 0; i < stack->sections.size(); i++) {
+  cilk_for (int i = 0; i < stack->sections.size(); i++) {
     Section* section = stack->sections[i];
     render(section, bbox, resolution,
            filename_prefix+"_"+std::to_string(section->real_section_id)+".tif"); 

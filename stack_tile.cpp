@@ -101,11 +101,12 @@ float tfk::Tile::error_tile_pair(Tile *other) {
   }
   cv::Mat result_CCOEFF_NORMED;
 
-  cv::Mat _transform_1, _transform_2;
-  cv::resize(transform_1, _transform_1, cv::Size(), 0.5,0.5, CV_INTER_AREA);
-  cv::resize(transform_2, _transform_2, cv::Size(), 0.5,0.5, CV_INTER_AREA);
+  //cv::Mat _transform_1, _transform_2;
+  //cv::resize(transform_1, _transform_1, cv::Size(), 1.0,1.0, CV_INTER_AREA);
+  //cv::resize(transform_2, _transform_2, cv::Size(), 1.0,1.0, CV_INTER_AREA);
 
-  cv::matchTemplate(_transform_1, _transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
+  //cv::matchTemplate(_transform_1, _transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
+  cv::matchTemplate(transform_1, transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
   return result_CCOEFF_NORMED.at<float>(0,0);
 }
 
@@ -450,7 +451,7 @@ void tfk::Tile::local2DAlignUpdateLimited(std::set<Tile*>* active_set) {
 
   if (this->bad_2d_alignment) return;
   //std::vector<edata>& edges = graph->edgeData[vid];
-  double global_learning_rate = 0.4;
+  double global_learning_rate = 0.45;
   if (this->edges.size() == 0) return;
   if (this->edges.size() == 0) return;
 
@@ -964,8 +965,9 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       cv::Mat ret;
       //cv::Mat src = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
       cv::Mat dst;
-      cv::equalizeHist( tmp, dst );
-      cv::resize(dst, ret, cv::Size(), 0.1,0.1,CV_INTER_AREA);
+      //cv::equalizeHist( tmp, dst );
+      //cv::resize(dst, ret, cv::Size(), 0.1,0.1,CV_INTER_AREA);
+      cv::resize(tmp, ret, cv::Size(), 0.1,0.1,CV_INTER_AREA);
       
       //int scale = 1;
       //cv::Laplacian(src, dst, CV_8U, 3, scale, 0, cv::BORDER_DEFAULT);
@@ -1058,8 +1060,9 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       cv::Mat tmp = this->get_tile_data(Resolution::FULL);//cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
       cv::Mat ret;
       cv::Mat dst;
-      cv::equalizeHist( tmp, dst );
-      cv::resize(dst, ret, cv::Size(), 0.3,0.3,CV_INTER_AREA);
+      //cv::equalizeHist( tmp, dst );
+      //cv::resize(dst, ret, cv::Size(), 0.3,0.3,CV_INTER_AREA);
+      cv::resize(tmp, ret, cv::Size(), 0.3,0.3,CV_INTER_AREA);
       //tmp.release();
       return ret;
       break;

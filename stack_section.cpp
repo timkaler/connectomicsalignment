@@ -1213,7 +1213,7 @@ void tfk::Section::find_3d_matches_in_box_cache(Section* neighbor,
   printf("Num matches is %zu\n", matches.size());
 
   // Bad don't add filtered matches.
-  if (matches.size() < 120) return;
+  if (matches.size() < 12) return;
 
   std::vector<cv::Point2f> match_points_a, match_points_b;
 
@@ -1238,7 +1238,7 @@ void tfk::Section::find_3d_matches_in_box_cache(Section* neighbor,
   }
 
   // Bad clear filtered matches.
-  if (num_filtered < 0.1*match_points_a.size() || num_filtered < 12) {
+  if (num_filtered < 0.05*match_points_a.size() || num_filtered < 12) {
      test_filtered_match_points_a.clear();
      test_filtered_match_points_b.clear();
   }
@@ -1294,7 +1294,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
   printf("Num matches is %zu\n", matches.size());
 
   // Bad don't add filtered matches.
-  if (matches.size() < 32) return;
+  if (matches.size() < 12) return;
 
   std::vector<cv::Point2f> match_points_a, match_points_b;
 
@@ -1305,7 +1305,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
 
   bool* mask = (bool*)calloc(match_points_a.size()+1, 1);
       //HERE
-  tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, ransac_thresh, mask);
+  vdata transform = tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, ransac_thresh, mask);
 
 
   for (int c = 0; c < match_points_a.size(); c++) {
@@ -1319,7 +1319,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
   }
 
   // Bad clear filtered matches.
-  if (num_filtered < 0.05*match_points_a.size() || num_filtered < 32) {
+  if (num_filtered < 0.05*match_points_a.size() || num_filtered < 12) {
      test_filtered_match_points_a.clear();
      test_filtered_match_points_b.clear();
   }
@@ -1375,8 +1375,8 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
   double max_x = bbox.second.x; 
   double max_y = bbox.second.y; 
   std::vector<std::pair<double, double> > valid_boxes;
-  for (double box_iter_x = min_x; box_iter_x < max_x + 12000; box_iter_x += 12000) {
-    for (double box_iter_y = min_y; box_iter_y < max_y + 12000; box_iter_y += 12000) {
+  for (double box_iter_x = min_x; box_iter_x < max_x + 12000; box_iter_x += 6000) {
+    for (double box_iter_y = min_y; box_iter_y < max_y + 12000; box_iter_y += 6000) {
       valid_boxes.push_back(std::make_pair(box_iter_x, box_iter_y));
     }
   }
@@ -1422,8 +1422,8 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
           sift_parameters.contrast_threshold = 0.02;
           sift_parameters.edge_threshold = 5.0;
           sift_parameters.sigma = 1.1;
-          sift_parameters.scale_x = 0.25;
-          sift_parameters.scale_y = 0.25;
+          sift_parameters.scale_x = 0.1;
+          sift_parameters.scale_y = 0.1;
 
 
           //this->find_3d_matches_in_box_cache(neighbor, sliding_bbox, test_filtered_match_points_a,
@@ -2513,7 +2513,7 @@ void tfk::Section::compute_keypoints_and_matches() {
     bool pivot_good = false;
     int pivot_search_start = 0;
     for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-      if (sorted_tiles[i].second->x_start > pivot->x_finish/* + 12000*/) {
+      if (sorted_tiles[i].second->x_start > pivot->x_finish + 12000) {
         pivot = sorted_tiles[i].second;
         pivot_search_start = i;
         pivot_good = true;
@@ -2632,7 +2632,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       //printf("presently done with %f %%  duration %f estimated completion time: %f\n", (100.0*pivot_search_start) / sorted_tiles.size(), duration, (duration)/((60*60*1.0*pivot_search_start)/sorted_tiles.size()));
       pivot_good = false;
       for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-        if (sorted_tiles[i].second->x_start > pivot->x_finish/*+12000*/) {
+        if (sorted_tiles[i].second->x_start > pivot->x_finish+12000) {
           pivot = sorted_tiles[i].second;
           pivot_search_start = i;
           pivot_good = true;
