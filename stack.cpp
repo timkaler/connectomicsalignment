@@ -164,7 +164,7 @@ void tfk::Stack::align_3d() {
 
   std::vector<Section*> good_sections;
   for (int i = 0; i < this->sections.size(); i++) {
-    bool bad = bad_sections[i].second > avg_bad_fraction+stddev;
+    bool bad = bad_sections[i].second > avg_bad_fraction+stddev*0.5;
     if (bad) printf("Section %d is bad\n", i);
     if (!bad) {
       good_sections.push_back(this->sections[i]);

@@ -117,9 +117,9 @@ namespace tfk {
         }
       }
 
-      //for (int i = 0; i < 4; i++) {
-      //  if (required[i] && !has[i]) return false;
-      //}
+      for (int i = 0; i < 4; i++) {
+        if (required[i] && !has[i]) return false;
+      }
 
       if (neighbor_success_count >= neighbors.size()*2.0/4.0 && neighbor_success_count >= 2.0) {
         return true;

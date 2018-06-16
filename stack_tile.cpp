@@ -1,5 +1,8 @@
 
 
+int DEBUG_total_read_count = 0;
+
+
 void updateTile2DAlign(int vid, void* scheduler_void) {
   //double global_learning_rate = 0.49;
    
@@ -40,12 +43,20 @@ float tfk::Tile::error_tile_pair(Tile *other) {
 
   cv::Mat tile_p_image_1;
   cv::Mat tile_p_image_2;
-  tile_p_image_1 = this->get_tile_data(Resolution::FULL); //cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
-  tile_p_image_2 = other->get_tile_data(Resolution::FULL); //cv::imread(other->filepath, CV_LOAD_IMAGE_UNCHANGED);
 
+  //float scale_x = 0.3;
+  //float scale_y = 0.3;
+  tile_p_image_1 = this->get_tile_data(Resolution::FULL);
+  tile_p_image_2 = other->get_tile_data(Resolution::FULL);
 
-  std::pair<cv::Point2f, cv::Point2f> tile_1_bounds = this->get_bbox(); 
-  std::pair<cv::Point2f, cv::Point2f> tile_2_bounds = other->get_bbox(); 
+  std::pair<cv::Point2f, cv::Point2f> tile_1_bounds = this->get_bbox();
+  std::pair<cv::Point2f, cv::Point2f> tile_2_bounds = other->get_bbox();
+
+  // scale the bbox.
+  //tile_1_bounds.first.x *= scale_x;
+  //tile_1_bounds.first.y *= scale_y;
+  //tile_1_bounds.second.x *= scale_x;
+  //tile_1_bounds.second.y *= scale_y;
 
   int nrows = std::min(tile_1_bounds.second.y, tile_2_bounds.second.y) - std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
   int ncols = std::min(tile_1_bounds.second.x, tile_2_bounds.second.x) - std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
@@ -55,12 +66,94 @@ float tfk::Tile::error_tile_pair(Tile *other) {
   }
   int offset_x = std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
   int offset_y = std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
+
+
+
+
   cv::Mat transform_1 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
   cv::Mat transform_2 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
 
   // make the transformed images in the same size with the same cells in the same locations
+
+  // determine start coordinates
+
+  int start_y1 = 1000000;
+  int end_y1 = -1;
+  int start_x1 = 1000000;
+  int end_x1 = -1;
   for (int _y = 0; _y < tile_p_image_1.rows; _y++) {
-    for (int _x = 0; _x < tile_p_image_1.cols; _x++) {
+      int _x = 0;
+      cv::Point2f p = cv::Point2f(_x, _y);
+      cv::Point2f transformed_p = this->rigid_transform(p);
+
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((y_c >= 0) && (y_c < nrows)) {
+        if (_y < start_y1) {
+          start_y1 = _y;
+        }
+        if (_y > end_y1) {
+          end_y1 = _y;
+        }
+      }
+  }
+  for (int _x = 0; _x < tile_p_image_1.cols; _x++) {
+      int _y = 0;
+      cv::Point2f p = cv::Point2f(_x, _y);
+      cv::Point2f transformed_p = this->rigid_transform(p);
+
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((x_c >= 0) && (x_c < ncols)) {
+        if (_x < start_x1) {
+          start_x1 = _x;
+        }
+        if (_x > end_x1) {
+          end_x1 = _x;
+        }
+      }
+  }
+
+  int start_y2 = 1000000;
+  int end_y2 = -1;
+  int start_x2 = 1000000;
+  int end_x2 = -1;
+  for (int _y = 0; _y < tile_p_image_2.rows; _y++) {
+      int _x = 0;
+      cv::Point2f p = cv::Point2f(_x, _y);
+      cv::Point2f transformed_p = other->rigid_transform(p);
+
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((y_c >= 0) && (y_c < nrows)) {
+        if (_y < start_y2) {
+          start_y2 = _y;
+        }
+        if (_y > end_y2) {
+          end_y2 = _y;
+        }
+      }
+  }
+  for (int _x = 0; _x < tile_p_image_2.cols; _x++) {
+      int _y = 0;
+      cv::Point2f p = cv::Point2f(_x, _y);
+      cv::Point2f transformed_p = other->rigid_transform(p);
+
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((x_c >= 0) && (x_c < ncols)) {
+        if (_x < start_x2) {
+          start_x2 = _x;
+        }
+        if (_x > end_x2) {
+          end_x2 = _x;
+        }
+      }
+  }
+
+
+  for (int _y = start_y1; _y < end_y1; _y++) {
+    for (int _x = start_x1; _x < end_x1; _x++) {
       cv::Point2f p = cv::Point2f(_x, _y);
       cv::Point2f transformed_p = this->rigid_transform(p);
 
@@ -73,8 +166,8 @@ float tfk::Tile::error_tile_pair(Tile *other) {
     }
   }
 
-  for (int _y = 0; _y < tile_p_image_2.rows; _y++) {
-    for (int _x = 0; _x < tile_p_image_2.cols; _x++) {
+  for (int _y = start_y2; _y < end_y2; _y++) {
+    for (int _x = start_x2; _x < end_x2; _x++) {
       cv::Point2f p = cv::Point2f(_x, _y);
       cv::Point2f transformed_p = other->rigid_transform(p);
 
@@ -755,6 +848,13 @@ tfk::Tile::Tile(TileData& tile_data) {
     this->offset_x = 0.0;
     this->offset_y = 0.0;
     this->filepath = tile_data.tile_filepath();
+
+
+    // NOTE TFK HACK
+    this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jpg");
+    this->filepath = this->filepath.replace(this->filepath.find("sep14iarpa"),10,"compressed2");
+
+
     this->p_image = new cv::Mat();
     this->p_kps = new std::vector<cv::KeyPoint>();
     this->p_kps_desc = new cv::Mat();
@@ -957,7 +1057,7 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
   std::string thumbnailpath = std::string(this->filepath);
   //thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".jp2"), 4,".jpg");
   //thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
-
+  //printf("the filepath is %s\n", this->filepath.c_str());
   switch(res) {
 
     case THUMBNAIL: {
@@ -1038,6 +1138,8 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
         //std::string new_path = this->filepath + "_.jpg";
         //printf("%s\n", new_path.c_str());
         full_image = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+        //int val = __sync_fetch_and_add(&DEBUG_total_read_count, 1);
+        //printf("Total read is %d\n", val);
         //printf("image rows %d and cols %d\n", full_image.rows, full_image.cols);
         //full_image = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
         //cv::imwrite(new_path,full_image);

@@ -14,3 +14,4 @@ AlignData_pb2.pyc
 *.tif
 *.png
 *.pbuf
+newcached_data/*
