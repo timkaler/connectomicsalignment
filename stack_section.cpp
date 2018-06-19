@@ -139,7 +139,7 @@ cv::Point2f tfk::Section::elastic_transform(cv::Point2f p, Triangle _tri) {
 void tfk::Section::align_2d() {
     if (this->alignment2d_exists()) {
       std::string filename =
-      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
+      std::string(ALIGN_CACHE_FILE_DIRECTORY + "/prefix_"+std::to_string(this->real_section_id));
 
       this->load_2d_alignment();
       this->read_3d_keypoints(filename);
@@ -553,7 +553,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
 
 bool tfk::Section::section_data_exists() {
   std::string filename =
-      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
+      std::string(ALIGN_CACHE_FILE_DIRECTORY+"/prefix_"+std::to_string(this->real_section_id));
 
 
   cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"), cv::FileStorage::READ);
@@ -633,7 +633,7 @@ void tfk::Section::save_elastic_mesh(Section* neighbor) {
     *(triangleMesh.mutable_triangles(i)) = ref;
   }
 
-  std::fstream output("emesh_"+std::to_string(this->real_section_id)+"_"+
+  std::fstream output(ALIGN_CACHE_FILE_DIRECTORY+"/emesh_"+std::to_string(this->real_section_id)+"_"+
                       std::to_string(neighbor->real_section_id)+".pbuf",
                       std::ios::out | std::ios::trunc | std::ios::binary);
   triangleMesh.SerializeToOstream(&output); 
@@ -1673,7 +1673,7 @@ bool tfk::Section::load_elastic_mesh(Section* neighbor) {
   TriangleMeshProto triangleMesh;
 
 
-  std::fstream input("emesh_"+std::to_string(this->real_section_id)+"_"+
+  std::fstream input(ALIGN_CACHE_FILE_DIRECTORY+"/emesh_"+std::to_string(this->real_section_id)+"_"+
                       std::to_string(neighbor->real_section_id)+".pbuf",
                       std::ios::in | std::ios::binary);
 
@@ -1965,7 +1965,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
 
   this->coarse_transform = A.clone();
 
-  std::string path = "coarse_transform_" +
+  std::string path = ALIGN_CACHE_FILE_DIRECTORY + "/coarse_transform_" +
       std::to_string(this->real_section_id) + "_" + std::to_string(neighbor->real_section_id);
   cv::FileStorage fs(path, cv::FileStorage::WRITE);
   cv::write(fs, "transform", this->coarse_transform);
@@ -2300,7 +2300,7 @@ void tfk::Section::compute_tile_matches(Tile* a_tile) {
 
 
 bool tfk::Section::alignment2d_exists() {
-  std::ifstream f("2d_alignment_"+std::to_string(this->real_section_id)+".pbuf");
+  std::ifstream f(ALIGN_CACHE_FILE_DIRECTORY + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf");
   return f.good();
 
   //std::string filename =
@@ -2348,7 +2348,7 @@ void tfk::Section::load_2d_alignment() {
 
 
   Saved2DAlignmentSection sectiondata;
-  std::fstream input("2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
+  std::fstream input(ALIGN_CACHE_FILE_DIRECTORY + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
 
   sectiondata.ParseFromIstream(&input);
 
@@ -2385,7 +2385,7 @@ void tfk::Section::save_2d_alignment() {
     sectiondata.add_tiles();
     *(sectiondata.mutable_tiles(i)) = tiledata; 
   }
-  std::fstream output("2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::out | std::ios::trunc | std::ios::binary);
+  std::fstream output(ALIGN_CACHE_FILE_DIRECTORY + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::out | std::ios::trunc | std::ios::binary);
   sectiondata.SerializeToOstream(&output); 
   output.close();
 }
@@ -2464,7 +2464,7 @@ void tfk::Section::read_2d_graph(std::string filename) {
 void tfk::Section::read_tile_matches() {
 
   std::string filename =
-      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
+      std::string(ALIGN_CACHE_FILE_DIRECTORY + "/prefix_"+std::to_string(this->real_section_id));
 
   this->read_3d_keypoints(filename);
   this->read_2d_graph(filename);
@@ -2473,7 +2473,7 @@ void tfk::Section::read_tile_matches() {
 void tfk::Section::save_tile_matches() {
 
   std::string filename =
-      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
+      std::string(ALIGN_CACHE_FILE_DIRECTORY+"/prefix_"+std::to_string(this->real_section_id));
 
   this->save_3d_keypoints(filename);
   this->save_2d_graph(filename);

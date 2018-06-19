@@ -237,7 +237,7 @@ namespace tfk {
       //tmp_a_tile.get_feature_vector(b_tile, 3, 2).copyTo(a_tile->feature_vectors[b_tile]);
       bool guess_ml = true;//this->model->predict(a_tile->feature_vectors[b_tile]);
       a_tile->ml_preds[b_tile] = guess_ml;
-      if (/*guess_ml*/ val >= 0.8 && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
+      if (/*guess_ml*/ val >= 0.75 && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
         cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
                                           tmp_a_tile.y_start+tmp_a_tile.offset_y);
         cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,

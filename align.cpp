@@ -187,7 +187,7 @@ void align_execute(align_data_t *p_align_data) {
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderfull", tfk::FULL);
 
     tfk::Render* render = new tfk::Render();
-    render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, "rendertest0");
+    render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, ALIGN_OUTPUT_FILE_DIRECTORY + "/rendertest0");
     //render->render_stack(stack, smaller_bbox, tfk::FULL, "rendertest0");
 
     printf("Right before render\n");

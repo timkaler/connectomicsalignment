@@ -34,6 +34,12 @@
 #ifndef ALIGNSTACK
 #define ALIGNSTACK
 
+
+
+//static std::string ALIGN_CACHE_FILE_DIRECTORY = "newcached_data"
+static std::string ALIGN_CACHE_FILE_DIRECTORY = "tmp";
+static std::string ALIGN_OUTPUT_FILE_DIRECTORY = "out";
+
 void updateTile2DAlign(int vid, void* scheduler_void);
 static bool STORE_ALIGN_RESULTS = false;
 static double totalTime = 0;
@@ -131,6 +137,11 @@ class Tile {
 
    bool has_full_image;
    cv::Mat full_image;
+
+   bool has_percent30_image;
+   cv::Mat percent30_image;
+   std::mutex* percent30_lock;
+
    std::mutex* full_image_lock;
 
    bool image_data_replaced;

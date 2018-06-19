@@ -57,6 +57,10 @@ float tfk::Tile::error_tile_pair(Tile *other) {
   //tile_1_bounds.first.y *= scale_y;
   //tile_1_bounds.second.x *= scale_x;
   //tile_1_bounds.second.y *= scale_y;
+  //tile_2_bounds.first.x *= scale_x;
+  //tile_2_bounds.first.y *= scale_y;
+  //tile_2_bounds.second.x *= scale_x;
+  //tile_2_bounds.second.y *= scale_y;
 
   int nrows = std::min(tile_1_bounds.second.y, tile_2_bounds.second.y) - std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
   int ncols = std::min(tile_1_bounds.second.x, tile_2_bounds.second.x) - std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
@@ -404,9 +408,13 @@ cv::Mat tfk::Tile::get_feature_vector(Tile *other, int boxes, int type) {
 
 void tfk::Tile::release_full_image() {
     full_image_lock->lock();
+    percent30_lock->lock();
     full_image.release();
     has_full_image = false;
-    full_image_lock->unlock(); 
+    has_percent30_image = false;
+    percent30_image.release();
+    percent30_lock->unlock();
+    full_image_lock->unlock();
 }
 
 void tfk::Tile::release_2d_keypoints() {
@@ -834,6 +842,7 @@ tfk::Tile::Tile(TileData& tile_data) {
     //p_sec_data->n_tiles++;
     this->has_full_image = false;
     this->full_image_lock = new std::mutex();
+    this->percent30_lock = new std::mutex();
     this->image_data_replaced = false;
     this->shape_dx = tile_data.x_finish() - tile_data.x_start();
     this->shape_dy = tile_data.y_finish() - tile_data.y_start();
@@ -1159,12 +1168,24 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       break;
     }
     case PERCENT30: {
+
+      percent30_lock->lock();
+      if (has_percent30_image) {
+        cv::Mat ret = percent30_image.clone();
+        percent30_lock->unlock();
+        return ret;
+      }
+
       cv::Mat tmp = this->get_tile_data(Resolution::FULL);//cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
       cv::Mat ret;
       cv::Mat dst;
+      
       //cv::equalizeHist( tmp, dst );
       //cv::resize(dst, ret, cv::Size(), 0.3,0.3,CV_INTER_AREA);
       cv::resize(tmp, ret, cv::Size(), 0.3,0.3,CV_INTER_AREA);
+      percent30_image = ret.clone();
+      has_percent30_image = true;
+      percent30_lock->unlock();
       //tmp.release();
       return ret;
       break;
