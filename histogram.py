@@ -33,6 +33,6 @@ for cutoff in bins:
     		fp += 1
     	else:
     		tn += 1
-    print "for cutoff", cutoff, "accuracy is", float(tp + tn) /total, "tp =", tp, "fp =", fp, "tn =", tn, "fn =", fn
+    print "for cutoff", cutoff, "accuracy is", float(tp + tn) /total, "fp% =", float(fp)/total,"%"
             
 

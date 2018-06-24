@@ -81,7 +81,7 @@ fasttime_t global_start;
     for (int iter = 0; iter < 1; iter++) {
       if (false) {
         int apx_count = 0;
-        cilk_for (int i = 0; i < 6000; i++) {
+        cilk_for (int i = 0; i < 15000; i++) {
           //printf("working on random tile %d\n", i);
           //paramDB->print_possible_params();
           int section_id = rand()%stack->sections.size();
@@ -116,10 +116,13 @@ fasttime_t global_start;
             printf("apx_count = %d\n", apx_count);
           }
         }
+        stack->ml_models[MATCH_TILE_PAIR_TASK_ID]->save("ml_after_param_opt.ml.25000_5_4_pre");
       }
-      //stack->ml_models[MATCH_TILE_PAIR_TASK_ID]->save("ml_after_param_opt.ml.1000_5_3");
+      
       printf("finished iter %d\n", iter);
+      stack->ml_models[MATCH_TILE_PAIR_TASK_ID]->enable_training();
       stack->ml_models[MATCH_TILE_PAIR_TASK_ID]->train(true);
+      stack->ml_models[MATCH_TILE_PAIR_TASK_ID]->save("ml_after_param_opt.ml.25000_5_4_post");
       //task->paramDB->print_possible_params();
     }
     

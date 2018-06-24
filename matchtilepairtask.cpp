@@ -96,6 +96,9 @@ namespace tfk {
     
       if (atile_kps_in_overlap.size() < MIN_FEATURES_NUM) return;
       if (btile_kps_in_overlap.size() < MIN_FEATURES_NUM) return;
+
+      a_tile->keypoints_in_overlap[b_tile] = atile_kps_in_overlap.size();
+      b_tile->keypoints_in_overlap[a_tile] = btile_kps_in_overlap.size();
     
       float trial_rod;
       for (int trial = 0; trial < 4; trial++) {
@@ -122,6 +125,8 @@ namespace tfk {
         if (matches.size() < MIN_FEATURES_NUM) {
           continue;
         }
+        a_tile->matched_keypoints_in_overlap[b_tile] = matches.size();
+        b_tile->matched_keypoints_in_overlap[a_tile] = matches.size();
     
         bool* mask = (bool*) calloc(match_points_a.size(), 1);
         double thresh = ransac_thresh;//5.0;
@@ -236,7 +241,7 @@ namespace tfk {
                                         b_tile->y_start+b_tile->offset_y);
       current_offset = a_point - b_point;
 
-      tmp_a_tile.get_feature_vector(b_tile, 5, 3).copyTo(a_tile->feature_vectors[b_tile]);
+      tmp_a_tile.get_feature_vector(b_tile, 5, 4).copyTo(a_tile->feature_vectors[b_tile]);
       // for fast path computation
       if (false_negative_rate > 0) {
         float val = tmp_a_tile.error_tile_pair(b_tile);

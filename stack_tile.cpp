@@ -110,6 +110,7 @@ type == 1 gives the irst element of the size of the overlapping region followed 
 type == 2 gives the size of the subsection followed by the pixel corralation or each subsection
 */
 cv::Mat tfk::Tile::get_feature_vector(Tile *other, int boxes, int type) {
+  // means and stddev
   if (type == 1) {
     cv::Mat vector = cv::Mat::zeros(1, boxes*boxes*4+1, CV_32F);
     if (!(this->overlaps_with(other))) {
@@ -207,6 +208,7 @@ cv::Mat tfk::Tile::get_feature_vector(Tile *other, int boxes, int type) {
     }
     return vector;
   }
+  // corrlations
   if (type == 2) {
     cv::Mat vector = cv::Mat::zeros(1, boxes*boxes+1, CV_32F);
     if (!(this->overlaps_with(other))) {
@@ -293,6 +295,7 @@ cv::Mat tfk::Tile::get_feature_vector(Tile *other, int boxes, int type) {
     }
     return vector;
   }
+  // both of above
   if (type == 3) {
     cv::Mat vector = cv::Mat::zeros(1, 5*boxes*boxes+1, CV_32F);
     if (!(this->overlaps_with(other))) {
@@ -401,6 +404,120 @@ cv::Mat tfk::Tile::get_feature_vector(Tile *other, int boxes, int type) {
 
       }
     }
+    return vector;
+  }
+  // also include counts for points in overlap
+  if (type == 4) {
+    cv::Mat vector = cv::Mat::zeros(1, 5*boxes*boxes+1+3, CV_32F);
+    if (!(this->overlaps_with(other))) {
+      return vector;
+    }
+
+
+    cv::Mat tile_p_image_1;
+    cv::Mat tile_p_image_2;
+    tile_p_image_1 = this->get_tile_data(Resolution::FULL); //cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+    tile_p_image_2 = other->get_tile_data(Resolution::FULL); //cv::imread(other->filepath, CV_LOAD_IMAGE_UNCHANGED);
+
+
+    std::pair<cv::Point2f, cv::Point2f> tile_1_bounds = this->get_bbox();
+    std::pair<cv::Point2f, cv::Point2f> tile_2_bounds = other->get_bbox();
+
+    int nrows = std::min(tile_1_bounds.second.y, tile_2_bounds.second.y) - std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
+    int ncols = std::min(tile_1_bounds.second.x, tile_2_bounds.second.x) - std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
+    //printf("rows = %d, cols = %d\n", nrows, ncols);
+    if ((nrows <= 0) || (ncols <= 0) ) {
+      return vector;
+    }
+    int offset_x = std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
+    int offset_y = std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
+    cv::Mat transform_1 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
+    cv::Mat transform_2 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
+
+    // make the transformed images in the same size with the same cells in the same locations
+    for (int _y = 0; _y < tile_p_image_1.rows; _y++) {
+      for (int _x = 0; _x < tile_p_image_1.cols; _x++) {
+        cv::Point2f p = cv::Point2f(_x, _y);
+        cv::Point2f transformed_p = this->rigid_transform(p);
+
+        int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+        int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+        if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
+          transform_1.at<unsigned char>(y_c, x_c) +=
+             tile_p_image_1.at<unsigned char>(_y, _x);
+        }
+      }
+    }
+
+    for (int _y = 0; _y < tile_p_image_2.rows; _y++) {
+      for (int _x = 0; _x < tile_p_image_2.cols; _x++) {
+        cv::Point2f p = cv::Point2f(_x, _y);
+        cv::Point2f transformed_p = other->rigid_transform(p);
+
+        int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+        int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+        if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
+          transform_2.at<unsigned char>(y_c, x_c) +=
+             tile_p_image_2.at<unsigned char>(_y, _x);
+        }
+      }
+    }
+
+    // clear any location which only has a value for one of them
+    // note that the transforms are the same size
+    for (int _y = 0; _y < transform_1.rows; _y++) {
+      for (int _x = 0; _x < transform_1.cols; _x++) {
+        if (transform_2.at<unsigned char>(_y, _x) == 0) {
+         transform_1.at<unsigned char>(_y, _x) = 0;
+        }
+        else if (transform_1.at<unsigned char>(_y, _x) == 0) {
+         transform_2.at<unsigned char>(_y, _x) = 0;
+        }
+      }
+    }
+
+    vector.at<float>(0) = ((float)nrows*ncols)/(boxes*boxes);
+
+    for (int i = 0; i < boxes; i++) {
+      for (int j = 0; j < boxes; j++) {
+        int start_x = i*ncols/boxes;
+        int start_y = j*nrows/boxes;
+        int end_x = std::min((i+1)*ncols/boxes, ncols-1);
+        int end_y = std::min((j+1)*nrows/boxes, nrows-1);
+        cv::Mat tmp1 = transform_1(cv::Rect(start_x,start_y,end_x-start_x,end_y-start_y));
+        cv::Mat tmp2 = transform_2(cv::Rect(start_x,start_y,end_x-start_x,end_y-start_y));
+        cv::Mat result_CCOEFF_NORMED;
+        cv::matchTemplate(tmp1, tmp2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
+        vector.at<float>(1+(i*boxes+j)) = result_CCOEFF_NORMED.at<float>(0,0);
+      }
+    }
+    for (int i = 0; i < boxes; i++) {
+      for (int j = 0; j < boxes; j++) {
+        cv::Scalar m1;
+        cv::Scalar m2;
+        cv::Scalar stdv1;
+        cv::Scalar stdv2;
+        int start_x = i*ncols/boxes;
+        int start_y = j*nrows/boxes;
+        int end_x = std::min((i+1)*ncols/boxes, ncols-1);
+        int end_y = std::min((j+1)*nrows/boxes, nrows-1);
+        cv::Mat tmp1 = transform_1(cv::Rect(start_x,start_y,end_x-start_x,end_y-start_y));
+        cv::Mat tmp2 = transform_2(cv::Rect(start_x,start_y,end_x-start_x,end_y-start_y));
+        cv::meanStdDev(tmp1, m1, stdv1);
+        cv::meanStdDev(tmp2, m2, stdv2);
+        //std::cout << "M = "<< std::endl << " "  << tmp1 << std::endl << std::endl;
+        //printf("%f, %f\n", m1[0],  stdv1[0]);
+        vector.at<float>(1+boxes*boxes+4*(i*boxes+j)) = (float)m1[0];
+        vector.at<float>(2+boxes*boxes+4*(i*boxes+j)) = (float)m2[0];
+        vector.at<float>(3+boxes*boxes+4*(i*boxes+j)) = (float)stdv1[0];
+        vector.at<float>(4+boxes*boxes+4*(i*boxes+j)) = (float)stdv2[0];
+
+
+      }
+    }
+    vector.at<float>(4+boxes*boxes+4*boxes*boxes) = this->keypoints_in_overlap[other];
+    vector.at<float>(4+boxes*boxes+4*boxes*boxes+1) = other->keypoints_in_overlap[this];
+    vector.at<float>(4+boxes*boxes+4*boxes*boxes+2) = this->matched_keypoints_in_overlap[other];
     return vector;
   }
 

@@ -161,7 +161,7 @@ namespace tfk {
     //  old_labels.push_back(new_labels[i]);
     //}
 
-    static float MAX_IMBALANCE_RATIO = 4.0;
+    static float MAX_IMBALANCE_RATIO = 5.0;
 
     int positive_count = 0;
     int negative_count = 0;
@@ -290,11 +290,11 @@ namespace tfk {
 // spcific to ANN
   MLAnn::MLAnn(int num_features, std::string saved_model) : MLBase(num_features, saved_model) {
     cv::Ptr<cv::ml::ANN_MLP> ann_model = cv::ml::ANN_MLP::create();
-    cv::Mat_<int> layers(4,1);
+    cv::Mat_<int> layers(3,1);
     layers(0) = num_features;     // input
-    layers(1) = num_features*2;      // positive negative and unknown
-    layers(2) = num_features*2;      // positive negative and unknown
-    layers(3) = 2;      // positive negative and unknown
+    layers(1) = num_features/2;      // positive negative and unknown
+    //layers(2) = num_features*2;      // positive negative and unknown
+    layers(2) = 2;      // positive negative and unknown
     ann_model->setLayerSizes(layers);
     ann_model->setActivationFunction(cv::ml::ANN_MLP::SIGMOID_SYM  , 1, 1);
     model = ann_model;
@@ -333,7 +333,8 @@ namespace tfk {
       //    model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS | cv::ml::ANN_MLP::NO_INPUT_SCALE);
       //} else {
       printf("training the model\n");
-          model->train(tdata);
+        model->train(tdata);
+          
           
           /*
            model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
@@ -342,6 +343,7 @@ namespace tfk {
            model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
            model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
            model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
+          
            model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
            model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
            model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
@@ -432,7 +434,6 @@ namespace tfk {
       cv::Mat trainSamples = tdata->getTrainSamples();
       cv::Mat trainLabels = tdata->getTrainResponses();
       printf("samples rows %d, samples cols %d, label rows %d, label cols %d\n\n",trainSamples.rows, trainSamples.cols, trainLabels.rows, trainLabels.cols );
-
       // for training set
       for (int i = 0; i < trainSamples.rows; i++) {
         cv::Mat results = cv::Mat::zeros(1, 2, CV_32F);
@@ -484,6 +485,8 @@ namespace tfk {
       neg_preds.clear();
       cv::Mat testSamples = tdata->getTestSamples();
       cv::Mat testLabels = tdata->getTestResponses();
+      FILE * pFile2;
+      pFile2 = fopen ("data_ml_both_pins.csv","w");
 
       // for test set
       for (int i = 0; i < testSamples.rows; i++) {
@@ -492,6 +495,7 @@ namespace tfk {
         bool prediction = results.at<float>(1) > results.at<float>(0);
         float pred_f = (results.at<float>(1) + 1.716) / (results.at<float>(0)+1.716);
         bool actual = testLabels.at<float>(i,1) > testLabels.at<float>(i,0);
+        fprintf(pFile2, "%d, %f, %f\n", actual, results.at<float>(0), results.at<float>(1));
         if (prediction == actual) {
           filtered_data.push_back(old_data[i]);
           filtered_labels.push_back(old_labels[i]);
@@ -526,7 +530,8 @@ namespace tfk {
       if (old_labels.size() == 0) {
         printf("no training examples\n");
       } else {
-        printf("on test set we got, accuracy = %f%%, true positives: %d, false positives: %d, true negatives: %d, false negatives: %d\n", 100.0*(tp+tn)/testSamples.rows, tp, fp, tn, fn);
+        printf("on test set we got, accuracy = %f%%, true positives: %f%%, false positives: %f%%, true negatives: %f%%, false negatives: %f%%\n",
+                     100.0*(tp+tn)/testSamples.rows, 100.0*tp/testSamples.rows, 100.0*fp/testSamples.rows, 100.0*tn/testSamples.rows, 100.0*fn/testSamples.rows);
       }
       //float percent = correct*100.0/(correct+wrong);
       //if (percent < 98.0) {
