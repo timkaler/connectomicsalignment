@@ -1965,7 +1965,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
 
   this->coarse_transform = A.clone();
 
-  std::string path = "/efs/home/tfk/maprecurse/sift_features4/coarse_transform_" +
+  std::string path = "coarse_transform_" +
       std::to_string(this->real_section_id) + "_" + std::to_string(neighbor->real_section_id);
   cv::FileStorage fs(path, cv::FileStorage::WRITE);
   cv::write(fs, "transform", this->coarse_transform);
