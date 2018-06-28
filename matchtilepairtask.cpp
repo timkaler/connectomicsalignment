@@ -154,11 +154,141 @@ namespace tfk {
     }
 
 
+    void MatchTilePairTask::alternative_compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
+      std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
+      cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
+      std::vector< cv::Point2f > &filtered_match_points_a,
+      std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh){
 
+      if (a_tile_keypoints.size() < MIN_FEATURES_NUM) return;
+      if (b_tile_keypoints.size() < MIN_FEATURES_NUM) return;
+
+      // Filter the features, so that only features that are in the
+      //   overlapping tile will be matches.
+      std::vector< cv::KeyPoint > atile_kps_in_overlap, btile_kps_in_overlap;
+
+      atile_kps_in_overlap.reserve(a_tile_keypoints.size());
+      btile_kps_in_overlap.reserve(b_tile_keypoints.size());
+
+      // atile_kps_in_overlap.clear(); btile_kps_in_overlap.clear();
+      cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
+
+      { // Begin scoped block A.
+        // Compute bounding box of overlap
+        int overlap_x_start = a_tile->x_start > b_tile->x_start ?
+                                  a_tile->x_start : b_tile->x_start;
+        int overlap_x_finish = a_tile->x_finish < b_tile->x_finish ?
+                                  a_tile->x_finish : b_tile->x_finish;
+        int overlap_y_start = a_tile->y_start > b_tile->y_start ?
+                                  a_tile->y_start : b_tile->y_start;
+        int overlap_y_finish = a_tile->y_finish < b_tile->y_finish ?
+                                  a_tile->y_finish : b_tile->y_finish;
+        // Add 50-pixel offset
+        const int OFFSET = 50;
+        overlap_x_start -= OFFSET;
+        overlap_x_finish += OFFSET;
+        overlap_y_start -= OFFSET;
+        overlap_y_finish += OFFSET;
+
+        std::vector< cv::Mat > atile_kps_desc_in_overlap_list;
+        atile_kps_desc_in_overlap_list.reserve(a_tile_keypoints.size());
+        std::vector< cv::Mat > btile_kps_desc_in_overlap_list;
+        btile_kps_desc_in_overlap_list.reserve(b_tile_keypoints.size());
+    
+        // Filter the points in a_tile.
+        for (size_t pt_idx = 0; pt_idx < a_tile_keypoints.size(); ++pt_idx) {
+          cv::Point2f pt = a_tile_keypoints[pt_idx].pt;
+          if (bbox_contains(pt.x + a_tile->x_start,
+                            pt.y + a_tile->y_start,  // transformed_pt[0],
+                            overlap_x_start, overlap_x_finish,
+                            overlap_y_start, overlap_y_finish)) {
+            atile_kps_in_overlap.push_back(a_tile_keypoints[pt_idx]);
+            atile_kps_desc_in_overlap_list.push_back(
+                a_tile_desc.row(pt_idx).clone());
+          }
+        }
+        cv::vconcat(atile_kps_desc_in_overlap_list,
+            (atile_kps_desc_in_overlap));
+    
+        // Filter the points in b_tile.
+        for (size_t pt_idx = 0; pt_idx < b_tile_keypoints.size(); ++pt_idx) {
+          cv::Point2f pt = b_tile_keypoints[pt_idx].pt;
+          if (bbox_contains(pt.x + b_tile->x_start,
+                            pt.y + b_tile->y_start,  // transformed_pt[0],
+                            overlap_x_start, overlap_x_finish,
+                            overlap_y_start, overlap_y_finish)) {
+            btile_kps_in_overlap.push_back(b_tile_keypoints[pt_idx]);
+            btile_kps_desc_in_overlap_list.push_back(b_tile_desc.row(pt_idx).clone());
+          }
+        }
+        cv::vconcat(btile_kps_desc_in_overlap_list,
+            (btile_kps_desc_in_overlap));
+      } // End scoped block A
+    
+      if (atile_kps_in_overlap.size() < MIN_FEATURES_NUM) return;
+      if (btile_kps_in_overlap.size() < MIN_FEATURES_NUM) return;
+    
+      float trial_rod;
+      for (int trial = 0; trial < 4; trial++) {
+        if (trial == 0) trial_rod = 0.7;
+        if (trial == 1) trial_rod = 0.8;
+        if (trial == 2) trial_rod = 0.92;
+        if (trial == 3) trial_rod = 0.96;
+        // Match the features
+        std::vector< cv::DMatch > matches;
+        alternative_match_features(matches,
+                       atile_kps_desc_in_overlap,
+                       btile_kps_desc_in_overlap,
+                       trial_rod);
+    
+        // Filter the matches with RANSAC
+        std::vector<cv::Point2f> match_points_a, match_points_b;
+        for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
+          match_points_a.push_back(
+              atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
+          match_points_b.push_back(
+              btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
+        }
+    
+        if (matches.size() < MIN_FEATURES_NUM) {
+          continue;
+        }
+    
+        bool* mask = (bool*) calloc(match_points_a.size(), 1);
+        double thresh = ransac_thresh;//5.0;
+        tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
+    
+    
+        filtered_match_points_a.clear();
+        filtered_match_points_b.clear();
+    
+        int num_matches_filtered = 0;
+        // Use the output mask to filter the matches
+        for (size_t i = 0; i < matches.size(); ++i) {
+          if (mask[i]) {
+            num_matches_filtered++;
+            filtered_match_points_a.push_back(
+                atile_kps_in_overlap[matches[i].queryIdx].pt);
+            filtered_match_points_b.push_back(
+                btile_kps_in_overlap[matches[i].trainIdx].pt);
+          }
+        }
+        free(mask);
+        if (num_matches_filtered >= MIN_FEATURES_NUM && filtered_match_points_a.size() >= 0.1*matches.size()) {
+          //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
+          break;
+        } else {
+          filtered_match_points_a.clear();
+          filtered_match_points_b.clear();
+        }
+      }
+    }
 
     void MatchTilePairTask::compute_with_params(MRParams* mr_params_local) {
       std::vector<cv::KeyPoint> a_tile_keypoints;
       cv::Mat a_tile_desc;
+      std::vector<cv::KeyPoint> a_tile_alt_keypoints;
+      cv::Mat a_tile_alt_desc;
 
       this->mr_params = mr_params_local;
 
@@ -178,9 +308,13 @@ namespace tfk {
       if (dependencies.find(a_tile->tile_id) == dependencies.end()) {
         a_tile->compute_sift_keypoints2d_params(new_params, a_tile_keypoints,
                                                 a_tile_desc, a_tile);
+        //a_tile->compute_alternative_keypoints2d_params(new_params, a_tile_alt_keypoints,
+        //                                        a_tile_alt_desc, a_tile);
       } else {
         a_tile_desc = dependencies[a_tile->tile_id]->tile_desc;
         a_tile_keypoints = dependencies[a_tile->tile_id]->tile_keypoints;
+        //a_tile_alt_desc = dependencies[a_tile->tile_id]->alt_tile_desc;
+        //a_tile_alt_keypoints = dependencies[a_tile->tile_id]->alt_tile_keypoints;
       }
 
       if (a_tile_keypoints.size() < MIN_FEATURES_NUM) return; // failure.
@@ -189,18 +323,28 @@ namespace tfk {
        
       std::vector<cv::KeyPoint> b_tile_keypoints;
       cv::Mat b_tile_desc;
+      std::vector<cv::KeyPoint> b_tile_alt_keypoints;
+      cv::Mat b_tile_alt_desc;
+
 
       if (dependencies.find(b_tile->tile_id) == dependencies.end()) {
         b_tile->compute_sift_keypoints2d_params(new_params, b_tile_keypoints,
                                                 b_tile_desc, a_tile);
+        //b_tile->compute_alternative_keypoints2d_params(new_params, b_tile_alt_keypoints,
+        //                                        b_tile_alt_desc, a_tile);
       } else {
         b_tile_desc = dependencies[b_tile->tile_id]->tile_desc;
         b_tile_keypoints = dependencies[b_tile->tile_id]->tile_keypoints;
+        //b_tile_alt_desc = dependencies[b_tile->tile_id]->alt_tile_desc;
+        //b_tile_alt_keypoints = dependencies[b_tile->tile_id]->alt_tile_keypoints;
       }
       if (b_tile_keypoints.size() < MIN_FEATURES_NUM) return;
+      //printf("%d,%d | %d,%d\n", a_tile_keypoints.size(), b_tile_keypoints.size(),a_tile_alt_keypoints.size(), b_tile_alt_keypoints.size());
       
       std::vector< cv::Point2f > filtered_match_points_a(0);
       std::vector< cv::Point2f > filtered_match_points_b(0);
+      std::vector< cv::Point2f > alt_filtered_match_points_a(0);
+      std::vector< cv::Point2f > alt_filtered_match_points_b(0);
 
      
       this->compute_tile_matches_pair(a_tile, b_tile,
@@ -209,14 +353,24 @@ namespace tfk {
         filtered_match_points_a,
         filtered_match_points_b, 5.0);
 
+       //this->alternative_compute_tile_matches_pair(a_tile, b_tile,
+       // a_tile_alt_keypoints, b_tile_alt_keypoints,
+       // a_tile_alt_desc, b_tile_alt_desc,
+       // alt_filtered_match_points_a,
+       // alt_filtered_match_points_b, 5.0); 
+
       // store the matched points.
       matched_points = std::make_pair(filtered_match_points_a, filtered_match_points_b);  
+      //alt_matched_points = std::make_pair(alt_filtered_match_points_a, alt_filtered_match_points_b);  
     }
 //TODO(wheatman) mark to neighbors as bad
     bool MatchTilePairTask::error_check(float false_negative_rate) {
       std::vector<cv::Point2f> filtered_match_points_a = matched_points.first;
       std::vector<cv::Point2f> filtered_match_points_b = matched_points.second;
       Tile tmp_a_tile = *a_tile;
+      //std::vector<cv::Point2f> alt_filtered_match_points_a = alt_matched_points.first;
+      //std::vector<cv::Point2f> alt_filtered_match_points_b = alt_matched_points.second;
+      //Tile alt_a_tile = *a_tile;
       
       // put b at 0,0
       if (filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
@@ -233,6 +387,22 @@ namespace tfk {
         }
       }
 
+        //printf("%d, %d\n", alt_filtered_match_points_a.size(), filtered_match_points_a.size() );
+      //if (alt_filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
+      //  //printf("We also got to move the alt part %d, %d\n", alt_filtered_match_points_a.size(), filtered_match_points_a.size() );
+      //  for (int _i = 0; _i < 1000; _i++) {
+      //    float dx = 0.0;
+      //    float dy = 0.0;
+      //    for (int j = 0; j < alt_filtered_match_points_a.size(); j++) {
+      //      cv::Point2f dp = b_tile->rigid_transform(alt_filtered_match_points_b[j]) - alt_a_tile.rigid_transform(alt_filtered_match_points_a[j]);
+      //      dx += 2*dp.x * 1.0 / (alt_filtered_match_points_a.size());
+      //      dy += 2*dp.y * 1.0 / (alt_filtered_match_points_a.size());
+      //    }
+      //    alt_a_tile.offset_x += 0.4*dx;
+      //    alt_a_tile.offset_y += 0.4*dy;
+      //  }
+      //}
+
       float val = tmp_a_tile.error_tile_pair(b_tile);
       //tmp_a_tile.get_feature_vector(b_tile, 3, 2).copyTo(a_tile->feature_vectors[b_tile]);
       bool guess_ml = true;//this->model->predict(a_tile->feature_vectors[b_tile]);
@@ -240,12 +410,17 @@ namespace tfk {
       if (/*guess_ml*/ val >= 0.75 && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
         cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
                                           tmp_a_tile.y_start+tmp_a_tile.offset_y);
+        //cv::Point2f alt_a_point = cv::Point2f(alt_a_tile.x_start+alt_a_tile.offset_x,
+        //                                  alt_a_tile.y_start+alt_a_tile.offset_y);
         cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
                                           b_tile->y_start+b_tile->offset_y);
         cv::Point2f delta = a_point - b_point;
+        //cv::Point2f alt_delta = alt_a_point - b_point;
+        //float alt_val = alt_a_tile.error_tile_pair(b_tile);
 
         a_tile->ideal_offsets[b_tile->tile_id] = delta;
         a_tile->neighbor_correlations[b_tile->tile_id] = val;
+        //printf("[%d,%d | %d,%d]: offset/val: (%f,%f) | new off/val (%f,%f) \n", alt_filtered_match_points_a.size(), filtered_match_points_a.size(),alt_filtered_match_points_b.size(), filtered_match_points_b.size(), delta.x, delta.y, alt_delta.x,alt_delta.y);
         success = true;
         return true;
 

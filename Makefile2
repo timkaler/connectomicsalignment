@@ -140,6 +140,10 @@ paramdb.o: paramdb.cpp paramdb.hpp
 render.o: render.cpp render.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
+data.o: data.cpp data.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+
 triangle_mesh.o: triangle_mesh.cpp triangle_mesh.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
@@ -169,7 +173,7 @@ matchtilepairtask.o: matchtilepairtask.cpp matchtilepairtask.hpp
 run.S: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: Graph.o scheduler.o engine.o common.o align.o match.o ransac.o run.o stack.o mrparams.o paramdb.o render.o triangle_mesh.o range_tree.o mlbase.o matchtilestask.o tilesifttask.o matchtilepairtask.o
+run_align: Graph.o scheduler.o engine.o common.o align.o match.o ransac.o run.o stack.o mrparams.o paramdb.o data.o render.o triangle_mesh.o range_tree.o mlbase.o matchtilestask.o tilesifttask.o matchtilepairtask.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:
