@@ -9,12 +9,8 @@
 
 namespace tfk {
 
-  class Data {
-    public:
-      Data();
-      void sample_stack(Stack* stack, int num_samples, int box_size, std::string filename_prefix);
-  };
-
+  void sample_stack(Stack* stack, int num_samples, int box_size, std::string filename_prefix);
+  bool mesh_overlaps(Stack* stack);
 
 }
 

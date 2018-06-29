@@ -188,13 +188,14 @@ void align_execute(align_data_t *p_align_data) {
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderfull", tfk::FULL);
 
     tfk::Render* render = new tfk::Render();
-    //render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, "rendertest0");
-    render->render_stack(stack, smaller_bbox, tfk::FULL, "rendertest0");
+    render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, "rendertest0");
+    //render->render_stack(stack, smaller_bbox, tfk::FULL, "rendertest0");
     //render->render_stack(stack, smaller_bbox, tfk::FULL, "rendertest0");
 
     printf("Right before render\n");
-    tfk::Data* data = new tfk::Data();
-    data->sample_stack(stack, 10, 10000, "sampletest0");
+    printf("Is Overlap: %d\n",tfk::mesh_overlaps(stack));
+    // tfk::Data* data = new tfk::Data();
+    // data->sample_stack(stack, 10, 10000, "sampletest0");
     //stack->render(std::make_pair(cv::Point2f(_start_x,_start_y),cv::Point2f(_start_x + size, _start_y + size)), "renderthumb", tfk::THUMBNAIL);
     //stack->render(entire_bbox, "renderthumb", tfk::THUMBNAIL);
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderthumb", tfk::PERCENT30);
