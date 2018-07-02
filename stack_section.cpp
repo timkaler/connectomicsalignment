@@ -418,6 +418,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
         for (int j = 0; j < triangle_edges->size(); j++) {
           cost += internal_mesh_derivs(mesh, gradients, (*triangle_edges)[j], rest_lengths[j],
                                        all_weight/triangle_edges->size(), sigma);
+                                       //all_weight, sigma);
         }
 
         //// update all triangles
@@ -427,6 +428,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
                                      (*triangles)[j].index3};
           cost += area_mesh_derivs(mesh, gradients, triangle_indices, rest_areas[j],
                                    all_weight/triangles->size());
+                                   //all_weight);
         }
       }
 
@@ -507,7 +509,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
         }
 
           if (max_iterations - iter < 1000) {
-            if (prev_cost - cost > 1.0/100) {
+            if (prev_cost - cost > 1.0/1000) {
               max_iterations += 1000;
             }
           }

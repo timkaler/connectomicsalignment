@@ -16,7 +16,7 @@ void updateTile2DAlign(int vid, void* scheduler_void) {
 
   tile->local2DAlignUpdate();
 
-  if (vertex_data->iteration_count < 100000) {
+  if (vertex_data->iteration_count < 50000) {
     scheduler->add_task(vid, updateTile2DAlign);
   }
   vertex_data->iteration_count++;
@@ -44,23 +44,24 @@ float tfk::Tile::error_tile_pair(Tile *other) {
   cv::Mat tile_p_image_1;
   cv::Mat tile_p_image_2;
 
-  //float scale_x = 0.3;
-  //float scale_y = 0.3;
-  tile_p_image_1 = this->get_tile_data(Resolution::FULL);
-  tile_p_image_2 = other->get_tile_data(Resolution::FULL);
+  float scale_x = 0.3;
+  float scale_y = 0.3;
+  float scale = 0.3;
+  tile_p_image_1 = this->get_tile_data(Resolution::PERCENT30);
+  tile_p_image_2 = other->get_tile_data(Resolution::PERCENT30);
 
   std::pair<cv::Point2f, cv::Point2f> tile_1_bounds = this->get_bbox();
   std::pair<cv::Point2f, cv::Point2f> tile_2_bounds = other->get_bbox();
 
   // scale the bbox.
-  //tile_1_bounds.first.x *= scale_x;
-  //tile_1_bounds.first.y *= scale_y;
-  //tile_1_bounds.second.x *= scale_x;
-  //tile_1_bounds.second.y *= scale_y;
-  //tile_2_bounds.first.x *= scale_x;
-  //tile_2_bounds.first.y *= scale_y;
-  //tile_2_bounds.second.x *= scale_x;
-  //tile_2_bounds.second.y *= scale_y;
+  tile_1_bounds.first.x *= scale_x;
+  tile_1_bounds.first.y *= scale_y;
+  tile_1_bounds.second.x *= scale_x;
+  tile_1_bounds.second.y *= scale_y;
+  tile_2_bounds.first.x *= scale_x;
+  tile_2_bounds.first.y *= scale_y;
+  tile_2_bounds.second.x *= scale_x;
+  tile_2_bounds.second.y *= scale_y;
 
   int nrows = std::min(tile_1_bounds.second.y, tile_2_bounds.second.y) - std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
   int ncols = std::min(tile_1_bounds.second.x, tile_2_bounds.second.x) - std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
@@ -87,8 +88,8 @@ float tfk::Tile::error_tile_pair(Tile *other) {
   int end_x1 = -1;
   for (int _y = 0; _y < tile_p_image_1.rows; _y++) {
       int _x = 0;
-      cv::Point2f p = cv::Point2f(_x, _y);
-      cv::Point2f transformed_p = this->rigid_transform(p);
+      cv::Point2f p = cv::Point2f(_x/scale, _y/scale);
+      cv::Point2f transformed_p = this->rigid_transform(p)*scale;
 
       int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
       int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
@@ -103,8 +104,8 @@ float tfk::Tile::error_tile_pair(Tile *other) {
   }
   for (int _x = 0; _x < tile_p_image_1.cols; _x++) {
       int _y = 0;
-      cv::Point2f p = cv::Point2f(_x, _y);
-      cv::Point2f transformed_p = this->rigid_transform(p);
+      cv::Point2f p = cv::Point2f(_x/scale, _y/scale);
+      cv::Point2f transformed_p = this->rigid_transform(p)*scale;
 
       int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
       int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
@@ -124,8 +125,8 @@ float tfk::Tile::error_tile_pair(Tile *other) {
   int end_x2 = -1;
   for (int _y = 0; _y < tile_p_image_2.rows; _y++) {
       int _x = 0;
-      cv::Point2f p = cv::Point2f(_x, _y);
-      cv::Point2f transformed_p = other->rigid_transform(p);
+      cv::Point2f p = cv::Point2f(_x/scale, _y/scale);
+      cv::Point2f transformed_p = other->rigid_transform(p)*scale;
 
       int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
       int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
@@ -140,8 +141,8 @@ float tfk::Tile::error_tile_pair(Tile *other) {
   }
   for (int _x = 0; _x < tile_p_image_2.cols; _x++) {
       int _y = 0;
-      cv::Point2f p = cv::Point2f(_x, _y);
-      cv::Point2f transformed_p = other->rigid_transform(p);
+      cv::Point2f p = cv::Point2f(_x/scale, _y/scale);
+      cv::Point2f transformed_p = other->rigid_transform(p)*scale;
 
       int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
       int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
@@ -158,8 +159,8 @@ float tfk::Tile::error_tile_pair(Tile *other) {
 
   for (int _y = start_y1; _y < end_y1; _y++) {
     for (int _x = start_x1; _x < end_x1; _x++) {
-      cv::Point2f p = cv::Point2f(_x, _y);
-      cv::Point2f transformed_p = this->rigid_transform(p);
+      cv::Point2f p = cv::Point2f(_x/scale, _y/scale);
+      cv::Point2f transformed_p = this->rigid_transform(p)*scale;
 
       int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
       int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
@@ -172,8 +173,8 @@ float tfk::Tile::error_tile_pair(Tile *other) {
 
   for (int _y = start_y2; _y < end_y2; _y++) {
     for (int _x = start_x2; _x < end_x2; _x++) {
-      cv::Point2f p = cv::Point2f(_x, _y);
-      cv::Point2f transformed_p = other->rigid_transform(p);
+      cv::Point2f p = cv::Point2f(_x/scale, _y/scale);
+      cv::Point2f transformed_p = other->rigid_transform(p)*scale;
 
       int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
       int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
@@ -186,6 +187,10 @@ float tfk::Tile::error_tile_pair(Tile *other) {
 
   // clear any location which only has a value for one of them
   // note that the transforms are the same size
+  int min_x = 1000000;
+  int min_y = 1000000;
+  int max_x = -1;
+  int max_y = -1;
   for (int _y = 0; _y < transform_1.rows; _y++) {
     for (int _x = 0; _x < transform_1.cols; _x++) {
       if (transform_2.at<unsigned char>(_y, _x) == 0) {
@@ -193,9 +198,38 @@ float tfk::Tile::error_tile_pair(Tile *other) {
       }
       else if (transform_1.at<unsigned char>(_y, _x) == 0) {
        transform_2.at<unsigned char>(_y, _x) = 0;
+      } else {
+        if (_y < min_y) min_y = _y;
+        if (_y > max_y) max_y = _y;
+        if (_x < min_x) min_x = _x;
+        if (_x > max_x) max_x = _x;
       }
     }
   }
+
+  int small_nrows = max_y - min_y + 1;
+  int small_ncols = max_x - min_x + 1;
+  if (small_nrows <= 0 || small_ncols <= 0) return -2;
+  cv::Mat small_transform_1 = cv::Mat::zeros(small_nrows, small_ncols, CV_8UC1);
+  cv::Mat small_transform_2 = cv::Mat::zeros(small_nrows, small_ncols, CV_8UC1);
+
+  for (int _y = 0; _y < transform_1.rows; _y++) {
+    for (int _x = 0; _x < transform_1.cols; _x++) {
+      if (transform_2.at<unsigned char>(_y, _x) == 0) {
+       transform_1.at<unsigned char>(_y, _x) = 0;
+      }
+      else if (transform_1.at<unsigned char>(_y, _x) == 0) {
+       transform_2.at<unsigned char>(_y, _x) = 0;
+      } else {
+        small_transform_1.at<unsigned char>(_y-min_y, _x-min_x) =
+            transform_1.at<unsigned char>(_y, _x);
+        small_transform_2.at<unsigned char>(_y-min_y, _x-min_x) =
+            transform_2.at<unsigned char>(_y, _x);
+      }
+    }
+  }
+
+
   cv::Mat result_CCOEFF_NORMED;
 
   //cv::Mat _transform_1, _transform_2;
@@ -203,7 +237,8 @@ float tfk::Tile::error_tile_pair(Tile *other) {
   //cv::resize(transform_2, _transform_2, cv::Size(), 1.0,1.0, CV_INTER_AREA);
 
   //cv::matchTemplate(_transform_1, _transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
-  cv::matchTemplate(transform_1, transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
+  //cv::matchTemplate(transform_1, transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
+  cv::matchTemplate(small_transform_1, small_transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
   return result_CCOEFF_NORMED.at<float>(0,0);
 }
 
@@ -633,7 +668,7 @@ void tfk::Tile::local2DAlignUpdateLimited(std::set<Tile*>* active_set) {
 void tfk::Tile::local2DAlignUpdate() {
   if (this->bad_2d_alignment) return;
   //std::vector<edata>& edges = graph->edgeData[vid];
-  double global_learning_rate = 0.4;
+  double global_learning_rate = 0.45;
   if (this->edges.size() == 0) return;
   if (this->edges.size() == 0) return;
 

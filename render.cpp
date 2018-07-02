@@ -423,7 +423,7 @@ void Render::render_stack_with_patch(Stack* stack,
       }
     }
     cilk_for (int c = 3; c < img.cols-3; c++) {
-      for (int r = 3; r < img.rows-3; r++) {
+      cilk_for (int r = 3; r < img.rows-3; r++) {
         if (section_p_out_count.at<unsigned short>(r,c) > 0) {
           img.at<unsigned char>(r,c) = section_p_out_sum.at<unsigned short>(r,c) / section_p_out_count.at<unsigned short>(r,c);
         }
