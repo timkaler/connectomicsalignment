@@ -207,7 +207,7 @@ namespace tfk {
         a_tile_keypoints, b_tile_keypoints,
         a_tile_desc, b_tile_desc,
         filtered_match_points_a,
-        filtered_match_points_b, 5.0);
+        filtered_match_points_b, 10.0); // changed 10 from 5 TFKNOTE
 
       // store the matched points.
       matched_points = std::make_pair(filtered_match_points_a, filtered_match_points_b);  

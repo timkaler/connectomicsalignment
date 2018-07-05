@@ -16,7 +16,7 @@ void updateTile2DAlign(int vid, void* scheduler_void) {
 
   tile->local2DAlignUpdate();
 
-  if (vertex_data->iteration_count < 50000) {
+  if (vertex_data->iteration_count < 500000) {
     scheduler->add_task(vid, updateTile2DAlign);
   }
   vertex_data->iteration_count++;
@@ -36,6 +36,7 @@ float tfk::Tile::compute_deviation(Tile* b_tile) {
 }
 
 float tfk::Tile::error_tile_pair(Tile *other) {
+  return 1.0;
   if (!(this->overlaps_with(other))) {
     return -2;
   }
@@ -44,11 +45,11 @@ float tfk::Tile::error_tile_pair(Tile *other) {
   cv::Mat tile_p_image_1;
   cv::Mat tile_p_image_2;
 
-  float scale_x = 0.3;
-  float scale_y = 0.3;
-  float scale = 0.3;
-  tile_p_image_1 = this->get_tile_data(Resolution::PERCENT30);
-  tile_p_image_2 = other->get_tile_data(Resolution::PERCENT30);
+  float scale = 1.0;
+  float scale_x = scale;
+  float scale_y = scale;
+  tile_p_image_1 = this->get_tile_data(Resolution::FULL);
+  tile_p_image_2 = other->get_tile_data(Resolution::FULL);
 
   std::pair<cv::Point2f, cv::Point2f> tile_1_bounds = this->get_bbox();
   std::pair<cv::Point2f, cv::Point2f> tile_2_bounds = other->get_bbox();
@@ -1264,8 +1265,8 @@ std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_til
   int my_y_start = this->y_start;
   int my_y_finish = this->y_finish;
 
-  int other_y_start = other_tile->y_start - 100;
-  int other_y_finish = other_tile->y_finish + 100;
+  int other_y_start = other_tile->y_start - 50;
+  int other_y_finish = other_tile->y_finish + 50;
 
   while (my_y_start < other_y_start) {
     my_y_start += 1;
@@ -1353,6 +1354,8 @@ std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_til
     //   the keypoints and their descriptors here.
     for (int i = 0; i < n_sub_images; i++) {
         for (int j = 0; j < v_kps[i].size(); j++) {
+            v_kps[i][j].pt.x += 0.5;
+            v_kps[i][j].pt.y += 0.5;
             v_kps[i][j].pt.x /= scale_x;
             v_kps[i][j].pt.y /= scale_y;
             v_kps[i][j].pt.x += new_x_start;

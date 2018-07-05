@@ -175,11 +175,11 @@ void align_execute(align_data_t *p_align_data) {
 
     auto entire_bbox = stack->sections[0]->get_bbox();
 
-    float x1 = (entire_bbox.first.x + entire_bbox.second.x)/2 -2500 + 5000;
+    float x1 = (entire_bbox.first.x + entire_bbox.second.x)/2+5000;// -2500 + 5000;
     //float x1 = (entire_bbox.first.x);
     //float x2 = x1+7500;
     float x2 = x1+5000;
-    float y1 = (entire_bbox.first.y+entire_bbox.second.y)/2 -2500 + 5000;
+    float y1 = (entire_bbox.first.y+entire_bbox.second.y)/2+5000;// -2500 + 5000;
     //float y1 = (entire_bbox.first.y);
     //float y2 = y1+7500;
     float y2 = y1+5000;
@@ -187,8 +187,8 @@ void align_execute(align_data_t *p_align_data) {
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderfull", tfk::FULL);
 
     tfk::Render* render = new tfk::Render();
-    render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, ALIGN_OUTPUT_FILE_DIRECTORY + "/rendertest0");
-    //render->render_stack(stack, smaller_bbox, tfk::FULL, "rendertest0");
+    //render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, ALIGN_OUTPUT_FILE_DIRECTORY + "/rendertest0");
+    render->render_stack(stack, entire_bbox, tfk::PERCENT30, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
 
     printf("Right before render\n");
     //stack->render(std::make_pair(cv::Point2f(_start_x,_start_y),cv::Point2f(_start_x + size, _start_y + size)), "renderthumb", tfk::THUMBNAIL);
