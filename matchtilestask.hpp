@@ -27,12 +27,14 @@ class MatchTilesTask : public MRTask {
     MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors);
     MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors,
                     std::map<int, TileSiftTask*> dependencies);
+    //~MatchTilesTask ();
 
     void compute_with_params(tfk::MRParams* mr_params_local);
     void compute(float probability_correct);
     void commit();
     bool error_check(float false_negative_rate);
     void get_parameter_options(std::vector<tfk::MRParams*>* vec);
+    bool compare_results_and_update_model(MRTask* known_good, float accuracy) {return false;}
 };
 
 } // end namespace tfk

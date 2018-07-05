@@ -56,22 +56,24 @@ void tfk::Stack::init() {
 
   printf("setting up the ml models and the paramsdb\n");
 
-  this->ml_models[MATCH_TILE_PAIR_TASK_ID] = new MLAnn(10);
-  this->ml_models[MATCH_TILES_TASK_ID] = new MLAnn(1);
-  std::string ml_model_location = "ml_model_after_section_0.ml";
+  this->ml_models[MATCH_TILE_PAIR_TASK_ID] = new MLAnn(1+5*5*5+3);
+  this->ml_models[MATCH_TILES_TASK_ID] = new MLAnn(4);
+  
+  std::string ml_model_location = "ml_after_param_opt.ml.25000_5_4_pre";
   printf("the ml model for task MATCH_TILE_PAIR is at %s\n", ml_model_location.c_str());
-  //this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load("ml_model_after_section_7.ml");
-  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load("ml_model_after_section_7.ml");
-
+  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load(ml_model_location, true);
+  /*
   std::string paramdb_location = "match_tiles_task_pdb_gen_data.pb";
   printf("The paramdb for task MATCH_TILE_PAIR is being loaded from %s\n", paramdb_location.c_str());
-
+  */
   ParamsDatabase pdb;
+  /*
   std::fstream input2(paramdb_location, std::ios::in | std::ios::binary);
   if (!pdb.ParseFromIstream(&input2)) {
     std::cerr << "Failed to parse protocal buffer for paramdb in stack_init." << std::endl;
     return;
   }
+  */
     
   this->paramdbs[MATCH_TILE_PAIR_TASK_ID] = new tfk::ParamDB(pdb);
   ParamsDatabase pdb2;
@@ -234,8 +236,6 @@ void tfk::Stack::align_2d() {
 
 #include "stack_learning.cpp"
 
-//<<<<<<< HEAD
-//=======
 //  std::vector<Tile*[2]> tile_pairs(trials);
 //
 //
@@ -636,4 +636,3 @@ void tfk::Stack::align_2d() {
 //  }
 //
 //}
-//>>>>>>> cdd2df2c332cdad2a05d9e719c4016eda32d01c9

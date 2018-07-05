@@ -15,9 +15,10 @@ namespace tfk {
       }
     }
 
-    MatchTilesTask::~MatchTilesTask() {
-      for (auto iter = child_tasks.begin(); iter != child_tasks.end(); ++iter) {
-        delete dynamic_cast<MatchTilePairTask*>(iter->second);
+    MatchTilesTask::~MatchTilesTask () {
+      for (int i = 0; i < neighbors.size(); i++) {
+        Tile* b_tile = neighbors[i];
+        delete child_tasks[b_tile];
       }
     }
 

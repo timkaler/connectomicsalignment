@@ -43,8 +43,9 @@ class MRTask {
     MRTask() {
 
     }
+    virtual ~MRTask() {}
 
-    ~MRTask() {};
+    //~MRTask() {};
 
     //virtual std::vector<std::map<> get_compute_params();
     //virtual std::vector<int> get_error_check_params();
@@ -65,6 +66,8 @@ class MRTask {
 
     virtual void get_parameter_options(std::vector<tfk::MRParams*>* vec) = 0;
 
+    virtual bool compare_results_and_update_model(MRTask* known_good, float accuracy) = 0;
+
     void setup_param_db_init(std::vector<tfk::MRParams*> *param_options) {
         get_parameter_options(param_options);
         for (int j = 0; j < param_options->size(); j++) {
@@ -72,7 +75,7 @@ class MRTask {
             paramDB->import_params(param);
         }
     }
-    void setup_param_db(int trials) {
+    void setup_param_db(int trials, MRTask* known_good) {
         std::vector<tfk::MRParams*> *param_options = paramDB->get_all_params();
         for (int j = 0; j < param_options->size(); j++) {
             tfk::MRParams *param = (*param_options)[j];
@@ -82,9 +85,10 @@ class MRTask {
             for (int i = 0; i < trials; i++) {
                 fasttime_t start = gettime();
                 compute_with_params(param);
+                error_check(-1);
                 double duration = tdiff(start, gettime());
-                bool correct2 = error_check(0);
-                if (correct2) {
+                bool correct = this->compare_results_and_update_model(known_good, 5);
+                if (correct) {
                     paramDB->record_success(param);
                 } else {
                     paramDB->record_failure(param);

@@ -30,6 +30,7 @@
 //#include "./meshoptimize.h"
 
 #include "matchtilestask.hpp"
+#include "matchtilepairtask.hpp"
 
 #ifndef ALIGNSTACK
 #define ALIGNSTACK
@@ -145,6 +146,8 @@ class Tile {
    std::map<Tile*, std::vector<float>> feature_vectors;
    std::map<Tile*, bool> ml_preds;
 
+   std::map<Tile*, int> keypoints_in_overlap;
+   std::map<Tile*, int> matched_keypoints_in_overlap;
 
 
    Tile(int section_id, int tile_id, int index, std::string filepath,

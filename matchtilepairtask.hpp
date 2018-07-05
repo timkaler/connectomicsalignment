@@ -15,6 +15,8 @@ class MatchTilePairTask : public MRTask {
 
     std::map<int, TileSiftTask*> dependencies;
 
+    cv::Point2f current_offset;
+
     void set_random_train();
     //void update_result(float last_correct, float next_correct);
 
@@ -39,6 +41,7 @@ class MatchTilePairTask : public MRTask {
     bool bbox_contains(float pt_x, float pt_y,
                               int x_start, int x_finish,
                               int y_start, int y_finish);
+    bool compare_results_and_update_model(MRTask* known_good, float accuracy);
 };
 
 } // end namespace tfk
