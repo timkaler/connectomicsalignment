@@ -421,7 +421,7 @@ void param_optimize(align_data_t *p_align_data) {
     return;
 }
 
-void test_learning(align_data_t *p_align_data) {
+void train_fsj(align_data_t *p_align_data) {
 
     tfk::Stack* stack = new tfk::Stack(p_align_data->base_section,
                                        p_align_data->n_sections,
@@ -444,6 +444,34 @@ void test_learning(align_data_t *p_align_data) {
     printf("stack has sections %zu\n", stack->sections.size());
     std::vector<tfk::params> ps;
     int trials = 10000;
+
+    stack->train_fsj(trials);
+    return;
+}
+
+void test_learning(align_data_t *p_align_data) {
+
+    tfk::Stack* stack = new tfk::Stack(p_align_data->base_section,
+                                       p_align_data->n_sections,
+                                       p_align_data->input_filepath,
+                                       p_align_data->output_dirpath);
+
+
+    stack->mode = p_align_data->mode;
+    stack->output_dirpath = p_align_data->output_dirpath;
+    stack->base_section = p_align_data->base_section;
+    stack->n_sections = p_align_data->n_sections;
+    stack->do_subvolume = p_align_data->do_subvolume;
+    stack->input_filepath = p_align_data->input_filepath;
+    stack->min_x = p_align_data->min_x;
+    stack->min_y = p_align_data->min_y;
+    stack->max_x = p_align_data->max_x;
+    stack->max_y = p_align_data->max_y;
+    stack->_bounding_box = p_align_data->bounding_box;
+    stack->init();
+    printf("stack has sections %zu\n", stack->sections.size());
+    std::vector<tfk::params> ps;
+    int trials = 1000;
 
     stack->test_learning(trials, 5, 2);
     return;

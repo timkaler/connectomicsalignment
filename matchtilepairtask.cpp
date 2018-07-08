@@ -11,7 +11,21 @@ namespace tfk {
         (pt_y >= y_start && pt_y <= y_finish);
     }
 
-    MatchTilePairTask::~MatchTilePairTask() {}
+    MatchTilePairTask::~MatchTilePairTask() {
+    }
+
+    std::vector<float> MatchTilePairTask::get_feature_vector () {
+      return feature_vector;
+    }
+    MatchTilePairTask::MatchTilePairTask (Tile* a_tile, Tile* b_tile, bool train) {
+      this->a_tile = a_tile;
+      this->b_tile = b_tile;
+      this->task_type_id = MATCH_TILE_PAIR_TASK_ID;
+      if (!train) {
+        this->paramDB = a_tile->paramdbs[this->task_type_id];
+        this->model = a_tile->ml_models[this->task_type_id];
+      }
+    }
 
     MatchTilePairTask::MatchTilePairTask (Tile* a_tile, Tile* b_tile) {
       this->a_tile = a_tile;
@@ -20,7 +34,7 @@ namespace tfk {
       this->paramDB = a_tile->paramdbs[this->task_type_id];
       this->model = a_tile->ml_models[this->task_type_id];
     }
-    
+
     //MatchTilePairTask::~MatchTilePairTask () {}
 
     void MatchTilePairTask::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
@@ -172,19 +186,20 @@ namespace tfk {
       tfk::params new_params;
       new_params.scale_x = mr_params->get_float_param("scale");
       new_params.scale_y = mr_params->get_float_param("scale");
-
+      //printf("scale %f\n", new_params.scale_x);
       //printf("scale x %f scale y %f\n", new_params.scale_x, new_params.scale_y);
       new_params.num_features = mr_params->get_int_param("num_features");
       new_params.num_octaves = mr_params->get_int_param("num_octaves");
       new_params.contrast_threshold = 0.015;//mr_params->get_float_param("contrast_threshold");
       new_params.edge_threshold = 6;// mr_params->get_float_param("edge_threshold");
-      new_params.sigma = 1.2;//mr_params->get_float_param("sigma");
+      new_params.sigma = 1.6;//mr_params->get_float_param("sigma");
 
 
       //TODO(wheatman) doing extra work here, but makes it the same as the cached version
       if (dependencies.find(a_tile->tile_id) == dependencies.end()) {
         a_tile->compute_sift_keypoints2d_params(new_params, a_tile_keypoints,
                                                 a_tile_desc, b_tile);
+        //printf("computing A keypoints\n");
       } else {
         a_tile_desc = dependencies[a_tile->tile_id]->tile_desc;
         a_tile_keypoints = dependencies[a_tile->tile_id]->tile_keypoints;
@@ -193,23 +208,24 @@ namespace tfk {
       if (a_tile_keypoints.size() < MIN_FEATURES_NUM) return; // failure.
 
       //int neighbor_success_count = 0;
-       
+
       std::vector<cv::KeyPoint> b_tile_keypoints;
       cv::Mat b_tile_desc;
 
       if (dependencies.find(b_tile->tile_id) == dependencies.end()) {
         b_tile->compute_sift_keypoints2d_params(new_params, b_tile_keypoints,
                                                 b_tile_desc, a_tile);
+        //printf("computing B keypoints\n");
       } else {
         b_tile_desc = dependencies[b_tile->tile_id]->tile_desc;
         b_tile_keypoints = dependencies[b_tile->tile_id]->tile_keypoints;
       }
       if (b_tile_keypoints.size() < MIN_FEATURES_NUM) return;
-      
+
       std::vector< cv::Point2f > filtered_match_points_a(0);
       std::vector< cv::Point2f > filtered_match_points_b(0);
 
-     
+
       this->compute_tile_matches_pair(a_tile, b_tile,
         a_tile_keypoints, b_tile_keypoints,
         a_tile_desc, b_tile_desc,
@@ -217,12 +233,43 @@ namespace tfk {
         filtered_match_points_b, 5.0);
 
       // store the matched points.
-      matched_points = std::make_pair(filtered_match_points_a, filtered_match_points_b);  
+      matched_points = std::make_pair(filtered_match_points_a, filtered_match_points_b);
+
     }
 //TODO(wheatman) mark to neighbors as bad
     bool MatchTilePairTask::error_check(float false_negative_rate) {
       std::vector<cv::Point2f> filtered_match_points_a = matched_points.first;
       std::vector<cv::Point2f> filtered_match_points_b = matched_points.second;
+       a_tile->release_full_image();
+      b_tile->release_full_image();
+      a_tile->release_2d_keypoints();
+      b_tile->release_2d_keypoints();
+    
+
+      std::vector<float> tmp_vector;
+      tmp_vector.push_back(filtered_match_points_a.size()*1.0);
+
+      cv::Point2f average = cv::Point2f(0.0,0.0);
+      for (int i = 0; i < filtered_match_points_a.size(); i++) {
+        average += filtered_match_points_a[i];
+      }
+      average /= 1.0*(filtered_match_points_a.size()+1);
+
+      float var_x = 0.0;
+      float var_y = 0.0;
+      for (int i = 0; i < filtered_match_points_a.size(); i++) {
+        float dx = filtered_match_points_a[i].x - average.x;
+        float dy = filtered_match_points_a[i].y - average.y;
+        var_x += dx*dx;
+        var_y += dy*dy;
+      }
+      var_x /= filtered_match_points_a.size()+1;
+      var_y /= filtered_match_points_a.size()+1;
+
+      tmp_vector.push_back(var_x);
+      tmp_vector.push_back(var_y);
+      tmp_vector.push_back(1.0);
+
       Tile tmp_a_tile = *a_tile;
       
       // put b at 0,0
@@ -256,13 +303,26 @@ namespace tfk {
                                         b_tile->y_start+b_tile->offset_y);
       current_offset = a_point - b_point;
 
+      this->predicted_offset = current_offset;
+      //printf("predicted offset %f %f\n", current_offset.x, current_offset.y);
+
       tmp_a_tile.get_feature_vector(b_tile, 5, 4).copyTo(a_tile->feature_vectors[b_tile]);
       // for fast path computation
+      //this->feature_vector = a_tile->feature_vectors[b_tile];
+
+      //printf("feature vector size: %d\n", feature_vector.size());
+
+      float val = tmp_a_tile.error_tile_pair(b_tile);
+      tmp_vector.push_back(val);
+      this->feature_vector = tmp_vector;
+
+       
+
       if (false_negative_rate > 0) {
-        float val = tmp_a_tile.error_tile_pair(b_tile);
-        bool guess_ml = this->model->predict(a_tile->feature_vectors[b_tile]);
+        //bool guess_ml = this->model->predict(a_tile->feature_vectors[b_tile]);
+        bool guess_ml = false;//this->model->predict(a_tile->feature_vectors[b_tile]);
         a_tile->ml_preds[b_tile] = guess_ml;
-        if (/*guess_ml*/ val >= 0.75) {
+        if (false && /*guess_ml*/ val >= 0.75) {
           a_tile->ideal_offsets[b_tile->tile_id] = current_offset;
           a_tile->neighbor_correlations[b_tile->tile_id] = val;
           success = true;

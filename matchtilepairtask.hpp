@@ -22,9 +22,9 @@ class MatchTilePairTask : public MRTask {
 
     Tile* a_tile;
     Tile* b_tile;
+    cv::Point2f predicted_offset;
     std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f> > matched_points;
     bool success;
-
     void compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
       std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
       cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
@@ -32,6 +32,7 @@ class MatchTilePairTask : public MRTask {
       std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh);
 
     MatchTilePairTask(Tile* a_tile, Tile* b_tile);
+    MatchTilePairTask(Tile* a_tile, Tile* b_tile, bool train);
     virtual ~MatchTilePairTask() final;
 
     void compute_with_params(tfk::MRParams* mr_params_local);
@@ -42,6 +43,8 @@ class MatchTilePairTask : public MRTask {
                               int x_start, int x_finish,
                               int y_start, int y_finish);
     bool compare_results_and_update_model(MRTask* known_good, float accuracy);
+    std::vector<float> feature_vector;
+    std::vector<float> get_feature_vector();
 };
 
 } // end namespace tfk

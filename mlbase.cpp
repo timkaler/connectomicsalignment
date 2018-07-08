@@ -161,7 +161,7 @@ namespace tfk {
     //  old_labels.push_back(new_labels[i]);
     //}
 
-    static float MAX_IMBALANCE_RATIO = 5.0;
+    static float MAX_IMBALANCE_RATIO = 500000.0;
 
     int positive_count = 0;
     int negative_count = 0;
@@ -290,18 +290,20 @@ namespace tfk {
 // spcific to ANN
   MLAnn::MLAnn(int num_features, std::string saved_model) : MLBase(num_features, saved_model) {
     cv::Ptr<cv::ml::ANN_MLP> ann_model = cv::ml::ANN_MLP::create();
-    cv::Mat_<int> layers(3,1);
+    cv::Mat_<int> layers(4,1);
     layers(0) = num_features;     // input
-    layers(1) = num_features/2;      // positive negative and unknown
+    layers(1) = num_features;      // positive negative and unknown
+    layers(2) = 8;
     //layers(2) = num_features*2;      // positive negative and unknown
-    layers(2) = 2;      // positive negative and unknown
+    layers(3) = 2;      // positive negative and unknown
     ann_model->setLayerSizes(layers);
     ann_model->setActivationFunction(cv::ml::ANN_MLP::SIGMOID_SYM  , 1, 1);
     model = ann_model;
+    this->ann_model = ann_model;
     size_of_feature_vector = num_features;
     if (!saved_model.empty()) {
       training_active = false;
-      this->load(saved_model);
+      this->load(saved_model, true);
     }
   }
 
@@ -311,30 +313,42 @@ namespace tfk {
   // this would be useul for the case where we can't do reinforcement learning
   void MLAnn::train(bool reinforcement) {
     mutex->lock();
+    cv::TermCriteria term_crit = cv::TermCriteria(cv::TermCriteria::Type::EPS, 10000000, 1e-17);
     if (training_active) {
       clear_saved_buffer();
       balance_and_flush_train_buffer();
       int new_training_examples = old_data.size();
       cv::Mat labels = cv::Mat::zeros(new_training_examples, 2, CV_32F);
+      cv::Mat weights = cv::Mat::zeros(new_training_examples,1, CV_32F);
       cv::Mat data = cv::Mat::zeros(new_training_examples, size_of_feature_vector , CV_32F);
+      int count_1 = 0;
+      int count_2 = 0;
       for (int i = 0; i < new_training_examples; i++) {
           if (old_labels[i]) {
               labels.at<float>(i, 1) = 1;
+              weights.at<float>(i,0) = 1.0;
+              count_1++;
           } else {
               labels.at<float>(i, 0) = 1;
+              //weights.at<float>(i,0) = 10000.0;//10000.0;
+              weights.at<float>(i,0) = 100.0;//10000.0;
+              count_2++;
           }
           for (int j = 0; j < size_of_feature_vector; j++) {
               data.at<float>(i, j) = old_data[i][j];
           }
       }
-      cv::Ptr<cv::ml::TrainData> tdata = cv::ml::TrainData::create(data, cv::ml::ROW_SAMPLE, labels);
-      tdata->setTrainTestSplitRatio(.9, false);
+      printf("count 1 %d, count 2 %d\n", count_1, count_2);
+      cv::Ptr<cv::ml::TrainData> tdata = cv::ml::TrainData::create(data, cv::ml::ROW_SAMPLE, labels,
+          cv::noArray(), cv::noArray(), weights);
+      tdata->setTrainTestSplitRatio(.75, false);
       //if (reinforcement && trained) {
       //    model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS | cv::ml::ANN_MLP::NO_INPUT_SCALE);
       //} else {
       printf("training the model\n");
+        //ann_model->setTrainMethod(0, 0.1,0.1);
+        ann_model->setTermCriteria(term_crit);
         model->train(tdata);
-          
           
           /*
            model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
@@ -438,7 +452,7 @@ namespace tfk {
       for (int i = 0; i < trainSamples.rows; i++) {
         cv::Mat results = cv::Mat::zeros(1, 2, CV_32F);
         model->predict(trainSamples.row(i), results);
-        bool prediction = results.at<float>(1) > results.at<float>(0);
+        bool prediction = results.at<float>(1) > results.at<float>(0)+0.95;
         float pred_f = (results.at<float>(1) + 1.716) / (results.at<float>(0)+1.716);
         bool actual = trainLabels.at<float>(i,1) > trainLabels.at<float>(i,0);
         if (prediction == actual) {
@@ -492,7 +506,7 @@ namespace tfk {
       for (int i = 0; i < testSamples.rows; i++) {
         cv::Mat results = cv::Mat::zeros(1, 2, CV_32F);
         model->predict(testSamples.row(i), results);
-        bool prediction = results.at<float>(1) > results.at<float>(0);
+        bool prediction = results.at<float>(1) > results.at<float>(0)+0.95;
         float pred_f = (results.at<float>(1) + 1.716) / (results.at<float>(0)+1.716);
         bool actual = testLabels.at<float>(i,1) > testLabels.at<float>(i,0);
         fprintf(pFile2, "%d, %f, %f\n", actual, results.at<float>(0), results.at<float>(1));

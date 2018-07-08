@@ -92,7 +92,7 @@ class Tile {
    bool tmp_bad_2d_alignment;
    double shape_dx;
    double shape_dy;
-
+   std::pair<cv::Mat, cv::Mat> get_overlap_matrix(Tile* other, float scale);
 
    //MRTask* match_tiles_task;
 
@@ -426,7 +426,7 @@ class Stack {
                std::string output_dirpath);
     void init();
 
-   
+    void train_fsj(int trials);
 
     // Test functions
     void test_io();

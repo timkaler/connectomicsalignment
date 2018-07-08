@@ -162,6 +162,123 @@ void tfk::Stack::parameter_optimization(int trials, double threshold, std::vecto
 
 }
 
+
+
+void tfk::Stack::train_fsj(int trials) {
+  params best_params;
+  best_params.num_features = 1;
+  best_params.num_octaves = 6;
+  best_params.contrast_threshold = .015;//CONTRAST_THRESH;
+  best_params.edge_threshold = 10;//EDGE_THRESH_2D;
+  best_params.sigma = 1.6;//1.6;
+  best_params.scale_x = 1.0;
+  best_params.scale_y = 1.0;
+  best_params.res = FULL;
+
+
+  params trial_params;
+  trial_params.num_features = 2;
+  trial_params.num_octaves = 6;
+  trial_params.contrast_threshold = .015;
+  trial_params.edge_threshold = 10;
+  trial_params.sigma = 1.6;
+  trial_params.scale_x = 0.01;
+  trial_params.scale_y = 0.01;
+  trial_params.res = FULL;
+
+  MRParams* best_mr_params = new MRParams();
+  best_mr_params->put_int_param("num_features",1);
+  best_mr_params->put_int_param("num_octaves",6);
+  best_mr_params->put_float_param("contrast_threshold",0.015);
+  best_mr_params->put_float_param("edge_threshold",10.0);
+  best_mr_params->put_float_param("sigma",1.6);
+  best_mr_params->put_float_param("scale",1.0);
+
+  MRParams* trial_mr_params = new MRParams();
+  trial_mr_params->put_int_param("num_features",4);
+  trial_mr_params->put_int_param("num_octaves",6);
+  trial_mr_params->put_float_param("contrast_threshold",0.015);
+  trial_mr_params->put_float_param("edge_threshold",10.0);
+  trial_mr_params->put_float_param("sigma",1.6);
+  trial_mr_params->put_float_param("scale",0.3);
+
+
+  std::vector<int> random_numbers_1;
+  std::vector<int> random_numbers_2;
+  std::vector<int> random_numbers_3;
+
+  for (int i = 0; i < trials; i++) {
+    random_numbers_1.push_back(rand());
+    random_numbers_2.push_back(rand());
+    random_numbers_3.push_back(rand());
+  }
+
+  int64_t success_count = 0;
+  int64_t failure_count = 0;
+
+
+  MLAnn* model = new MLAnn(5, "tfk_test_model");
+  model->load("tfk_test_model", true);
+  model->enable_training();
+  model->train(false);
+
+  return;
+
+  model->enable_training();
+   
+
+  cilk_for (int i = 0; i < trials; i++) {
+    int section_index = random_numbers_1[i]%this->sections.size();
+    int tile_index = random_numbers_2[i]%this->sections[section_index]->tiles.size();
+
+    Tile* tile_a = this->sections[section_index]->tiles[tile_index];
+    std::vector<Tile*> close_tiles = this->sections[section_index]->get_all_close_tiles(tile_a);
+
+    if (close_tiles.size() == 0) continue;
+    int n_index = random_numbers_3[i]%close_tiles.size();
+    Tile* tile_b = close_tiles[n_index];
+
+
+
+    MatchTilePairTask* task2 = new MatchTilePairTask(tile_a, tile_b, true);
+    task2->compute_with_params(trial_mr_params);
+    task2->error_check(0.9);
+    cv::Point2f offset2 = task2->predicted_offset;
+
+
+    MatchTilePairTask* task1 = new MatchTilePairTask(tile_a, tile_b, true);
+    task1->compute_with_params(best_mr_params);
+    task1->error_check(0.9);
+    cv::Point2f offset1 = task1->predicted_offset;
+
+      tile_a->release_2d_keypoints();
+      tile_b->release_2d_keypoints();
+      tile_a->release_full_image();
+      tile_b->release_full_image();
+    float dx = offset1.x - offset2.x;
+    float dy = offset1.y - offset2.y;
+    float dist = sqrt(dx*dx+dy*dy);
+    int local_failure_count = failure_count;
+    int local_success_count = success_count;
+    if (dist > 1.0) {
+      local_failure_count = __sync_fetch_and_add(&failure_count, 1)+1;
+      model->add_training_example(task2->get_feature_vector(), 0, dist);
+      printf("failure\n");
+    } else {
+      printf("success\n");
+      local_success_count = __sync_fetch_and_add(&success_count, 1)+1;
+      model->add_training_example(task2->get_feature_vector(), 1, dist);
+    }
+    printf("failures %d, successes %d, fraction %f%%\n", local_failure_count, local_success_count, (100.0*local_failure_count)/(local_failure_count+local_success_count));
+    delete task1;
+    delete task2;
+  }
+
+  model->train(false);
+  model->save("tfk_test_model");
+}
+
+
 void tfk::Stack::test_learning(int trials, int vector_grid_size, int vector_mode) {
 
   std::vector<Tile*[2]> tile_pairs(trials);
@@ -559,5 +676,5 @@ void tfk::Stack::test_learning(int trials, int vector_grid_size, int vector_mode
     }
     printf("\n"); 
   }
-
+  
 }
