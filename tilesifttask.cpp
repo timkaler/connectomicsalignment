@@ -17,18 +17,31 @@ namespace tfk {
 
       MRParams* mr_params = mr_params_local;
 
-      tfk::params new_params;
-      new_params.scale_x = mr_params->get_float_param("scale");
-      new_params.scale_y = mr_params->get_float_param("scale");
 
-      //printf("scale x %f scale y %f\n", new_params.scale_x, new_params.scale_y);
-      new_params.num_features = mr_params->get_int_param("num_features");
-      new_params.num_octaves = mr_params->get_int_param("num_octaves");
-      new_params.contrast_threshold = 0.015;//mr_params->get_float_param("contrast_threshold");
-      new_params.edge_threshold = 6;// mr_params->get_float_param("edge_threshold");
-      new_params.sigma = 1.2;//mr_params->get_float_param("sigma");
+  params trial_params;
+  trial_params.num_features = 4;
+  trial_params.num_octaves = 6;
+  trial_params.contrast_threshold = .015;
+  trial_params.edge_threshold = 10;
+  trial_params.sigma = 1.6;
+  trial_params.scale_x = 0.3;
+  trial_params.scale_y = 0.3;
+  trial_params.res = FULL;
 
-      tile->compute_sift_keypoints2d_params(new_params, tile_keypoints,
+
+
+      //tfk::params new_params;
+      //new_params.scale_x = mr_params->get_float_param("scale");
+      //new_params.scale_y = mr_params->get_float_param("scale");
+
+      ////printf("scale x %f scale y %f\n", new_params.scale_x, new_params.scale_y);
+      //new_params.num_features = mr_params->get_int_param("num_features");
+      //new_params.num_octaves = mr_params->get_int_param("num_octaves");
+      //new_params.contrast_threshold = 0.015;//mr_params->get_float_param("contrast_threshold");
+      //new_params.edge_threshold = 6;// mr_params->get_float_param("edge_threshold");
+      //new_params.sigma = 1.2;//mr_params->get_float_param("sigma");
+
+      tile->compute_sift_keypoints2d_params(trial_params, tile_keypoints,
                                               tile_desc, tile);
     }
 

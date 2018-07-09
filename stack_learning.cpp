@@ -177,13 +177,13 @@ void tfk::Stack::train_fsj(int trials) {
 
 
   params trial_params;
-  trial_params.num_features = 2;
+  trial_params.num_features = 4;
   trial_params.num_octaves = 6;
   trial_params.contrast_threshold = .015;
   trial_params.edge_threshold = 10;
   trial_params.sigma = 1.6;
-  trial_params.scale_x = 0.01;
-  trial_params.scale_y = 0.01;
+  trial_params.scale_x = 0.3;
+  trial_params.scale_y = 0.3;
   trial_params.res = FULL;
 
   MRParams* best_mr_params = new MRParams();
@@ -218,11 +218,11 @@ void tfk::Stack::train_fsj(int trials) {
 
 
   MLAnn* model = new MLAnn(5, "tfk_test_model");
-  model->load("tfk_test_model", true);
-  model->enable_training();
-  model->train(false);
+  //model->load("tfk_test_model", true);
+  //model->enable_training();
+  //model->train(false);
 
-  return;
+  //return;
 
   model->enable_training();
    
@@ -240,9 +240,21 @@ void tfk::Stack::train_fsj(int trials) {
 
 
 
+    std::map<int, TileSiftTask*> dependencies;
+    TileSiftTask* sift_task_a = new TileSiftTask(this->paramdbs[MATCH_TILE_PAIR_TASK_ID], tile_a);
+    TileSiftTask* sift_task_b = new TileSiftTask(this->paramdbs[MATCH_TILE_PAIR_TASK_ID], tile_b);
+
+    dependencies[tile_a->tile_id] = sift_task_a;
+    dependencies[tile_b->tile_id] = sift_task_b;
+
+    dependencies[tile_a->tile_id]->compute(0.9);
+    dependencies[tile_b->tile_id]->compute(0.9);
     MatchTilePairTask* task2 = new MatchTilePairTask(tile_a, tile_b, true);
+    task2->dependencies = dependencies;
     task2->compute_with_params(trial_mr_params);
     task2->error_check(0.9);
+    delete dependencies[tile_a->tile_id];
+    delete dependencies[tile_b->tile_id];
     cv::Point2f offset2 = task2->predicted_offset;
 
 
@@ -260,7 +272,7 @@ void tfk::Stack::train_fsj(int trials) {
     float dist = sqrt(dx*dx+dy*dy);
     int local_failure_count = failure_count;
     int local_success_count = success_count;
-    if (dist > 1.0) {
+    if (dist > 2.0) {
       local_failure_count = __sync_fetch_and_add(&failure_count, 1)+1;
       model->add_training_example(task2->get_feature_vector(), 0, dist);
       printf("failure\n");

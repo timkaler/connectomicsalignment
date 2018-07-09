@@ -261,15 +261,19 @@ namespace tfk {
 
 
   bool MLBase::predict(std::vector<float> vec) {
-    if (!trained) {
-      return true;
-    }
+    //if (!trained) {
+    //  return true;
+    //}
     mutex->lock();
     cv:: Mat mat_vec = cv::Mat::zeros(1, size_of_feature_vector, CV_32F);
     for (int i = 0; i < size_of_feature_vector; i++) {
         mat_vec.at<float>(i) = vec[i];
     }
-    bool ret = model->predict(mat_vec);
+        cv::Mat results = cv::Mat::zeros(1, 2, CV_32F);
+        model->predict(mat_vec, results);
+        bool ret = results.at<float>(1) > results.at<float>(0)+0.95;
+       
+    //bool ret = model->predict(mat_vec);
     mutex->unlock();
     return ret;
   }

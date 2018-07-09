@@ -2596,12 +2596,12 @@ void tfk::Section::compute_keypoints_and_matches() {
         //} else {
         //  tiles_to_process_matches[i]->match_tiles_task->commit();
         //}
-        if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.4)) { // low number tells error check to also check ml response
+        if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.4) || true) { // low number tells error check to also check ml response
           //printf("Tile failed first error check.\n");
           std::map<int, TileSiftTask*> empty_map;
           tiles_to_process_matches[i]->match_tiles_task->dependencies = empty_map;
           __sync_fetch_and_add(&tiles_in_error,1);
-          tiles_to_process_matches[i]->match_tiles_task->compute(0.99);
+          tiles_to_process_matches[i]->match_tiles_task->compute(1.0);
         }
       }
 
