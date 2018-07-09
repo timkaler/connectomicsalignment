@@ -62,8 +62,12 @@ void tfk::Stack::init() {
   //std::string ml_model_location = "ml_after_param_opt.ml.25000_5_4_pre";
   std::string ml_model_location = "tfk_test_model";
   printf("the ml model for task MATCH_TILE_PAIR is at %s\n", ml_model_location.c_str());
-  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load(ml_model_location, true);
-  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->train(false);
+  try {
+    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load(ml_model_location, true);
+    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->train(false);
+  } catch (const std::exception& e) {
+
+  }
   /*
   std::string paramdb_location = "match_tiles_task_pdb_gen_data.pb";
   printf("The paramdb for task MATCH_TILE_PAIR is being loaded from %s\n", paramdb_location.c_str());

@@ -188,7 +188,7 @@ namespace tfk {
   best_params.num_octaves = 6;
   best_params.contrast_threshold = .015;//CONTRAST_THRESH;
   best_params.edge_threshold = 10;//EDGE_THRESH_2D;
-  best_params.sigma = 1.6;//1.6;
+  best_params.sigma = 1.2;//1.6;
   best_params.scale_x = 1.0;
   best_params.scale_y = 1.0;
   best_params.res = FULL;
@@ -205,13 +205,14 @@ namespace tfk {
       //new_params.sigma = 1.6;//mr_params->get_float_param("sigma");
 
 
-      
+      bool second_pass = false;
 
 
       //TODO(wheatman) doing extra work here, but makes it the same as the cached version
       if (dependencies.find(a_tile->tile_id) == dependencies.end()) {
         a_tile->compute_sift_keypoints2d_params(best_params, a_tile_keypoints,
                                                 a_tile_desc, b_tile);
+        second_pass = true;
         //printf("computing A keypoints\n");
       } else {
         a_tile_desc = dependencies[a_tile->tile_id]->tile_desc;
@@ -228,6 +229,7 @@ namespace tfk {
       if (dependencies.find(b_tile->tile_id) == dependencies.end()) {
         b_tile->compute_sift_keypoints2d_params(best_params, b_tile_keypoints,
                                                 b_tile_desc, a_tile);
+        second_pass = true;
         //printf("computing B keypoints\n");
       } else {
         b_tile_desc = dependencies[b_tile->tile_id]->tile_desc;
@@ -243,7 +245,7 @@ namespace tfk {
         a_tile_keypoints, b_tile_keypoints,
         a_tile_desc, b_tile_desc,
         filtered_match_points_a,
-        filtered_match_points_b, 5.0);
+        filtered_match_points_b, 10.0); // TFKNOTE JUST CHANGED FROM 5.0
 
       // store the matched points.
       matched_points = std::make_pair(filtered_match_points_a, filtered_match_points_b);
@@ -335,15 +337,17 @@ namespace tfk {
         //bool guess_ml = this->model->predict(a_tile->feature_vectors[b_tile]);
         //bool guess_ml = false;//this->model->predict(a_tile->feature_vectors[b_tile]);
         bool guess_ml = this->model->predict(tmp_vector);//this->model->predict(a_tile->feature_vectors[b_tile]);
-
+        //bool guess_ml = true;
         a_tile->ml_preds[b_tile] = guess_ml;
         //if (false && /*guess_ml*/ val >= 0.75) {
-        if (guess_ml) {
+        if ((guess_ml || false_negative_rate > 1.0) && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
           a_tile->ideal_offsets[b_tile->tile_id] = current_offset;
           a_tile->neighbor_correlations[b_tile->tile_id] = val;
+          a_tile->ml_preds[b_tile] = true;
           success = true;
           return true;
         } else {
+          a_tile->ml_preds[b_tile] = false;
           success = false;
           return false;
         }

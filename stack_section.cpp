@@ -243,7 +243,7 @@ void tfk::Section::align_2d() {
 
           float val = t->compute_deviation(neighbor);
 
-          if (val > 10.0) {
+          if (val > 5.0) {
             //match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
               t->tmp_bad_2d_alignment = true;
               neighbor->tmp_bad_2d_alignment = true; 
@@ -2513,7 +2513,7 @@ void tfk::Section::compute_keypoints_and_matches() {
     bool pivot_good = false;
     int pivot_search_start = 0;
     for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-      if (sorted_tiles[i].second->x_start > pivot->x_finish + 12000) {
+      if (sorted_tiles[i].second->x_start > pivot->x_finish /*+ 12000*/) {
         pivot = sorted_tiles[i].second;
         pivot_search_start = i;
         pivot_good = true;
@@ -2596,7 +2596,7 @@ void tfk::Section::compute_keypoints_and_matches() {
         //} else {
         //  tiles_to_process_matches[i]->match_tiles_task->commit();
         //}
-        if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.4) || true) { // low number tells error check to also check ml response
+        if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.4)) { // low number tells error check to also check ml response
           //printf("Tile failed first error check.\n");
           std::map<int, TileSiftTask*> empty_map;
           tiles_to_process_matches[i]->match_tiles_task->dependencies = empty_map;
@@ -2607,7 +2607,7 @@ void tfk::Section::compute_keypoints_and_matches() {
 
       cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
         //cilk_spawn this->compute_tile_matches2(tiles_to_process_matches[i]);
-        if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.9)) {
+        if (!tiles_to_process_matches[i]->match_tiles_task->error_check(1.9)) {
           //printf("Tile failed second error check.\n");
           tiles_to_process_matches[i]->bad_2d_alignment = true;
           //tiles_to_process_matches[i]->match_tiles_task->commit();
@@ -2632,7 +2632,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       //printf("presently done with %f %%  duration %f estimated completion time: %f\n", (100.0*pivot_search_start) / sorted_tiles.size(), duration, (duration)/((60*60*1.0*pivot_search_start)/sorted_tiles.size()));
       pivot_good = false;
       for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-        if (sorted_tiles[i].second->x_start > pivot->x_finish+12000) {
+        if (sorted_tiles[i].second->x_start > pivot->x_finish /*+ 12000*/) {
           pivot = sorted_tiles[i].second;
           pivot_search_start = i;
           pivot_good = true;

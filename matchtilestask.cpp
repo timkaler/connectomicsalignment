@@ -56,7 +56,7 @@ namespace tfk {
       for (int i = 0; i < neighbors.size(); i++) {
         Tile* b_tile = neighbors[i];
         //TODO(wheatman) something smarter to pick this number
-        bool guess = child_tasks[b_tile]->error_check(.9);
+        bool guess = child_tasks[b_tile]->error_check(false_negative_rate);
         if (guess) {
           neighbor_to_success[b_tile] = true;
           neighbor_success_count++;
@@ -122,7 +122,7 @@ namespace tfk {
       //  if (required[i] && !has[i]) return false;
       //}
 
-      if (neighbor_success_count >= neighbors.size()*2.0/4.0 && neighbor_success_count >= 2.0) {
+      if (neighbor_success_count >= neighbors.size()*3.0/4.0 && neighbor_success_count >= 2.0) {
         return true;
       } else {
         return false;

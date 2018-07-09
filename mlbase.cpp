@@ -3,7 +3,7 @@
 namespace tfk {
 
 // general MLBAse functions
-
+  static float FP_PENALTY = 0.5;
   MLBase::MLBase(int num_features, std::string saved_model) {
     this->mutex = new std::recursive_mutex();
   }
@@ -271,7 +271,7 @@ namespace tfk {
     }
         cv::Mat results = cv::Mat::zeros(1, 2, CV_32F);
         model->predict(mat_vec, results);
-        bool ret = results.at<float>(1) > results.at<float>(0)+0.95;
+        bool ret = results.at<float>(1) > results.at<float>(0)+FP_PENALTY;
        
     //bool ret = model->predict(mat_vec);
     mutex->unlock();
@@ -335,7 +335,7 @@ namespace tfk {
           } else {
               labels.at<float>(i, 0) = 1;
               //weights.at<float>(i,0) = 10000.0;//10000.0;
-              weights.at<float>(i,0) = 100.0;//10000.0;
+              weights.at<float>(i,0) = 1000.0;//10000.0;
               count_2++;
           }
           for (int j = 0; j < size_of_feature_vector; j++) {
@@ -456,7 +456,7 @@ namespace tfk {
       for (int i = 0; i < trainSamples.rows; i++) {
         cv::Mat results = cv::Mat::zeros(1, 2, CV_32F);
         model->predict(trainSamples.row(i), results);
-        bool prediction = results.at<float>(1) > results.at<float>(0)+0.95;
+        bool prediction = results.at<float>(1) > results.at<float>(0)+FP_PENALTY;
         float pred_f = (results.at<float>(1) + 1.716) / (results.at<float>(0)+1.716);
         bool actual = trainLabels.at<float>(i,1) > trainLabels.at<float>(i,0);
         if (prediction == actual) {
@@ -510,7 +510,7 @@ namespace tfk {
       for (int i = 0; i < testSamples.rows; i++) {
         cv::Mat results = cv::Mat::zeros(1, 2, CV_32F);
         model->predict(testSamples.row(i), results);
-        bool prediction = results.at<float>(1) > results.at<float>(0)+0.95;
+        bool prediction = results.at<float>(1) > results.at<float>(0)+FP_PENALTY;
         float pred_f = (results.at<float>(1) + 1.716) / (results.at<float>(0)+1.716);
         bool actual = testLabels.at<float>(i,1) > testLabels.at<float>(i,0);
         fprintf(pFile2, "%d, %f, %f\n", actual, results.at<float>(0), results.at<float>(1));

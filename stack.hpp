@@ -131,8 +131,11 @@ class Tile {
 
 
    bool has_full_image;
+   bool has_percent30_image;
    cv::Mat full_image;
+   cv::Mat percent30_image;
    std::mutex* full_image_lock;
+   std::mutex* percent30_lock;
 
    bool image_data_replaced;
 
