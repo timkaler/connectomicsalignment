@@ -173,7 +173,7 @@ void tfk::Section::align_2d() {
       int bas_fp = 0;
       int bas_fn = 0;
  
-    for (int trial = 0; trial < 5; trial++) {
+    for (int trial = 0; trial < 1; trial++) {
       //global_learning_rate = 0.49;
       std::vector<int> vertex_ids;
       for (int i = 0; i < this->graph->num_vertices(); i++) {
@@ -239,11 +239,12 @@ void tfk::Section::align_2d() {
           bool guess_basic = task->neighbor_to_success[neighbor];
           if (neighbor->bad_2d_alignment) continue;
           //if (guess_basic == false) continue;
-          if (t->ideal_offsets.find(neighbor->tile_id) == t->ideal_offsets.end()) continue;
+          if (t->ideal_offsets.find(neighbor->tile_id) == t->ideal_offsets.end() ||
+              neighbor->ideal_offsets.find(t->tile_id) == neighbor->ideal_offsets.end()) continue;
 
           float val = t->compute_deviation(neighbor);
 
-          if (val > 5.0) {
+          if (val > 15.0) {
             //match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
               t->tmp_bad_2d_alignment = true;
               neighbor->tmp_bad_2d_alignment = true; 
@@ -290,7 +291,7 @@ void tfk::Section::align_2d() {
 
       printf("Basic Correct positive = %d, correct negatives = %d, false positives = %d, false negative = %d\n", bas_correct_pos, bas_correct_neg, bas_fp, bas_fn);
       //match_tile_pair_task_model->train(true);
-      break;
+      //break;
     }
 
 
@@ -2513,7 +2514,7 @@ void tfk::Section::compute_keypoints_and_matches() {
     bool pivot_good = false;
     int pivot_search_start = 0;
     for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-      if (sorted_tiles[i].second->x_start > pivot->x_finish /*+ 12000*/) {
+      if (sorted_tiles[i].second->x_start > pivot->x_finish + 12000) {
         pivot = sorted_tiles[i].second;
         pivot_search_start = i;
         pivot_good = true;
@@ -2521,6 +2522,9 @@ void tfk::Section::compute_keypoints_and_matches() {
       } else {
         active_set.insert(sorted_tiles[i].second);
       }
+    }
+    if (!pivot_good) {
+      pivot_search_start = sorted_tiles.size();
     }
     printf("Num tiles in sweep 0 is %lu\n", active_set.size()); 
 
@@ -2632,7 +2636,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       //printf("presently done with %f %%  duration %f estimated completion time: %f\n", (100.0*pivot_search_start) / sorted_tiles.size(), duration, (duration)/((60*60*1.0*pivot_search_start)/sorted_tiles.size()));
       pivot_good = false;
       for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-        if (sorted_tiles[i].second->x_start > pivot->x_finish /*+ 12000*/) {
+        if (sorted_tiles[i].second->x_start > pivot->x_finish + 12000) {
           pivot = sorted_tiles[i].second;
           pivot_search_start = i;
           pivot_good = true;
@@ -2641,7 +2645,10 @@ void tfk::Section::compute_keypoints_and_matches() {
           active_set.insert(sorted_tiles[i].second);
         }
       }
-      if (!pivot_good) break;
+      //if (!pivot_good && active_set.size() == 0) break;
+      if (!pivot_good) {
+        pivot_search_start = sorted_tiles.size();
+      }
     }
 
       // close open tiles that aren't in active or neighbor set.
@@ -2739,7 +2746,7 @@ std::vector<int> tfk::Section::get_all_close_tiles(int atile_id) {
   std::vector<int> neighbor_index_list(0);
 
   Tile* a_tile = this->tiles[atile_id];
-  for (int i = atile_id+1; i < this->tiles.size(); i++) {
+  for (int i = 0/*atile_id+1*/; i < this->tiles.size(); i++) {
     Tile* b_tile = this->tiles[i];
     if (a_tile->overlaps_with(b_tile)) {
       neighbor_index_list.push_back(i);

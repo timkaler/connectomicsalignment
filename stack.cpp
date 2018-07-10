@@ -215,17 +215,17 @@ void tfk::Stack::align_3d() {
 
 void tfk::Stack::align_2d() {
   //this->ml_models[0]->enable_training();
-  for (int i = 0; i < this->sections.size(); i++) {
-    global_start = gettime();
-    this->sections[i]->align_2d();
-    printf("ML Correct positive = %d, correct negatives = %d, false positives = %d, false negative = %d\n", this->ml_models[0]->ml_correct_pos, this->ml_models[0]->ml_correct_neg, this->ml_models[0]->ml_fp, this->ml_models[0]->ml_fn);
-    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_correct_pos = 0;
-    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_correct_neg = 0;
-    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_fp = 0;
-    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_fn = 0;
-    //this->ml_models[0]->save("ml_model_after_section_"+std::to_string(i)+".ml"); 
-  }
-  return;
+  //for (int i = 0; i < this->sections.size(); i++) {
+  //  global_start = gettime();
+  //  this->sections[i]->align_2d();
+  //  printf("ML Correct positive = %d, correct negatives = %d, false positives = %d, false negative = %d\n", this->ml_models[0]->ml_correct_pos, this->ml_models[0]->ml_correct_neg, this->ml_models[0]->ml_fp, this->ml_models[0]->ml_fn);
+  //  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_correct_pos = 0;
+  //  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_correct_neg = 0;
+  //  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_fp = 0;
+  //  this->ml_models[MATCH_TILE_PAIR_TASK_ID]->ml_fn = 0;
+  //  //this->ml_models[0]->save("ml_model_after_section_"+std::to_string(i)+".ml"); 
+  //}
+  //return;
   //int count = 0;
   int j = 0;
   int i = 0;

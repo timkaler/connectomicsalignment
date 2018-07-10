@@ -13,7 +13,7 @@ void updateTile2DAlign(int vid, void* scheduler_void) {
 
   tile->local2DAlignUpdate();
 
-  if (vertex_data->iteration_count < 100000) {
+  if (vertex_data->iteration_count < 50000) {
     scheduler->add_task(vid, updateTile2DAlign);
   }
   vertex_data->iteration_count++;
@@ -996,15 +996,17 @@ void tfk::Tile::local2DAlignUpdateLimited(std::set<Tile*>* active_set) {
 void tfk::Tile::local2DAlignUpdate() {
   if (this->bad_2d_alignment) return;
   //std::vector<edata>& edges = graph->edgeData[vid];
-  double global_learning_rate = 0.49;
+  double global_learning_rate = 0.45;
   if (this->edges.size() == 0) return;
   if (this->edges.size() == 0) return;
 
   double learning_rate = global_learning_rate;
   double grad_error_x = 0.0;
   double grad_error_y = 0.0;
-  double weight_sum = 1.0;
+  double weight_sum = 0.0;
 
+
+  std::set<int> found_tile_ids;
   for (int i = 0; i < this->edges.size(); i++) {
     std::vector<cv::Point2f>* v_points = this->edges[i].v_points;
     std::vector<cv::Point2f>* n_points = this->edges[i].n_points;
@@ -1015,6 +1017,9 @@ void tfk::Tile::local2DAlignUpdate() {
     if (this->ideal_offsets.find(neighbor->tile_id) == this->ideal_offsets.end() &&
         neighbor->ideal_offsets.find(this->tile_id) == neighbor->ideal_offsets.end()) continue;
 
+
+    if (found_tile_ids.find(neighbor->tile_id) != found_tile_ids.end()) continue;
+    found_tile_ids.insert(neighbor->tile_id);
 
 
       cv::Point2f a_point = cv::Point2f(this->x_start+this->offset_x,
@@ -1041,12 +1046,15 @@ void tfk::Tile::local2DAlignUpdate() {
         //            - c_b_point + c_a_point - a_point + b_point
         deviation = -1*neighbor->ideal_offsets[this->tile_id] - delta;
       }
-
+      //float dist = sqrt(deviation.x*deviation.x + deviation.y*deviation.y);
+      //if (dist > 10.0) {
+      //  printf("The dist is %f\n", dist);
+      //}
       weight_sum += 1;
-      if (std::abs(deviation.x) > 2.0 || true) {
+      if (std::abs(deviation.x) > 3.0 || true ) {
         grad_error_x += 2*deviation.x;
       }
-      if (std::abs(deviation.y) > 2.0 || true ) {
+      if (std::abs(deviation.y) > 3.0 || true ) {
         grad_error_y += 2*deviation.y;
       }
       continue;
@@ -1065,10 +1073,15 @@ void tfk::Tile::local2DAlignUpdate() {
   }
 
   //printf("gradient %f %f\n", grad_error_x, grad_error_y);
-
+  if (weight_sum > 0.5) {
   // update the gradients.
+  //if (grad_error_x / (weight_sum) > 10.0 ||
+  //    grad_error_y / (weight_sum) > 10.0) {
+  //  printf("grad error x is %f y is %f\n", grad_error_x, grad_error_y); 
+  //}
   this->offset_x += grad_error_x*learning_rate/(weight_sum);
   this->offset_y += grad_error_y*learning_rate/(weight_sum);
+  }
 }
 
 
@@ -1221,6 +1234,14 @@ tfk::Tile::Tile(TileData& tile_data) {
     this->offset_x = 0.0;
     this->offset_y = 0.0;
     this->filepath = tile_data.tile_filepath();
+
+
+    // NOTE TFK HACK
+    this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jpg");
+    this->filepath = this->filepath.replace(this->filepath.find("sep14iarpa"),10,"compressed2");
+
+
+
     this->p_image = new cv::Mat();
     this->p_kps = new std::vector<cv::KeyPoint>();
     this->p_kps_desc = new cv::Mat();
@@ -1681,6 +1702,8 @@ std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_til
     //   the keypoints and their descriptors here.
     for (int i = 0; i < n_sub_images; i++) {
         for (int j = 0; j < v_kps[i].size(); j++) {
+            v_kps[i][j].pt.x += 0.5;
+            v_kps[i][j].pt.y += 0.5;
             v_kps[i][j].pt.x /= scale_x;
             v_kps[i][j].pt.y /= scale_y;
             v_kps[i][j].pt.x += new_x_start;

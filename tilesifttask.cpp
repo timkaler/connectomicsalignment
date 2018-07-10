@@ -17,15 +17,26 @@ namespace tfk {
 
       MRParams* mr_params = mr_params_local;
 
+  //params trial_params;
+  //trial_params.num_features = 2;
+  //trial_params.num_octaves = 6;
+  //trial_params.contrast_threshold = .015;
+  //trial_params.edge_threshold = 20;
+  //trial_params.sigma = 1.05;
+  //trial_params.scale_x = 0.3;
+  //trial_params.scale_y = 0.3;
+  //trial_params.res = FULL;
+
+
 
   params trial_params;
-  trial_params.num_features = 1;
+  trial_params.num_features = 2;
   trial_params.num_octaves = 6;
   trial_params.contrast_threshold = .015;
   trial_params.edge_threshold = 10;
   trial_params.sigma = 1.2;
-  trial_params.scale_x = 1.0;
-  trial_params.scale_y = 1.0;
+  trial_params.scale_x = 0.3;
+  trial_params.scale_y = 0.3;
   trial_params.res = FULL;
 
 

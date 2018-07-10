@@ -42,9 +42,9 @@ namespace tfk {
         Tile* b_tile = neighbors[i];
         //TODO(wheatman) something smarter here dealing with the parameters
         dynamic_cast<MatchTilePairTask*>(child_tasks[b_tile])->dependencies = dependencies;
-        //if (!neighbor_to_success[b_tile]) {
-        child_tasks[b_tile]->compute(accuracy);
-        //}
+        if (!neighbor_to_success[b_tile]) {
+          child_tasks[b_tile]->compute(accuracy);
+        }
       }
     }
 

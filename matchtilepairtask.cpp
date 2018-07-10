@@ -189,8 +189,8 @@ namespace tfk {
   best_params.contrast_threshold = .015;//CONTRAST_THRESH;
   best_params.edge_threshold = 10;//EDGE_THRESH_2D;
   best_params.sigma = 1.2;//1.6;
-  best_params.scale_x = 1.0;
-  best_params.scale_y = 1.0;
+  best_params.scale_x = 0.5;
+  best_params.scale_y = 0.5;
   best_params.res = FULL;
 
       //tfk::params new_params;
@@ -245,7 +245,7 @@ namespace tfk {
         a_tile_keypoints, b_tile_keypoints,
         a_tile_desc, b_tile_desc,
         filtered_match_points_a,
-        filtered_match_points_b, 10.0); // TFKNOTE JUST CHANGED FROM 5.0
+        filtered_match_points_b, 5.0); // TFKNOTE JUST CHANGED FROM 5.0
 
       // store the matched points.
       matched_points = std::make_pair(filtered_match_points_a, filtered_match_points_b);
@@ -347,6 +347,7 @@ namespace tfk {
           success = true;
           return true;
         } else {
+          a_tile->ideal_offsets.erase(b_tile->tile_id);
           a_tile->ml_preds[b_tile] = false;
           success = false;
           return false;
