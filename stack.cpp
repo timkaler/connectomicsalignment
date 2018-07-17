@@ -230,7 +230,7 @@ void tfk::Stack::align_2d() {
   int j = 0;
   int i = 0;
   while (j < this->sections.size()) {
-    j += 4;
+    j += 2;
     if (j >= this->sections.size()) j = this->sections.size();
 
     for (; i < j; i++) {

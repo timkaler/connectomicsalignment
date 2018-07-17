@@ -145,8 +145,12 @@ TriangleMesh::TriangleMesh(TriangleMeshProto triangleMesh) {
 TriangleMesh::TriangleMesh(double hex_spacing,
                            std::pair<cv::Point2f, cv::Point2f> _bbox) {
 
-
   this->bbox = _bbox;
+  bbox.first.x-=hex_spacing*3+0.01 + 50000;
+  bbox.first.y-=hex_spacing*3+0.01 + 50000;
+  bbox.second.x+=hex_spacing*3+0.01 + 50000;
+  bbox.second.y+=hex_spacing*3+0.01 + 50000;
+
   double min_x = bbox.first.x;
   double min_y = bbox.first.y;
   double max_x = bbox.second.x;
@@ -157,10 +161,6 @@ TriangleMesh::TriangleMesh(double hex_spacing,
 
   cv::Rect rect(min_x-hex_spacing*3,min_y-hex_spacing*3,max_x-min_x+hex_spacing*6, max_y-min_y + hex_spacing*6);
 
-  bbox.first.x-=hex_spacing*3+0.01 + 50000;
-  bbox.first.y-=hex_spacing*3+0.01 + 50000;
-  bbox.second.x+=hex_spacing*3+0.01 + 50000;
-  bbox.second.y+=hex_spacing*3+0.01 + 50000;
 
   cv::Subdiv2D subdiv(rect);
   subdiv.initDelaunay(rect);
