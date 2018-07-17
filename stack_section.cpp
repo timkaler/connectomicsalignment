@@ -243,7 +243,7 @@ void tfk::Section::align_2d() {
 
           float val = t->compute_deviation(neighbor);
 
-          if (val > 5.0) {
+          if (val > 10.0) {
             //match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
               t->tmp_bad_2d_alignment = true;
               neighbor->tmp_bad_2d_alignment = true; 
@@ -2579,7 +2579,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       cilk_for (int i = 0; i < tiles_to_process_keypoints.size(); i++) {
          Tile* tile = tiles_to_process_keypoints[i];
          //tile->compute_sift_keypoints2d();
-         dependencies[tile->tile_id]->compute(0.999);
+         dependencies[tile->tile_id]->compute(0.9);
          tile->compute_sift_keypoints3d();
          tile->match_tiles_task->dependencies = dependencies;
       }
@@ -2587,7 +2587,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       for (int i = 0; i < tiles_to_process_matches.size(); i++) {
         //cilk_spawn this->compute_tile_matches(tiles_to_process_matches[i]);
         tiles_to_process_matches[i]->match_tiles_task->dependencies = dependencies;
-        cilk_spawn tiles_to_process_matches[i]->match_tiles_task->compute(0.999);
+        cilk_spawn tiles_to_process_matches[i]->match_tiles_task->compute(0.9);
       }
       cilk_sync;
 

@@ -28,6 +28,7 @@
 #include <ctime>
 #include "fasttime.h"
 #include "render.hpp"
+#include "data.hpp"
 #include "ParamsDatabase.pb.h"
 fasttime_t global_start; 
 
@@ -191,6 +192,11 @@ void align_execute(align_data_t *p_align_data) {
     render->render_stack(stack, entire_bbox, tfk::PERCENT30, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
 
     printf("Right before render\n");
+    //printf("Is Overlap: %d\n",tfk::mesh_overlaps(stack));
+    printf("Num Sections: %d\n", stack->sections.size());
+    overlay_triangles_stack(stack, entire_bbox, tfk::THUMBNAIL, "rendertest0");
+    // tfk::Data* data = new tfk::Data();
+    // data->sample_stack(stack, 10, 10000, "sampletest0");
     //stack->render(std::make_pair(cv::Point2f(_start_x,_start_y),cv::Point2f(_start_x + size, _start_y + size)), "renderthumb", tfk::THUMBNAIL);
     //stack->render(entire_bbox, "renderthumb", tfk::THUMBNAIL);
     //stack->render(std::make_pair(cv::Point2f(50000,50000),cv::Point2f(50000 + size, 50000 + size)), "renderthumb", tfk::PERCENT30);

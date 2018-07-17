@@ -463,6 +463,11 @@ void tfk::Tile::release_2d_keypoints() {
     this->p_kps_desc->release();
     this->p_kps_desc_fallback->release();
 
+    this->alt_p_kps->clear();
+    std::vector<cv::KeyPoint>().swap(*(this->alt_p_kps));
+
+    this->alt_p_kps_desc->release();
+
     //// clean up the memory
     //for (auto del : known_set) {
     //  tile_data_t *a_tile = &(p_sec_data->tiles[del]);
@@ -903,6 +908,8 @@ tfk::Tile::Tile(TileData& tile_data) {
     this->p_image = new cv::Mat();
     this->p_kps = new std::vector<cv::KeyPoint>();
     this->p_kps_desc = new cv::Mat();
+    this->alt_p_kps = new std::vector<cv::KeyPoint>();
+    this->alt_p_kps_desc = new cv::Mat();
     this->p_kps_fallback = new std::vector<cv::KeyPoint>();
     this->p_kps_desc_fallback = new cv::Mat();
 
@@ -1373,6 +1380,148 @@ std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_til
   local_p_image.release();
 }
 
+void tfk::Tile::compute_alternative_keypoints2d_params(tfk::params params,
+std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile) {
+  //printf("computing sift keypoints 2d with params\n");
+
+  cv::Mat _tmp_image = this->get_tile_data(FULL);
+  //_tmp_image.create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
+  //_tmp_image = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
+
+  cv::Mat local_p_image;
+
+  int my_x_start = this->x_start;
+  int my_x_finish = this->x_finish;
+
+  int other_x_start = other_tile->x_start - 50;
+  int other_x_finish = other_tile->x_finish + 50;
+
+  while (my_x_start < other_x_start) {
+    my_x_start += 1;
+  }
+  while (my_x_finish > other_x_finish) {
+    my_x_finish -= 1;
+  }
+
+  int my_y_start = this->y_start;
+  int my_y_finish = this->y_finish;
+
+  int other_y_start = other_tile->y_start - 100;
+  int other_y_finish = other_tile->y_finish + 100;
+
+  while (my_y_start < other_y_start) {
+    my_y_start += 1;
+  }
+  while (my_y_finish > other_y_finish) {
+    my_y_finish -= 1;
+  }
+
+  int new_x_start = my_x_start - ((int)this->x_start);
+  int new_x_finish = ((int)this->x_finish) - my_x_finish;
+
+  int new_y_start = my_y_start - ((int)this->y_start);
+  int new_y_finish = ((int)this->y_finish) - my_y_finish;
+
+  if (new_x_start < 0 || new_y_start < 0) printf("The starts are less than zero!\n");
+  if (_tmp_image.cols-new_x_finish < 0 || _tmp_image.rows - new_y_finish < 0) printf("The ends are less than zero!\n");
+  if (_tmp_image.cols-new_x_finish > _tmp_image.cols || _tmp_image.rows - new_y_finish > _tmp_image.rows) printf("The ends are greater than dims!\n");
+
+  cv::Mat tmp_image = _tmp_image(cv::Rect(new_x_start, new_y_start,
+                                          _tmp_image.cols - new_x_finish-new_x_start,
+                                          _tmp_image.rows - new_y_finish-new_y_start));
+
+  float scale_x = params.scale_x;
+  float scale_y = params.scale_y;
+  cv::resize(tmp_image, local_p_image, cv::Size(), scale_x,scale_y,CV_INTER_AREA);
+  _tmp_image.release();
+
+  int rows = local_p_image.rows;
+  int cols = local_p_image.cols;
+
+  //cv::Ptr<cv::Feature2D> p_sift;
+  //cv::Ptr<cv::AKAZE> p_akaze;
+  cv::Ptr<cv::xfeatures2d::SURF> p_surf;
+
+  std::vector<cv::KeyPoint> v_kps[SIFT_MAX_SUB_IMAGES];
+  cv::Mat m_kps_desc[SIFT_MAX_SUB_IMAGES];
+
+  int n_sub_images = 1;
+  if ((this->tile_id > MFOV_BOUNDARY_THRESH)) {
+     //p_sift = cv::xfeatures2d::SIFT_Impl(
+     //        params.num_features,  // num_features --- unsupported.
+     //        params.num_octaves,  // number of octaves
+     //        params.contrast_threshold,  // contrast threshold.
+     //        params.edge_threshold,  // edge threshold.
+     //        params.sigma);  // sigma.
+   // p_akaze = cv::AKAZE::create(
+   //           cv::AKAZE::DESCRIPTOR_MLDB, // descriptor_type
+   //           0,  // descriptor_size
+   //           3,  // channels
+   //           0.0001f,  // threshold
+   //           6,  // number of octaves
+   //           6,  // number of octave layers
+   //           cv::KAZE::DIFF_WEICKERT);  // diffusivity
+    p_surf = cv::xfeatures2d::SURF::create(300,4,3,false, true);
+
+    // THEN: This tile is on the boundary, we need to compute SIFT features
+    // on the entire section.
+    //int max_rows = rows / SIFT_D1_SHIFT;
+    //int max_cols = cols / SIFT_D2_SHIFT;
+    int max_rows = 1;
+    int max_cols = 1;
+    n_sub_images = max_rows * max_cols;
+
+    cilk_for (int cur_d1 = 0; cur_d1 < rows; cur_d1 += SIFT_D1_SHIFT) {
+      cilk_for (int cur_d2 = 0; cur_d2 < cols; cur_d2 += SIFT_D2_SHIFT) {
+        //printf("cur_d2 is %d cur_d1 is %d\n", cur_d2, cur_d1);
+        // Subimage of size SIFT_D1_SHIFT x SHIFT_D2_SHIFT
+        cv::Mat sub_im = local_p_image(cv::Rect(cur_d2, cur_d1,
+            cols, rows));
+
+        // Mask for subimage
+        cv::Mat sum_im_mask = cv::Mat::ones(rows, cols,
+            CV_8UC1);
+
+        // Compute a subimage ID, refering to a tile within larger
+        //   2d image.
+        //int cur_d1_id = 0;//cur_d1 / SIFT_D1_SHIFT;
+        //int cur_d2_id = 0;//cur_d2 / SIFT_D2_SHIFT;
+        int sub_im_id = 0;//cur_d1_id * max_cols + cur_d2_id;
+
+        // Detect the SIFT features within the subimage.
+        fasttime_t tstart = gettime();
+        p_surf->detectAndCompute(sub_im, sum_im_mask, v_kps[sub_im_id],
+            m_kps_desc[sub_im_id]);
+
+        fasttime_t tend = gettime();
+        totalTime += tdiff(tstart, tend);
+
+        for (size_t i = 0; i < v_kps[sub_im_id].size(); i++) {
+          v_kps[sub_im_id][i].pt.x += cur_d2;
+          v_kps[sub_im_id][i].pt.y += cur_d1;
+        }
+      }
+    }
+    // Regardless of whether we were on or off MFOV boundary, we concat
+    //   the keypoints and their descriptors here.
+    for (int i = 0; i < n_sub_images; i++) {
+        for (int j = 0; j < v_kps[i].size(); j++) {
+            v_kps[i][j].pt.x /= scale_x;
+            v_kps[i][j].pt.y /= scale_y;
+            v_kps[i][j].pt.x += new_x_start;
+            v_kps[i][j].pt.y += new_y_start;
+            local_keypoints.push_back(v_kps[i][j]);
+        }
+    }
+
+  } else {
+    printf("Assert false becasue this is unsupported code path.\n");
+    assert(false);
+  }
+
+  cv::vconcat(m_kps_desc, n_sub_images, local_desc);
+  local_p_image.release();
+}
 
 void tfk::Tile::compute_sift_keypoints2d() {
   //printf("computing sift keypoints 2d\n");
@@ -1600,3 +1749,4 @@ void tfk::Tile::compute_sift_keypoints2d() {
   cv::vconcat(m_kps_desc, n_sub_images, *(this->p_kps_desc));
   this->p_image->release();
 }
+
