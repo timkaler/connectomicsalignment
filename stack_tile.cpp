@@ -16,7 +16,7 @@ void updateTile2DAlign(int vid, void* scheduler_void) {
 
   tile->local2DAlignUpdate();
 
-  if (vertex_data->iteration_count < 500000) {
+  if (vertex_data->iteration_count < 50000) {
     scheduler->add_task(vid, updateTile2DAlign);
   }
   vertex_data->iteration_count++;

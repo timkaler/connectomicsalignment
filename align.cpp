@@ -189,12 +189,12 @@ void align_execute(align_data_t *p_align_data) {
 
     tfk::Render* render = new tfk::Render();
     //render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, ALIGN_OUTPUT_FILE_DIRECTORY + "/rendertest0");
-    render->render_stack(stack, entire_bbox, tfk::PERCENT30, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
+    render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
 
     printf("Right before render\n");
     //printf("Is Overlap: %d\n",tfk::mesh_overlaps(stack));
     printf("Num Sections: %d\n", stack->sections.size());
-    overlay_triangles_stack(stack, entire_bbox, tfk::THUMBNAIL, "rendertest0");
+    //overlay_triangles_stack(stack, entire_bbox, tfk::THUMBNAIL, "rendertest0");
     // tfk::Data* data = new tfk::Data();
     // data->sample_stack(stack, 10, 10000, "sampletest0");
     //stack->render(std::make_pair(cv::Point2f(_start_x,_start_y),cv::Point2f(_start_x + size, _start_y + size)), "renderthumb", tfk::THUMBNAIL);
