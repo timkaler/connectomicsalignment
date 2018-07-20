@@ -107,6 +107,7 @@ void overlay_triangles(Section* section, std::pair<cv::Point2f, cv::Point2f> bbo
 
   cv::imwrite(filename,img);//"t_"+filename, img);
 }
+
 void overlay_mesh(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
     tfk::Resolution resolution, std::string filename){
   tfk::Render* render = new tfk::Render();
@@ -124,8 +125,11 @@ void overlay_mesh(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
   int ncols = (input_upper_x-input_lower_x)/render_scale.x;
 
   std::vector<Triangle>* triangles_list = new std::vector<Triangle>();
-  std::vector<Triangle>* triangles_old = new std::vector<Triangle>();
+  //std::vector<Triangle>* triangles_old = new std::vector<Triangle>();
   std::vector<Triangle>* bad_list = bad_triangles(section);
+  printf("Matches try %d\n", section->section_mesh_matches.size());
+  std::vector<tfkMatch>& mesh_matches = section->section_mesh_matches;
+
 
   for (int i = 0; i < section->triangle_mesh->triangles->size(); i++) {
     tfkTriangle tri = (*(section->triangle_mesh->triangles))[i];
@@ -133,12 +137,12 @@ void overlay_mesh(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
     new_t.points[0] = (*(section->triangle_mesh->mesh))[tri.index1];
     new_t.points[1] = (*(section->triangle_mesh->mesh))[tri.index2];
     new_t.points[2] = (*(section->triangle_mesh->mesh))[tri.index3];
-    Triangle old_t;
-    old_t.points[0] = (*(section->triangle_mesh->mesh_orig))[tri.index1];
-    old_t.points[1] = (*(section->triangle_mesh->mesh_orig))[tri.index2];
-    old_t.points[2] = (*(section->triangle_mesh->mesh_orig))[tri.index3];
+    //Triangle old_t;
+    //old_t.points[0] = (*(section->triangle_mesh->mesh_orig))[tri.index1];
+    //old_t.points[1] = (*(section->triangle_mesh->mesh_orig))[tri.index2];
+    //old_t.points[2] = (*(section->triangle_mesh->mesh_orig))[tri.index3];
     triangles_list->push_back(new_t);
-    triangles_old->push_back(old_t);
+    //triangles_old->push_back(old_t);
   }
  
   for(int i = 0; i<triangles_list->size(); i++){
@@ -148,18 +152,47 @@ void overlay_mesh(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
       tri.points[j].y = (tri.points[j].y-(float)input_lower_y)/render_scale.y;
     }
     for(int j=0; j<3; j++){
-      cv::line(img, tri.points[j], tri.points[(j+1)%3],CV_RGB(0,255,0),5);
+      cv::line(img, tri.points[j], tri.points[(j+1)%3],CV_RGB(0,0,255),5);
     }
   }
-  for(int i = 0; i<triangles_old->size(); i++){
-    Triangle tri = (*triangles_old)[i];
+  //for(int i = 0; i<triangles_old->size(); i++){
+  //  Triangle tri = (*triangles_old)[i];
+  //  for(int j = 0; j<3; j++){
+  //    tri.points[j].x = (tri.points[j].x-(float)input_lower_x)/render_scale.x;
+  //    tri.points[j].y = (tri.points[j].y-(float)input_lower_y)/render_scale.y;
+  //  }
+  //  for(int j=0; j<3; j++){
+  //    cv::line(img, tri.points[j], tri.points[(j+1)%3],CV_RGB(0,0,255),5);
+  //  }
+  //}
+
+  printf("There are %d matches\n", mesh_matches.size());
+  for(int i = 0; i < mesh_matches.size(); i++){
+    Triangle tri;
+    tri.points[0] = (*(section->triangle_mesh->mesh))[mesh_matches[i].my_tri.index1];
+    tri.points[1] = (*(section->triangle_mesh->mesh))[mesh_matches[i].my_tri.index2];
+    tri.points[2] = (*(section->triangle_mesh->mesh))[mesh_matches[i].my_tri.index3];
     for(int j = 0; j<3; j++){
       tri.points[j].x = (tri.points[j].x-(float)input_lower_x)/render_scale.x;
       tri.points[j].y = (tri.points[j].y-(float)input_lower_y)/render_scale.y;
     }
     for(int j=0; j<3; j++){
-      cv::line(img, tri.points[j], tri.points[(j+1)%3],CV_RGB(0,0,255),5);
+      cv::line(img, tri.points[j], tri.points[(j+1)%3],CV_RGB(0,255,0),5);
     }
+    double* barys = mesh_matches[i].my_barys;
+    float px, py;
+    px = tri.points[0].x*barys[0] + tri.points[1].x*barys[1] + tri.points[2].x*barys[2];
+    py = tri.points[0].y*barys[0] + tri.points[1].y*barys[1] + tri.points[2].y*barys[2];
+    cv::Point2f p = cv::Point2f(px,py);
+    cv::circle(img,p, 5, CV_RGB(0,255,255),5, 8, 0); 
+  }
+
+  for(int i=0; i<section->off_grid->size(); i++){
+    float px, py;
+    px = ((*(section->off_grid))[i].x-(float)input_lower_x)/render_scale.x;
+    py = ((*(section->off_grid))[i].y-(float)input_lower_y)/render_scale.y;
+    cv::Point2f p = cv::Point2f(px,py);
+    cv::circle(img,p, 5, CV_RGB(255,0,255),5, 8, 0); 
   }
 
   for(int i = 0; i<bad_list->size(); i++){
