@@ -244,6 +244,7 @@ class Section {
     void load_2d_alignment();
     void save_2d_alignment();
 
+    std::vector<cv::Point2f>* off_grid;
     //std::vector<cv::Point2f>* mesh_orig;
     std::vector<cv::Point2f>* mesh_orig_save;
     std::vector<cv::Point2f>* mesh_old;

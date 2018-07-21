@@ -94,8 +94,10 @@ cv::Point2f tfk::Section::affine_transform_plusA(cv::Point2f pt, cv::Mat A) {
 // assumes point p is post section-global affine.
 cv::Point2f tfk::Section::elastic_transform(cv::Point2f p) {
   std::tuple<bool, float, float, float, int> info = this->get_triangle_for_point(p);
-  if (!std::get<0>(info)) return p;
-
+  if (!std::get<0>(info)){
+    off_grid->push_back(p);
+    return p;
+  }
   //int wid = __cilkrts_get_worker_number();
 
   int triangle_index = std::get<4>(info);
@@ -2761,6 +2763,7 @@ std::vector<int> tfk::Section::get_all_close_tiles(int atile_id) {
 // Section from protobuf
 tfk::Section::Section(SectionData& section_data, std::pair<cv::Point2f, cv::Point2f> bounding_box, bool use_bbox_prefilter) {
   //section_data_t *p_sec_data = &(p_tile_data->sec_data[i - p_tile_data->base_section]);
+  this->off_grid = new std::vector<cv::Point2f>();
   this->elastic_transform_ready = false;
   this->section_id = section_data.section_id();
   this->real_section_id = section_data.section_id();
