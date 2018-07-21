@@ -12,6 +12,8 @@ class TileSiftTask : public MRTask {
     Tile* tile;
     std::vector<cv::KeyPoint> tile_keypoints;
     cv::Mat tile_desc;
+    // std::vector<cv::KeyPoint> alt_tile_keypoints;
+    // cv::Mat alt_tile_desc;
 
     TileSiftTask (ParamDB* paramDB, Tile* tile);
     virtual ~TileSiftTask () final ;

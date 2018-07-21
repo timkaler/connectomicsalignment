@@ -14,7 +14,7 @@ extern fasttime_t global_start;
 
 
 //#define CORR_THRESH -10000.0
-#define CORR_THRESH 0.75
+#define CORR_THRESH 0.8
 
 
 
@@ -139,7 +139,7 @@ cv::Point2f tfk::Section::elastic_transform(cv::Point2f p, Triangle _tri) {
 void tfk::Section::align_2d() {
     if (this->alignment2d_exists()) {
       std::string filename =
-      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
+      std::string(ALIGN_CACHE_FILE_DIRECTORY + "/prefix_"+std::to_string(this->real_section_id));
 
       this->load_2d_alignment();
       this->read_3d_keypoints(filename);
@@ -244,7 +244,7 @@ void tfk::Section::align_2d() {
 
           float val = t->compute_deviation(neighbor);
 
-          if (val > 15.0) {
+          if (val > 10.0) {
             //match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
               t->tmp_bad_2d_alignment = true;
               neighbor->tmp_bad_2d_alignment = true; 
@@ -301,7 +301,7 @@ void tfk::Section::align_2d() {
 }
 
 void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
-  double cross_slice_weight = 1.0;
+  double cross_slice_weight = 10.0;
   double cross_slice_winsor = 20.0;
   double intra_slice_weight = 1.0;
   double intra_slice_winsor = 200.0;
@@ -419,6 +419,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
         for (int j = 0; j < triangle_edges->size(); j++) {
           cost += internal_mesh_derivs(mesh, gradients, (*triangle_edges)[j], rest_lengths[j],
                                        all_weight/triangle_edges->size(), sigma);
+                                       //all_weight, sigma);
         }
 
         //// update all triangles
@@ -428,6 +429,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
                                      (*triangles)[j].index3};
           cost += area_mesh_derivs(mesh, gradients, triangle_indices, rest_areas[j],
                                    all_weight/triangles->size());
+                                   //all_weight);
         }
       }
 
@@ -508,7 +510,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
         }
 
           if (max_iterations - iter < 1000) {
-            if (prev_cost - cost > 1.0/100) {
+            if (prev_cost - cost > 1.0/1000) {
               max_iterations += 1000;
             }
           }
@@ -554,7 +556,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
 
 bool tfk::Section::section_data_exists() {
   std::string filename =
-      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
+      std::string(ALIGN_CACHE_FILE_DIRECTORY+"/prefix_"+std::to_string(this->real_section_id));
 
 
   cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"), cv::FileStorage::READ);
@@ -634,7 +636,7 @@ void tfk::Section::save_elastic_mesh(Section* neighbor) {
     *(triangleMesh.mutable_triangles(i)) = ref;
   }
 
-  std::fstream output("emesh_"+std::to_string(this->real_section_id)+"_"+
+  std::fstream output(ALIGN_CACHE_FILE_DIRECTORY+"/emesh_"+std::to_string(this->real_section_id)+"_"+
                       std::to_string(neighbor->real_section_id)+".pbuf",
                       std::ios::out | std::ios::trunc | std::ios::binary);
   triangleMesh.SerializeToOstream(&output); 
@@ -1674,7 +1676,7 @@ bool tfk::Section::load_elastic_mesh(Section* neighbor) {
   TriangleMeshProto triangleMesh;
 
 
-  std::fstream input("emesh_"+std::to_string(this->real_section_id)+"_"+
+  std::fstream input(ALIGN_CACHE_FILE_DIRECTORY+"/emesh_"+std::to_string(this->real_section_id)+"_"+
                       std::to_string(neighbor->real_section_id)+".pbuf",
                       std::ios::in | std::ios::binary);
 
@@ -1966,7 +1968,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
 
   this->coarse_transform = A.clone();
 
-  std::string path = "/efs/home/tfk/maprecurse/sift_features4/coarse_transform_" +
+  std::string path = ALIGN_CACHE_FILE_DIRECTORY + "/coarse_transform_" +
       std::to_string(this->real_section_id) + "_" + std::to_string(neighbor->real_section_id);
   cv::FileStorage fs(path, cv::FileStorage::WRITE);
   cv::write(fs, "transform", this->coarse_transform);
@@ -2191,8 +2193,8 @@ void tfk::Section::compute_tile_matches2(Tile* a_tile) {
             dx += 2*dp.x * 1.0 / (filtered_match_points_a.size());
             dy += 2*dp.y * 1.0 / (filtered_match_points_a.size());
           }
-          tmp_a_tile.offset_x += 0.4*dx;
-          tmp_a_tile.offset_y += 0.4*dy;
+          tmp_a_tile.offset_x += 0.48*dx;
+          tmp_a_tile.offset_y += 0.48*dy;
         }
       }
 
@@ -2266,8 +2268,8 @@ void tfk::Section::compute_tile_matches(Tile* a_tile) {
           dx += 2*dp.x * 1.0 / (filtered_match_points_a.size());
           dy += 2*dp.y * 1.0 / (filtered_match_points_a.size());
         }
-        tmp_a_tile.offset_x += 0.4*dx;
-        tmp_a_tile.offset_y += 0.4*dy;
+        tmp_a_tile.offset_x += 0.48*dx;
+        tmp_a_tile.offset_y += 0.48*dy;
       }
     }
 
@@ -2301,7 +2303,7 @@ void tfk::Section::compute_tile_matches(Tile* a_tile) {
 
 
 bool tfk::Section::alignment2d_exists() {
-  std::ifstream f("2d_alignment_"+std::to_string(this->real_section_id)+".pbuf");
+  std::ifstream f(ALIGN_CACHE_FILE_DIRECTORY + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf");
   return f.good();
 
   //std::string filename =
@@ -2349,7 +2351,7 @@ void tfk::Section::load_2d_alignment() {
 
 
   Saved2DAlignmentSection sectiondata;
-  std::fstream input("2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
+  std::fstream input(ALIGN_CACHE_FILE_DIRECTORY + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
 
   sectiondata.ParseFromIstream(&input);
 
@@ -2386,7 +2388,7 @@ void tfk::Section::save_2d_alignment() {
     sectiondata.add_tiles();
     *(sectiondata.mutable_tiles(i)) = tiledata; 
   }
-  std::fstream output("2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::out | std::ios::trunc | std::ios::binary);
+  std::fstream output(ALIGN_CACHE_FILE_DIRECTORY + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::out | std::ios::trunc | std::ios::binary);
   sectiondata.SerializeToOstream(&output); 
   output.close();
 }
@@ -2465,7 +2467,7 @@ void tfk::Section::read_2d_graph(std::string filename) {
 void tfk::Section::read_tile_matches() {
 
   std::string filename =
-      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
+      std::string(ALIGN_CACHE_FILE_DIRECTORY + "/prefix_"+std::to_string(this->real_section_id));
 
   this->read_3d_keypoints(filename);
   this->read_2d_graph(filename);
@@ -2474,7 +2476,7 @@ void tfk::Section::read_tile_matches() {
 void tfk::Section::save_tile_matches() {
 
   std::string filename =
-      std::string("newcached_data/prefix_"+std::to_string(this->real_section_id));
+      std::string(ALIGN_CACHE_FILE_DIRECTORY+"/prefix_"+std::to_string(this->real_section_id));
 
   this->save_3d_keypoints(filename);
   this->save_2d_graph(filename);
@@ -2783,7 +2785,22 @@ tfk::Section::Section(SectionData& section_data, std::pair<cv::Point2f, cv::Poin
   //this->tiles.resize(section_data.tiles_size());
   std::vector<Tile*> tmp_tiles;
   tmp_tiles.resize(section_data.tiles_size());
- 
+
+  float min_x, min_y;
+  // need to find min_x and min_y and make it zero.
+  for (int j = 0; j < section_data.tiles_size(); j++) {
+    TileData tile_data = section_data.tiles(j);
+    Tile* tile = new Tile(tile_data);
+    if (j == 0) {
+      min_x = tile->x_start;
+      min_y = tile->y_start;
+    } else {
+      if (tile->x_start < min_x) min_x = tile->x_start;
+      if (tile->y_start < min_y) min_y = tile->y_start;
+    }
+
+  }
+
 
   int added_count = 0; 
   for (int j = 0; j < section_data.tiles_size(); j++) {
@@ -2791,6 +2808,9 @@ tfk::Section::Section(SectionData& section_data, std::pair<cv::Point2f, cv::Poin
 
     Tile* tile = new Tile(tile_data);
     tile->tile_id = j;
+
+    tile->x_start -= min_x;
+    tile->y_start -= min_y;
 
     std::string new_filepath = "new_tiles/sec_"+std::to_string(this->real_section_id) +
         "_tileid_"+std::to_string(tile->tile_id) + ".bmp";

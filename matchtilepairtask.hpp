@@ -24,8 +24,15 @@ class MatchTilePairTask : public MRTask {
     Tile* b_tile;
     cv::Point2f predicted_offset;
     std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f> > matched_points;
+    std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f> > alt_matched_points;
     bool success;
     void compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
+      std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
+      cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
+      std::vector< cv::Point2f > &filtered_match_points_a,
+      std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh);
+
+    void alternative_compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
       std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
       cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
       std::vector< cv::Point2f > &filtered_match_points_a,

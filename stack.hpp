@@ -35,6 +35,12 @@
 #ifndef ALIGNSTACK
 #define ALIGNSTACK
 
+
+
+//static std::string ALIGN_CACHE_FILE_DIRECTORY = "newcached_data"
+static std::string ALIGN_CACHE_FILE_DIRECTORY = "tmp";
+static std::string ALIGN_OUTPUT_FILE_DIRECTORY = "out";
+
 void updateTile2DAlign(int vid, void* scheduler_void);
 static bool STORE_ALIGN_RESULTS = false;
 static double totalTime = 0;
@@ -101,6 +107,8 @@ class Tile {
 
    std::vector<cv::KeyPoint>* p_kps;
    cv::Mat* p_kps_desc;
+   std::vector<cv::KeyPoint>* alt_p_kps;
+   cv::Mat* alt_p_kps_desc;
 
    std::vector<cv::KeyPoint>* p_kps_fallback;
    cv::Mat* p_kps_desc_fallback;
@@ -108,6 +116,10 @@ class Tile {
    void compute_sift_keypoints2d_params(tfk::params params,
       std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc);
    void compute_sift_keypoints2d_params(tfk::params params,
+      std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile);
+   void compute_alternative_keypoints2d_params(tfk::params params,
+      std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc);
+   void compute_alternative_keypoints2d_params(tfk::params params,
       std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile);
 
    float compute_deviation(Tile* b_tile);
@@ -134,6 +146,8 @@ class Tile {
    bool has_percent30_image;
    cv::Mat full_image;
    cv::Mat percent30_image;
+
+
    std::mutex* full_image_lock;
    std::mutex* percent30_lock;
 
@@ -161,6 +175,7 @@ class Tile {
    void release_full_image();
 
    void compute_sift_keypoints2d();
+   void compute_alternative_keypoints2d();
    void compute_sift_keypoints3d(bool recomputation = false);
    void compute_sift_keypoints_with_params(params p);
 

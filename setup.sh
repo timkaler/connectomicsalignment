@@ -61,5 +61,8 @@ export LD_LIBRARY_PATH=/efs/tools/protobuf_c4/lib:$LD_LIBRARY_PATH
 #export LD_PRELOAD=/efs/tools/jemalloc/lib/libjemalloc.so
 protoc --cpp_out=. --python_out=. AlignData.proto
 protoc --cpp_out=. --python_out=. ParamsDatabase.proto
+mkdir -p newcached_data
+mkdir -p tmp
+mkdir -p out
 #HEAPCHECK=normal $@
 $@
