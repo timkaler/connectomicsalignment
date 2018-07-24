@@ -121,7 +121,7 @@ class Tile {
       std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc);
    void compute_alternative_keypoints2d_params(tfk::params params,
       std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile);
-
+   void release_3d_keypoints();
    float compute_deviation(Tile* b_tile);
 
    std::vector<cv::KeyPoint>* p_kps_3d;
@@ -243,7 +243,7 @@ class Section {
     bool alignment2d_exists();
     void load_2d_alignment();
     void save_2d_alignment();
-
+    void erase_3d_keypoints();
     std::vector<cv::Point2f>* off_grid;
     //std::vector<cv::Point2f>* mesh_orig;
     std::vector<cv::Point2f>* mesh_orig_save;
@@ -446,6 +446,8 @@ class Stack {
     void init();
 
     void train_fsj(int trials);
+
+    std::pair<cv::Point2f, cv::Point2f> get_bbox();
 
     // Test functions
     void test_io();

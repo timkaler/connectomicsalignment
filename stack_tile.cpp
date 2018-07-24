@@ -783,6 +783,12 @@ void tfk::Tile::release_full_image() {
     full_image_lock->unlock();
 }
 
+void tfk::Tile::release_3d_keypoints() {
+  this->p_kps_3d->clear();
+  std::vector<cv::KeyPoint>().swap(*(this->p_kps_3d));
+  this->p_kps_desc_3d->release();
+}
+
 void tfk::Tile::release_2d_keypoints() {
 
     this->p_kps->clear();
@@ -1401,7 +1407,7 @@ void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
             //24,  // number of octaves
             CONTRAST_THRESH_3D,  // contrast threshold.
             EDGE_THRESH_3D,  // edge threshold.
-            1.6*2);  // sigma.
+            1.6);  // sigma.
  } else {
 
   p_sift = new cv::xfeatures2d::SIFT_Impl(

@@ -19,6 +19,33 @@ tfk::Stack::Stack(int base_section, int n_sections,
   this->output_dirpath = output_dirpath;
 }
 
+
+// gets bbox for entire stack.
+std::pair<cv::Point2f, cv::Point2f> tfk::Stack::get_bbox() {
+  float min_x = 0;
+  float max_x = 0;
+  float min_y = 0;
+  float max_y = 0;
+
+  for (int i = 0; i < this->sections.size(); i++) {
+    Section* section = this->sections[i];
+    //if (tile->bad_2d_alignment) continue;
+    std::pair<cv::Point2f, cv::Point2f> bbox = section->elastic_transform_bbox(section->get_bbox());
+    if (i == 0) {
+      min_x = bbox.first.x;
+      min_y = bbox.first.y;
+      max_x = bbox.second.x;
+      max_y = bbox.second.y;
+    } else {
+      if (bbox.first.x < min_x) min_x = bbox.first.x;
+      if (bbox.first.y < min_y) min_y = bbox.first.y;
+      if (bbox.second.x > max_x) max_x = bbox.second.x;
+      if (bbox.second.y > max_y) max_y = bbox.second.y;
+    }
+  }
+  return std::make_pair(cv::Point2f(min_x, min_y), cv::Point2f(max_x, max_y));
+}
+
 void tfk::Stack::init() {
   printf("Initializing the stack.\n");
   AlignData align_data;
@@ -194,13 +221,29 @@ void tfk::Stack::align_3d() {
 
   //this->sections = filtered_sections;
 
+  std::set<int> sections_with_3d_keypoints;
+  cilk_for (int i = 0; i < this->sections.size(); i++) {
+    this->sections[i]->read_3d_keypoints("");
+  }
+
+  //this->sections[0]->read_3d_keypoints("");
+  //sections_with_3d_keypoints.insert(0);
   cilk_spawn this->sections[0]->align_3d(this->sections[0]);
 
-  for (int i = 1; i < this->sections.size(); i++) {
-    cilk_spawn this->sections[i]->align_3d(this->sections[i-1]);
+  cilk_for (int i = 1; i < this->sections.size(); i++) {
+    //this->sections[i]->read_3d_keypoints("");
+    //sections_with_3d_keypoints.insert(i);
+    this->sections[i]->align_3d(this->sections[i-1]);
+    //if (i >= 2) {
+    //  this->sections[i-2]->erase_3d_keypoints();
+    //  sections_with_3d_keypoints.erase(i-2);
+    //}
   }
   cilk_sync;
-
+  //for (auto iter = sections_with_3d_keypoints.begin();
+  //     iter != sections_with_3d_keypoints.end(); ++iter) {
+  //  this->sections[*iter]->erase_3d_keypoints();
+  //}
 
   // section i is aligned to section i-1;
   for (int i = 1; i < this->sections.size(); i++) {
@@ -230,7 +273,7 @@ void tfk::Stack::align_2d() {
   int j = 0;
   int i = 0;
   while (j < this->sections.size()) {
-    j += 2;
+    j += 4;
     if (j >= this->sections.size()) j = this->sections.size();
 
     for (; i < j; i++) {

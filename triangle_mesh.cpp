@@ -146,10 +146,10 @@ TriangleMesh::TriangleMesh(double hex_spacing,
                            std::pair<cv::Point2f, cv::Point2f> _bbox) {
 
   this->bbox = _bbox;
-  bbox.first.x-=hex_spacing*3+0.01 + 50000;
-  bbox.first.y-=hex_spacing*3+0.01 + 50000;
-  bbox.second.x+=hex_spacing*3+0.01 + 50000;
-  bbox.second.y+=hex_spacing*3+0.01 + 50000;
+  bbox.first.x-=hex_spacing*3+0.01 + 100000;
+  bbox.first.y-=hex_spacing*3+0.01 + 100000;
+  bbox.second.x+=hex_spacing*3+0.01 + 100000;
+  bbox.second.y+=hex_spacing*3+0.01 + 100000;
 
   double min_x = bbox.first.x;
   double min_y = bbox.first.y;

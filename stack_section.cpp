@@ -17,7 +17,11 @@ extern fasttime_t global_start;
 #define CORR_THRESH 0.8
 
 
-
+void tfk::Section::erase_3d_keypoints() {
+  for (int i = 0; i < this->tiles.size(); i++) {
+    this->tiles[i]->release_3d_keypoints();
+  }
+}
 
 
 std::vector<tfk::Tile*> tfk::Section::get_all_neighbor_tiles(tfk::Tile* tile) {
@@ -144,7 +148,7 @@ void tfk::Section::align_2d() {
       std::string(ALIGN_CACHE_FILE_DIRECTORY + "/prefix_"+std::to_string(this->real_section_id));
 
       this->load_2d_alignment();
-      this->read_3d_keypoints(filename);
+      //this->read_3d_keypoints(filename);
       return;
     }
 
@@ -1149,10 +1153,10 @@ void tfk::Section::get_3d_keypoints_for_box(std::pair<cv::Point2f, cv::Point2f> 
 
     // filter out any keypoints that are not inside the bounding box.
     for (int i = 0; i < atile_all_kps.size(); i++) {
-      if (atile_all_kps[i].pt.x < box_min_x) continue;
-      if (atile_all_kps[i].pt.x > box_max_x) continue;
-      if (atile_all_kps[i].pt.y < box_min_y) continue;
-      if (atile_all_kps[i].pt.y > box_max_y) continue;
+      //if (atile_all_kps[i].pt.x < box_min_x) continue;
+      //if (atile_all_kps[i].pt.x > box_max_x) continue;
+      //if (atile_all_kps[i].pt.y < box_min_y) continue;
+      //if (atile_all_kps[i].pt.y > box_max_y) continue;
       kps_in_box.push_back(atile_all_kps[i]);
       kps_desc_in_box_list.push_back(atile_all_kps_desc[i]);
     }
@@ -1213,7 +1217,7 @@ void tfk::Section::find_3d_matches_in_box_cache(Section* neighbor,
   match_features(matches,
                  atile_kps_desc_in_overlap,
                  btile_kps_desc_in_overlap,
-                 0.92);
+                 0.65);
 
   printf("Num matches is %zu\n", matches.size());
 
@@ -1281,12 +1285,12 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
   this->get_3d_keypoints_for_box(sliding_bbox, atile_kps_in_overlap,
       atile_kps_desc_in_overlap, use_cached, sift_parameters, tiles_loaded, tiles_loaded_mutex, true);
 
-  if (atile_kps_in_overlap.size() < 120) return;
+  if (atile_kps_in_overlap.size() < 12) return;
 
   neighbor->get_3d_keypoints_for_box(sliding_bbox, btile_kps_in_overlap,
       btile_kps_desc_in_overlap, use_cached, sift_parameters, tiles_loaded, tiles_loaded_mutex, false);
 
-  if (btile_kps_in_overlap.size() < 120) return;
+  if (btile_kps_in_overlap.size() < 12) return;
 
   if (atile_kps_in_overlap.size() < 4 || btile_kps_in_overlap.size() < 4) return;
 
@@ -1380,8 +1384,8 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
   double max_x = bbox.second.x; 
   double max_y = bbox.second.y; 
   std::vector<std::pair<double, double> > valid_boxes;
-  for (double box_iter_x = min_x; box_iter_x < max_x + 12000; box_iter_x += 6000) {
-    for (double box_iter_y = min_y; box_iter_y < max_y + 12000; box_iter_y += 6000) {
+  for (double box_iter_x = min_x; box_iter_x < max_x + 12000; box_iter_x += 3000) {
+    for (double box_iter_y = min_y; box_iter_y < max_y + 12000; box_iter_y += 3000) {
       valid_boxes.push_back(std::make_pair(box_iter_x, box_iter_y));
     }
   }
@@ -1406,7 +1410,7 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
       //int num_filtered = 0;
       std::pair<cv::Point2f, cv::Point2f> sliding_bbox =
           std::make_pair(cv::Point2f(box_iter_x, box_iter_y),
-                         cv::Point2f(box_iter_x+12000, box_iter_y+12000));
+                         cv::Point2f(box_iter_x+6000, box_iter_y+6000));
 
 
       std::vector< cv::Point2f > test_filtered_match_points_a(0);
@@ -1581,7 +1585,7 @@ void tfk::Section::affine_transform_mesh() {
 
 void tfk::Section::construct_triangles() {
   printf("called construct triangles\n");
-  float hex_spacing = 3000.0;
+  float hex_spacing = 6000.0;
   std::pair<cv::Point2f, cv::Point2f> bbox = this->get_bbox();
   triangle_mesh = new TriangleMesh(hex_spacing, bbox);
 }
@@ -1736,6 +1740,7 @@ void tfk::Section::align_3d(Section* neighbor) {
 
   // check to see if the elastic transforms exist.
 
+
   if (!load_elastic_mesh(neighbor)) {
     // do the affine align with the neighbor.
     this->coarse_affine_align(neighbor);
@@ -1752,6 +1757,19 @@ void tfk::Section::align_3d(Section* neighbor) {
     this->get_elastic_matches_relative(neighbor);
     this->elastic_gradient_descent_section(neighbor);
     this->triangle_mesh->build_index_post();
+
+    //this->get_elastic_matches_relative(neighbor);
+    //this->elastic_gradient_descent_section(neighbor);
+    //this->triangle_mesh->build_index_post();
+
+    //this->get_elastic_matches_relative(neighbor);
+    //this->elastic_gradient_descent_section(neighbor);
+    //this->triangle_mesh->build_index_post();
+
+
+    //this->get_elastic_matches_relative(neighbor);
+    //this->elastic_gradient_descent_section(neighbor);
+    //this->triangle_mesh->build_index_post();
 
     //this->get_elastic_matches_relative(neighbor);
     //this->elastic_gradient_descent_section(neighbor);
@@ -2321,6 +2339,9 @@ bool tfk::Section::alignment2d_exists() {
 }
 
 void tfk::Section::read_3d_keypoints(std::string filename) {
+
+  filename = std::string(ALIGN_CACHE_FILE_DIRECTORY + "/prefix_"+std::to_string(this->real_section_id));
+
   cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"),
                      cv::FileStorage::READ);
   int count = 0;
