@@ -20,6 +20,9 @@ class MatchTilePairTask : public MRTask {
     void set_random_train();
     //void update_result(float last_correct, float next_correct);
 
+    cv::Point2f compute_quick(Tile* a_tile, Tile* b_tile);
+
+    bool second_pass;
     Tile* a_tile;
     Tile* b_tile;
     cv::Point2f predicted_offset;

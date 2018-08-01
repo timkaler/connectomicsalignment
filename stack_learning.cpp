@@ -217,7 +217,7 @@ void tfk::Stack::train_fsj(int trials) {
   int64_t failure_count = 0;
 
 
-  MLAnn* model = new MLAnn(5, "tfk_test_model");
+  MLAnn* model = new MLAnn(11, "tfk_test_model");
   //model->load("tfk_test_model", true);
   //model->enable_training();
   //model->train(false);
@@ -252,7 +252,7 @@ void tfk::Stack::train_fsj(int trials) {
     MatchTilePairTask* task2 = new MatchTilePairTask(tile_a, tile_b, true);
     task2->dependencies = dependencies;
     task2->compute_with_params(trial_mr_params);
-    bool res1 = task2->error_check(0.9);
+    bool res1 = task2->error_check(1.9);
     delete dependencies[tile_a->tile_id];
     delete dependencies[tile_b->tile_id];
     cv::Point2f offset2 = task2->predicted_offset;
@@ -260,25 +260,29 @@ void tfk::Stack::train_fsj(int trials) {
 
     MatchTilePairTask* task1 = new MatchTilePairTask(tile_a, tile_b, true);
     task1->compute_with_params(best_mr_params);
-    bool res2 = task1->error_check(0.9);
+    bool res2 = task1->error_check(1.9);
     cv::Point2f offset1 = task1->predicted_offset;
 
       tile_a->release_2d_keypoints();
       tile_b->release_2d_keypoints();
       tile_a->release_full_image();
       tile_b->release_full_image();
-    if (!res1 || !res2) {
-      __sync_fetch_and_add(&failure_count, 1);
-      delete task1;
-      delete task2;
-      continue;
-    }
+    //if (!res1 || !res2) {
+    //  if (res1 != res2) {
+    //    __sync_fetch_and_add(&failure_count, 1);
+    //  } else {
+    //    __sync_fetch_and_add(&success_count, 1);
+    //  }
+    //  delete task1;
+    //  delete task2;
+    //  continue;
+    //}
     float dx = offset1.x - offset2.x;
     float dy = offset1.y - offset2.y;
     float dist = sqrt(dx*dx+dy*dy);
     int local_failure_count = failure_count;
     int local_success_count = success_count;
-    if (dist > 2.0) {
+    if (res1 != res2 || dist > 2.0) {
       local_failure_count = __sync_fetch_and_add(&failure_count, 1)+1;
       model->add_training_example(task2->get_feature_vector(), 0, dist);
       printf("failure\n");

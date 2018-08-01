@@ -36,8 +36,242 @@ float tfk::Tile::compute_deviation(Tile* b_tile) {
 }
 
 
+std::vector<float> tfk::Tile::tile_pair_feature(Tile *other) {
+  //return 1.0;
+  if (!(this->overlaps_with(other))) {
+    return std::vector<float>();//-2;
+  }
+
+
+  cv::Mat tile_p_image_1;
+  cv::Mat tile_p_image_2;
+
+  float scale = 0.3;
+  float scale_x = scale;
+  float scale_y = scale;
+  tile_p_image_1 = this->get_tile_data(Resolution::PERCENT30);
+  tile_p_image_2 = other->get_tile_data(Resolution::PERCENT30);
+  //tile_p_image_1 = this->get_tile_data(Resolution::FULL);
+  //tile_p_image_2 = other->get_tile_data(Resolution::FULL);
+
+  std::pair<cv::Point2f, cv::Point2f> tile_1_bounds = this->get_bbox();
+  std::pair<cv::Point2f, cv::Point2f> tile_2_bounds = other->get_bbox();
+
+  // scale the bbox.
+  tile_1_bounds.first.x *= scale_x;
+  tile_1_bounds.first.y *= scale_y;
+  tile_1_bounds.second.x *= scale_x;
+  tile_1_bounds.second.y *= scale_y;
+  tile_2_bounds.first.x *= scale_x;
+  tile_2_bounds.first.y *= scale_y;
+  tile_2_bounds.second.x *= scale_x;
+  tile_2_bounds.second.y *= scale_y;
+
+  int nrows = std::min(tile_1_bounds.second.y, tile_2_bounds.second.y) - std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
+  int ncols = std::min(tile_1_bounds.second.x, tile_2_bounds.second.x) - std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
+  //printf("rows = %d, cols = %d\n", nrows, ncols);
+  if ((nrows <= 0) || (ncols <= 0) ) {
+    return std::vector<float>();
+  }
+  int offset_x = std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
+  int offset_y = std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
+
+
+
+
+  cv::Mat transform_1 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
+  cv::Mat transform_2 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
+
+  // make the transformed images in the same size with the same cells in the same locations
+
+  // determine start coordinates
+
+  int start_y1 = 1000000;
+  int end_y1 = -1;
+  int start_x1 = 1000000;
+  int end_x1 = -1;
+  for (int _y = 0; _y < tile_p_image_1.rows; _y++) {
+      int _x = 0;
+      cv::Point2f p = cv::Point2f(_x/scale, _y/scale);
+      cv::Point2f transformed_p = this->rigid_transform(p)*scale;
+
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((y_c >= 0) && (y_c < nrows)) {
+        if (_y < start_y1) {
+          start_y1 = _y;
+        }
+        if (_y > end_y1) {
+          end_y1 = _y;
+        }
+      }
+  }
+  for (int _x = 0; _x < tile_p_image_1.cols; _x++) {
+      int _y = 0;
+      cv::Point2f p = cv::Point2f(_x/scale, _y/scale);
+      cv::Point2f transformed_p = this->rigid_transform(p)*scale;
+
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((x_c >= 0) && (x_c < ncols)) {
+        if (_x < start_x1) {
+          start_x1 = _x;
+        }
+        if (_x > end_x1) {
+          end_x1 = _x;
+        }
+      }
+  }
+
+  int start_y2 = 1000000;
+  int end_y2 = -1;
+  int start_x2 = 1000000;
+  int end_x2 = -1;
+  for (int _y = 0; _y < tile_p_image_2.rows; _y++) {
+      int _x = 0;
+      cv::Point2f p = cv::Point2f(_x/scale, _y/scale);
+      cv::Point2f transformed_p = other->rigid_transform(p)*scale;
+
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((y_c >= 0) && (y_c < nrows)) {
+        if (_y < start_y2) {
+          start_y2 = _y;
+        }
+        if (_y > end_y2) {
+          end_y2 = _y;
+        }
+      }
+  }
+  for (int _x = 0; _x < tile_p_image_2.cols; _x++) {
+      int _y = 0;
+      cv::Point2f p = cv::Point2f(_x/scale, _y/scale);
+      cv::Point2f transformed_p = other->rigid_transform(p)*scale;
+
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((x_c >= 0) && (x_c < ncols)) {
+        if (_x < start_x2) {
+          start_x2 = _x;
+        }
+        if (_x > end_x2) {
+          end_x2 = _x;
+        }
+      }
+  }
+
+
+  for (int _y = start_y1; _y < end_y1; _y++) {
+    for (int _x = start_x1; _x < end_x1; _x++) {
+      cv::Point2f p = cv::Point2f(_x/scale, _y/scale);
+      cv::Point2f transformed_p = this->rigid_transform(p)*scale;
+
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
+        transform_1.at<unsigned char>(y_c, x_c) +=
+           tile_p_image_1.at<unsigned char>(_y, _x);
+      }
+    }
+  }
+
+  for (int _y = start_y2; _y < end_y2; _y++) {
+    for (int _x = start_x2; _x < end_x2; _x++) {
+      cv::Point2f p = cv::Point2f(_x/scale, _y/scale);
+      cv::Point2f transformed_p = other->rigid_transform(p)*scale;
+
+      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
+      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
+      if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
+        transform_2.at<unsigned char>(y_c, x_c) +=
+           tile_p_image_2.at<unsigned char>(_y, _x);
+      }
+    }
+  }
+
+
+
+  // clear any location which only has a value for one of them
+  // note that the transforms are the same size
+  int min_x = 1000000;
+  int min_y = 1000000;
+  int max_x = -1;
+  int max_y = -1;
+  for (int _y = 0; _y < transform_1.rows; _y++) {
+    for (int _x = 0; _x < transform_1.cols; _x++) {
+      if (transform_2.at<unsigned char>(_y, _x) == 0) {
+       transform_1.at<unsigned char>(_y, _x) = 0;
+      }
+      else if (transform_1.at<unsigned char>(_y, _x) == 0) {
+       transform_2.at<unsigned char>(_y, _x) = 0;
+      } else {
+        if (_y < min_y) min_y = _y;
+        if (_y > max_y) max_y = _y;
+        if (_x < min_x) min_x = _x;
+        if (_x > max_x) max_x = _x;
+      }
+    }
+  }
+
+  int small_nrows = max_y - min_y + 1;
+  int small_ncols = max_x - min_x + 1;
+  if (small_nrows <= 0 || small_ncols <= 0) return std::vector<float>();
+  cv::Mat small_transform_1 = cv::Mat::zeros(small_nrows, small_ncols, CV_8UC1);
+  cv::Mat small_transform_2 = cv::Mat::zeros(small_nrows, small_ncols, CV_8UC1);
+
+  for (int _y = 0; _y < transform_1.rows; _y++) {
+    for (int _x = 0; _x < transform_1.cols; _x++) {
+      if (transform_2.at<unsigned char>(_y, _x) == 0) {
+       transform_1.at<unsigned char>(_y, _x) = 0;
+      }
+      else if (transform_1.at<unsigned char>(_y, _x) == 0) {
+       transform_2.at<unsigned char>(_y, _x) = 0;
+      } else {
+        small_transform_1.at<unsigned char>(_y-min_y, _x-min_x) =
+            transform_1.at<unsigned char>(_y, _x);
+        small_transform_2.at<unsigned char>(_y-min_y, _x-min_x) =
+            transform_2.at<unsigned char>(_y, _x);
+      }
+    }
+  }
+
+  //if (small_transform_1.rows < 10 || small_transform_2.rows < 10 ||
+  //    small_transform_1.cols < 10 || small_transform_2.cols < 10) {
+  //  return std::vector<float>();
+  //}
+
+  int start_index = 0;
+  std::vector<float> coordinates;
+  //for (int r = 0; r < 10; r++) {
+  //  for (int c = 0; c < 10; c++) {
+  //    coordinates.push_back(1.0*small_transform_1.at<unsigned char>(r,c));
+  //    coordinates.push_back(1.0*small_transform_2.at<unsigned char>(r,c));
+  //  }
+  //}
+
+  cv::Mat result_CCOEFF_NORMED;
+  cv::Mat result_TM_SQDIFF;
+
+  ////cv::Mat _transform_1, _transform_2;
+  ////cv::resize(transform_1, _transform_1, cv::Size(), 1.0,1.0, CV_INTER_AREA);
+  ////cv::resize(transform_2, _transform_2, cv::Size(), 1.0,1.0, CV_INTER_AREA);
+
+  ////cv::matchTemplate(_transform_1, _transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
+  cv::matchTemplate(small_transform_1, small_transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
+  cv::matchTemplate(small_transform_1, small_transform_2, result_TM_SQDIFF, CV_TM_SQDIFF);
+  coordinates.push_back(result_CCOEFF_NORMED.at<float>(0,0));
+  coordinates.push_back(result_TM_SQDIFF.at<float>(0,0));
+  coordinates.push_back(small_transform_1.rows*small_transform_1.cols/(scale*scale));
+  coordinates.push_back(small_transform_1.rows/scale);
+  coordinates.push_back(small_transform_1.cols/scale);
+
+  return coordinates;
+  //cv::matchTemplate(small_transform_1, small_transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
+  //return result_CCOEFF_NORMED.at<float>(0,0);
+}
+
 float tfk::Tile::error_tile_pair(Tile *other) {
-  return 1.0;
+  //return 1.0;
   if (!(this->overlaps_with(other))) {
     return -2;
   }
@@ -324,7 +558,8 @@ float tfk::Tile::error_tile_pair(Tile *other) {
 //}
 
 
-std::pair<cv::Mat, cv::Mat> tfk::Tile::get_overlap_matrix(Tile* other, float scale) {
+std::pair<cv::Mat, cv::Mat> tfk::Tile::get_overlap_matrix(Tile* other, float scale,
+    std::pair<cv::Point2f, cv::Point2f>& offset_info) {
 
 
     if (!(this->overlaps_with(other))) {
@@ -474,6 +709,11 @@ std::pair<cv::Mat, cv::Mat> tfk::Tile::get_overlap_matrix(Tile* other, float sca
     }
   }
 
+  offset_info =
+      std::make_pair(cv::Point2f(1.0*start_x1, 1.0*start_y1),
+                     cv::Point2f(1.0*start_x2, 1.0*start_y2));
+  printf("offset info %d %d %d %d\n", start_x1, start_y1, start_x2, start_y2);
+
   // clear any location which only has a value for one of them
   // note that the transforms are the same size
   int min_x = 1000000;
@@ -532,7 +772,8 @@ cv::Mat tfk::Tile::get_feature_vector(Tile *other, int boxes, int type) {
   // means and stddev
   if (type == 1) {
     cv::Mat vector = cv::Mat::zeros(1, boxes*boxes*4+1, CV_32F);
-    std::pair<cv::Mat, cv::Mat> overlaps = this->get_overlap_matrix(other, 1.0);
+    std::pair<cv::Point2f, cv::Point2f> offset_info;
+    std::pair<cv::Mat, cv::Mat> overlaps = this->get_overlap_matrix(other, 1.0, offset_info);
     if (overlaps.first.rows == 0 && overlaps.first.cols == 0) return vector;
 
 
@@ -573,8 +814,8 @@ cv::Mat tfk::Tile::get_feature_vector(Tile *other, int boxes, int type) {
   // corrlations
   if (type == 2) {
     cv::Mat vector = cv::Mat::zeros(1, boxes*boxes+1, CV_32F);
-
-    std::pair<cv::Mat, cv::Mat> overlaps = this->get_overlap_matrix(other, 1.0);
+    std::pair<cv::Point2f, cv::Point2f> offset_info;
+    std::pair<cv::Mat, cv::Mat> overlaps = this->get_overlap_matrix(other, 1.0, offset_info);
     if (overlaps.first.rows == 0 && overlaps.first.cols == 0) return vector;
 
     cv::Mat transform_1 = overlaps.first;
@@ -603,8 +844,8 @@ cv::Mat tfk::Tile::get_feature_vector(Tile *other, int boxes, int type) {
   // both of above
   if (type == 3) {
     cv::Mat vector = cv::Mat::zeros(1, 5*boxes*boxes+1, CV_32F);
-
-    std::pair<cv::Mat, cv::Mat> overlaps = this->get_overlap_matrix(other, 1.0);
+    std::pair<cv::Point2f, cv::Point2f> offset_info;
+    std::pair<cv::Mat, cv::Mat> overlaps = this->get_overlap_matrix(other, 1.0, offset_info);
     if (overlaps.first.rows == 0 && overlaps.first.cols == 0) return vector;
 
     cv::Mat transform_1 = overlaps.first;
@@ -1407,7 +1648,7 @@ void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
             //24,  // number of octaves
             CONTRAST_THRESH_3D,  // contrast threshold.
             EDGE_THRESH_3D,  // edge threshold.
-            1.6);  // sigma.
+            1.6*2);  // sigma.
  } else {
 
   p_sift = new cv::xfeatures2d::SIFT_Impl(
@@ -1539,7 +1780,11 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
         //printf("%s\n", path.c_str());
         //std::string new_path = this->filepath + "_.jpg";
         //printf("%s\n", new_path.c_str());
-        full_image = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+        cv::Mat tmp = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+
+        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
+        clahe->setClipLimit(1.0);
+        clahe->apply(tmp,full_image);
         //int val = __sync_fetch_and_add(&DEBUG_total_read_count, 1);
         //printf("Total read is %d\n", val);
         //printf("image rows %d and cols %d\n", full_image.rows, full_image.cols);

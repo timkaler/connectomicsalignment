@@ -307,7 +307,8 @@ void align_execute(align_data_t *p_align_data) {
     int _start_y = 100000;
 
 
-    auto entire_bbox = stack->get_bbox();//stack->sections[0]->get_bbox();
+    //auto entire_bbox = stack->get_bbox();//stack->sections[0]->get_bbox();
+    auto entire_bbox = stack->sections[0]->get_bbox();
 
     float x1 = (entire_bbox.first.x + entire_bbox.second.x)/2+5000;// -2500 + 5000;
     //float x1 = (entire_bbox.first.x);
@@ -327,7 +328,7 @@ void align_execute(align_data_t *p_align_data) {
     printf("Right before render\n");
     //printf("Is Overlap: %d\n",tfk::mesh_overlaps(stack));
     printf("Num Sections: %d\n", stack->sections.size());
-    overlay_triangles_stack(stack, entire_bbox, tfk::THUMBNAIL, ALIGN_OUTPUT_FILE_DIRECTORY + "/rendertest0");
+    //overlay_triangles_stack(stack, entire_bbox, tfk::THUMBNAIL, ALIGN_OUTPUT_FILE_DIRECTORY + "/rendertest0");
     // tfk::Data* data = new tfk::Data();
     // data->sample_stack(stack, 10, 10000, "sampletest0");
     //stack->render(std::make_pair(cv::Point2f(_start_x,_start_y),cv::Point2f(_start_x + size, _start_y + size)), "renderthumb", tfk::THUMBNAIL);
@@ -449,7 +450,7 @@ void train_fsj(align_data_t *p_align_data) {
     stack->init();
     printf("stack has sections %zu\n", stack->sections.size());
     std::vector<tfk::params> ps;
-    int trials = 10000;
+    int trials = 1000;
 
     stack->train_fsj(trials);
     return;
@@ -477,7 +478,7 @@ void test_learning(align_data_t *p_align_data) {
     stack->init();
     printf("stack has sections %zu\n", stack->sections.size());
     std::vector<tfk::params> ps;
-    int trials = 10000;
+    int trials = 1000;
 
     stack->test_learning(trials, 5, 2);
     return;

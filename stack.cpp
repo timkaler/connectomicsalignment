@@ -83,7 +83,7 @@ void tfk::Stack::init() {
 
   printf("setting up the ml models and the paramsdb\n");
 
-  this->ml_models[MATCH_TILE_PAIR_TASK_ID] = new MLAnn(5);//new MLAnn(1+5*5*5+3);
+  this->ml_models[MATCH_TILE_PAIR_TASK_ID] = new MLAnn(11);//new MLAnn(1+5*5*5+3);
   this->ml_models[MATCH_TILES_TASK_ID] = new MLAnn(4);
   
   //std::string ml_model_location = "ml_after_param_opt.ml.25000_5_4_pre";
@@ -91,7 +91,8 @@ void tfk::Stack::init() {
   printf("the ml model for task MATCH_TILE_PAIR is at %s\n", ml_model_location.c_str());
   try {
     this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load(ml_model_location, true);
-    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->train(false);
+    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->enable_training();
+    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->train(true);
   } catch (const std::exception& e) {
 
   }
@@ -273,7 +274,7 @@ void tfk::Stack::align_2d() {
   int j = 0;
   int i = 0;
   while (j < this->sections.size()) {
-    j += 4;
+    j += 2;
     if (j >= this->sections.size()) j = this->sections.size();
 
     for (; i < j; i++) {

@@ -63,6 +63,7 @@ typedef struct {
   graph_section_data n_section_data;
   void* my_section;
   void* n_section;
+  cv::Point2f dest_p;
 } tfkMatch;
 
 

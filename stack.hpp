@@ -98,7 +98,7 @@ class Tile {
    bool tmp_bad_2d_alignment;
    double shape_dx;
    double shape_dy;
-   std::pair<cv::Mat, cv::Mat> get_overlap_matrix(Tile* other, float scale);
+   std::pair<cv::Mat, cv::Mat> get_overlap_matrix(Tile* other, float scale, std::pair<cv::Point2f, cv::Point2f>& overlap_matrix);
 
    //MRTask* match_tiles_task;
 
@@ -184,6 +184,8 @@ class Tile {
    void release_2d_keypoints();
 
    float error_tile_pair(Tile *other);
+
+   std::vector<float> tile_pair_feature(Tile* other);
 
    void get_3d_keypoints(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::Mat>& desc);
 

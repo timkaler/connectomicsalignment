@@ -37,6 +37,69 @@ namespace tfk {
 
     //MatchTilePairTask::~MatchTilePairTask () {}
 
+
+
+    cv::Point2f MatchTilePairTask::compute_quick(Tile* a_tile, Tile* b_tile) {
+      std::pair<cv::Point2f, cv::Point2f> overlap_offsets;
+      std::pair<cv::Mat, cv::Mat> images = a_tile->get_overlap_matrix(b_tile, 0.5, overlap_offsets);
+      printf("overlap offsets %f %f %f %f\n", overlap_offsets.first.x, overlap_offsets.first.y, overlap_offsets.second.x, overlap_offsets.second.y);
+      int rows = images.first.rows;
+      int cols = images.first.cols;
+      if (rows < 20 || cols < 20) return cv::Point2f(0,0);
+
+      int start_r = 0;
+      int start_c = 0;
+
+      int start_r2 = rows - 10;
+      int start_c2 = cols - 10;
+
+      int start_r3 = rows - 5;
+      int start_c3 = cols - 5;
+
+      cv::Mat tmplate(10,10,CV_8UC1);
+      cv::Mat tmplate2(10,10,CV_8UC1);
+      cv::Mat tmplate3(10,10,CV_8UC1);
+      for (int r = 0; r < 10; r++) {
+        for (int c = 0; c < 10; c++) {
+          tmplate.at<unsigned char>(r,c) = images.first.at<unsigned char>(r+start_r,c+start_c);
+          tmplate2.at<unsigned char>(r,c) = images.first.at<unsigned char>(r+start_r2,c+start_c2);
+          tmplate3.at<unsigned char>(r,c) = images.first.at<unsigned char>(r+start_r3,c+start_c3);
+        }
+      }
+
+      cv::Mat result,result2, result3;
+      cv::matchTemplate(images.second, tmplate, result, CV_TM_CCOEFF);
+      cv::matchTemplate(images.second, tmplate2, result2, CV_TM_CCOEFF);
+      cv::matchTemplate(images.second, tmplate2, result3, CV_TM_CCOEFF);
+
+
+      cv::Point2f best = cv::Point2f(0.0,0.0);
+      cv::Point2f best_offset = cv::Point2f(0.0,0.0);
+      float best_val = -1000.0;
+      for (int r = 0 ; r < result.rows; r++) {
+        for (int c = 0; c < result.cols; c++) {
+          float res1 = result.at<float>(r,c);
+          float res2 = result2.at<float>(r,c);
+          float res3 = result3.at<float>(r,c);
+          float val = std::min(res1,res2);
+          val = std::min(val,res3);
+          //if (result2.at<float>(r,c) < 0 || result1.at<float>(r,c) < 0) continue;
+          if (val > best_val) {
+            best_val = val;
+            cv::Point2f a_point = a_tile->rigid_transform(cv::Point2f(overlap_offsets.first.x+1.0*start_c, overlap_offsets.first.y + 1.0*start_r));
+
+            cv::Point2f b_point = b_tile->rigid_transform(cv::Point2f(overlap_offsets.second.x+1.0*start_c, overlap_offsets.second.y + 1.0*start_r));
+            best_offset = cv::Point2f(1.0*c,1.0*r);
+
+            best = cv::Point2f(1.0*overlap_offsets.second.x-1.0*overlap_offsets.first.x, 1.0*overlap_offsets.second.y - 1.0*overlap_offsets.first.y);
+            printf("best offset is %f %f val %f\n", best_offset.x-start_c, best_offset.y-start_r, val);
+          }
+        }
+      }
+      printf("best offset is %f %f\n", best_offset.x-start_c, best_offset.y-start_r);
+      return best;
+    }
+
     void MatchTilePairTask::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
       std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
       cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
@@ -295,7 +358,7 @@ namespace tfk {
           }
         }
         free(mask);
-        if (num_matches_filtered >= MIN_FEATURES_NUM && filtered_match_points_a.size() >= 0.1*matches.size()) {
+        if (num_matches_filtered >= MIN_FEATURES_NUM && filtered_match_points_a.size() >= 0.05*matches.size()) {
           //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
           break;
         } else {
@@ -319,8 +382,8 @@ namespace tfk {
   best_params.contrast_threshold = .015;//CONTRAST_THRESH;
   best_params.edge_threshold = 10;//EDGE_THRESH_2D;
   best_params.sigma = 1.2;//1.6;
-  best_params.scale_x = 0.5;
-  best_params.scale_y = 0.5;
+  best_params.scale_x = 1.0;
+  best_params.scale_y = 1.0;
   best_params.res = FULL;
 
       //tfk::params new_params;
@@ -335,7 +398,7 @@ namespace tfk {
       //new_params.sigma = 1.6;//mr_params->get_float_param("sigma");
 
 
-      bool second_pass = false;
+      second_pass = false;
 
 
       //TODO(wheatman) doing extra work here, but makes it the same as the cached version
@@ -420,7 +483,8 @@ namespace tfk {
 
       tmp_vector.push_back(var_x);
       tmp_vector.push_back(var_y);
-      tmp_vector.push_back(1.0);
+      tmp_vector.push_back(a_tile->index);
+      tmp_vector.push_back(b_tile->index);
 
       Tile tmp_a_tile = *a_tile;
       //std::vector<cv::Point2f> alt_filtered_match_points_a = alt_matched_points.first;
@@ -447,8 +511,18 @@ namespace tfk {
       cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
                                         b_tile->y_start+b_tile->offset_y);
       current_offset = a_point - b_point;
-
+      //printf("a_tile id and index %d %d\n", a_tile->index, a_tile->tile_id);
+      //if (!second_pass) {
+      //  this->predicted_offset = compute_quick(a_tile, b_tile);
+      //  printf("predicted offset %f, %f\n", predicted_offset.x, predicted_offset.y);
+      //  for (int i = 0; i < MIN_FEATURES_NUM+1; i++) { 
+      //  filtered_match_points_a.push_back(cv::Point2f(0,0));
+      //  filtered_match_points_b.push_back(cv::Point2f(0,0));
+      //  }
+      //} else {
       this->predicted_offset = current_offset;
+      //printf("predicted offset %f, %f\n", predicted_offset.x, predicted_offset.y);
+      //}
       //printf("predicted offset %f %f\n", current_offset.x, current_offset.y);
 
       //tmp_a_tile.get_feature_vector(b_tile, 5, 4).copyTo(a_tile->feature_vectors[b_tile]);
@@ -473,27 +547,47 @@ namespace tfk {
       //  }
       //}
 
-      float val = tmp_a_tile.error_tile_pair(b_tile);
-      tmp_vector.push_back(val);
-      this->feature_vector = tmp_vector;
+      float val = 2.0;//tmp_a_tile.error_tile_pair(b_tile);
+      //tmp_vector.push_back(val);
+      this->feature_vector = tmp_a_tile.tile_pair_feature(b_tile);
+      this->feature_vector.push_back(filtered_match_points_a.size());
+      std::vector<float> tmp_feature_vector = a_tile->tile_pair_feature(b_tile);
+      for (int i = 0; i < tmp_feature_vector.size(); i++) {
+        this->feature_vector.push_back(tmp_feature_vector[i]);
+      }
 
-      
+      if (this->feature_vector.size() == 0) {
+        printf("feature vector size is 0\n");
+        //exit(0);
+        for (int i = 0; i < 10*10; i++) {
+          this->feature_vector.push_back(rand()%256);
+          this->feature_vector.push_back(rand()%256);
+        }
+      }
       if (false_negative_rate > 0) {
         //bool guess_ml = this->model->predict(a_tile->feature_vectors[b_tile]);
         //bool guess_ml = false;//this->model->predict(a_tile->feature_vectors[b_tile]);
-        bool guess_ml = this->model->predict(tmp_vector);//this->model->predict(a_tile->feature_vectors[b_tile]);
+
+        bool guess_ml;
+        if (false_negative_rate <= 1.0) {
+          guess_ml = this->model->predict(tmp_vector);//this->model->predict(a_tile->feature_vectors[b_tile]);
+        } else {
+          guess_ml = true;
+        }
+        //if (!second_pass) guess_ml = false;
+        //guess_ml = true;
         //bool guess_ml = true;
         a_tile->ml_preds[b_tile] = guess_ml;
         //if (false && /*guess_ml*/ val >= 0.75) {
         if ((guess_ml || false_negative_rate > 1.0) && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
           a_tile->ideal_offsets[b_tile->tile_id] = current_offset;
           a_tile->neighbor_correlations[b_tile->tile_id] = val;
-          a_tile->ml_preds[b_tile] = true;
+          a_tile->ml_preds[b_tile] = guess_ml;
           success = true;
           return true;
         } else {
           a_tile->ideal_offsets.erase(b_tile->tile_id);
-          a_tile->ml_preds[b_tile] = false;
+          a_tile->ml_preds[b_tile] = guess_ml;
           success = false;
           return false;
         }

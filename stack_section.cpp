@@ -311,7 +311,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
   double cross_slice_winsor = 20.0;
   double intra_slice_weight = 1.0;
   double intra_slice_winsor = 200.0;
-  int max_iterations = 10000; //ORIGINALL 5000
+  int max_iterations = 2000; //ORIGINALL 5000
   double stepsize = 0.1;
   double momentum = 0.9;
 
@@ -459,24 +459,24 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
           //int nz = n_section->section_id;
 
           cv::Point2f* gradients1 = my_section->gradients;
-          cv::Point2f* gradients2 = n_section->gradients;
+          //cv::Point2f* gradients2 = n_section->gradients;
           double* barys1 = mesh_matches[j].my_barys;
-          double* barys2 = mesh_matches[j].n_barys;
+          //double* barys2 = mesh_matches[j].n_barys;
           double all_weight = cross_slice_weight / mesh_matches.size();
           double sigma = cross_slice_winsor;
 
           int indices1[3] = {mesh_matches[j].my_tri.index1,
                              mesh_matches[j].my_tri.index2,
                              mesh_matches[j].my_tri.index3};
-          int indices2[3] = {mesh_matches[j].n_tri.index1,
-                             mesh_matches[j].n_tri.index2,
-                             mesh_matches[j].n_tri.index3};
+          //int indices2[3] = {mesh_matches[j].n_tri.index1,
+          //                   mesh_matches[j].n_tri.index2,
+          //                   mesh_matches[j].n_tri.index3};
 
-          cost += crosslink_mesh_derivs(mesh1, mesh2,
-                                        gradients1, gradients2,
-                                        indices1, indices2,
-                                        barys1, barys2,
-                                        all_weight, sigma);
+          cost += crosslink_mesh_derivs(mesh1,
+                                        gradients1,
+                                        indices1,
+                                        barys1,
+                                        all_weight, sigma, mesh_matches[j].dest_p);
 
           //cost += crosslink_mesh_derivs(mesh2, mesh1,
           //                              gradients2, gradients1,
@@ -1384,8 +1384,8 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
   double max_x = bbox.second.x; 
   double max_y = bbox.second.y; 
   std::vector<std::pair<double, double> > valid_boxes;
-  for (double box_iter_x = min_x; box_iter_x < max_x + 12000; box_iter_x += 3000) {
-    for (double box_iter_y = min_y; box_iter_y < max_y + 12000; box_iter_y += 3000) {
+  for (double box_iter_x = min_x; box_iter_x < max_x + 12000; box_iter_x += 12000) {
+    for (double box_iter_y = min_y; box_iter_y < max_y + 12000; box_iter_y += 12000) {
       valid_boxes.push_back(std::make_pair(box_iter_x, box_iter_y));
     }
   }
@@ -1410,7 +1410,7 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
       //int num_filtered = 0;
       std::pair<cv::Point2f, cv::Point2f> sliding_bbox =
           std::make_pair(cv::Point2f(box_iter_x, box_iter_y),
-                         cv::Point2f(box_iter_x+6000, box_iter_y+6000));
+                         cv::Point2f(box_iter_x+12000, box_iter_y+12000));
 
 
       std::vector< cv::Point2f > test_filtered_match_points_a(0);
@@ -1499,63 +1499,159 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
       }
     //}
 
+
+  // divide all the points into triangles.
+  std::map<int, std::vector<cv::Point2f> > parted_points_a;
+  std::map<int, std::vector<cv::Point2f> > parted_points_b;
+
   for (int m = 0; m < filtered_match_points_a.size(); m++) {
     cv::Point2f my_pt = filtered_match_points_a[m];
     cv::Point2f n_pt = filtered_match_points_b[m];
-
     Triangle my_tri = this->triangle_mesh->find_triangle_post(my_pt);
-    Triangle n_tri = neighbor->triangle_mesh->find_triangle(my_pt);
-    if (my_tri.index == -1 || n_tri.index == -1) continue;
-    tfkMatch match;
+    if (my_tri.index == -1) continue;
+    parted_points_a[my_tri.index].push_back(my_pt);
+    parted_points_b[my_tri.index].push_back(n_pt);
+  }
 
-    // find the triangle...
+  // after dividing all the points filter out any triangles that don't have at least 3 points.
+  for (auto iter = parted_points_a.begin(); iter != parted_points_a.end(); ++iter) {
     std::vector<tfkTriangle>* triangles = this->triangle_mesh->triangles;//this->triangles[wid];
     std::vector<cv::Point2f>* mesh = this->triangle_mesh->mesh;
 
-    std::vector<tfkTriangle>* n_triangles = neighbor->triangle_mesh->triangles;
-    std::vector<cv::Point2f>* n_mesh = neighbor->triangle_mesh->mesh_orig;
+    int s = iter->first;
+    cv::Point2f opt1 = (*mesh)[(*triangles)[s].index1];
+    cv::Point2f opt2 = (*mesh)[(*triangles)[s].index2];
+    cv::Point2f opt3 = (*mesh)[(*triangles)[s].index3];
 
-    {
-      int s = my_tri.index;
-      float u,v,w;
-      cv::Point2f pt1 = (*mesh)[(*triangles)[s].index1];
-      cv::Point2f pt2 = (*mesh)[(*triangles)[s].index2];
-      cv::Point2f pt3 = (*mesh)[(*triangles)[s].index3];
-      Barycentric(my_pt, pt1,pt2,pt3,u,v,w);
-      if (u <= 0 || v <= 0 || w <= 0) continue;
-      int my_triangle_index = s;
-      match.my_tri = (*triangles)[my_triangle_index];
-      match.my_barys[0] = (double)1.0*u;
-      match.my_barys[1] = (double)1.0*v;
-      match.my_barys[2] = (double)1.0*w;
-    }
+    cv::Point2f pt1 = (*mesh)[(*triangles)[s].index1];
+    cv::Point2f pt2 = (*mesh)[(*triangles)[s].index2];
+    cv::Point2f pt3 = (*mesh)[(*triangles)[s].index3];
+    if (parted_points_a.size() < 3) continue;
 
-    {
-      int s = n_tri.index;
-      float u,v,w;
-      cv::Point2f pt1 = (*n_mesh)[(*n_triangles)[s].index1];
-      cv::Point2f pt2 = (*n_mesh)[(*n_triangles)[s].index2];
-      cv::Point2f pt3 = (*n_mesh)[(*n_triangles)[s].index3];
-      Barycentric(n_pt, pt1,pt2,pt3,u,v,w);
-      if (u <= 0 || v <= 0 || w <= 0) continue;
-      int n_triangle_index = s;
-      match.n_tri = (*n_triangles)[n_triangle_index];
-      match.n_barys[0] = (double)1.0*u;
-      match.n_barys[1] = (double)1.0*v;
-      match.n_barys[2] = (double)1.0*w;
-    }
+   for (int gs = 0; gs < 1000; gs++) {
+      cv::Point2f d_pt1 = cv::Point2f(0.0,0.0);
+      cv::Point2f d_pt2 = cv::Point2f(0.0,0.0);
+      cv::Point2f d_pt3 = cv::Point2f(0.0,0.0);
 
-    //if (my_triangle_index == -1 || n_triangle_index == -1) continue;
+      for (int k = 0; k < parted_points_a[s].size(); k++) {
+        cv::Point2f my_pt = parted_points_a[s][k];
+        cv::Point2f n_pt = parted_points_b[s][k];
+        float u,v,w;
+        Barycentric(my_pt, opt1,opt2,opt3,u,v,w);
+        //if (u < 0 || v < 0 || w < 0) continue;
+        if (std::isnan(u) || std::isnan(v) || std::isnan(w)) continue;
+        //printf("%f,%f,%f\n", u,v,w);
+        cv::Point2f test_pt = pt1*u + pt2*v + pt3*w;
+        d_pt1 += u*(n_pt - test_pt);
+        d_pt2 += v*(n_pt - test_pt);
+        d_pt3 += w*(n_pt - test_pt);
+      }
 
-    //match.my_section_data = *section_data_a;
-    //match.n_section_data = *section_data_b;
+      d_pt1 = d_pt1/(1.0*parted_points_a.size());
+      d_pt2 = d_pt2/(1.0*parted_points_a.size());
+      d_pt3 = d_pt3/(1.0*parted_points_a.size());
 
-    match.my_section = (void*) this;
-    match.n_section = (void*) neighbor;
-    section_mesh_matches_mutex->lock();
-    this->section_mesh_matches.push_back(match);
-    section_mesh_matches_mutex->unlock();
+      pt1 += 0.4*d_pt1;
+      pt2 += 0.4*d_pt2;
+      pt3 += 0.4*d_pt3;
+   }
+
+   //printf("pt 1 %f, %f\n", pt1.x, pt1.y);
+
+   tfkMatch match1;
+   match1.my_tri = (*triangles)[s];
+   match1.my_barys[0] = (double)1.0;
+   match1.my_barys[1] = 0.0;
+   match1.my_barys[2] = 0.0;
+   match1.dest_p = pt1;
+
+   tfkMatch match2;
+   match2.my_tri = (*triangles)[s];
+   match2.my_barys[0] = 0.0;
+   match2.my_barys[1] = (double)1.0;
+   match2.my_barys[2] = 0.0;
+   match2.dest_p = pt2;
+
+   tfkMatch match3;
+   match3.my_tri = (*triangles)[s];
+   match3.my_barys[0] = 0.0;
+   match3.my_barys[1] = 0.0;
+   match3.my_barys[2] = (double)1.0;
+   match3.dest_p = pt3;
+
+
+   match1.my_section = (void*) this;
+   match1.n_section = (void*) neighbor;
+   match2.my_section = (void*) this;
+   match2.n_section = (void*) neighbor;
+   match3.my_section = (void*) this;
+   match3.n_section = (void*) neighbor;
+
+   section_mesh_matches_mutex->lock();
+   this->section_mesh_matches.push_back(match1);
+   this->section_mesh_matches.push_back(match2);
+   this->section_mesh_matches.push_back(match3);
+   section_mesh_matches_mutex->unlock();
+
   }
+
+  //for (int m = 0; m < filtered_match_points_a.size(); m++) {
+  //  cv::Point2f my_pt = filtered_match_points_a[m];
+  //  cv::Point2f n_pt = filtered_match_points_b[m];
+
+  //  Triangle my_tri = this->triangle_mesh->find_triangle_post(my_pt);
+  //  Triangle n_tri = neighbor->triangle_mesh->find_triangle(my_pt);
+  //  if (my_tri.index == -1 || n_tri.index == -1) continue;
+  //  tfkMatch match;
+
+  //  // find the triangle...
+  //  std::vector<tfkTriangle>* triangles = this->triangle_mesh->triangles;//this->triangles[wid];
+  //  std::vector<cv::Point2f>* mesh = this->triangle_mesh->mesh;
+
+  //  std::vector<tfkTriangle>* n_triangles = neighbor->triangle_mesh->triangles;
+  //  std::vector<cv::Point2f>* n_mesh = neighbor->triangle_mesh->mesh_orig;
+
+  //  {
+  //    int s = my_tri.index;
+  //    float u,v,w;
+  //    cv::Point2f pt1 = (*mesh)[(*triangles)[s].index1];
+  //    cv::Point2f pt2 = (*mesh)[(*triangles)[s].index2];
+  //    cv::Point2f pt3 = (*mesh)[(*triangles)[s].index3];
+  //    Barycentric(my_pt, pt1,pt2,pt3,u,v,w);
+  //    if (u <= 0 || v <= 0 || w <= 0) continue;
+  //    int my_triangle_index = s;
+  //    match.my_tri = (*triangles)[my_triangle_index];
+  //    match.my_barys[0] = (double)1.0*u;
+  //    match.my_barys[1] = (double)1.0*v;
+  //    match.my_barys[2] = (double)1.0*w;
+  //  }
+
+  //  {
+  //    int s = n_tri.index;
+  //    float u,v,w;
+  //    cv::Point2f pt1 = (*n_mesh)[(*n_triangles)[s].index1];
+  //    cv::Point2f pt2 = (*n_mesh)[(*n_triangles)[s].index2];
+  //    cv::Point2f pt3 = (*n_mesh)[(*n_triangles)[s].index3];
+  //    Barycentric(n_pt, pt1,pt2,pt3,u,v,w);
+  //    if (u <= 0 || v <= 0 || w <= 0) continue;
+  //    int n_triangle_index = s;
+  //    match.n_tri = (*n_triangles)[n_triangle_index];
+  //    match.n_barys[0] = (double)1.0*u;
+  //    match.n_barys[1] = (double)1.0*v;
+  //    match.n_barys[2] = (double)1.0*w;
+  //  }
+
+  //  //if (my_triangle_index == -1 || n_triangle_index == -1) continue;
+
+  //  //match.my_section_data = *section_data_a;
+  //  //match.n_section_data = *section_data_b;
+
+  //  match.my_section = (void*) this;
+  //  match.n_section = (void*) neighbor;
+  //  section_mesh_matches_mutex->lock();
+  //  this->section_mesh_matches.push_back(match);
+  //  section_mesh_matches_mutex->unlock();
+  //}
   }
 
 }

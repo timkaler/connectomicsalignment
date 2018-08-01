@@ -3,7 +3,7 @@
 namespace tfk {
 
 // general MLBAse functions
-  static float FP_PENALTY = 0.5;
+  static float FP_PENALTY = 0.0;
   MLBase::MLBase(int num_features, std::string saved_model) {
     this->mutex = new std::recursive_mutex();
   }
@@ -297,11 +297,12 @@ namespace tfk {
     cv::Mat_<int> layers(4,1);
     layers(0) = num_features;     // input
     layers(1) = num_features;      // positive negative and unknown
-    layers(2) = 8;
-    //layers(2) = num_features*2;      // positive negative and unknown
+    layers(2) = num_features/2 + 1;      // positive negative and unknown
+    //layers(2) = num_features/8 + 2;      // positive negative and unknown
     layers(3) = 2;      // positive negative and unknown
     ann_model->setLayerSizes(layers);
-    ann_model->setActivationFunction(cv::ml::ANN_MLP::SIGMOID_SYM  , 1, 1);
+    //ann_model->setActivationFunction(cv::ml::ANN_MLP::SIGMOID_SYM  , 1, 1);
+    ann_model->setActivationFunction(cv::ml::ANN_MLP::ActivationFunctions::SIGMOID_SYM  , 1, 1);
     model = ann_model;
     this->ann_model = ann_model;
     size_of_feature_vector = num_features;
@@ -327,16 +328,31 @@ namespace tfk {
       cv::Mat data = cv::Mat::zeros(new_training_examples, size_of_feature_vector , CV_32F);
       int count_1 = 0;
       int count_2 = 0;
+
+
+
+      for (int i = 0; i < new_training_examples; i++) {
+          if (old_labels[i]) {
+              count_1++;
+          } else {
+              count_2++;
+          }
+      }
+
+      float weight_1 = 1.0;//(1.0*count_2/count_2;
+      float weight_2 = 100.0*(count_1*1.0)/count_2;
+
+
       for (int i = 0; i < new_training_examples; i++) {
           if (old_labels[i]) {
               labels.at<float>(i, 1) = 1;
-              weights.at<float>(i,0) = 1.0;
-              count_1++;
+              weights.at<float>(i,0) = 1.0*weight_1;
+              //count_1++;
           } else {
               labels.at<float>(i, 0) = 1;
               //weights.at<float>(i,0) = 10000.0;//10000.0;
-              weights.at<float>(i,0) = 1000.0;//10000.0;
-              count_2++;
+              weights.at<float>(i,0) = 1.0*weight_2;//10000.0;
+              //count_2++;
           }
           for (int j = 0; j < size_of_feature_vector; j++) {
               data.at<float>(i, j) = old_data[i][j];
@@ -345,7 +361,7 @@ namespace tfk {
       printf("count 1 %d, count 2 %d\n", count_1, count_2);
       cv::Ptr<cv::ml::TrainData> tdata = cv::ml::TrainData::create(data, cv::ml::ROW_SAMPLE, labels,
           cv::noArray(), cv::noArray(), weights);
-      tdata->setTrainTestSplitRatio(.75, false);
+      tdata->setTrainTestSplitRatio(.75, true);
       //if (reinforcement && trained) {
       //    model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS | cv::ml::ANN_MLP::NO_INPUT_SCALE);
       //} else {
@@ -353,7 +369,7 @@ namespace tfk {
         //ann_model->setTrainMethod(0, 0.1,0.1);
         ann_model->setTermCriteria(term_crit);
         model->train(tdata);
-          
+        model->train(tdata);
           /*
            model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
            model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);

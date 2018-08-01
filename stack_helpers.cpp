@@ -157,10 +157,17 @@ static double c_reglen(double vx, double vy, double d_vx_dx, double d_vy_dy,
 }
 
 
-static double crosslink_mesh_derivs(std::vector<cv::Point2f>* mesh1, std::vector<cv::Point2f>* mesh2,
-                             cv::Point2f* d_cost_d_mesh1, cv::Point2f* d_cost_d_mesh2,
-                             int* indices1, int* indices2, double* barys1, double* barys2,
-                             double all_weight, double sigma) {
+//static double crosslink_mesh_derivs(std::vector<cv::Point2f>* mesh1, std::vector<cv::Point2f>* mesh2,
+//                             cv::Point2f* d_cost_d_mesh1, cv::Point2f* d_cost_d_mesh2,
+//                             int* indices1, int* indices2, double* barys1, double* barys2,
+//                             double all_weight, double sigma) {
+
+
+
+static double crosslink_mesh_derivs(std::vector<cv::Point2f>* mesh1,
+                             cv::Point2f* d_cost_d_mesh1,
+                             int* indices1, double* barys1,
+                             double all_weight, double sigma, cv::Point2f dest_p) {
   double px, py, qx, qy;
   int pidx0, pidx1, pidx2;
   int qidx0, qidx1, qidx2;
@@ -180,29 +187,18 @@ static double crosslink_mesh_derivs(std::vector<cv::Point2f>* mesh1, std::vector
   pb1 = barys1[1];
   pb2 = barys1[2];
 
-  qidx0 = indices2[0];
-  qidx1 = indices2[1];
-  qidx2 = indices2[2];
 
-  qb0 = barys2[0];
-  qb1 = barys2[1];
-  qb2 = barys2[2];
 
   px = (*mesh1)[pidx0].x * pb0 +
        (*mesh1)[pidx1].x * pb1 + 
        (*mesh1)[pidx2].x * pb2;
 
   py = (*mesh1)[pidx0].y * pb0 +
-       (*mesh1)[pidx1].y * pb1 + 
+       (*mesh1)[pidx1].y * pb1 +
        (*mesh1)[pidx2].y * pb2;
 
-  qx = (*mesh2)[qidx0].x * qb0 +
-       (*mesh2)[qidx1].x * qb1 + 
-       (*mesh2)[qidx2].x * qb2;
-
-  qy = (*mesh2)[qidx0].y * qb0 +
-       (*mesh2)[qidx1].y * qb1 + 
-       (*mesh2)[qidx2].y * qb2;
+  qx = dest_p.x;
+  qy = dest_p.y;
 
   r = c_reglen(px-qx, py-qy,1,1,&(dr_dx),&(dr_dy));
   h = c_huber(r, 0, sigma, dr_dx, dr_dy, &(dh_dx), &(dh_dy));
