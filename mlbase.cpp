@@ -3,7 +3,7 @@
 namespace tfk {
 
 // general MLBAse functions
-  static float FP_PENALTY = 0.0;
+  static float FP_PENALTY = -0.3;
   MLBase::MLBase(int num_features, std::string saved_model) {
     this->mutex = new std::recursive_mutex();
   }
@@ -269,9 +269,9 @@ namespace tfk {
     for (int i = 0; i < size_of_feature_vector; i++) {
         mat_vec.at<float>(i) = vec[i];
     }
-        cv::Mat results = cv::Mat::zeros(1, 2, CV_32F);
+        cv::Mat results = cv::Mat::zeros(1, 1, CV_32F);
         model->predict(mat_vec, results);
-        bool ret = results.at<float>(1) > results.at<float>(0)+FP_PENALTY;
+        bool ret = results.at<float>(0) > 0.5 +FP_PENALTY;
        
     //bool ret = model->predict(mat_vec);
     mutex->unlock();
@@ -293,16 +293,17 @@ namespace tfk {
 
 // spcific to ANN
   MLAnn::MLAnn(int num_features, std::string saved_model) : MLBase(num_features, saved_model) {
-    cv::Ptr<cv::ml::ANN_MLP> ann_model = cv::ml::ANN_MLP::create();
-    cv::Mat_<int> layers(4,1);
-    layers(0) = num_features;     // input
-    layers(1) = num_features;      // positive negative and unknown
-    layers(2) = num_features/2 + 1;      // positive negative and unknown
-    //layers(2) = num_features/8 + 2;      // positive negative and unknown
-    layers(3) = 2;      // positive negative and unknown
-    ann_model->setLayerSizes(layers);
-    //ann_model->setActivationFunction(cv::ml::ANN_MLP::SIGMOID_SYM  , 1, 1);
-    ann_model->setActivationFunction(cv::ml::ANN_MLP::ActivationFunctions::SIGMOID_SYM  , 1, 1);
+    cv::Ptr<cv::ml::RTrees> ann_model = cv::ml::RTrees::create();
+
+    //cv::Mat_<int> layers(4,1);
+    //layers(0) = num_features;     // input
+    //layers(1) = num_features;      // positive negative and unknown
+    //layers(2) = num_features/2 + 1;      // positive negative and unknown
+    ////layers(2) = num_features/8 + 2;      // positive negative and unknown
+    //layers(3) = 2;      // positive negative and unknown
+    //ann_model->setLayerSizes(layers);
+    ////ann_model->setActivationFunction(cv::ml::ANN_MLP::SIGMOID_SYM  , 1, 1);
+    //ann_model->setActivationFunction(cv::ml::ANN_MLP::ActivationFunctions::SIGMOID_SYM  , 1, 1);
     model = ann_model;
     this->ann_model = ann_model;
     size_of_feature_vector = num_features;
@@ -323,7 +324,7 @@ namespace tfk {
       clear_saved_buffer();
       balance_and_flush_train_buffer();
       int new_training_examples = old_data.size();
-      cv::Mat labels = cv::Mat::zeros(new_training_examples, 2, CV_32F);
+      cv::Mat labels = cv::Mat::zeros(new_training_examples, 1, CV_32F);
       cv::Mat weights = cv::Mat::zeros(new_training_examples,1, CV_32F);
       cv::Mat data = cv::Mat::zeros(new_training_examples, size_of_feature_vector , CV_32F);
       int count_1 = 0;
@@ -340,16 +341,16 @@ namespace tfk {
       }
 
       float weight_1 = 1.0;//(1.0*count_2/count_2;
-      float weight_2 = 100.0*(count_1*1.0)/count_2;
+      float weight_2 = 10.0*(count_1*1.0)/count_2;
 
 
       for (int i = 0; i < new_training_examples; i++) {
           if (old_labels[i]) {
-              labels.at<float>(i, 1) = 1;
+              labels.at<float>(i, 0) = 1;
               weights.at<float>(i,0) = 1.0*weight_1;
               //count_1++;
           } else {
-              labels.at<float>(i, 0) = 1;
+              labels.at<float>(i, 0) = 0;
               //weights.at<float>(i,0) = 10000.0;//10000.0;
               weights.at<float>(i,0) = 1.0*weight_2;//10000.0;
               //count_2++;
@@ -367,9 +368,10 @@ namespace tfk {
       //} else {
       printf("training the model\n");
         //ann_model->setTrainMethod(0, 0.1,0.1);
-        ann_model->setTermCriteria(term_crit);
+        //ann_model->setTermCriteria(term_crit);
         model->train(tdata);
-        model->train(tdata);
+        printf("after training\n");
+        //model->train(tdata);
           /*
            model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
            model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
@@ -470,11 +472,13 @@ namespace tfk {
       printf("samples rows %d, samples cols %d, label rows %d, label cols %d\n\n",trainSamples.rows, trainSamples.cols, trainLabels.rows, trainLabels.cols );
       // for training set
       for (int i = 0; i < trainSamples.rows; i++) {
-        cv::Mat results = cv::Mat::zeros(1, 2, CV_32F);
+        cv::Mat results = cv::Mat::zeros(1, 1, CV_32F);
         model->predict(trainSamples.row(i), results);
-        bool prediction = results.at<float>(1) > results.at<float>(0)+FP_PENALTY;
-        float pred_f = (results.at<float>(1) + 1.716) / (results.at<float>(0)+1.716);
-        bool actual = trainLabels.at<float>(i,1) > trainLabels.at<float>(i,0);
+        //bool prediction = results.at<float>(1) > results.at<float>(0)+FP_PENALTY;
+        bool prediction = results.at<float>(0) > 0.5 + FP_PENALTY;
+        //printf();
+        float pred_f = (results.at<float>(0) + 1.716) / (results.at<float>(0)+1.716);
+        bool actual = trainLabels.at<float>(i,0) > 0.5 + FP_PENALTY;
         if (prediction == actual) {
           filtered_data.push_back(old_data[i]);
           filtered_labels.push_back(old_labels[i]);
@@ -524,12 +528,12 @@ namespace tfk {
 
       // for test set
       for (int i = 0; i < testSamples.rows; i++) {
-        cv::Mat results = cv::Mat::zeros(1, 2, CV_32F);
+        cv::Mat results = cv::Mat::zeros(1, 1, CV_32F);
         model->predict(testSamples.row(i), results);
-        bool prediction = results.at<float>(1) > results.at<float>(0)+FP_PENALTY;
-        float pred_f = (results.at<float>(1) + 1.716) / (results.at<float>(0)+1.716);
-        bool actual = testLabels.at<float>(i,1) > testLabels.at<float>(i,0);
-        fprintf(pFile2, "%d, %f, %f\n", actual, results.at<float>(0), results.at<float>(1));
+        bool prediction = results.at<float>(0) > 0.5 + FP_PENALTY;//results.at<float>(0)+FP_PENALTY;
+        float pred_f = (results.at<float>(0) + 1.716) / (results.at<float>(0)+1.716);
+        bool actual = testLabels.at<float>(i,0) > 0.5;
+        fprintf(pFile2, "%d, %f, %f\n", actual, results.at<float>(0), results.at<float>(0));
         if (prediction == actual) {
           filtered_data.push_back(old_data[i]);
           filtered_labels.push_back(old_labels[i]);

@@ -42,9 +42,9 @@ namespace tfk {
         Tile* b_tile = neighbors[i];
         //TODO(wheatman) something smarter here dealing with the parameters
         dynamic_cast<MatchTilePairTask*>(child_tasks[b_tile])->dependencies = dependencies;
-        //if (!neighbor_to_success[b_tile] && !tile->ml_preds[b_tile]) {
+        if (!neighbor_to_success[b_tile] && !tile->ml_preds[b_tile]) {
           child_tasks[b_tile]->compute(accuracy);
-        //}
+        }
       }
     }
 
@@ -122,7 +122,7 @@ namespace tfk {
       //  if (required[i] && !has[i]) return false;
       //}
 
-      if (neighbor_success_count >= neighbors.size()*3.0/4.0 && neighbor_success_count >= 2.0) {
+      if (neighbor_success_count >= neighbors.size() * 3.0/4.0 && neighbor_success_count >= 2.0) {
         return true;
       } else {
         return false;

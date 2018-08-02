@@ -191,16 +191,19 @@ void tfk::Section::align_2d() {
       }
 
       std::set<int> section_list;
-
+      double lr = 0.1;
+      int iter_count = 0;
+      while (true) {
+      if (iter_count++ > 20) break;
       for (int _i = 0; _i < this->graph->num_vertices(); _i++) {
         int i = _i;//vertex_ids[_i];
-        int z = this->graph->getVertexData(i)->z;
+        //int z = this->graph->getVertexData(i)->z;
         this->graph->getVertexData(i)->iteration_count = 0;
-        if (section_list.find(z) == section_list.end()) {
-          if (this->graph->edgeData[i].size() > 4) {
-            section_list.insert(z);
-          }
-        }
+        //if (section_list.find(z) == section_list.end()) {
+        //  if (this->graph->edgeData[i].size() > 4) {
+        //    section_list.insert(z);
+        //  }
+        //}
       }
 
       scheduler->isStatic = false;
@@ -210,8 +213,29 @@ void tfk::Section::align_2d() {
       scheduler->isStatic = true;
 
       printf("starting run\n");
-      e->run();
+
+      double last_energy = 0.0;
+      for (int x = 0; x < this->tiles.size(); x++) {
+        last_energy += this->tiles[x]->local2DAlignUpdateEnergy();
+      }
+
+      //e->run();
+      for (int c = 0; c < 10000; c++) {
+        for (int x = 0; x < this->tiles.size(); x++) {
+          this->tiles[x]->local2DAlignUpdate(lr);
+        }
+      }
+
+      double energy = 0.0;
       printf("ending run\n");
+        for (int x = 0; x < this->tiles.size(); x++) {
+          energy += this->tiles[x]->local2DAlignUpdateEnergy();
+        }
+        printf("Total energy is %f lr is %f\n", energy, lr);
+        if (energy > last_energy) {
+          lr = lr * 0.5;
+        }
+      }
       //this->coarse_affine_align();
       //this->elastic_align();
       //int count = 0;
@@ -250,7 +274,7 @@ void tfk::Section::align_2d() {
 
           float val = t->compute_deviation(neighbor);
 
-          if (val > 10.0) {
+          if (val > 5.0){ //10.0) {
             //match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
               t->tmp_bad_2d_alignment = true;
               neighbor->tmp_bad_2d_alignment = true; 

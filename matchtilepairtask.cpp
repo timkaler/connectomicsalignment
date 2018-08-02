@@ -569,6 +569,7 @@ namespace tfk {
         //bool guess_ml = false;//this->model->predict(a_tile->feature_vectors[b_tile]);
 
         bool guess_ml;
+
         if (false_negative_rate <= 1.0) {
           guess_ml = this->model->predict(tmp_vector);//this->model->predict(a_tile->feature_vectors[b_tile]);
         } else {
@@ -576,7 +577,8 @@ namespace tfk {
         }
         //if (!second_pass) guess_ml = false;
         //guess_ml = true;
-        //bool guess_ml = true;
+        //guess_ml = true;
+
         a_tile->ml_preds[b_tile] = guess_ml;
         //if (false && /*guess_ml*/ val >= 0.75) {
         if ((guess_ml || false_negative_rate > 1.0) && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
@@ -589,6 +591,9 @@ namespace tfk {
           a_tile->ideal_offsets.erase(b_tile->tile_id);
           a_tile->ml_preds[b_tile] = guess_ml;
           success = false;
+          if (!second_pass) {
+            return guess_ml;
+          }
           return false;
         }
       } else {

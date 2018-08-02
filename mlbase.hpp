@@ -37,7 +37,7 @@ class MLBase {
     // not needed for reinforcement learning
     std::vector<std::vector<float>> old_data;
     std::vector<float> old_labels;
-    cv::Ptr<cv::ml::ANN_MLP> ann_model;
+    cv::Ptr<cv::ml::RTrees> ann_model;
     std::vector<std::vector<float>> new_data;
     std::vector<float> new_labels;
     std::vector<float> new_errors;

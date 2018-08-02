@@ -197,6 +197,8 @@ class Tile {
    bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
    bool overlaps_with(Tile* other);
    void local2DAlignUpdate();
+   void local2DAlignUpdate(double lr);
+   double local2DAlignUpdateEnergy();
    void local2DAlignUpdateLimited(std::set<Tile*>* active_set);
    void insert_matches(Tile* neighbor, std::vector<cv::Point2f>& points_a, std::vector<cv::Point2f>& points_b);
    void make_symmetric(int phase, std::vector<Tile*>& tile_list);
