@@ -259,7 +259,7 @@ std::vector<float> tfk::Tile::tile_pair_feature(Tile *other) {
 
   ////cv::matchTemplate(_transform_1, _transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
   cv::matchTemplate(small_transform_1, small_transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
-  cv::matchTemplate(small_transform_1, small_transform_2, result_TM_SQDIFF, CV_TM_SQDIFF);
+  cv::matchTemplate(small_transform_1, small_transform_2, result_TM_SQDIFF, CV_TM_SQDIFF_NORMED);
   coordinates.push_back(result_CCOEFF_NORMED.at<float>(0,0));
   coordinates.push_back(result_TM_SQDIFF.at<float>(0,0));
   coordinates.push_back(small_transform_1.rows*small_transform_1.cols/(scale*scale));
@@ -1445,7 +1445,7 @@ void tfk::Tile::local2DAlignUpdate(double lr) {
 void tfk::Tile::local2DAlignUpdate() {
   if (this->bad_2d_alignment) return;
   //std::vector<edata>& edges = graph->edgeData[vid];
-  double global_learning_rate = 0.0001;
+  double global_learning_rate = 0.45;
   if (this->edges.size() == 0) return;
   if (this->edges.size() == 0) return;
 
@@ -1493,16 +1493,16 @@ void tfk::Tile::local2DAlignUpdate() {
         //            c_a_point - a_point + b_point - c_b_point
 
         //            - c_b_point + c_a_point - a_point + b_point
-        //deviation = -1*neighbor->ideal_offsets[this->tile_id] - delta;
+        deviation = -1*neighbor->ideal_offsets[this->tile_id] - delta;
         continue;
       }
       //float dist = sqrt(deviation.x*deviation.x + deviation.y*deviation.y);
       //if (dist > 10.0) {
       //  printf("The dist is %f\n", dist);
       //}
-      weight_sum = 1;
-      this->offset_x += deviation.x*learning_rate;
-      this->offset_y += deviation.y*learning_rate;
+      weight_sum += 1;
+      //this->offset_x += deviation.x*learning_rate;
+      //this->offset_y += deviation.y*learning_rate;
 
       if (std::abs(deviation.x) > 3.0 || true ) {
         grad_error_x += 2*deviation.x;
@@ -1532,8 +1532,8 @@ void tfk::Tile::local2DAlignUpdate() {
   ////    grad_error_y / (weight_sum) > 10.0) {
   ////  printf("grad error x is %f y is %f\n", grad_error_x, grad_error_y); 
   ////}
-  //this->offset_x += grad_error_x*learning_rate/(weight_sum);
-  //this->offset_y += grad_error_y*learning_rate/(weight_sum);
+  this->offset_x += grad_error_x*learning_rate/(weight_sum);
+  this->offset_y += grad_error_y*learning_rate/(weight_sum);
   //printf("offset x is %f\n", this->offset_x);
   //}
 }
@@ -1629,10 +1629,10 @@ cv::Point2f tfk::Tile::rigid_transform(cv::Point2f pt) {
 }
 
 bool tfk::Tile::overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox) {
-    float x1_start = this->x_start;
-    float x1_finish = this->x_finish;
-    float y1_start = this->y_start;
-    float y1_finish = this->y_finish;
+    float x1_start = this->x_start + this->offset_x;
+    float x1_finish = this->x_finish + this->offset_x;
+    float y1_start = this->y_start + this->offset_y;
+    float y1_finish = this->y_finish + this->offset_y;
 
     float x2_start = bbox.first.x;
     float x2_finish = bbox.second.x;
@@ -1649,10 +1649,10 @@ bool tfk::Tile::overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox) {
 
 
 bool tfk::Tile::overlaps_with(Tile* other) {
-    int x1_start = this->x_start;
-    int x1_finish = this->x_finish;
-    int y1_start = this->y_start;
-    int y1_finish = this->y_finish;
+    int x1_start = this->x_start + this->offset_x;
+    int x1_finish = this->x_finish + this->offset_x;
+    int y1_start = this->y_start + this->offset_y;
+    int y1_finish = this->y_finish + this->offset_y;
 
     int x2_start = other->x_start;
     int x2_finish = other->x_finish;
@@ -1982,7 +1982,7 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
         cv::Mat tmp = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
 
         cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
-        clahe->setClipLimit(1.0);
+        clahe->setClipLimit(10.0);
         clahe->apply(tmp,full_image);
         //int val = __sync_fetch_and_add(&DEBUG_total_read_count, 1);
         //printf("Total read is %d\n", val);
@@ -2046,14 +2046,14 @@ std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_til
   cv::Mat _tmp_image = this->get_tile_data(FULL);
   //_tmp_image.create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
   //_tmp_image = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
-
+  int buffer_slack = 50;
   cv::Mat local_p_image;
 
   int my_x_start = this->x_start;
   int my_x_finish = this->x_finish;
 
-  int other_x_start = other_tile->x_start - 50;
-  int other_x_finish = other_tile->x_finish + 50;
+  int other_x_start = other_tile->x_start - buffer_slack;
+  int other_x_finish = other_tile->x_finish + buffer_slack;
 
   while (my_x_start < other_x_start) {
     my_x_start += 1;
@@ -2065,8 +2065,8 @@ std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_til
   int my_y_start = this->y_start;
   int my_y_finish = this->y_finish;
 
-  int other_y_start = other_tile->y_start - 50;
-  int other_y_finish = other_tile->y_finish + 50;
+  int other_y_start = other_tile->y_start - buffer_slack;
+  int other_y_finish = other_tile->y_finish + buffer_slack;
 
   while (my_y_start < other_y_start) {
     my_y_start += 1;

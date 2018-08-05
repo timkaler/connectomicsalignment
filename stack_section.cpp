@@ -159,7 +159,8 @@ void tfk::Section::align_2d() {
       //TODO(wheatman) put this in a better place
       tiles[i]->ml_models = this->ml_models;
       tiles[i]->paramdbs = this->paramdbs;
-      tiles[i]->match_tiles_task = new MatchTilesTask(tiles[i], get_all_close_tiles(tiles[i]));
+      std::vector<Tile*> close_tiles = get_all_close_tiles(tiles[i]);
+      tiles[i]->match_tiles_task = new MatchTilesTask(tiles[i], close_tiles);
     }
     this->compute_keypoints_and_matches();
     // End Compute keypoints task.
@@ -194,7 +195,7 @@ void tfk::Section::align_2d() {
       double lr = 0.1;
       int iter_count = 0;
       while (true) {
-      if (iter_count++ > 20) break;
+      if (iter_count++ > 1) break;
       for (int _i = 0; _i < this->graph->num_vertices(); _i++) {
         int i = _i;//vertex_ids[_i];
         //int z = this->graph->getVertexData(i)->z;
@@ -219,12 +220,12 @@ void tfk::Section::align_2d() {
         last_energy += this->tiles[x]->local2DAlignUpdateEnergy();
       }
 
-      //e->run();
-      for (int c = 0; c < 10000; c++) {
-        for (int x = 0; x < this->tiles.size(); x++) {
-          this->tiles[x]->local2DAlignUpdate(lr);
-        }
-      }
+      e->run();
+      //for (int c = 0; c < 10000; c++) {
+      //  for (int x = 0; x < this->tiles.size(); x++) {
+      //    this->tiles[x]->local2DAlignUpdate(lr);
+      //  }
+      //}
 
       double energy = 0.0;
       printf("ending run\n");
@@ -274,7 +275,7 @@ void tfk::Section::align_2d() {
 
           float val = t->compute_deviation(neighbor);
 
-          if (val > 5.0){ //10.0) {
+          if (val > 15.0){ //10.0) {
             //match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
               t->tmp_bad_2d_alignment = true;
               neighbor->tmp_bad_2d_alignment = true; 
@@ -331,7 +332,7 @@ void tfk::Section::align_2d() {
 }
 
 void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
-  double cross_slice_weight = 10.0;
+  double cross_slice_weight = 1.0;
   double cross_slice_winsor = 20.0;
   double intra_slice_weight = 1.0;
   double intra_slice_winsor = 200.0;
@@ -1611,71 +1612,72 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
    match3.my_section = (void*) this;
    match3.n_section = (void*) neighbor;
 
-   section_mesh_matches_mutex->lock();
-   this->section_mesh_matches.push_back(match1);
-   this->section_mesh_matches.push_back(match2);
-   this->section_mesh_matches.push_back(match3);
-   section_mesh_matches_mutex->unlock();
+   //section_mesh_matches_mutex->lock();
+   //this->section_mesh_matches.push_back(match1);
+   //this->section_mesh_matches.push_back(match2);
+   //this->section_mesh_matches.push_back(match3);
+   //section_mesh_matches_mutex->unlock();
 
   }
 
-  //for (int m = 0; m < filtered_match_points_a.size(); m++) {
-  //  cv::Point2f my_pt = filtered_match_points_a[m];
-  //  cv::Point2f n_pt = filtered_match_points_b[m];
+  for (int m = 0; m < filtered_match_points_a.size(); m++) {
+    cv::Point2f my_pt = filtered_match_points_a[m];
+    cv::Point2f n_pt = filtered_match_points_b[m];
 
-  //  Triangle my_tri = this->triangle_mesh->find_triangle_post(my_pt);
-  //  Triangle n_tri = neighbor->triangle_mesh->find_triangle(my_pt);
-  //  if (my_tri.index == -1 || n_tri.index == -1) continue;
-  //  tfkMatch match;
+    Triangle my_tri = this->triangle_mesh->find_triangle_post(my_pt);
+    Triangle n_tri = neighbor->triangle_mesh->find_triangle(my_pt);
+    if (my_tri.index == -1 || n_tri.index == -1) continue;
+    tfkMatch match;
 
-  //  // find the triangle...
-  //  std::vector<tfkTriangle>* triangles = this->triangle_mesh->triangles;//this->triangles[wid];
-  //  std::vector<cv::Point2f>* mesh = this->triangle_mesh->mesh;
+    // find the triangle...
+    std::vector<tfkTriangle>* triangles = this->triangle_mesh->triangles;//this->triangles[wid];
+    std::vector<cv::Point2f>* mesh = this->triangle_mesh->mesh;
 
-  //  std::vector<tfkTriangle>* n_triangles = neighbor->triangle_mesh->triangles;
-  //  std::vector<cv::Point2f>* n_mesh = neighbor->triangle_mesh->mesh_orig;
+    std::vector<tfkTriangle>* n_triangles = neighbor->triangle_mesh->triangles;
+    std::vector<cv::Point2f>* n_mesh = neighbor->triangle_mesh->mesh_orig;
 
-  //  {
-  //    int s = my_tri.index;
-  //    float u,v,w;
-  //    cv::Point2f pt1 = (*mesh)[(*triangles)[s].index1];
-  //    cv::Point2f pt2 = (*mesh)[(*triangles)[s].index2];
-  //    cv::Point2f pt3 = (*mesh)[(*triangles)[s].index3];
-  //    Barycentric(my_pt, pt1,pt2,pt3,u,v,w);
-  //    if (u <= 0 || v <= 0 || w <= 0) continue;
-  //    int my_triangle_index = s;
-  //    match.my_tri = (*triangles)[my_triangle_index];
-  //    match.my_barys[0] = (double)1.0*u;
-  //    match.my_barys[1] = (double)1.0*v;
-  //    match.my_barys[2] = (double)1.0*w;
-  //  }
+    {
+      int s = my_tri.index;
+      float u,v,w;
+      cv::Point2f pt1 = (*mesh)[(*triangles)[s].index1];
+      cv::Point2f pt2 = (*mesh)[(*triangles)[s].index2];
+      cv::Point2f pt3 = (*mesh)[(*triangles)[s].index3];
+      Barycentric(my_pt, pt1,pt2,pt3,u,v,w);
+      if (u <= 0 || v <= 0 || w <= 0) continue;
+      int my_triangle_index = s;
+      match.my_tri = (*triangles)[my_triangle_index];
+      match.my_barys[0] = (double)1.0*u;
+      match.my_barys[1] = (double)1.0*v;
+      match.my_barys[2] = (double)1.0*w;
+    }
 
-  //  {
-  //    int s = n_tri.index;
-  //    float u,v,w;
-  //    cv::Point2f pt1 = (*n_mesh)[(*n_triangles)[s].index1];
-  //    cv::Point2f pt2 = (*n_mesh)[(*n_triangles)[s].index2];
-  //    cv::Point2f pt3 = (*n_mesh)[(*n_triangles)[s].index3];
-  //    Barycentric(n_pt, pt1,pt2,pt3,u,v,w);
-  //    if (u <= 0 || v <= 0 || w <= 0) continue;
-  //    int n_triangle_index = s;
-  //    match.n_tri = (*n_triangles)[n_triangle_index];
-  //    match.n_barys[0] = (double)1.0*u;
-  //    match.n_barys[1] = (double)1.0*v;
-  //    match.n_barys[2] = (double)1.0*w;
-  //  }
+    {
+      int s = n_tri.index;
+      float u,v,w;
+      cv::Point2f pt1 = (*n_mesh)[(*n_triangles)[s].index1];
+      cv::Point2f pt2 = (*n_mesh)[(*n_triangles)[s].index2];
+      cv::Point2f pt3 = (*n_mesh)[(*n_triangles)[s].index3];
+      Barycentric(n_pt, pt1,pt2,pt3,u,v,w);
+      if (u <= 0 || v <= 0 || w <= 0) continue;
+      int n_triangle_index = s;
+      match.n_tri = (*n_triangles)[n_triangle_index];
+      match.n_barys[0] = (double)1.0*u;
+      match.n_barys[1] = (double)1.0*v;
+      match.n_barys[2] = (double)1.0*w;
+    }
 
-  //  //if (my_triangle_index == -1 || n_triangle_index == -1) continue;
+    //if (my_triangle_index == -1 || n_triangle_index == -1) continue;
 
-  //  //match.my_section_data = *section_data_a;
-  //  //match.n_section_data = *section_data_b;
+    //match.my_section_data = *section_data_a;
+    //match.n_section_data = *section_data_b;
 
-  //  match.my_section = (void*) this;
-  //  match.n_section = (void*) neighbor;
-  //  section_mesh_matches_mutex->lock();
-  //  this->section_mesh_matches.push_back(match);
-  //  section_mesh_matches_mutex->unlock();
-  //}
+    match.my_section = (void*) this;
+    match.n_section = (void*) neighbor;
+    match.dest_p = n_pt;
+    section_mesh_matches_mutex->lock();
+    this->section_mesh_matches.push_back(match);
+    section_mesh_matches_mutex->unlock();
+  }
   }
 
 }
@@ -1705,7 +1707,7 @@ void tfk::Section::affine_transform_mesh() {
 
 void tfk::Section::construct_triangles() {
   printf("called construct triangles\n");
-  float hex_spacing = 6000.0;
+  float hex_spacing = 3000.0;
   std::pair<cv::Point2f, cv::Point2f> bbox = this->get_bbox();
   triangle_mesh = new TriangleMesh(hex_spacing, bbox);
 }
@@ -2726,7 +2728,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       cilk_for (int i = 0; i < tiles_to_process_keypoints.size(); i++) {
          Tile* tile = tiles_to_process_keypoints[i];
          //tile->compute_sift_keypoints2d();
-         dependencies[tile->tile_id]->compute(0.9);
+         //dependencies[tile->tile_id]->compute(0.9);
          tile->compute_sift_keypoints3d();
          tile->match_tiles_task->dependencies = dependencies;
       }

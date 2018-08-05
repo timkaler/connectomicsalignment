@@ -196,9 +196,9 @@ namespace tfk {
         std::vector<cv::Point2f> match_points_a, match_points_b;
         for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
           match_points_a.push_back(
-              atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
+              a_tile->rigid_transform(atile_kps_in_overlap[matches[tmpi].queryIdx].pt));
           match_points_b.push_back(
-              btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
+              b_tile->rigid_transform(btile_kps_in_overlap[matches[tmpi].trainIdx].pt));
         }
     
         if (matches.size() < MIN_FEATURES_NUM) {
@@ -209,7 +209,7 @@ namespace tfk {
     
         bool* mask = (bool*) calloc(match_points_a.size(), 1);
         double thresh = ransac_thresh;//5.0;
-        tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
+        cv::Point2f best_offset = tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
     
     
         filtered_match_points_a.clear();
@@ -229,6 +229,7 @@ namespace tfk {
         free(mask);
         if (num_matches_filtered >= MIN_FEATURES_NUM && filtered_match_points_a.size() >= 0.1*matches.size()) {
           //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
+          this->best_offset = best_offset;
           break;
         } else {
           filtered_match_points_a.clear();
@@ -386,6 +387,30 @@ namespace tfk {
   best_params.scale_y = 1.0;
   best_params.res = FULL;
 
+  //params trial_params;
+  //trial_params.num_features = 2;
+  //trial_params.num_octaves = 12;
+  //trial_params.contrast_threshold = .015;
+  //trial_params.edge_threshold = 10;
+  //trial_params.sigma = 1.2;
+  //trial_params.scale_x = 0.15;
+  //trial_params.scale_y = 0.15;
+  //trial_params.res = FULL;
+
+  params trial_params;
+  trial_params.num_features = 2;
+  trial_params.num_octaves = 12;
+  trial_params.contrast_threshold = .015;
+  trial_params.edge_threshold = 10;
+  trial_params.sigma = 1.2;
+  trial_params.scale_x = 0.12;
+  trial_params.scale_y = 0.12;
+  trial_params.res = FULL;
+
+
+
+
+
       //tfk::params new_params;
       //new_params.scale_x = mr_params->get_float_param("scale");
       //new_params.scale_y = mr_params->get_float_param("scale");
@@ -408,8 +433,11 @@ namespace tfk {
         second_pass = true;
         //printf("computing A keypoints\n");
       } else {
-        a_tile_desc = dependencies[a_tile->tile_id]->tile_desc;
-        a_tile_keypoints = dependencies[a_tile->tile_id]->tile_keypoints;
+        //a_tile_desc = dependencies[a_tile->tile_id]->tile_desc;
+        //a_tile_keypoints = dependencies[a_tile->tile_id]->tile_keypoints;
+        a_tile->compute_sift_keypoints2d_params(trial_params, a_tile_keypoints,
+                                                a_tile_desc, b_tile);
+
         //a_tile_alt_desc = dependencies[a_tile->tile_id]->alt_tile_desc;
         //a_tile_alt_keypoints = dependencies[a_tile->tile_id]->alt_tile_keypoints;
       }
@@ -430,8 +458,10 @@ namespace tfk {
         second_pass = true;
         //printf("computing B keypoints\n");
       } else {
-        b_tile_desc = dependencies[b_tile->tile_id]->tile_desc;
-        b_tile_keypoints = dependencies[b_tile->tile_id]->tile_keypoints;
+        //b_tile_desc = dependencies[b_tile->tile_id]->tile_desc;
+        //b_tile_keypoints = dependencies[b_tile->tile_id]->tile_keypoints;
+        b_tile->compute_sift_keypoints2d_params(trial_params, b_tile_keypoints,
+                                                b_tile_desc, a_tile);
         //b_tile_alt_desc = dependencies[b_tile->tile_id]->alt_tile_desc;
         //b_tile_alt_keypoints = dependencies[b_tile->tile_id]->alt_tile_keypoints;
       }
@@ -505,6 +535,8 @@ namespace tfk {
           tmp_a_tile.offset_y += 0.4*dy;
         }
       }
+      //tmp_a_tile.offset_x += best_offset.x;
+      //tmp_a_tile.offset_y += best_offset.y;
       cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
                                           tmp_a_tile.y_start+tmp_a_tile.offset_y);
       //TODO(wheatman) tell tim I have this done even if it failed
@@ -552,6 +584,10 @@ namespace tfk {
       this->feature_vector = tmp_a_tile.tile_pair_feature(b_tile);
       this->feature_vector.push_back(filtered_match_points_a.size());
       std::vector<float> tmp_feature_vector = a_tile->tile_pair_feature(b_tile);
+      if (tmp_feature_vector.size() == 0) {
+        printf("major error abort!\n");
+        exit(0);
+      }
       for (int i = 0; i < tmp_feature_vector.size(); i++) {
         this->feature_vector.push_back(tmp_feature_vector[i]);
       }
@@ -571,14 +607,25 @@ namespace tfk {
         bool guess_ml;
 
         if (false_negative_rate <= 1.0) {
-          guess_ml = this->model->predict(tmp_vector);//this->model->predict(a_tile->feature_vectors[b_tile]);
+      //    printf("called predict\n");
+
+      //for (int i = 0; i < feature_vector.size(); i++) {
+      //  printf("%f\n", feature_vector[i]);
+      //}
+          guess_ml = this->model->predict(this->feature_vector);//this->model->predict(a_tile->feature_vectors[b_tile]);
+        if (guess_ml == false) {
+          //printf("guess ml was false\n");
+        }
         } else {
           guess_ml = true;
         }
+        //guess_ml = true;
         //if (!second_pass) guess_ml = false;
-        //guess_ml = true;
-        //guess_ml = true;
 
+        if (second_pass) guess_ml = true;
+        //guess_ml = true;
+        //guess_ml = true;
+        //guess_ml = true;
         a_tile->ml_preds[b_tile] = guess_ml;
         //if (false && /*guess_ml*/ val >= 0.75) {
         if ((guess_ml || false_negative_rate > 1.0) && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
@@ -591,9 +638,9 @@ namespace tfk {
           a_tile->ideal_offsets.erase(b_tile->tile_id);
           a_tile->ml_preds[b_tile] = guess_ml;
           success = false;
-          if (!second_pass) {
-            return guess_ml;
-          }
+          //if (!second_pass) {
+          //  return guess_ml;
+          //}
           return false;
         }
       } else {

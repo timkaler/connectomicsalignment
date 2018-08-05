@@ -42,7 +42,7 @@ namespace tfk {
         Tile* b_tile = neighbors[i];
         //TODO(wheatman) something smarter here dealing with the parameters
         dynamic_cast<MatchTilePairTask*>(child_tasks[b_tile])->dependencies = dependencies;
-        if (!neighbor_to_success[b_tile] && !tile->ml_preds[b_tile]) {
+        if (/*!neighbor_to_success[b_tile] &&*/ !tile->ml_preds[b_tile]) {
           child_tasks[b_tile]->compute(accuracy);
         }
       }
@@ -52,15 +52,18 @@ namespace tfk {
 
     bool MatchTilesTask::error_check(float false_negative_rate) {
       int neighbor_success_count = 0;
-
+      int neighbor_needs_recomputation_count = 0;
       for (int i = 0; i < neighbors.size(); i++) {
         Tile* b_tile = neighbors[i];
         //TODO(wheatman) something smarter to pick this number
         bool guess = child_tasks[b_tile]->error_check(false_negative_rate);
         if (guess) {
+          if (!tile->ml_preds[b_tile]) neighbor_needs_recomputation_count++;
+
           neighbor_to_success[b_tile] = true;
           neighbor_success_count++;
         } else {
+          if (!tile->ml_preds[b_tile]) neighbor_needs_recomputation_count++;
           //cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
           //                                  tmp_a_tile.y_start+tmp_a_tile.offset_y);
           //cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
@@ -122,7 +125,14 @@ namespace tfk {
       //  if (required[i] && !has[i]) return false;
       //}
 
-      if (neighbor_success_count >= neighbors.size() * 3.0/4.0 && neighbor_success_count >= 2.0) {
+
+      if (neighbor_needs_recomputation_count > 0){
+        printf("Neighbor needs recomputation count is %d\n", neighbor_needs_recomputation_count);
+        return false;
+      }
+
+      if (neighbor_success_count >= neighbors.size() * 2.0/4.0 && neighbor_success_count >= 2.0) {
+      //if (neighbor_needs_recomputation_count > 0) {
         return true;
       } else {
         return false;

@@ -247,8 +247,8 @@ void tfk::Stack::train_fsj(int trials) {
     dependencies[tile_a->tile_id] = sift_task_a;
     dependencies[tile_b->tile_id] = sift_task_b;
 
-    dependencies[tile_a->tile_id]->compute(0.9);
-    dependencies[tile_b->tile_id]->compute(0.9);
+    //dependencies[tile_a->tile_id]->compute(0.9);
+    //dependencies[tile_b->tile_id]->compute(0.9);
     MatchTilePairTask* task2 = new MatchTilePairTask(tile_a, tile_b, true);
     task2->dependencies = dependencies;
     task2->compute_with_params(trial_mr_params);
@@ -282,7 +282,7 @@ void tfk::Stack::train_fsj(int trials) {
     float dist = sqrt(dx*dx+dy*dy);
     int local_failure_count = failure_count;
     int local_success_count = success_count;
-    if (res1 != res2 || dist > 2.0) {
+    if (res1 != res2 || dist > 5.0) {
       local_failure_count = __sync_fetch_and_add(&failure_count, 1)+1;
       model->add_training_example(task2->get_feature_vector(), 0, dist);
       printf("failure\n");

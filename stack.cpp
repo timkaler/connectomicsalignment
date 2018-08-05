@@ -92,9 +92,10 @@ void tfk::Stack::init() {
   try {
     this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load(ml_model_location, true);
     this->ml_models[MATCH_TILE_PAIR_TASK_ID]->enable_training();
-    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->train(true);
+    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->train(false);
+    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->disable_training();
   } catch (const std::exception& e) {
-
+    printf("There was an exception!\n");
   }
   /*
   std::string paramdb_location = "match_tiles_task_pdb_gen_data.pb";
@@ -200,13 +201,12 @@ void tfk::Stack::align_3d() {
 
   std::vector<Section*> good_sections;
   for (int i = 0; i < this->sections.size(); i++) {
-    bool bad = bad_sections[i].second > avg_bad_fraction+stddev;
+    bool bad = bad_sections[i].second > avg_bad_fraction+stddev*100;
     if (bad) printf("Section %d is bad\n", i);
     if (!bad) {
       good_sections.push_back(this->sections[i]);
     }
   }
-  //exit(0);
 
   this->sections = good_sections;
 
@@ -274,13 +274,18 @@ void tfk::Stack::align_2d() {
   int j = 0;
   int i = 0;
   while (j < this->sections.size()) {
-    j += 2;
+    j += 4;
     if (j >= this->sections.size()) j = this->sections.size();
-
-    for (; i < j; i++) {
-       cilk_spawn this->sections[i]->align_2d();
+    if (j-i > 1) {
+      for (; i < j; i++) {
+         cilk_spawn this->sections[i]->align_2d();
+      }
+      cilk_sync;
+    } else {
+      for (; i < j; i++) {
+         this->sections[i]->align_2d();
+      }
     }
-    cilk_sync;
   }
 }
 

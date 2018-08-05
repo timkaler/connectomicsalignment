@@ -21,7 +21,7 @@
 
 #include "mrparams.hpp"
 #include "paramdb.hpp"
-
+#include "opencv2/ml.hpp"
 #include "cilk_tools/engine.h"
 //#include "./meshoptimize.h"
 #ifndef MLBASE

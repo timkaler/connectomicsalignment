@@ -3,7 +3,7 @@
 namespace tfk {
 
 // general MLBAse functions
-  static float FP_PENALTY = -0.3;
+  static float FP_PENALTY = -0.2;
   MLBase::MLBase(int num_features, std::string saved_model) {
     this->mutex = new std::recursive_mutex();
   }
@@ -264,17 +264,20 @@ namespace tfk {
     //if (!trained) {
     //  return true;
     //}
+    //printf("predict was called\n");
     mutex->lock();
-    cv:: Mat mat_vec = cv::Mat::zeros(1, size_of_feature_vector, CV_32F);
+    cv:: Mat mat_vec = cv::Mat::zeros(1, size_of_feature_vector,CV_32F);
     for (int i = 0; i < size_of_feature_vector; i++) {
-        mat_vec.at<float>(i) = vec[i];
+        //printf("inside predict value I'm seeing is %f\n", vec[i]);
+        mat_vec.at<float>(0,i) = vec[i];
     }
         cv::Mat results = cv::Mat::zeros(1, 1, CV_32F);
         model->predict(mat_vec, results);
         bool ret = results.at<float>(0) > 0.5 +FP_PENALTY;
-       
+    //std::cout << mat_vec <<std::endl; 
     //bool ret = model->predict(mat_vec);
     mutex->unlock();
+    //if (!ret) printf("guess ml was false inside predict\n");
     return ret;
   }
 
@@ -341,7 +344,7 @@ namespace tfk {
       }
 
       float weight_1 = 1.0;//(1.0*count_2/count_2;
-      float weight_2 = 10.0*(count_1*1.0)/count_2;
+      float weight_2 = 1.0*(count_1*1.0)/count_2;
 
 
       for (int i = 0; i < new_training_examples; i++) {
@@ -475,7 +478,13 @@ namespace tfk {
         cv::Mat results = cv::Mat::zeros(1, 1, CV_32F);
         model->predict(trainSamples.row(i), results);
         //bool prediction = results.at<float>(1) > results.at<float>(0)+FP_PENALTY;
-        bool prediction = results.at<float>(0) > 0.5 + FP_PENALTY;
+        std::vector<float> vec;
+        for (int j = 0; j < trainSamples.cols; j++) {
+          vec.push_back(trainSamples.at<float>(i,j));
+        }
+        bool prediction = this->predict(vec);
+
+        //bool prediction = results.at<float>(0) > 0.5 + FP_PENALTY;
         //printf();
         float pred_f = (results.at<float>(0) + 1.716) / (results.at<float>(0)+1.716);
         bool actual = trainLabels.at<float>(i,0) > 0.5 + FP_PENALTY;
@@ -530,7 +539,18 @@ namespace tfk {
       for (int i = 0; i < testSamples.rows; i++) {
         cv::Mat results = cv::Mat::zeros(1, 1, CV_32F);
         model->predict(testSamples.row(i), results);
-        bool prediction = results.at<float>(0) > 0.5 + FP_PENALTY;//results.at<float>(0)+FP_PENALTY;
+
+        std::vector<float> vec;
+        for (int j = 0; j < testSamples.cols; j++) {
+          vec.push_back(testSamples.at<float>(i,j));
+        }
+        std::cout << testSamples.row(i) << std::endl;
+
+        bool prediction = this->predict(vec);
+        //exit(0);
+
+
+        //bool prediction = results.at<float>(0) > 0.5 + FP_PENALTY;//results.at<float>(0)+FP_PENALTY;
         float pred_f = (results.at<float>(0) + 1.716) / (results.at<float>(0)+1.716);
         bool actual = testLabels.at<float>(i,0) > 0.5;
         fprintf(pFile2, "%d, %f, %f\n", actual, results.at<float>(0), results.at<float>(0));
@@ -613,7 +633,9 @@ namespace tfk {
     if (fs.isOpened()) {
       fs.release();
       if (!data_only) {
-        model = cv::ml::ANN_MLP::load(filename);
+        ann_model = cv::ml::StatModel::load<cv::ml::RTrees>(filename);
+        //model->load(filename);// = cv::ml::RTrees::load(filename);
+        model = ann_model;
         trained = true;
         training_active = false;
       }

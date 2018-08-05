@@ -39,6 +39,16 @@ namespace tfk {
   trial_params.scale_y = 0.15;
   trial_params.res = FULL;
 
+  params best_params;
+  best_params.num_features = 1;
+  best_params.num_octaves = 6;
+  best_params.contrast_threshold = .015;//CONTRAST_THRESH;
+  best_params.edge_threshold = 10;//EDGE_THRESH_2D;
+  best_params.sigma = 1.2;//1.6;
+  best_params.scale_x = 1.0;
+  best_params.scale_y = 1.0;
+  best_params.res = FULL;
+
 
 
       //tfk::params new_params;
@@ -55,6 +65,8 @@ namespace tfk {
       tile->compute_sift_keypoints2d_params(trial_params, tile_keypoints,
                                               tile_desc, tile);
 
+      //tile->compute_sift_keypoints2d_params(best_params, tile_keypoints,
+      //                                        tile_desc, tile);
 
       //tile->compute_alternative_keypoints2d_params(new_params, alt_tile_keypoints,
       //                                        alt_tile_desc, tile);
