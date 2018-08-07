@@ -544,7 +544,7 @@ namespace tfk {
         for (int j = 0; j < testSamples.cols; j++) {
           vec.push_back(testSamples.at<float>(i,j));
         }
-        std::cout << testSamples.row(i) << std::endl;
+        //std::cout << testSamples.row(i) << std::endl;
 
         bool prediction = this->predict(vec);
         //exit(0);

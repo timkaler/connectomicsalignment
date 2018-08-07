@@ -825,6 +825,7 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
 {
     //printf("detect and compute\n");
     int firstOctave = 0, actualNOctaves = 0, actualNLayers = 0;
+    //int firstOctave = -1, actualNOctaves = 0, actualNLayers = 0;
     Mat image = _image.getMat(), mask = _mask.getMat();
 
     if( image.empty() || image.depth() != CV_8U )

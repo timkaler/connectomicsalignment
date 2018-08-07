@@ -202,10 +202,11 @@ void tfk::Stack::align_3d() {
   std::vector<Section*> good_sections;
   for (int i = 0; i < this->sections.size(); i++) {
     bool bad = bad_sections[i].second > avg_bad_fraction+stddev*100;
-    if (bad) printf("Section %d is bad\n", i);
+    //if (bad) printf("Section %d is bad with %d bad tiles\n", i, );
     if (!bad) {
       good_sections.push_back(this->sections[i]);
     }
+    printf("Section %d has %f fraction bad tiles\n", i, bad_sections[i].second);
   }
 
   this->sections = good_sections;

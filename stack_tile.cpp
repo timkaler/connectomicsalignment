@@ -1299,8 +1299,8 @@ double tfk::Tile::local2DAlignUpdateEnergy() {
         //            c_a_point - a_point + b_point - c_b_point
 
         //            - c_b_point + c_a_point - a_point + b_point
-        //deviation = -1*neighbor->ideal_offsets[this->tile_id] - delta;
-        continue;
+        deviation = -1*neighbor->ideal_offsets[this->tile_id] - delta;
+        //continue;
       }
       //float dist = sqrt(deviation.x*deviation.x + deviation.y*deviation.y);
       //if (dist > 10.0) {
@@ -1378,7 +1378,9 @@ void tfk::Tile::local2DAlignUpdate(double lr) {
                                         this->y_start+this->offset_y);
       cv::Point2f b_point = cv::Point2f(neighbor->x_start+neighbor->offset_x,
                                         neighbor->y_start+neighbor->offset_y);
-      cv::Point2f delta = a_point-b_point;
+      std::mt19937 g1 (this->tile_id + rand());  // mt19937 is a standard mersenne_twister_engine
+      std::uniform_real_distribution<float> distribution(-2.0,2.0);
+      cv::Point2f delta = a_point-b_point + cv::Point2f(distribution(g1), distribution(g1));
                               // c_a_point - c_b_point - a_point + b_point
                               // c_a_point - a_point + b_point-c_b_point
       if (v_points->size() == 0 && n_points->size() == 0) continue; 
@@ -1396,7 +1398,7 @@ void tfk::Tile::local2DAlignUpdate(double lr) {
         //            c_a_point - a_point + b_point - c_b_point
 
         //            - c_b_point + c_a_point - a_point + b_point
-        //deviation = -1*neighbor->ideal_offsets[this->tile_id] - delta;
+        deviation = -1*neighbor->ideal_offsets[this->tile_id] - delta;
         continue;
       }
       //float dist = sqrt(deviation.x*deviation.x + deviation.y*deviation.y);
@@ -1445,7 +1447,7 @@ void tfk::Tile::local2DAlignUpdate(double lr) {
 void tfk::Tile::local2DAlignUpdate() {
   if (this->bad_2d_alignment) return;
   //std::vector<edata>& edges = graph->edgeData[vid];
-  double global_learning_rate = 0.45;
+  double global_learning_rate = 0.5;//0.45;
   if (this->edges.size() == 0) return;
   if (this->edges.size() == 0) return;
 
@@ -1456,7 +1458,9 @@ void tfk::Tile::local2DAlignUpdate() {
 
 
   std::set<int> found_tile_ids;
+  int index = (this->iteration_count++)%this->edges.size();
   for (int i = 0; i < this->edges.size(); i++) {
+    //if (i != index) continue;
     std::vector<cv::Point2f>* v_points = this->edges[i].v_points;
     std::vector<cv::Point2f>* n_points = this->edges[i].n_points;
     //vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
@@ -1494,22 +1498,35 @@ void tfk::Tile::local2DAlignUpdate() {
 
         //            - c_b_point + c_a_point - a_point + b_point
         deviation = -1*neighbor->ideal_offsets[this->tile_id] - delta;
-        continue;
+        //continue;
       }
-      //float dist = sqrt(deviation.x*deviation.x + deviation.y*deviation.y);
+      float dist = sqrt(deviation.x*deviation.x + deviation.y*deviation.y);
       //if (dist > 10.0) {
       //  printf("The dist is %f\n", dist);
       //}
-      weight_sum += 1;
       //this->offset_x += deviation.x*learning_rate;
       //this->offset_y += deviation.y*learning_rate;
+      double damp = 1.0;
 
-      if (std::abs(deviation.x) > 3.0 || true ) {
-        grad_error_x += 2*deviation.x;
-      }
-      if (std::abs(deviation.y) > 3.0 || true ) {
-        grad_error_y += 2*deviation.y;
-      }
+
+      weight_sum += damp;
+
+      //if (this->mfov_id != neighbor->mfov_id) {
+      //  damp = 0.5;
+      //  damp = damp*damp;
+      //}
+
+
+      if (dist > 0.0) {
+        if (std::abs(deviation.x) > 3.0 || true ) {
+          //grad_error_x += 2*deviation.x*damp;
+          grad_error_x += deviation.x;
+        }
+        if (std::abs(deviation.y) > 3.0 || true ) {
+          grad_error_y += deviation.y;
+          //grad_error_y += 2*deviation.y*damp;
+        }
+     }
       //continue;
     //double curr_weight = 1.0/v_points->size();
 
@@ -1532,8 +1549,17 @@ void tfk::Tile::local2DAlignUpdate() {
   ////    grad_error_y / (weight_sum) > 10.0) {
   ////  printf("grad error x is %f y is %f\n", grad_error_x, grad_error_y); 
   ////}
-  this->offset_x += grad_error_x*learning_rate/(weight_sum);
-  this->offset_y += grad_error_y*learning_rate/(weight_sum);
+
+  //if (this->offset_x > 1.0) {
+  //  grad_error_x -= this->offset_x / std::pow(std::abs(this->offset_x),0.25);
+  //}
+  //if (this->offset_y > 1.0) {
+  //  grad_error_y -= this->offset_y / std::pow(std::abs(this->offset_y),0.25);
+  //}
+  if (weight_sum > 0.5) {
+    this->offset_x += grad_error_x*learning_rate/(weight_sum);
+    this->offset_y += grad_error_y*learning_rate/(weight_sum);
+  }
   //printf("offset x is %f\n", this->offset_x);
   //}
 }
@@ -1688,7 +1714,7 @@ tfk::Tile::Tile(TileData& tile_data) {
     this->offset_x = 0.0;
     this->offset_y = 0.0;
     this->filepath = tile_data.tile_filepath();
-
+    printf("mfov id is %d\n", mfov_id);
 
     // NOTE TFK HACK
     this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jpg");
@@ -2163,8 +2189,8 @@ std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_til
     //   the keypoints and their descriptors here.
     for (int i = 0; i < n_sub_images; i++) {
         for (int j = 0; j < v_kps[i].size(); j++) {
-            v_kps[i][j].pt.x += 0.5;
-            v_kps[i][j].pt.y += 0.5;
+            //v_kps[i][j].pt.x += 0.5;
+            //v_kps[i][j].pt.y += 0.5;
             v_kps[i][j].pt.x /= scale_x;
             v_kps[i][j].pt.y /= scale_y;
             v_kps[i][j].pt.x += new_x_start;

@@ -383,8 +383,8 @@ namespace tfk {
   best_params.contrast_threshold = .015;//CONTRAST_THRESH;
   best_params.edge_threshold = 10;//EDGE_THRESH_2D;
   best_params.sigma = 1.2;//1.6;
-  best_params.scale_x = 1.0;
-  best_params.scale_y = 1.0;
+  best_params.scale_x = 0.5;
+  best_params.scale_y = 0.5;
   best_params.res = FULL;
 
   //params trial_params;
@@ -398,17 +398,17 @@ namespace tfk {
   //trial_params.res = FULL;
 
   params trial_params;
-  trial_params.num_features = 2;
+  trial_params.num_features = 1;
   trial_params.num_octaves = 12;
   trial_params.contrast_threshold = .015;
   trial_params.edge_threshold = 10;
-  trial_params.sigma = 1.2;
+  trial_params.sigma = 1.05;
   trial_params.scale_x = 0.12;
   trial_params.scale_y = 0.12;
   trial_params.res = FULL;
 
 
-
+  //trial_params = best_params;
 
 
       //tfk::params new_params;
@@ -523,7 +523,7 @@ namespace tfk {
       
       // put b at 0,0
       if (filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
-        for (int _i = 0; _i < 1000; _i++) {
+        for (int _i = 0; _i < 5000; _i++) {
           float dx = 0.0;
           float dy = 0.0;
           for (int j = 0; j < filtered_match_points_a.size(); j++) {

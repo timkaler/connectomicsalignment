@@ -76,7 +76,7 @@ class Tile {
   public:
    std::map<int, cv::Point2f> ideal_offsets;
 
-
+   int iteration_count;
 
    std::map<int, cv::Point2f> ideal_offsets_first;
    std::map<int, cv::Point2f> ideal_offsets_second;
@@ -166,6 +166,7 @@ class Tile {
    std::map<Tile*, int> keypoints_in_overlap;
    std::map<Tile*, int> matched_keypoints_in_overlap;
 
+   int incident_bad_edges;
 
    Tile(int section_id, int tile_id, int index, std::string filepath,
             int x_start, int x_finish, int y_start, int y_finish);
@@ -244,6 +245,7 @@ class Section {
     double offset_x;
     double offset_y;
 
+    void print_2d_error_info(Tile* t, Tile* n, float val);
     bool alignment2d_exists();
     void load_2d_alignment();
     void save_2d_alignment();
@@ -286,6 +288,8 @@ class Section {
     void compute_keypoints_and_matches();
     void compute_tile_matches(Tile* a_tile);
     void compute_tile_matches2(Tile* a_tile);
+
+    void compare_2d_alignment();
 
     void align_3d(Section* neighbor);
 

@@ -17,6 +17,47 @@ extern fasttime_t global_start;
 #define CORR_THRESH 0.8
 
 
+void tfk::Section::print_2d_error_info(
+    Tile* t, Tile* n, float val) {
+  printf("===BEGIN===");
+  printf("error info %d %d %f\n", t->tile_id, n->tile_id, val);
+  for (int i = 0; i < t->edges.size(); i++) {
+    Tile* neighbor = this->tiles[t->edges[i].neighbor_id];
+    if (neighbor->bad_2d_alignment) {
+      printf("Skip neighbor %d (bad alignment)\n", neighbor->tile_id);
+      continue;
+    }
+
+    if (t->ideal_offsets.find(neighbor->tile_id) == t->ideal_offsets.end() &&
+        n->ideal_offsets.find(t->tile_id) == neighbor->ideal_offsets.end()) {
+      printf("Skip neighbor %d (no ideal offset)\n", neighbor->tile_id);
+      continue;
+    }
+
+    
+      cv::Point2f a_point = cv::Point2f(t->x_start+t->offset_x,
+                                        t->y_start+t->offset_y);
+      cv::Point2f b_point = cv::Point2f(neighbor->x_start+neighbor->offset_x,
+                                        neighbor->y_start+neighbor->offset_y);
+    cv::Point2f delta = a_point-b_point;
+      cv::Point2f deviation;
+      if (t->ideal_offsets.find(neighbor->tile_id) != t->ideal_offsets.end()) {
+        deviation = t->ideal_offsets[neighbor->tile_id] - delta;
+      } else {
+        deviation = -1*neighbor->ideal_offsets[t->tile_id] - delta;
+      }
+
+
+
+    printf("neigh %d a_pt %f,%f; b_pt %f,%f; delta %f,%f; deviation %f,%f\n", neighbor->tile_id, a_point.x, a_point.y, b_point.x, b_point.y, delta.x, delta.y, deviation.x, deviation.y);
+
+
+ 
+  }
+  printf("===END===");
+
+}
+
 void tfk::Section::erase_3d_keypoints() {
   for (int i = 0; i < this->tiles.size(); i++) {
     this->tiles[i]->release_3d_keypoints();
@@ -148,6 +189,7 @@ void tfk::Section::align_2d() {
       std::string(ALIGN_CACHE_FILE_DIRECTORY + "/prefix_"+std::to_string(this->real_section_id));
 
       this->load_2d_alignment();
+      compare_2d_alignment();
       //this->read_3d_keypoints(filename);
       return;
     }
@@ -190,12 +232,15 @@ void tfk::Section::align_2d() {
       for (int i = 0; i < this->graph->num_vertices(); i++) {
         this->graph->getVertexData(i)->iteration_count = 0;
       }
+      for (int i = 0; i < this->tiles.size(); i++) {
+        this->tiles[i]->iteration_count = 0;
+      }
 
       std::set<int> section_list;
       double lr = 0.1;
       int iter_count = 0;
       while (true) {
-      if (iter_count++ > 1) break;
+      if (iter_count++ > 80) break;
       for (int _i = 0; _i < this->graph->num_vertices(); _i++) {
         int i = _i;//vertex_ids[_i];
         //int z = this->graph->getVertexData(i)->z;
@@ -234,6 +279,7 @@ void tfk::Section::align_2d() {
         }
         printf("Total energy is %f lr is %f\n", energy, lr);
         if (energy > last_energy) {
+          iter_count += 20;
           lr = lr * 0.5;
         }
       }
@@ -249,6 +295,7 @@ void tfk::Section::align_2d() {
       // init tmp bad 2d alignment.
       for (int i = 0; i < this->tiles.size(); i++) {
         this->tiles[i]->tmp_bad_2d_alignment = this->tiles[i]->bad_2d_alignment;
+        this->tiles[i]->incident_bad_edges = 0;
       }
 
 
@@ -276,9 +323,11 @@ void tfk::Section::align_2d() {
           float val = t->compute_deviation(neighbor);
 
           if (val > 15.0){ //10.0) {
+              t->incident_bad_edges += 1;
+              neighbor->incident_bad_edges += 1;
             //match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
-              t->tmp_bad_2d_alignment = true;
-              neighbor->tmp_bad_2d_alignment = true; 
+              //t->tmp_bad_2d_alignment = true;
+              //neighbor->tmp_bad_2d_alignment = true; 
             if (guess_ml) {
               match_tile_pair_task_model->ml_fp++;
             } else {
@@ -304,6 +353,70 @@ void tfk::Section::align_2d() {
           }
         }
       }
+
+      for (int i = 0; i < this->tiles.size(); i++) {
+        Tile* t = this->tiles[i];
+
+        if (t->bad_2d_alignment) {
+          //printf("Tile has bad 2d alignment\n");
+          continue;
+        }
+
+
+        for (int k = 0; k < t->edges.size(); k++) {
+          Tile* neighbor = this->tiles[t->edges[k].neighbor_id];
+          bool guess_ml = t->ml_preds[neighbor];
+          MatchTilesTask *task = t->match_tiles_task;
+          bool guess_basic = task->neighbor_to_success[neighbor];
+          if (neighbor->bad_2d_alignment) continue;
+          //if (guess_basic == false) continue;
+          if (t->ideal_offsets.find(neighbor->tile_id) == t->ideal_offsets.end() ||
+              neighbor->ideal_offsets.find(t->tile_id) == neighbor->ideal_offsets.end()) continue;
+
+          float val = t->compute_deviation(neighbor);
+
+          if (val > 15.0){ //10.0) {
+              //print_2d_error_info(t,neighbor,val);
+              //t->incident_bad_edges += 1;
+              //neighbor->incident_bad_edges += 1;
+              //if (t->incident_bad_edges > neighbor->incident_bad_edges) {
+                t->tmp_bad_2d_alignment = true;
+                //t->incident_bad_edges -= 1;
+                //neighbor->tmp_bad_2d_alignment = true;
+              //} else {
+                neighbor->tmp_bad_2d_alignment = true;
+                //neighbor->incident_bad_edges -= 1;
+              //}
+            //match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 0, val);
+              //t->tmp_bad_2d_alignment = true;
+              //neighbor->tmp_bad_2d_alignment = true; 
+            if (guess_ml) {
+              match_tile_pair_task_model->ml_fp++;
+            } else {
+              match_tile_pair_task_model->ml_correct_neg++;
+            }
+            if (guess_basic) {
+              bas_fp++;
+            } else {
+              bas_correct_neg++;
+            }
+          } else {
+            //match_tile_pair_task_model->add_training_example(t->feature_vectors[neighbor], 1, val);
+            if (guess_ml) {
+              match_tile_pair_task_model->ml_correct_pos++;
+            } else {
+              match_tile_pair_task_model->ml_fn++;
+            }
+            if (guess_basic) {
+              bas_correct_pos++;
+            } else {
+              bas_fn++;
+            }
+          }
+        }
+      }
+
+
 
       // set the bad alignment based on results.
       for (int i = 0; i < this->tiles.size(); i++) {
@@ -2478,6 +2591,83 @@ void tfk::Section::read_3d_keypoints(std::string filename) {
   fs.release();
 }
 
+
+void tfk::Section::compare_2d_alignment() {
+  printf("Comparing 2d alignment\n");
+
+  Saved2DAlignmentSection sectiondata;
+  std::fstream input(ALIGN_CACHE_FILE_DIRECTORY + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
+
+  sectiondata.ParseFromIstream(&input);
+
+
+  for (int i = 0; i < sectiondata.tiles_size(); i++) {
+    Tile* tile = this->tiles[i];
+    Saved2DAlignmentTile tiledata = sectiondata.tiles(i);
+    tile->bad_2d_alignment = tiledata.bad_2d_alignment();
+    tile->x_start = tiledata.x_start();
+    tile->x_finish = tiledata.x_finish();
+    tile->y_start = tiledata.y_start();
+    tile->y_finish = tiledata.y_finish();
+    tile->offset_x = tiledata.offset_x();
+    tile->offset_y = tiledata.offset_y();
+  }
+  input.close();
+
+  Saved2DAlignmentSection sectiondata2;
+  std::fstream input2(ALIGN_CACHE_FILE_DIRECTORY + "_compare/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
+
+  sectiondata2.ParseFromIstream(&input2);
+
+  float min_x,min_y;
+  float min_x2,min_y2;
+  for (int i = 0; i < sectiondata2.tiles_size(); i++) {
+    Saved2DAlignmentTile tiledata = sectiondata2.tiles(i);
+    Tile* tile = this->tiles[i];
+    if (i==0) {
+      min_x = tile->x_start + tile->offset_x;
+      min_y = tile->y_start + tile->offset_y;
+      min_x2 = tiledata.x_start() + tiledata.offset_x();
+      min_y2 = tiledata.y_start() + tiledata.offset_y();
+    } else {
+      float x = tile->x_start + tile->offset_x;
+      float y = tile->y_start + tile->offset_y;
+      float x2 = tiledata.x_start() + tiledata.offset_x();
+      float y2 = tiledata.y_start() + tiledata.offset_y();
+      if (x < min_x) min_x = x;
+      if (y < min_y) min_y = y;
+      if (x2 < min_x2) min_x2 = x2;
+      if (y2 < min_y2) min_y2 = y2;
+    }
+  }
+
+  for (int i = 0; i < sectiondata2.tiles_size(); i++) {
+    Tile* tile = this->tiles[i];
+    Saved2DAlignmentTile tiledata = sectiondata2.tiles(i);
+
+    cv::Point2f corner = cv::Point2f(tile->x_start + tile->offset_x - min_x,
+                                     tile->y_start + tile->offset_y - min_y);
+
+    cv::Point2f corner2 = cv::Point2f(tiledata.x_start() + tiledata.offset_x() - min_x2,
+                                      tiledata.y_start() + tiledata.offset_y() - min_y2);
+    cv::Point2f delta_corners = corner - corner2;
+    float delta = std::sqrt(delta_corners.x*delta_corners.x + delta_corners.y*delta_corners.y);
+    if (delta > 15.0 || true) {
+      printf("delta is %f, bad 2d %d %d; x %f y %f\n", delta, tiledata.bad_2d_alignment(), tile->bad_2d_alignment, tile->x_start + tile->offset_x-min_x, tile->y_start + tile->offset_y - min_y);
+    }
+/*
+    tile->bad_2d_alignment = tiledata.bad_2d_alignment();
+    tile->x_start = tiledata.x_start();
+    tile->x_finish = tiledata.x_finish();
+    tile->y_start = tiledata.y_start();
+    tile->y_finish = tiledata.y_finish();
+    tile->offset_x = tiledata.offset_x();
+    tile->offset_y = tiledata.offset_y();*/
+  }
+  input2.close();
+
+}
+
 void tfk::Section::load_2d_alignment() {
   printf("Loading 2d alignment\n");
   //cv::FileStorage fs(std::string("2d_alignment_"+std::to_string(this->real_section_id)),
@@ -2677,7 +2867,7 @@ void tfk::Section::compute_keypoints_and_matches() {
 
       std::map<int, TileSiftTask*> dependencies;
     while (active_set.size() > 0) {
-      //printf("Current active set size is %lu\n", active_set.size());
+      printf("Current active set size is %lu\n", active_set.size());
       // find all the neighbors.
       for (auto it = active_set.begin(); it != active_set.end(); ++it) {
         Tile* tile = *it;
