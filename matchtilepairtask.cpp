@@ -230,6 +230,7 @@ namespace tfk {
         if (num_matches_filtered >= MIN_FEATURES_NUM && filtered_match_points_a.size() >= 0.1*matches.size()) {
           //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
           this->best_offset = best_offset;
+          this->successful_rod = trial_rod;
           break;
         } else {
           filtered_match_points_a.clear();
@@ -383,8 +384,8 @@ namespace tfk {
   best_params.contrast_threshold = .015;//CONTRAST_THRESH;
   best_params.edge_threshold = 10;//EDGE_THRESH_2D;
   best_params.sigma = 1.2;//1.6;
-  best_params.scale_x = 0.5;
-  best_params.scale_y = 0.5;
+  best_params.scale_x = 1.0;
+  best_params.scale_y = 1.0;
   best_params.res = FULL;
 
   //params trial_params;
@@ -403,8 +404,8 @@ namespace tfk {
   trial_params.contrast_threshold = .015;
   trial_params.edge_threshold = 10;
   trial_params.sigma = 1.05;
-  trial_params.scale_x = 0.12;
-  trial_params.scale_y = 0.12;
+  trial_params.scale_x = 0.15;
+  trial_params.scale_y = 0.15;
   trial_params.res = FULL;
 
 
@@ -524,10 +525,16 @@ namespace tfk {
       // put b at 0,0
       if (filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
         for (int _i = 0; _i < 5000; _i++) {
-          float dx = 0.0;
-          float dy = 0.0;
+          double dx = 0.0;
+          double dy = 0.0;
           for (int j = 0; j < filtered_match_points_a.size(); j++) {
-            cv::Point2f dp = b_tile->rigid_transform(filtered_match_points_b[j]) - tmp_a_tile.rigid_transform(filtered_match_points_a[j]);
+            cv::Point2d p1 = cv::Point2d(1.0l*filtered_match_points_b[j].x,
+                                         1.0l*filtered_match_points_b[j].y);
+            cv::Point2d p2 = cv::Point2d(1.0l*filtered_match_points_a[j].x,
+                                         1.0l*filtered_match_points_a[j].y);
+
+            //cv::Point2d dp = b_tile->rigid_transform_d(filtered_match_points_b[j]) - tmp_a_tile.rigid_transform(filtered_match_points_a[j]);
+            cv::Point2d dp = b_tile->rigid_transform_d(p1) - tmp_a_tile.rigid_transform_d(p2);
             dx += 2*dp.x * 1.0 / (filtered_match_points_a.size());
             dy += 2*dp.y * 1.0 / (filtered_match_points_a.size());
           }
@@ -537,10 +544,10 @@ namespace tfk {
       }
       //tmp_a_tile.offset_x += best_offset.x;
       //tmp_a_tile.offset_y += best_offset.y;
-      cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
+      cv::Point2d a_point = cv::Point2d(tmp_a_tile.x_start+tmp_a_tile.offset_x,
                                           tmp_a_tile.y_start+tmp_a_tile.offset_y);
       //TODO(wheatman) tell tim I have this done even if it failed
-      cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
+      cv::Point2d b_point = cv::Point2d(b_tile->x_start+b_tile->offset_x,
                                         b_tile->y_start+b_tile->offset_y);
       current_offset = a_point - b_point;
       //printf("a_tile id and index %d %d\n", a_tile->index, a_tile->tile_id);
@@ -553,6 +560,8 @@ namespace tfk {
       //  }
       //} else {
       this->predicted_offset = current_offset;
+
+
       //printf("predicted offset %f, %f\n", predicted_offset.x, predicted_offset.y);
       //}
       //printf("predicted offset %f %f\n", current_offset.x, current_offset.y);
@@ -600,6 +609,7 @@ namespace tfk {
           this->feature_vector.push_back(rand()%256);
         }
       }
+      this->feature_vector.push_back(this->successful_rod);
       if (false_negative_rate > 0) {
         //bool guess_ml = this->model->predict(a_tile->feature_vectors[b_tile]);
         //bool guess_ml = false;//this->model->predict(a_tile->feature_vectors[b_tile]);
@@ -613,6 +623,9 @@ namespace tfk {
       //  printf("%f\n", feature_vector[i]);
       //}
           guess_ml = this->model->predict(this->feature_vector);//this->model->predict(a_tile->feature_vectors[b_tile]);
+        //if (filtered_match_points_a.size() < MIN_FEATURES_NUM) {
+        //  guess_ml = false;
+        //}
         if (guess_ml == false) {
           //printf("guess ml was false\n");
         }
@@ -627,6 +640,8 @@ namespace tfk {
         //guess_ml = true;
         //guess_ml = true;
         a_tile->ml_preds[b_tile] = guess_ml;
+
+
         //if (false && /*guess_ml*/ val >= 0.75) {
         if ((guess_ml || false_negative_rate > 1.0) && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
           a_tile->ideal_offsets[b_tile->tile_id] = current_offset;

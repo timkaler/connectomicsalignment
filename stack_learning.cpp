@@ -216,8 +216,9 @@ void tfk::Stack::train_fsj(int trials) {
   int64_t success_count = 0;
   int64_t failure_count = 0;
 
+  int64_t failure_type2_count = 0;
 
-  MLAnn* model = new MLAnn(11, "tfk_test_model");
+  MLAnn* model = new MLAnn(12, "tfk_test_model");
   //model->load("tfk_test_model", true);
   //model->enable_training();
   //model->train(false);
@@ -267,6 +268,7 @@ void tfk::Stack::train_fsj(int trials) {
       tile_b->release_2d_keypoints();
       tile_a->release_full_image();
       tile_b->release_full_image();
+    //if (!res1 || !res2) continue;
     //if (!res1 || !res2) {
     //  if (res1 != res2) {
     //    __sync_fetch_and_add(&failure_count, 1);
@@ -282,7 +284,11 @@ void tfk::Stack::train_fsj(int trials) {
     float dist = sqrt(dx*dx+dy*dy);
     int local_failure_count = failure_count;
     int local_success_count = success_count;
-    if (res1 != res2 || dist > 5.0) {
+    int local_failure_type2_count = failure_type2_count;
+    if (res1 != res2 || dist > 2.0) {
+      if (res1 == res2) {
+        local_failure_type2_count = __sync_fetch_and_add(&failure_type2_count,1);
+      }
       local_failure_count = __sync_fetch_and_add(&failure_count, 1)+1;
       model->add_training_example(task2->get_feature_vector(), 0, dist);
       printf("failure\n");
@@ -291,7 +297,7 @@ void tfk::Stack::train_fsj(int trials) {
       local_success_count = __sync_fetch_and_add(&success_count, 1)+1;
       model->add_training_example(task2->get_feature_vector(), 1, dist);
     }
-    printf("failures %d, successes %d, fraction %f%%\n", local_failure_count, local_success_count, (100.0*local_failure_count)/(local_failure_count+local_success_count));
+    printf("failures %d, successes %d, fraction %f%%; type2: %f%%\n", local_failure_count, local_success_count, (100.0*local_failure_count)/(local_failure_count+local_success_count), (100.0*local_failure_type2_count) / (local_failure_count + local_success_count));
     delete task1;
     delete task2;
   }

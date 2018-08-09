@@ -64,7 +64,7 @@ ifdef ASSEMBLY
 endif
 
 ifdef DEBUG
-	CFLAGS += -O0 -g
+	CFLAGS += -O1 -g
 else
 	CFLAGS += -DNDEBUG
 	CFLAGS += -O3 -g -mavx2 -m64 -march=native

@@ -74,12 +74,14 @@ typedef struct params {
 
 class Tile {
   public:
-   std::map<int, cv::Point2f> ideal_offsets;
+   std::map<int, cv::Point2d> ideal_offsets;
 
    int iteration_count;
 
-   std::map<int, cv::Point2f> ideal_offsets_first;
-   std::map<int, cv::Point2f> ideal_offsets_second;
+   bool highlight;
+
+   std::map<int, cv::Point2d> ideal_offsets_first;
+   std::map<int, cv::Point2d> ideal_offsets_second;
    bool both_passes;
 
    std::map<int, float> neighbor_correlations;
@@ -93,6 +95,9 @@ class Tile {
    double x_finish;
    double y_start;
    double y_finish;
+
+
+   double grad_error_x, grad_error_y;
 
    bool bad_2d_alignment;
    bool tmp_bad_2d_alignment;
@@ -181,6 +186,7 @@ class Tile {
    void compute_sift_keypoints_with_params(params p);
 
    cv::Point2f rigid_transform(cv::Point2f pt);
+   cv::Point2d rigid_transform_d(cv::Point2d pt);
 
    void release_2d_keypoints();
 

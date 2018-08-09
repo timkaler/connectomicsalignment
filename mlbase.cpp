@@ -3,7 +3,8 @@
 namespace tfk {
 
 // general MLBAse functions
-  static float FP_PENALTY = -0.2;
+  //static float FP_PENALTY = -0.2;
+  static float FP_PENALTY = 0.0;
   MLBase::MLBase(int num_features, std::string saved_model) {
     this->mutex = new std::recursive_mutex();
   }
@@ -261,6 +262,7 @@ namespace tfk {
 
 
   bool MLBase::predict(std::vector<float> vec) {
+    //return true;
     //if (!trained) {
     //  return true;
     //}
@@ -322,7 +324,7 @@ namespace tfk {
   // this would be useul for the case where we can't do reinforcement learning
   void MLAnn::train(bool reinforcement) {
     mutex->lock();
-    cv::TermCriteria term_crit = cv::TermCriteria(cv::TermCriteria::Type::EPS, 10000000, 1e-17);
+    cv::TermCriteria term_crit = cv::TermCriteria(cv::TermCriteria::Type::COUNT, 128, 1e-12);
     if (training_active) {
       clear_saved_buffer();
       balance_and_flush_train_buffer();
@@ -344,7 +346,7 @@ namespace tfk {
       }
 
       float weight_1 = 1.0;//(1.0*count_2/count_2;
-      float weight_2 = 1.0*(count_1*1.0)/count_2;
+      float weight_2 = 4.0*(count_1*1.0)/count_2;
 
 
       for (int i = 0; i < new_training_examples; i++) {

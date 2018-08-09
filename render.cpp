@@ -1,5 +1,5 @@
 #include "render.hpp"
-
+#include "stack_helpers.cpp"
 namespace tfk {
 
 
@@ -180,10 +180,10 @@ void tfk::Render::render_tile_helper(cv::Mat& tile_p_image,
           int x = x_c+k;
           int y = y_c+m;
           if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
-            //section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) = val;
-            //section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) = 1;
-            __sync_fetch_and_add(&section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x), val);
-            __sync_fetch_and_add(&section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x),1);
+            section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) = val;
+            section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) = 1;
+            //__sync_fetch_and_add(&section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x), val);
+            //__sync_fetch_and_add(&section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x),1);
           }
         }
       }
@@ -201,6 +201,8 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
   //  if (section->tiles[i]->bad_2d_alignment) bad_2d_alignment++;
   //}
   //printf("total tiles %d, bad 2d count %d\n", section->tiles.size(), bad_2d_alignment);
+
+  bool highlight_tiles = true;
 
   cv::Point2f render_scale = this->get_render_scale(section, resolution);
 
@@ -230,6 +232,9 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
   //section->p_out = new cv::Mat();
   (*section_p_out_sum).create(nrows, ncols, CV_16UC1);
 
+  cv::Mat heat_floats;
+  heat_floats.create(nrows,ncols,CV_32F);
+
   // temporary matrix for the section.
   cv::Mat* section_p_out_ncount = new cv::Mat();
   //section->p_out = new cv::Mat();
@@ -240,6 +245,7 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
       section_p_out.at<unsigned char>(y,x) = 0;
       section_p_out_sum->at<unsigned short>(y,x) = 0;
       section_p_out_ncount->at<unsigned short>(y,x) = 0;
+      heat_floats.at<float>(y,x)=0.0;
     }
   }
 
@@ -253,38 +259,41 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
 
         //cv::Mat* tile_p_image = this->read_tile(tile->filepath, resolution);
         cv::Mat tile_p_image = tile->get_tile_data(resolution);
-
+        printf("rendering a tile?\n");
 
         render_tile_helper(tile_p_image, section, tile, render_scale, section_p_out_sum,
                            section_p_out_ncount, nrows, ncols, lower_x, lower_y, nomesh,
                            0,0,tile_p_image.size().width, tile_p_image.size().height);
 
-        //for (int _y = 0; _y < (tile_p_image).size().height; _y++) {
-        //  for (int _x = 0; _x < (tile_p_image).size().width; _x++) {
-        //    if (_x > 10 && _x < tile_p_image.size().width-10 &&
-        //        _y > 10 && _y < tile_p_image.size().height-10) continue;
-        //    cv::Point2f p = cv::Point2f(_x*render_scale.x, _y*render_scale.y);
-        //    cv::Point2f post_rigid_p = tile->rigid_transform(p);
-        //    cv::Point2f transformed_p = post_rigid_p;
-        //    if (!nomesh) {
-        //      transformed_p = section->elastic_transform(post_rigid_p);
-        //    }
-        //    int x_c = (int)(transformed_p.x/render_scale.x + 0.5);
-        //    int y_c = (int)(transformed_p.y/render_scale.y + 0.5);
-        //    for (int k = -1; k < 2; k++) {
-        //      for (int m = -1; m < 2; m++) {
-        //        if (k != 0 || m!=0) continue;
-        //        unsigned char val = 0;//tile_p_image.at<unsigned char>(_y, _x);
-        //        int x = x_c+k;
-        //        int y = y_c+m;
-        //        if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
-        //          section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) = val;
-        //          section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) = 1;
-        //        }
-        //      }
-        //    }
-        //  }
-        //}
+        if (highlight_tiles && tile->highlight && false) {
+          for (int _y = 0; _y < (tile_p_image).size().height; _y++) {
+            for (int _x = 0; _x < (tile_p_image).size().width; _x++) {
+              //if (_x > 10 && _x < tile_p_image.size().width-10 &&
+              //    _y > 10 && _y < tile_p_image.size().height-10) continue;
+              cv::Point2f p = cv::Point2f(_x*render_scale.x, _y*render_scale.y);
+              cv::Point2f post_rigid_p = tile->rigid_transform(p);
+              cv::Point2f transformed_p = post_rigid_p;
+              if (!nomesh) {
+                transformed_p = section->elastic_transform(post_rigid_p);
+              }
+              int x_c = (int)(transformed_p.x/render_scale.x + 0.5);
+              int y_c = (int)(transformed_p.y/render_scale.y + 0.5);
+              for (int k = -1; k < 2; k++) {
+                for (int m = -1; m < 2; m++) {
+                  if (k != 0 || m!=0) continue;
+                  unsigned char val = 0;//tile_p_image.at<unsigned char>(_y, _x);
+                  int x = x_c+k;
+                  int y = y_c+m;
+                  heat_floats.at<float>(y-lower_y,x-lower_x) = 0.5;
+                  //if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
+                  //  section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) = val;
+                  //  section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) = 1000;
+                  //}
+                }
+              }
+            }
+          }
+        }
         //for (int _y = 0; _y < (tile_p_image).size().height; _y++) {
         //  for (int _x = 0; _x < (tile_p_image).size().width; _x++) {
         //    cv::Point2f p = cv::Point2f(_x*render_scale.x, _y*render_scale.y);
@@ -338,6 +347,11 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
     }
   }
 
+
+  //cv::Mat colored = apply_heatmap_to_grayscale(&section_p_out, &heat_floats, nrows, ncols);
+
+  //imwrite("colored.jpg", colored);
+
   //if (write) {
   //  cv::imwrite(filename, (*section_p_out));
   //}
@@ -362,11 +376,29 @@ void Render::render_stack(Stack* stack,
     std::pair<cv::Point2f, cv::Point2f> bbox, tfk::Resolution resolution,
     std::string filename_prefix) {
 
+  int tile_count = 0;
   for (int i = 0; i < stack->sections.size(); i++) {
     Section* section = stack->sections[i];
-    render(section, bbox, resolution,
-           filename_prefix+"_"+std::to_string(section->real_section_id)+".tif"); 
+
+    for (int j = 0; j < section->tiles.size(); j++) {
+      Tile* tile = section->tiles[j];
+      if (tile->highlight) {
+        tile_count++;
+        auto tbbox = tile->get_bbox();
+        //tbbox.first -= cv::Point2f(500.0,500.0);
+        //tbbox.second += cv::Point2f(500.0,500.0);
+        render(section, tbbox, resolution, filename_prefix+"_" +
+               std::to_string(section->real_section_id)+"_"+std::to_string(tile_count)+".tif");
+      }
+    }
   }
+
+
+  //for (int i = 0; i < stack->sections.size(); i++) {
+  //  Section* section = stack->sections[i];
+  //  render(section, bbox, resolution,
+  //         filename_prefix+"_"+std::to_string(section->real_section_id)+".tif"); 
+  //}
 }
 
 void Render::render_stack_with_patch(Stack* stack,

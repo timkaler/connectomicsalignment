@@ -35,12 +35,12 @@ void tfk::Section::print_2d_error_info(
     }
 
     
-      cv::Point2f a_point = cv::Point2f(t->x_start+t->offset_x,
+      cv::Point2d a_point = cv::Point2d(t->x_start+t->offset_x,
                                         t->y_start+t->offset_y);
-      cv::Point2f b_point = cv::Point2f(neighbor->x_start+neighbor->offset_x,
+      cv::Point2d b_point = cv::Point2d(neighbor->x_start+neighbor->offset_x,
                                         neighbor->y_start+neighbor->offset_y);
-    cv::Point2f delta = a_point-b_point;
-      cv::Point2f deviation;
+    cv::Point2d delta = a_point-b_point;
+      cv::Point2d deviation;
       if (t->ideal_offsets.find(neighbor->tile_id) != t->ideal_offsets.end()) {
         deviation = t->ideal_offsets[neighbor->tile_id] - delta;
       } else {
@@ -240,23 +240,19 @@ void tfk::Section::align_2d() {
       double lr = 0.1;
       int iter_count = 0;
       while (true) {
-      if (iter_count++ > 80) break;
+      if (iter_count++ > 5) break;
       for (int _i = 0; _i < this->graph->num_vertices(); _i++) {
         int i = _i;//vertex_ids[_i];
-        //int z = this->graph->getVertexData(i)->z;
         this->graph->getVertexData(i)->iteration_count = 0;
-        //if (section_list.find(z) == section_list.end()) {
-        //  if (this->graph->edgeData[i].size() > 4) {
-        //    section_list.insert(z);
-        //  }
-        //}
+        this->tiles[i]->grad_error_x = 0.0;
+        this->tiles[i]->grad_error_y = 0.0;
       }
 
-      scheduler->isStatic = false;
-      for (int i = 0; i < this->graph->num_vertices(); i++) {
-        scheduler->add_task_static(i, updateTile2DAlign); //updateVertex2DAlignFULLFast);
-      }
-      scheduler->isStatic = true;
+      //scheduler->isStatic = false;
+      //for (int i = 0; i < this->graph->num_vertices(); i++) {
+      //  scheduler->add_task_static(i, updateTile2DAlign); //updateVertex2DAlignFULLFast);
+      //}
+      //scheduler->isStatic = true;
 
       printf("starting run\n");
 
@@ -265,12 +261,18 @@ void tfk::Section::align_2d() {
         last_energy += this->tiles[x]->local2DAlignUpdateEnergy();
       }
 
-      e->run();
-      //for (int c = 0; c < 10000; c++) {
-      //  for (int x = 0; x < this->tiles.size(); x++) {
-      //    this->tiles[x]->local2DAlignUpdate(lr);
-      //  }
-      //}
+      //e->run();
+      for (int c = 0; c < 10000; c++) {
+        cilk_for (int x = 0; x < this->tiles.size(); x++) {
+          this->tiles[x]->local2DAlignUpdate(lr);
+        }
+        cilk_for (int x = 0; x < this->tiles.size(); x++) {
+          this->tiles[x]->offset_x += this->tiles[x]->grad_error_x*lr;
+          this->tiles[x]->offset_y += this->tiles[x]->grad_error_y*lr;
+        }
+
+      }
+
 
       double energy = 0.0;
       printf("ending run\n");
@@ -278,8 +280,8 @@ void tfk::Section::align_2d() {
           energy += this->tiles[x]->local2DAlignUpdateEnergy();
         }
         printf("Total energy is %f lr is %f\n", energy, lr);
-        if (energy > last_energy) {
-          iter_count += 20;
+        if (energy + 0.1 > last_energy) {
+          //iter_count += 20;
           lr = lr * 0.5;
         }
       }
@@ -2459,12 +2461,12 @@ void tfk::Section::compute_tile_matches2(Tile* a_tile) {
         neighbor_success_count++;
         a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
 
-      cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
+      cv::Point2d a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
                                         tmp_a_tile.y_start+tmp_a_tile.offset_y);
-      cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
+      cv::Point2d b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
                                         b_tile->y_start+b_tile->offset_y);
 
-      cv::Point2f delta = a_point-b_point;
+      cv::Point2d delta = a_point-b_point;
 
       a_tile->ideal_offsets[b_tile->tile_id] = delta;
       a_tile->neighbor_correlations[b_tile->tile_id] = val;
@@ -2535,12 +2537,12 @@ void tfk::Section::compute_tile_matches(Tile* a_tile) {
       neighbor_success_count++;
       a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
 
-      cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
+      cv::Point2d a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
                                         tmp_a_tile.y_start+tmp_a_tile.offset_y);
-      cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
+      cv::Point2d b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
                                         b_tile->y_start+b_tile->offset_y);
 
-      cv::Point2f delta = a_point-b_point;
+      cv::Point2d delta = a_point-b_point;
 
       a_tile->ideal_offsets[b_tile->tile_id] = delta;
       a_tile->neighbor_correlations[b_tile->tile_id] = val;
@@ -2624,6 +2626,7 @@ void tfk::Section::compare_2d_alignment() {
   for (int i = 0; i < sectiondata2.tiles_size(); i++) {
     Saved2DAlignmentTile tiledata = sectiondata2.tiles(i);
     Tile* tile = this->tiles[i];
+    tile->highlight = false;
     if (i==0) {
       min_x = tile->x_start + tile->offset_x;
       min_y = tile->y_start + tile->offset_y;
@@ -2651,9 +2654,32 @@ void tfk::Section::compare_2d_alignment() {
     cv::Point2f corner2 = cv::Point2f(tiledata.x_start() + tiledata.offset_x() - min_x2,
                                       tiledata.y_start() + tiledata.offset_y() - min_y2);
     cv::Point2f delta_corners = corner - corner2;
+
+
+    std::vector<Tile*> neighbors = this->get_all_close_tiles(tile);
+    for (int n = 0; n < neighbors.size(); n++) {
+      double dx = neighbors[n]->x_start+neighbors[n]->offset_x - tile->x_start - tile->offset_x;
+      double dy = neighbors[n]->y_start+neighbors[n]->offset_y - tile->y_start - tile->offset_y;
+
+      Saved2DAlignmentTile tiledata2 = sectiondata2.tiles(neighbors[n]->tile_id);
+
+      double dx2 = tiledata2.x_start()+tiledata2.offset_x() - tiledata.x_start() - tiledata.offset_x();
+      double dy2 = tiledata2.y_start()+tiledata2.offset_y() - tiledata.y_start() - tiledata.offset_y();
+
+      double diff = std::sqrt((dx-dx2)*(dx-dx2) + (dy-dy2)*(dy-dy2));
+      if (tiledata2.bad_2d_alignment() || tiledata.bad_2d_alignment() || tile->bad_2d_alignment || neighbors[n]->bad_2d_alignment) continue;
+      if (diff > 1.0) {
+        tile->highlight = true;
+        printf("Diff is %f\n", diff);
+      }
+
+    }
+
+
+
     float delta = std::sqrt(delta_corners.x*delta_corners.x + delta_corners.y*delta_corners.y);
     if (delta > 15.0 || true) {
-      printf("delta is %f, bad 2d %d %d; x %f y %f\n", delta, tiledata.bad_2d_alignment(), tile->bad_2d_alignment, tile->x_start + tile->offset_x-min_x, tile->y_start + tile->offset_y - min_y);
+      //printf("delta is %f, bad 2d %d %d; x %f y %f\n", delta, tiledata.bad_2d_alignment(), tile->bad_2d_alignment, tile->x_start + tile->offset_x-min_x, tile->y_start + tile->offset_y - min_y);
     }
 /*
     tile->bad_2d_alignment = tiledata.bad_2d_alignment();
@@ -3145,8 +3171,17 @@ tfk::Section::Section(SectionData& section_data, std::pair<cv::Point2f, cv::Poin
     Tile* tile = new Tile(tile_data);
     tile->tile_id = j;
 
+    double x_diff = tile->x_finish - tile->x_start;
+    double y_diff = tile->y_finish - tile->y_start;
+
     tile->x_start -= min_x;
     tile->y_start -= min_y;
+
+    tile->x_start = std::round(tile->x_start);
+    tile->y_start = std::round(tile->y_start);
+
+    tile->x_finish = tile->x_start + x_diff;
+    tile->y_finish = tile->y_start + y_diff;
 
     std::string new_filepath = "new_tiles/sec_"+std::to_string(this->real_section_id) +
         "_tileid_"+std::to_string(tile->tile_id) + ".bmp";
