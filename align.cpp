@@ -328,9 +328,9 @@ void align_execute(align_data_t *p_align_data) {
     auto quadrant_1 = std::make_pair(cv::Point2f(entire_bbox.first.x, entire_bbox.first.y), cv::Point2f(entire_bbox.first.x + delta_x*0.3, entire_bbox.first.y+delta_y*0.3));
 
     //render->render_stack(stack, smaller_bbox, tfk::FULL, ALIGN_OUTPUT_FILE_DIRECTORY + "/rendertest0");
-    //render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
+    render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
 
-    render->render_stack(stack, entire_bbox, tfk::FULL, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
+    //render->render_stack(stack, entire_bbox, tfk::FULL, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
 
     printf("Right before render\n");
     //printf("Is Overlap: %d\n",tfk::mesh_overlaps(stack));
@@ -458,7 +458,7 @@ void train_fsj(align_data_t *p_align_data) {
     stack->init();
     printf("stack has sections %zu\n", stack->sections.size());
     std::vector<tfk::params> ps;
-    int trials = 5000;
+    int trials = 20000;
 
     stack->train_fsj(trials);
     return;

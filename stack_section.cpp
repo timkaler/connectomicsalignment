@@ -11,7 +11,7 @@
 #include "render.hpp"
 #include "matchtilestask.hpp"
 extern fasttime_t global_start; 
-
+static int ALL_2D_ERRORS = 0;
 
 //#define CORR_THRESH -10000.0
 #define CORR_THRESH 0.8
@@ -2644,6 +2644,7 @@ void tfk::Section::compare_2d_alignment() {
     }
   }
 
+    int count_errors = 0;
   for (int i = 0; i < sectiondata2.tiles_size(); i++) {
     Tile* tile = this->tiles[i];
     Saved2DAlignmentTile tiledata = sectiondata2.tiles(i);
@@ -2667,14 +2668,16 @@ void tfk::Section::compare_2d_alignment() {
       double dy2 = tiledata2.y_start()+tiledata2.offset_y() - tiledata.y_start() - tiledata.offset_y();
 
       double diff = std::sqrt((dx-dx2)*(dx-dx2) + (dy-dy2)*(dy-dy2));
-      if (tiledata2.bad_2d_alignment() || tiledata.bad_2d_alignment() || tile->bad_2d_alignment || neighbors[n]->bad_2d_alignment) continue;
-      if (diff > 1.0) {
+      bool res1 = tiledata2.bad_2d_alignment() || tiledata.bad_2d_alignment();
+      bool res2 = tile->bad_2d_alignment || neighbors[n]->bad_2d_alignment;
+      //if (tiledata2.bad_2d_alignment() || tiledata.bad_2d_alignment() || tile->bad_2d_alignment || neighbors[n]->bad_2d_alignment) continue;
+      if (diff > 8.0 && !res1 && !tile->highlight/*|| res1 != res2*/ /*&& this->real_section_id != 30*/) {
+        count_errors++;
         tile->highlight = true;
-        printf("Diff is %f\n", diff);
+        //printf("Diff is %f\n", diff);
       }
 
     }
-
 
 
     float delta = std::sqrt(delta_corners.x*delta_corners.x + delta_corners.y*delta_corners.y);
@@ -2690,8 +2693,10 @@ void tfk::Section::compare_2d_alignment() {
     tile->offset_x = tiledata.offset_x();
     tile->offset_y = tiledata.offset_y();*/
   }
+    printf("total errors is %d section %d\n", count_errors, this->real_section_id);
   input2.close();
-
+  __sync_fetch_and_add(&ALL_2D_ERRORS,count_errors);
+  printf("Running error total %d\n", ALL_2D_ERRORS);
 }
 
 void tfk::Section::load_2d_alignment() {
@@ -2949,12 +2954,13 @@ void tfk::Section::compute_keypoints_and_matches() {
          tile->match_tiles_task->dependencies = dependencies;
       }
 
-      for (int i = 0; i < tiles_to_process_matches.size(); i++) {
+      cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
         //cilk_spawn this->compute_tile_matches(tiles_to_process_matches[i]);
         tiles_to_process_matches[i]->match_tiles_task->dependencies = dependencies;
-        cilk_spawn tiles_to_process_matches[i]->match_tiles_task->compute(0.9);
+        //cilk_spawn
+        tiles_to_process_matches[i]->match_tiles_task->compute(0.9);
       }
-      cilk_sync;
+      //cilk_sync;
 
       cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
         //cilk_spawn this->compute_tile_matches2(tiles_to_process_matches[i]);
@@ -2967,7 +2973,7 @@ void tfk::Section::compute_keypoints_and_matches() {
           //printf("Tile failed first error check.\n");
           std::map<int, TileSiftTask*> empty_map;
           tiles_to_process_matches[i]->match_tiles_task->dependencies = empty_map;
-          __sync_fetch_and_add(&tiles_in_error,1);
+          //__sync_fetch_and_add(&tiles_in_error,1);
           tiles_to_process_matches[i]->match_tiles_task->compute(1.0);
         }
       }

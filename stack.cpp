@@ -277,13 +277,13 @@ void tfk::Stack::align_2d() {
   int j = 0;
   int i = 0;
   while (j < this->sections.size()) {
-    j += 4;
+    j += 8;
     if (j >= this->sections.size()) j = this->sections.size();
     if (j-i > 1) {
       for (; i < j; i++) {
-         /*cilk_spawn*/ this->sections[i]->align_2d();
+         cilk_spawn this->sections[i]->align_2d();
       }
-      /*cilk_sync;*/
+      cilk_sync;
     } else {
       for (; i < j; i++) {
          this->sections[i]->align_2d();

@@ -872,7 +872,7 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
         KeyPointsFilter::removeDuplicated( keypoints );
 
         //if( nfeatures > 0 )
-        //    KeyPointsFilter::retainBest(keypoints, nfeatures);
+        KeyPointsFilter::retainBest(keypoints, 1000.0/*nfeatures*/);
         //t = (double)getTickCount() - t;
         //printf("keypoint detection time: %g\n", t*1000./tf);
 
@@ -893,7 +893,7 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
     else
     {
         // filter keypoints by mask
-        KeyPointsFilter::runByKeypointSize( keypoints, min_size);
+        //KeyPointsFilter::runByKeypointSize( keypoints, min_size);
     }
 
     if( _descriptors.needed() )

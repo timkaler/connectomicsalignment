@@ -21,7 +21,7 @@ class MatchTilePairTask : public MRTask {
     //void update_result(float last_correct, float next_correct);
 
     cv::Point2f compute_quick(Tile* a_tile, Tile* b_tile);
-
+    int min_features_num;
     bool second_pass;
     Tile* a_tile;
     Tile* b_tile;

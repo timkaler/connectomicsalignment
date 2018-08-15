@@ -127,7 +127,7 @@ namespace tfk {
 
 
       if (neighbor_needs_recomputation_count > 0){
-        printf("Neighbor needs recomputation count is %d\n", neighbor_needs_recomputation_count);
+        //printf("Neighbor needs recomputation count is %d\n", neighbor_needs_recomputation_count);
         return false;
       }
 

@@ -21,6 +21,7 @@ namespace tfk {
       this->a_tile = a_tile;
       this->b_tile = b_tile;
       this->task_type_id = MATCH_TILE_PAIR_TASK_ID;
+      this->min_features_num = MIN_FEATURES_NUM;
       if (!train) {
         this->paramDB = a_tile->paramdbs[this->task_type_id];
         this->model = a_tile->ml_models[this->task_type_id];
@@ -33,6 +34,7 @@ namespace tfk {
       this->task_type_id = MATCH_TILE_PAIR_TASK_ID;
       this->paramDB = a_tile->paramdbs[this->task_type_id];
       this->model = a_tile->ml_models[this->task_type_id];
+      this->min_features_num = MIN_FEATURES_NUM;
     }
 
     //MatchTilePairTask::~MatchTilePairTask () {}
@@ -108,8 +110,8 @@ namespace tfk {
 
       //std::vector<int> neighbors = get_all_close_tiles(a_tile->tile_id);
 
-      if (a_tile_keypoints.size() < MIN_FEATURES_NUM) return;
-      if (b_tile_keypoints.size() < MIN_FEATURES_NUM) return;
+      if (a_tile_keypoints.size() < min_features_num) return;
+      if (b_tile_keypoints.size() < min_features_num) return;
 
       // Filter the features, so that only features that are in the
       //   overlapping tile will be matches.
@@ -173,8 +175,8 @@ namespace tfk {
             (btile_kps_desc_in_overlap));
       } // End scoped block A
     
-      if (atile_kps_in_overlap.size() < MIN_FEATURES_NUM) return;
-      if (btile_kps_in_overlap.size() < MIN_FEATURES_NUM) return;
+      if (atile_kps_in_overlap.size() < min_features_num) return;
+      if (btile_kps_in_overlap.size() < min_features_num) return;
 
       a_tile->keypoints_in_overlap[b_tile] = atile_kps_in_overlap.size();
       b_tile->keypoints_in_overlap[a_tile] = btile_kps_in_overlap.size();
@@ -201,7 +203,7 @@ namespace tfk {
               b_tile->rigid_transform(btile_kps_in_overlap[matches[tmpi].trainIdx].pt));
         }
     
-        if (matches.size() < MIN_FEATURES_NUM) {
+        if (matches.size() < min_features_num) {
           continue;
         }
         a_tile->matched_keypoints_in_overlap[b_tile] = matches.size();
@@ -227,7 +229,7 @@ namespace tfk {
           }
         }
         free(mask);
-        if (num_matches_filtered >= MIN_FEATURES_NUM && filtered_match_points_a.size() >= 0.1*matches.size()) {
+        if (num_matches_filtered >= min_features_num && filtered_match_points_a.size() >= 0.1*matches.size()) {
           //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
           this->best_offset = best_offset;
           this->successful_rod = trial_rod;
@@ -246,8 +248,8 @@ namespace tfk {
       std::vector< cv::Point2f > &filtered_match_points_a,
       std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh){
 
-      if (a_tile_keypoints.size() < MIN_FEATURES_NUM) return;
-      if (b_tile_keypoints.size() < MIN_FEATURES_NUM) return;
+      if (a_tile_keypoints.size() < min_features_num) return;
+      if (b_tile_keypoints.size() < min_features_num) return;
 
       // Filter the features, so that only features that are in the
       //   overlapping tile will be matches.
@@ -311,8 +313,8 @@ namespace tfk {
             (btile_kps_desc_in_overlap));
       } // End scoped block A
     
-      if (atile_kps_in_overlap.size() < MIN_FEATURES_NUM) return;
-      if (btile_kps_in_overlap.size() < MIN_FEATURES_NUM) return;
+      if (atile_kps_in_overlap.size() < min_features_num) return;
+      if (btile_kps_in_overlap.size() < min_features_num) return;
     
       float trial_rod;
       for (int trial = 0; trial < 4; trial++) {
@@ -336,7 +338,7 @@ namespace tfk {
               btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
         }
     
-        if (matches.size() < MIN_FEATURES_NUM) {
+        if (matches.size() < min_features_num) {
           continue;
         }
     
@@ -360,7 +362,7 @@ namespace tfk {
           }
         }
         free(mask);
-        if (num_matches_filtered >= MIN_FEATURES_NUM && filtered_match_points_a.size() >= 0.05*matches.size()) {
+        if (num_matches_filtered >= min_features_num && filtered_match_points_a.size() >= 0.05*matches.size()) {
           //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
           break;
         } else {
@@ -400,12 +402,12 @@ namespace tfk {
 
   params trial_params;
   trial_params.num_features = 1;
-  trial_params.num_octaves = 12;
-  trial_params.contrast_threshold = .015;
-  trial_params.edge_threshold = 10;
-  trial_params.sigma = 1.05;
-  trial_params.scale_x = 0.15;
-  trial_params.scale_y = 0.15;
+  trial_params.num_octaves = 6;
+  trial_params.contrast_threshold = 0.015;//.015;
+  trial_params.edge_threshold = 10;//10;
+  trial_params.sigma = 1.2;//1.05;//1.05;//1.05;
+  trial_params.scale_x = 0.3;
+  trial_params.scale_y = 0.3;
   trial_params.res = FULL;
 
 
@@ -429,11 +431,13 @@ namespace tfk {
 
       //TODO(wheatman) doing extra work here, but makes it the same as the cached version
       if (dependencies.find(a_tile->tile_id) == dependencies.end()) {
+        min_features_num = 5;
         a_tile->compute_sift_keypoints2d_params(best_params, a_tile_keypoints,
                                                 a_tile_desc, b_tile);
         second_pass = true;
         //printf("computing A keypoints\n");
       } else {
+        min_features_num = 5;
         //a_tile_desc = dependencies[a_tile->tile_id]->tile_desc;
         //a_tile_keypoints = dependencies[a_tile->tile_id]->tile_keypoints;
         a_tile->compute_sift_keypoints2d_params(trial_params, a_tile_keypoints,
@@ -443,7 +447,7 @@ namespace tfk {
         //a_tile_alt_keypoints = dependencies[a_tile->tile_id]->alt_tile_keypoints;
       }
 
-      if (a_tile_keypoints.size() < MIN_FEATURES_NUM) return; // failure.
+      if (a_tile_keypoints.size() < min_features_num) return; // failure.
 
       //int neighbor_success_count = 0;
 
@@ -454,11 +458,13 @@ namespace tfk {
 
 
       if (dependencies.find(b_tile->tile_id) == dependencies.end()) {
+        min_features_num = 5;
         b_tile->compute_sift_keypoints2d_params(best_params, b_tile_keypoints,
                                                 b_tile_desc, a_tile);
         second_pass = true;
         //printf("computing B keypoints\n");
       } else {
+        min_features_num = 5;
         //b_tile_desc = dependencies[b_tile->tile_id]->tile_desc;
         //b_tile_keypoints = dependencies[b_tile->tile_id]->tile_keypoints;
         b_tile->compute_sift_keypoints2d_params(trial_params, b_tile_keypoints,
@@ -466,7 +472,7 @@ namespace tfk {
         //b_tile_alt_desc = dependencies[b_tile->tile_id]->alt_tile_desc;
         //b_tile_alt_keypoints = dependencies[b_tile->tile_id]->alt_tile_keypoints;
       }
-      if (b_tile_keypoints.size() < MIN_FEATURES_NUM) return;
+      if (b_tile_keypoints.size() < min_features_num) return;
       std::vector< cv::Point2f > filtered_match_points_a(0);
       std::vector< cv::Point2f > filtered_match_points_b(0);
       std::vector< cv::Point2f > alt_filtered_match_points_a(0);
@@ -523,7 +529,7 @@ namespace tfk {
       //Tile alt_a_tile = *a_tile;
       
       // put b at 0,0
-      if (filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
+      if (filtered_match_points_a.size() >= min_features_num) {
         for (int _i = 0; _i < 5000; _i++) {
           double dx = 0.0;
           double dy = 0.0;
@@ -554,11 +560,12 @@ namespace tfk {
       //if (!second_pass) {
       //  this->predicted_offset = compute_quick(a_tile, b_tile);
       //  printf("predicted offset %f, %f\n", predicted_offset.x, predicted_offset.y);
-      //  for (int i = 0; i < MIN_FEATURES_NUM+1; i++) { 
+      //  for (int i = 0; i < min_features_num+1; i++) { 
       //  filtered_match_points_a.push_back(cv::Point2f(0,0));
       //  filtered_match_points_b.push_back(cv::Point2f(0,0));
       //  }
       //} else {
+      //this->predicted_offset = best_offset;//current_offset;
       this->predicted_offset = current_offset;
 
 
@@ -573,7 +580,7 @@ namespace tfk {
       //printf("feature vector size: %d\n", feature_vector.size());
 
         //printf("%d, %d\n", alt_filtered_match_points_a.size(), filtered_match_points_a.size() );
-      //if (alt_filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
+      //if (alt_filtered_match_points_a.size() >= min_features_num) {
       //  //printf("We also got to move the alt part %d, %d\n", alt_filtered_match_points_a.size(), filtered_match_points_a.size() );
       //  for (int _i = 0; _i < 1000; _i++) {
       //    float dx = 0.0;
@@ -623,7 +630,7 @@ namespace tfk {
       //  printf("%f\n", feature_vector[i]);
       //}
           guess_ml = this->model->predict(this->feature_vector);//this->model->predict(a_tile->feature_vectors[b_tile]);
-        //if (filtered_match_points_a.size() < MIN_FEATURES_NUM) {
+        //if (filtered_match_points_a.size() < min_features_num) {
         //  guess_ml = false;
         //}
         if (guess_ml == false) {
@@ -643,7 +650,7 @@ namespace tfk {
 
 
         //if (false && /*guess_ml*/ val >= 0.75) {
-        if ((guess_ml || false_negative_rate > 1.0) && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
+        if ((guess_ml || false_negative_rate > 1.0) && filtered_match_points_a.size() >= min_features_num) {
           a_tile->ideal_offsets[b_tile->tile_id] = current_offset;
           a_tile->neighbor_correlations[b_tile->tile_id] = val;
           a_tile->ml_preds[b_tile] = guess_ml;

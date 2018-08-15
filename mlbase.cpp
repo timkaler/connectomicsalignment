@@ -262,6 +262,8 @@ namespace tfk {
 
 
   bool MLBase::predict(std::vector<float> vec) {
+    //return false;
+    //return false;
     //return true;
     //if (!trained) {
     //  return true;
@@ -324,7 +326,7 @@ namespace tfk {
   // this would be useul for the case where we can't do reinforcement learning
   void MLAnn::train(bool reinforcement) {
     mutex->lock();
-    cv::TermCriteria term_crit = cv::TermCriteria(cv::TermCriteria::Type::COUNT, 128, 1e-12);
+    cv::TermCriteria term_crit = cv::TermCriteria(cv::TermCriteria::Type::COUNT, 8, 1e-12);
     if (training_active) {
       clear_saved_buffer();
       balance_and_flush_train_buffer();
@@ -346,7 +348,7 @@ namespace tfk {
       }
 
       float weight_1 = 1.0;//(1.0*count_2/count_2;
-      float weight_2 = 4.0*(count_1*1.0)/count_2;
+      float weight_2 = 1.0*(count_1*1.0)/count_2;
 
 
       for (int i = 0; i < new_training_examples; i++) {
@@ -373,7 +375,7 @@ namespace tfk {
       //} else {
       printf("training the model\n");
         //ann_model->setTrainMethod(0, 0.1,0.1);
-        //ann_model->setTermCriteria(term_crit);
+        ann_model->setTermCriteria(term_crit);
         model->train(tdata);
         printf("after training\n");
         //model->train(tdata);
