@@ -262,6 +262,7 @@ namespace tfk {
 
 
   bool MLBase::predict(std::vector<float> vec) {
+    return true;
     //return true;
     //return false;
     //return false;

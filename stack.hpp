@@ -77,7 +77,6 @@ class Tile {
    std::map<int, cv::Point2d> ideal_offsets;
 
    int iteration_count;
-
    bool highlight;
 
    std::map<int, cv::Point2d> ideal_offsets_first;

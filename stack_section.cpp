@@ -11,7 +11,11 @@
 #include "render.hpp"
 #include "matchtilestask.hpp"
 extern fasttime_t global_start; 
-static int ALL_2D_ERRORS = 0;
+static int64_t ALL_2D_ERRORS_1 = 0;
+static int64_t ALL_2D_ERRORS_2 = 0;
+static int64_t ALL_2D_ERRORS_4 = 0;
+static int64_t ALL_2D_ERRORS_8 = 0;
+static int64_t ALL_2D_ERRORS_16 = 0;
 
 //#define CORR_THRESH -10000.0
 #define CORR_THRESH 0.8
@@ -2598,7 +2602,7 @@ void tfk::Section::compare_2d_alignment() {
   printf("Comparing 2d alignment\n");
 
   Saved2DAlignmentSection sectiondata;
-  std::fstream input(ALIGN_CACHE_FILE_DIRECTORY + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
+  std::fstream input(ALIGN_CACHE_FILE_DIRECTORY + "_compare/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
 
   sectiondata.ParseFromIstream(&input);
 
@@ -2617,7 +2621,7 @@ void tfk::Section::compare_2d_alignment() {
   input.close();
 
   Saved2DAlignmentSection sectiondata2;
-  std::fstream input2(ALIGN_CACHE_FILE_DIRECTORY + "_compare/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
+  std::fstream input2(ALIGN_CACHE_FILE_DIRECTORY + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
 
   sectiondata2.ParseFromIstream(&input2);
 
@@ -2645,8 +2649,16 @@ void tfk::Section::compare_2d_alignment() {
   }
 
     int count_errors = 0;
+
+  int count_errors_1 = 0;
+  int count_errors_2 = 0;
+  int count_errors_4 = 0;
+  int count_errors_8 = 0;
+  int count_errors_16 = 0;
+
   for (int i = 0; i < sectiondata2.tiles_size(); i++) {
     Tile* tile = this->tiles[i];
+    float max_error = 0.0;
     Saved2DAlignmentTile tiledata = sectiondata2.tiles(i);
 
     cv::Point2f corner = cv::Point2f(tile->x_start + tile->offset_x - min_x,
@@ -2667,18 +2679,37 @@ void tfk::Section::compare_2d_alignment() {
       double dx2 = tiledata2.x_start()+tiledata2.offset_x() - tiledata.x_start() - tiledata.offset_x();
       double dy2 = tiledata2.y_start()+tiledata2.offset_y() - tiledata.y_start() - tiledata.offset_y();
 
-      double diff = std::sqrt((dx-dx2)*(dx-dx2) + (dy-dy2)*(dy-dy2));
+      float diff = std::sqrt((dx-dx2)*(dx-dx2) + (dy-dy2)*(dy-dy2));
       bool res1 = tiledata2.bad_2d_alignment() || tiledata.bad_2d_alignment();
       bool res2 = tile->bad_2d_alignment || neighbors[n]->bad_2d_alignment;
       //if (tiledata2.bad_2d_alignment() || tiledata.bad_2d_alignment() || tile->bad_2d_alignment || neighbors[n]->bad_2d_alignment) continue;
-      if (diff > 1.0 && !res1 && !tile->highlight/*|| res1 != res2*/ /*&& this->real_section_id != 30*/) {
-        count_errors++;
-        tile->highlight = true;
+      if (diff > 1.0/* && !res2 *//*&& !tile->highlight*//*|| res1 != res2*/ /*&& this->real_section_id != 30 && this->real_section_id != 30*/) {
+        max_error = std::max(diff, max_error);
+        //count_errors_1++;
+        //if (diff > 2.0) count_errors_2++;
+        //if (diff > 4.0) count_errors_4++;
+        //if (diff > 8.0) count_errors_8++;
+        //if (diff > 16.0) count_errors_16++;
+        //count_errors++;
+        //tile->highlight = true;
         //printf("Diff is %f\n", diff);
       }
 
     }
 
+
+    float diff = max_error;
+      if (diff > 1.0 /*&& !tile->highlight*//*|| res1 != res2*/ /*&& this->real_section_id != 30 && this->real_section_id != 30*/) {
+        max_error = std::max(diff, max_error);
+        count_errors_1++;
+        if (diff > 2.0) count_errors_2++;
+        if (diff > 4.0) count_errors_4++;
+        if (diff > 8.0) count_errors_8++;
+        if (diff > 16.0) count_errors_16++;
+        count_errors++;
+        tile->highlight = true;
+        //printf("Diff is %f\n", diff);
+      }
 
     float delta = std::sqrt(delta_corners.x*delta_corners.x + delta_corners.y*delta_corners.y);
     if (delta > 15.0 || true) {
@@ -2695,8 +2726,12 @@ void tfk::Section::compare_2d_alignment() {
   }
     printf("total errors is %d section %d\n", count_errors, this->real_section_id);
   input2.close();
-  __sync_fetch_and_add(&ALL_2D_ERRORS,count_errors);
-  printf("Running error total %d\n", ALL_2D_ERRORS);
+  __sync_fetch_and_add(&ALL_2D_ERRORS_1,count_errors_1);
+  __sync_fetch_and_add(&ALL_2D_ERRORS_2,count_errors_2);
+  __sync_fetch_and_add(&ALL_2D_ERRORS_4,count_errors_4);
+  __sync_fetch_and_add(&ALL_2D_ERRORS_8,count_errors_8);
+  __sync_fetch_and_add(&ALL_2D_ERRORS_16,count_errors_16);
+  printf("Running error total %d %d %d %d %d\n", ALL_2D_ERRORS_1, ALL_2D_ERRORS_2, ALL_2D_ERRORS_4, ALL_2D_ERRORS_8, ALL_2D_ERRORS_16);
 }
 
 void tfk::Section::load_2d_alignment() {

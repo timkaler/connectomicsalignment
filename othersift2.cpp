@@ -557,7 +557,7 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
             int rows = img.rows, cols = img.cols;
 
             float size_ub = sigma*powf(2.f, 1)*(1 << o)*2;
-            if (size_ub < min_size) continue;
+            //if (size_ub < min_size) continue;
             
             for( int r = SIFT_IMG_BORDER; r < rows-SIFT_IMG_BORDER; r++)
             {
@@ -824,7 +824,7 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
                       bool useProvidedKeypoints)
 {
     //printf("detect and compute\n");
-    int firstOctave = 0, actualNOctaves = 0, actualNLayers = 0;
+    int firstOctave = -1, actualNOctaves = 0, actualNLayers = 0;
     //int firstOctave = -1, actualNOctaves = 0, actualNLayers = 0;
     Mat image = _image.getMat(), mask = _mask.getMat();
 
@@ -888,7 +888,7 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
 
         if( !mask.empty() )
             KeyPointsFilter::runByPixelsMask( keypoints, mask );
-        KeyPointsFilter::runByKeypointSize( keypoints, min_size);
+        //KeyPointsFilter::runByKeypointSize( keypoints, min_size);
     }
     else
     {

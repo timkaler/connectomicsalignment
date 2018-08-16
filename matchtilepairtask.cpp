@@ -406,8 +406,8 @@ namespace tfk {
   trial_params.contrast_threshold = 0.015;//.015;
   trial_params.edge_threshold = 10;//10;
   trial_params.sigma = 1.2;//1.05;//1.05;//1.05;
-  trial_params.scale_x = 0.2;
-  trial_params.scale_y = 0.2;
+  trial_params.scale_x = 0.99;
+  trial_params.scale_y = 0.99;
   trial_params.res = FULL;
 
 
