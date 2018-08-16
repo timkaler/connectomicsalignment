@@ -545,7 +545,7 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
 
 
     //int mutex = 0;
-    float min_size = nfeatures*1.0;
+    float min_size = 1.0;//nfeatures*1.0;
     for( int o = 0; o < nOctaves; o++ )
         for( int i = 1; i <= nOctaveLayers; i++ )
         {
@@ -864,7 +864,7 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
 
     //t = (double)getTickCount() - t;
     //printf("pyramid construction time: %g\n", t*1000./tf);
-    float min_size = 1.0*nfeatures;
+    float min_size = 1.0;//1.0*nfeatures;
     if( !useProvidedKeypoints )
     {
         //t = (double)getTickCount();
@@ -872,7 +872,7 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
         KeyPointsFilter::removeDuplicated( keypoints );
 
         //if( nfeatures > 0 )
-        KeyPointsFilter::retainBest(keypoints, 1000.0/*nfeatures*/);
+        KeyPointsFilter::retainBest(keypoints, 1.0*nfeatures/*nfeatures*/);
         //t = (double)getTickCount() - t;
         //printf("keypoint detection time: %g\n", t*1000./tf);
 

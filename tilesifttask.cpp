@@ -11,9 +11,17 @@ namespace tfk {
       this->paramDB = paramDB;
       this->tile = tile;
       this->task_type_id = 1;
+      this->computed = false;
     }
 
     void TileSiftTask::compute_with_params(MRParams* mr_params_local) {
+
+
+      if (computed) {
+        printf("tried to call this on a tile that was already computed.\n");
+        return;
+      }
+      computed = false;
 
       MRParams* mr_params = mr_params_local;
 
@@ -29,15 +37,28 @@ namespace tfk {
 
 
 
+  //params trial_params;
+  //trial_params.num_features = 2;
+  //trial_params.num_octaves = 12;
+  //trial_params.contrast_threshold = .015;
+  //trial_params.edge_threshold = 10;
+  //trial_params.sigma = 1.2;
+  //trial_params.scale_x = 0.15;
+  //trial_params.scale_y = 0.15;
+  //trial_params.res = FULL;
+
+
   params trial_params;
-  trial_params.num_features = 2;
-  trial_params.num_octaves = 12;
-  trial_params.contrast_threshold = .015;
-  trial_params.edge_threshold = 10;
-  trial_params.sigma = 1.2;
-  trial_params.scale_x = 0.15;
-  trial_params.scale_y = 0.15;
+  trial_params.num_features = 4000;
+  trial_params.num_octaves = 6;
+  trial_params.contrast_threshold = 0.015;//.015;
+  trial_params.edge_threshold = 10;//10;
+  trial_params.sigma = 1.2;//1.05;//1.05;//1.05;
+  trial_params.scale_x = 0.2;
+  trial_params.scale_y = 0.2;
   trial_params.res = FULL;
+
+
 
   params best_params;
   best_params.num_features = 1;
@@ -62,8 +83,17 @@ namespace tfk {
       //new_params.edge_threshold = 6;// mr_params->get_float_param("edge_threshold");
       //new_params.sigma = 1.2;//mr_params->get_float_param("sigma");
 
-      tile->compute_sift_keypoints2d_params(trial_params, tile_keypoints,
-                                              tile_desc, tile);
+      if (tile->index > 100) {
+        printf("error, error!\n");
+      }
+
+      if (tile->index > 37) {
+        computed = false;
+        //tile->compute_sift_keypoints2d_params(trial_params, tile_keypoints,
+        //                                        tile_desc, tile);
+      } else {
+        computed = false;
+      }
 
       //tile->compute_sift_keypoints2d_params(best_params, tile_keypoints,
       //                                        tile_desc, tile);

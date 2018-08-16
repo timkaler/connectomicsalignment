@@ -376,29 +376,29 @@ void Render::render_stack(Stack* stack,
     std::pair<cv::Point2f, cv::Point2f> bbox, tfk::Resolution resolution,
     std::string filename_prefix) {
 
-  //int tile_count = 0;
-  //for (int i = 0; i < stack->sections.size(); i++) {
-  //  Section* section = stack->sections[i];
-
-  //  for (int j = 0; j < section->tiles.size(); j++) {
-  //    Tile* tile = section->tiles[j];
-  //    if (tile->highlight) {
-  //      tile_count++;
-  //      auto tbbox = tile->get_bbox();
-  //      //tbbox.first -= cv::Point2f(500.0,500.0);
-  //      //tbbox.second += cv::Point2f(500.0,500.0);
-  //      render(section, tbbox, resolution, filename_prefix+"_" +
-  //             std::to_string(section->real_section_id)+"_"+std::to_string(tile_count)+".tif");
-  //    }
-  //  }
-  //}
-
-
+  int tile_count = 0;
   for (int i = 0; i < stack->sections.size(); i++) {
     Section* section = stack->sections[i];
-    render(section, bbox, resolution,
-           filename_prefix+"_"+std::to_string(section->real_section_id)+".tif"); 
+
+    for (int j = 0; j < section->tiles.size(); j++) {
+      Tile* tile = section->tiles[j];
+      if (tile->highlight) {
+        tile_count++;
+        auto tbbox = tile->get_bbox();
+        //tbbox.first -= cv::Point2f(500.0,500.0);
+        //tbbox.second += cv::Point2f(500.0,500.0);
+        render(section, tbbox, resolution, filename_prefix+"_" +
+               std::to_string(section->real_section_id)+"_"+std::to_string(tile_count)+".tif");
+      }
+    }
   }
+
+
+  //for (int i = 0; i < stack->sections.size(); i++) {
+  //  Section* section = stack->sections[i];
+  //  render(section, bbox, resolution,
+  //         filename_prefix+"_"+std::to_string(section->real_section_id)+".tif"); 
+  //}
 }
 
 void Render::render_stack_with_patch(Stack* stack,

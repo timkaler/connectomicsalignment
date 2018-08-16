@@ -32,13 +32,13 @@ const int MAX_EPSILON = 10;
 
 void match_features(std::vector< cv::DMatch > &matches,
                            cv::Mat &descs1, cv::Mat &descs2,
-                           float rod);
+                           float rod, bool brute);
 
 cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local);
 
-void match_features(std::vector< cv::DMatch > &matches,
-                           cv::Mat &descs1, cv::Mat &descs2,
-                           float rod);
+//void match_features(std::vector< cv::DMatch > &matches,
+//                           cv::Mat &descs1, cv::Mat &descs2,
+//                           float rod);
 
 void alternative_match_features(std::vector< cv::DMatch > &matches,
                            cv::Mat &descs1, cv::Mat &descs2,

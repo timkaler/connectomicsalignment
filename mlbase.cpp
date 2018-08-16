@@ -262,6 +262,7 @@ namespace tfk {
 
 
   bool MLBase::predict(std::vector<float> vec) {
+    //return true;
     //return false;
     //return false;
     //return true;
@@ -348,7 +349,7 @@ namespace tfk {
       }
 
       float weight_1 = 1.0;//(1.0*count_2/count_2;
-      float weight_2 = 1.0*(count_1*1.0)/count_2;
+      float weight_2 = (count_1*1.0)/count_2;
 
 
       for (int i = 0; i < new_training_examples; i++) {

@@ -10,7 +10,7 @@ cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local) {
 }
 
 // Helper method to match the features of two tiles.
-void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, cv::Mat &descs2, float rod) {
+void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, cv::Mat &descs2, float rod, bool brute) {
   std::vector< std::vector < cv::DMatch > > raw_matches;
   if (true || descs1.rows + descs1.cols > descs2.rows + descs2.cols) {
     //if (descs1.rows +descs1.cols > 0 && false) {
@@ -22,17 +22,25 @@ void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, cv::Mat
     //                 raw_matches,
     //                 2);
     //} else {
-    //cv::BFMatcher matcher(cv::NORM_L2, false);
+    if (brute || true) {
+    cv::BFMatcher matcher(cv::NORM_L2, false);
     //static const cv::Ptr<cv::flann::IndexParams> index_params = new cv::flann::KDTreeIndexParams(16);
     //static const cv::Ptr<cv::flann::SearchParams> search_params = new cv::flann::SearchParams(128, 0, false);
     //static const cv::Ptr<cv::flann::IndexParams> index_params = new cv::flann::KDTreeIndexParams(4);
     //static const cv::Ptr<cv::flann::SearchParams> search_params = new cv::flann::SearchParams(32, 1.0, true);
     //cv::FlannBasedMatcher matcher(index_params, search_params);
     //cv::FlannBasedMatcher matcher = cv::FlannBasedMatcher(cv::makePtr<cv::flann::LshIndexParams>(12, 20, 2));
-    cv::FlannBasedMatcher matcher;
+    //cv::FlannBasedMatcher matcher;
     matcher.knnMatch(descs1, descs2,
                      raw_matches,
                      2);
+    } else {
+
+      cv::FlannBasedMatcher matcher;
+      matcher.knnMatch(descs1, descs2,
+                       raw_matches,
+                       2);
+    }
 
     //}
     matches.reserve(raw_matches.size());

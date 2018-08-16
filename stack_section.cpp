@@ -1357,7 +1357,7 @@ void tfk::Section::find_3d_matches_in_box_cache(Section* neighbor,
   match_features(matches,
                  atile_kps_desc_in_overlap,
                  btile_kps_desc_in_overlap,
-                 0.65);
+                 0.65, false);
 
   printf("Num matches is %zu\n", matches.size());
 
@@ -1438,7 +1438,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
   match_features(matches,
                  atile_kps_desc_in_overlap,
                  btile_kps_desc_in_overlap,
-                 0.92);
+                 0.92, false);
 
   printf("Num matches is %zu\n", matches.size());
 
@@ -2144,7 +2144,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   match_features(matches,
                  atile_kps_desc_in_overlap,
                  btile_kps_desc_in_overlap,
-                 0.92);
+                 0.92, false);
 
   // Filter the matches with RANSAC
   std::vector<cv::Point2f> match_points_a, match_points_b;
@@ -2322,7 +2322,7 @@ cv::Point2f tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
     match_features(matches,
                    atile_kps_desc_in_overlap,
                    btile_kps_desc_in_overlap,
-                   trial_rod);
+                   trial_rod, false);
 
     // Filter the matches with RANSAC
     std::vector<cv::Point2f> match_points_a, match_points_b;
@@ -2671,7 +2671,7 @@ void tfk::Section::compare_2d_alignment() {
       bool res1 = tiledata2.bad_2d_alignment() || tiledata.bad_2d_alignment();
       bool res2 = tile->bad_2d_alignment || neighbors[n]->bad_2d_alignment;
       //if (tiledata2.bad_2d_alignment() || tiledata.bad_2d_alignment() || tile->bad_2d_alignment || neighbors[n]->bad_2d_alignment) continue;
-      if (diff > 8.0 && !res1 && !tile->highlight/*|| res1 != res2*/ /*&& this->real_section_id != 30*/) {
+      if (diff > 1.0 && !res1 && !tile->highlight/*|| res1 != res2*/ /*&& this->real_section_id != 30*/) {
         count_errors++;
         tile->highlight = true;
         //printf("Diff is %f\n", diff);
@@ -2949,8 +2949,8 @@ void tfk::Section::compute_keypoints_and_matches() {
       cilk_for (int i = 0; i < tiles_to_process_keypoints.size(); i++) {
          Tile* tile = tiles_to_process_keypoints[i];
          //tile->compute_sift_keypoints2d();
-         //dependencies[tile->tile_id]->compute(0.9);
-         tile->compute_sift_keypoints3d();
+         dependencies[tile->tile_id]->compute(0.9);//compute_with_params(NULL);
+         //tile->compute_sift_keypoints3d();
          tile->match_tiles_task->dependencies = dependencies;
       }
 

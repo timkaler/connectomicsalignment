@@ -83,7 +83,7 @@ void tfk::Stack::init() {
 
   printf("setting up the ml models and the paramsdb\n");
 
-  this->ml_models[MATCH_TILE_PAIR_TASK_ID] = new MLAnn(12);//new MLAnn(1+5*5*5+3);
+  this->ml_models[MATCH_TILE_PAIR_TASK_ID] = new MLAnn(12-4);//new MLAnn(1+5*5*5+3);
   this->ml_models[MATCH_TILES_TASK_ID] = new MLAnn(4);
   
   //std::string ml_model_location = "ml_after_param_opt.ml.25000_5_4_pre";

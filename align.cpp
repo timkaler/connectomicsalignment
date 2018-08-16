@@ -289,7 +289,7 @@ void align_execute(align_data_t *p_align_data) {
     //return;
     stack->align_2d();
     printf("Done with align 2d\n");
-    stack->align_3d();
+    //stack->align_3d();
     printf("Done with align 3d\n");
     //stack->coarse_affine_align();
     //stack->elastic_align();
@@ -328,7 +328,7 @@ void align_execute(align_data_t *p_align_data) {
     auto quadrant_1 = std::make_pair(cv::Point2f(entire_bbox.first.x, entire_bbox.first.y), cv::Point2f(entire_bbox.first.x + delta_x*0.3, entire_bbox.first.y+delta_y*0.3));
 
     //render->render_stack(stack, smaller_bbox, tfk::FULL, ALIGN_OUTPUT_FILE_DIRECTORY + "/rendertest0");
-    render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
+    //render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
 
     //render->render_stack(stack, entire_bbox, tfk::FULL, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
 

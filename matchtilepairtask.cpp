@@ -192,7 +192,7 @@ namespace tfk {
         match_features(matches,
                        atile_kps_desc_in_overlap,
                        btile_kps_desc_in_overlap,
-                       trial_rod);
+                       trial_rod, second_pass);
     
         // Filter the matches with RANSAC
         std::vector<cv::Point2f> match_points_a, match_points_b;
@@ -381,7 +381,7 @@ namespace tfk {
       this->mr_params = mr_params_local;
 
   params best_params;
-  best_params.num_features = 1;
+  best_params.num_features = 1000;
   best_params.num_octaves = 6;
   best_params.contrast_threshold = .015;//CONTRAST_THRESH;
   best_params.edge_threshold = 10;//EDGE_THRESH_2D;
@@ -401,13 +401,13 @@ namespace tfk {
   //trial_params.res = FULL;
 
   params trial_params;
-  trial_params.num_features = 1;
+  trial_params.num_features = 1000;
   trial_params.num_octaves = 6;
   trial_params.contrast_threshold = 0.015;//.015;
   trial_params.edge_threshold = 10;//10;
   trial_params.sigma = 1.2;//1.05;//1.05;//1.05;
-  trial_params.scale_x = 0.3;
-  trial_params.scale_y = 0.3;
+  trial_params.scale_x = 0.2;
+  trial_params.scale_y = 0.2;
   trial_params.res = FULL;
 
 
@@ -438,10 +438,15 @@ namespace tfk {
         //printf("computing A keypoints\n");
       } else {
         min_features_num = 5;
-        //a_tile_desc = dependencies[a_tile->tile_id]->tile_desc;
-        //a_tile_keypoints = dependencies[a_tile->tile_id]->tile_keypoints;
-        a_tile->compute_sift_keypoints2d_params(trial_params, a_tile_keypoints,
-                                                a_tile_desc, b_tile);
+        if (dependencies[a_tile->tile_id]->computed) {
+          a_tile_desc = dependencies[a_tile->tile_id]->tile_desc;
+          a_tile_keypoints = dependencies[a_tile->tile_id]->tile_keypoints;
+        } else {
+          a_tile->compute_sift_keypoints2d_params(trial_params, a_tile_keypoints,
+                                                  a_tile_desc, b_tile);
+        }
+        //a_tile->compute_sift_keypoints2d_params(trial_params, a_tile_keypoints,
+        //                                        a_tile_desc, b_tile);
 
         //a_tile_alt_desc = dependencies[a_tile->tile_id]->alt_tile_desc;
         //a_tile_alt_keypoints = dependencies[a_tile->tile_id]->alt_tile_keypoints;
@@ -465,10 +470,15 @@ namespace tfk {
         //printf("computing B keypoints\n");
       } else {
         min_features_num = 5;
-        //b_tile_desc = dependencies[b_tile->tile_id]->tile_desc;
-        //b_tile_keypoints = dependencies[b_tile->tile_id]->tile_keypoints;
-        b_tile->compute_sift_keypoints2d_params(trial_params, b_tile_keypoints,
-                                                b_tile_desc, a_tile);
+        if (dependencies[b_tile->tile_id]->computed) {
+          b_tile_desc = dependencies[b_tile->tile_id]->tile_desc;
+          b_tile_keypoints = dependencies[b_tile->tile_id]->tile_keypoints;
+        } else {
+          b_tile->compute_sift_keypoints2d_params(trial_params, b_tile_keypoints,
+                                                  b_tile_desc, a_tile);
+        }
+        //b_tile->compute_sift_keypoints2d_params(trial_params, b_tile_keypoints,
+        //                                        b_tile_desc, a_tile);
         //b_tile_alt_desc = dependencies[b_tile->tile_id]->alt_tile_desc;
         //b_tile_alt_keypoints = dependencies[b_tile->tile_id]->alt_tile_keypoints;
       }
