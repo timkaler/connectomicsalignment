@@ -208,7 +208,11 @@ void tfk::Stack::train_fsj(int trials) {
   std::vector<int> random_numbers_3;
 
   for (int i = 0; i < trials; i++) {
-    random_numbers_1.push_back(rand());
+    int section_id = rand();
+    // while (section_id%this->sections.size() == 30) {
+    //   section_id = rand();
+    // }
+    random_numbers_1.push_back(section_id);
     random_numbers_2.push_back(rand());
     random_numbers_3.push_back(rand());
   }
@@ -218,7 +222,7 @@ void tfk::Stack::train_fsj(int trials) {
 
   int64_t failure_type2_count = 0;
 
-  MLAnn* model = new MLAnn(12-4, "tfk_test_model");
+  MLAnn* model = new MLAnn(12-4+6, "tfk_test_model");
   //model->load("tfk_test_model", true);
   //model->enable_training();
   //model->train(false);
@@ -230,15 +234,22 @@ void tfk::Stack::train_fsj(int trials) {
 
   cilk_for (int i = 0; i < trials; i++) {
     int section_index = random_numbers_1[i]%this->sections.size();
+
+
     int tile_index = random_numbers_2[i]%this->sections[section_index]->tiles.size();
 
-    Tile* tile_a = this->sections[section_index]->tiles[tile_index];
-    std::vector<Tile*> close_tiles = this->sections[section_index]->get_all_close_tiles(tile_a);
+    Tile* _tile_a = this->sections[section_index]->tiles[tile_index];
+    std::vector<Tile*> close_tiles = this->sections[section_index]->get_all_close_tiles(_tile_a);
 
     if (close_tiles.size() == 0) continue;
     int n_index = random_numbers_3[i]%close_tiles.size();
-    Tile* tile_b = close_tiles[n_index];
+    Tile* _tile_b = close_tiles[n_index];
 
+
+    Tile _tile_a_copy = *_tile_a;
+    Tile _tile_b_copy = *_tile_b;
+    Tile* tile_a = &_tile_a_copy;
+    Tile* tile_b = &_tile_b_copy;
 
 
     std::map<int, TileSiftTask*> dependencies;
@@ -253,7 +264,7 @@ void tfk::Stack::train_fsj(int trials) {
     MatchTilePairTask* task2 = new MatchTilePairTask(tile_a, tile_b, true);
     task2->dependencies = dependencies;
     task2->compute_with_params(trial_mr_params);
-    bool res1 = task2->error_check(1.9);
+    bool res1 = task2->error_check(1000*1.9);
     delete dependencies[tile_a->tile_id];
     delete dependencies[tile_b->tile_id];
     cv::Point2f offset2 = task2->predicted_offset;
@@ -261,7 +272,7 @@ void tfk::Stack::train_fsj(int trials) {
 
     MatchTilePairTask* task1 = new MatchTilePairTask(tile_a, tile_b, true);
     task1->compute_with_params(best_mr_params);
-    bool res2 = task1->error_check(1.9);
+    bool res2 = task1->error_check(1000*1.9);
     cv::Point2f offset1 = task1->predicted_offset;
 
       tile_a->release_2d_keypoints();
@@ -285,19 +296,41 @@ void tfk::Stack::train_fsj(int trials) {
     int local_failure_count = failure_count;
     int local_success_count = success_count;
     int local_failure_type2_count = failure_type2_count;
-    if (res1 != res2 || dist > 2.0) {
+    if (res1 != res2 || dist > 1.0) {
       if (res1 == res2) {
         local_failure_type2_count = __sync_fetch_and_add(&failure_type2_count,1);
+        printf("failure dist is %f\n", dist);
+      } else {
+        printf("failure, results don't match. %d, %d, dist %f\n", res1, res2, dist);
       }
       local_failure_count = __sync_fetch_and_add(&failure_count, 1)+1;
-      model->add_training_example(task2->get_feature_vector(), 0, dist);
-      printf("failure\n");
+
+      model->add_training_example(task2->get_feature_vector(), 0, dist+1);
+      //std::vector<float> vec = task2->get_feature_vector();
+      //printf("fast:");
+      //for (int x = 0; x < vec.size(); x++) {
+      // printf("%f\t", vec[x]);
+      //}
+      // printf("\n");
+      // vec = task1->get_feature_vector();
+      //printf("slow:");
+      //for (int x = 0; x < vec.size(); x++) {
+      // printf("%f\t", vec[x]);
+      //}
+      // printf("\n\n");
+
+      //printf("failure\n");
     } else {
-      printf("success\n");
+      //if (!res1) printf("both failed\n");
+      //printf("success\n");
+      if (dist < 0.5) {
       local_success_count = __sync_fetch_and_add(&success_count, 1)+1;
-      model->add_training_example(task2->get_feature_vector(), 1, dist);
+        model->add_training_example(task2->get_feature_vector(), 1, dist+1);
+      }
     }
+    if (i%100 == 0 || i == trials-1) {
     printf("failures %d, successes %d, fraction %f%%; type2: %f%%\n", local_failure_count, local_success_count, (100.0*local_failure_count)/(local_failure_count+local_success_count), (100.0*local_failure_type2_count) / (local_failure_count + local_success_count));
+    }
     delete task1;
     delete task2;
   }

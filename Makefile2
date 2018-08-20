@@ -118,7 +118,7 @@ align.S: align.cpp othersift2.cpp
 run.o: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-stack.o: stack.cpp stack.hpp stack_section.cpp stack_tile.cpp
+stack.o: stack.cpp stack.hpp stack_section.cpp stack_tile.cpp stack_learning.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 

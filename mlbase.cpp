@@ -48,7 +48,7 @@ namespace tfk {
 
     new_data.clear();
     new_labels.clear();
-    new_errors.clear();
+    //new_errors.clear();
     mutex->unlock();
   }
 
@@ -263,7 +263,6 @@ namespace tfk {
 
   bool MLBase::predict(std::vector<float> vec) {
     return true;
-    //return true;
     //return false;
     //return false;
     //return true;
@@ -328,7 +327,7 @@ namespace tfk {
   // this would be useul for the case where we can't do reinforcement learning
   void MLAnn::train(bool reinforcement) {
     mutex->lock();
-    cv::TermCriteria term_crit = cv::TermCriteria(cv::TermCriteria::Type::COUNT, 8, 1e-12);
+    cv::TermCriteria term_crit = cv::TermCriteria(cv::TermCriteria::Type::COUNT, 128, 1e-12);
     if (training_active) {
       clear_saved_buffer();
       balance_and_flush_train_buffer();
@@ -350,7 +349,7 @@ namespace tfk {
       }
 
       float weight_1 = 1.0;//(1.0*count_2/count_2;
-      float weight_2 = (count_1*1.0)/count_2;
+      float weight_2 = 1.0*(count_1*1.0)/count_2;
 
 
       for (int i = 0; i < new_training_examples; i++) {
@@ -361,7 +360,7 @@ namespace tfk {
           } else {
               labels.at<float>(i, 0) = 0;
               //weights.at<float>(i,0) = 10000.0;//10000.0;
-              weights.at<float>(i,0) = 1.0*weight_2;//10000.0;
+              weights.at<float>(i,0) = new_errors[i] * 1.0*weight_2;//10000.0;
               //count_2++;
           }
           for (int j = 0; j < size_of_feature_vector; j++) {
@@ -378,6 +377,9 @@ namespace tfk {
       printf("training the model\n");
         //ann_model->setTrainMethod(0, 0.1,0.1);
         ann_model->setTermCriteria(term_crit);
+        ann_model->setMaxDepth(4);
+        //ann_model->setMinSampleCount(2); 
+        ann_model->setCalculateVarImportance(true);
         model->train(tdata);
         printf("after training\n");
         //model->train(tdata);
@@ -506,6 +508,7 @@ namespace tfk {
           }
         } else {
           if (prediction) {
+            printf("dist of false positive is %f\n", new_errors[i]);
             fp++;
             neg_preds.push_back(pred_f);
           } else {
@@ -572,6 +575,7 @@ namespace tfk {
           }
         } else {
           if (prediction) {
+            printf("dist of false positive is %f\n", new_errors[i]);
             fp++;
             neg_preds.push_back(pred_f);
           } else {
@@ -618,6 +622,7 @@ namespace tfk {
       state.add_match_tile_pair_vector();
       MatchTilePairVector tile_pair_vector;
       tile_pair_vector.set_label(old_labels[i]);
+      tile_pair_vector.set_dist(new_errors[i]);
       for (int j = 0; j < old_data[i].size(); j++) {
         tile_pair_vector.add_feature_vector(old_data[i][j]);
         //*(tile_pair_vector.mutable_feature_vector(j)) = old_data[i][j];
@@ -657,6 +662,7 @@ namespace tfk {
         }
         old_labels.push_back(mvector.label());
         old_data.push_back(fvector);
+        new_errors.push_back(mvector.dist());
       }
       input.close();
       

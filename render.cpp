@@ -175,7 +175,7 @@ void tfk::Render::render_tile_helper(cv::Mat& tile_p_image,
       int y_c = (int)(transformed_p.y/render_scale.y + 0.5);
       for (int k = -1; k < 2; k++) {
         for (int m = -1; m < 2; m++) {
-          //if (k != 0 || m!=0) continue;
+          if (k != 0 || m!=0) continue;
           unsigned char val = tile_p_image.at<unsigned char>(_y, _x);
           int x = x_c+k;
           int y = y_c+m;

@@ -20,6 +20,7 @@ class MatchTilesTask : public MRTask {
 
     Tile* tile;
     std::vector<Tile*> neighbors;
+    std::vector<Tile*> all_neighbors;
     std::map<Tile*, bool> neighbor_to_success;
     std::map<Tile*, MRTask*> child_tasks;
 

@@ -545,6 +545,7 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
 
 
     //int mutex = 0;
+  
     float min_size = 1.0;//nfeatures*1.0;
     for( int o = 0; o < nOctaves; o++ )
         for( int i = 1; i <= nOctaveLayers; i++ )
@@ -557,7 +558,7 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
             int rows = img.rows, cols = img.cols;
 
             float size_ub = sigma*powf(2.f, 1)*(1 << o)*2;
-            //if (size_ub < min_size) continue;
+            //if (size_ub < min_size && nfeatures == 1001) continue;
             
             for( int r = SIFT_IMG_BORDER; r < rows-SIFT_IMG_BORDER; r++)
             {
@@ -824,7 +825,11 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
                       bool useProvidedKeypoints)
 {
     //printf("detect and compute\n");
+
     int firstOctave = -1, actualNOctaves = 0, actualNLayers = 0;
+    if (nfeatures == 1001) firstOctave = 0;
+
+
     //int firstOctave = -1, actualNOctaves = 0, actualNLayers = 0;
     Mat image = _image.getMat(), mask = _mask.getMat();
 
@@ -862,9 +867,16 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
     buildGaussianPyramid(base, gpyr, nOctaves);
     buildDoGPyramid(gpyr, dogpyr);
 
+
     //t = (double)getTickCount() - t;
     //printf("pyramid construction time: %g\n", t*1000./tf);
-    float min_size = 1.0;//1.0*nfeatures;
+    float min_size = 2.0;//1.0*nfeatures;
+
+    //if (nfeatures == 1000) {
+    //  min_size = 4;
+    //}
+
+    //if (nfeatures == 1001) min_size = 0.0;
     if( !useProvidedKeypoints )
     {
         //t = (double)getTickCount();
@@ -872,7 +884,8 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
         KeyPointsFilter::removeDuplicated( keypoints );
 
         //if( nfeatures > 0 )
-        KeyPointsFilter::retainBest(keypoints, 1.0*nfeatures/*nfeatures*/);
+        if (nfeatures == 1001) nfeatures = 1000;
+        KeyPointsFilter::retainBest(keypoints, nfeatures);
         //t = (double)getTickCount() - t;
         //printf("keypoint detection time: %g\n", t*1000./tf);
 
@@ -888,7 +901,7 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
 
         if( !mask.empty() )
             KeyPointsFilter::runByPixelsMask( keypoints, mask );
-        //KeyPointsFilter::runByKeypointSize( keypoints, min_size);
+        KeyPointsFilter::runByKeypointSize( keypoints, min_size);
     }
     else
     {

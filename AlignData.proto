@@ -28,6 +28,7 @@ message PairDouble {
 message MatchTilePairVector {
   repeated float feature_vector = 1;
   required float label = 2;
+  required float dist = 3;
 }
 
 message MLAnnState {

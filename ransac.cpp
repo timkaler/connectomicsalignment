@@ -704,14 +704,30 @@ cv::Point2f tfk_simple_ransac(std::vector<cv::Point2f>& match_points_a,
     }
 
     //printf("number of inliers is %d fraction is %f\n", maxInliers, (1.0*maxInliers) / match_points_a.size());
+     //float median_dist = 0.0;
+     //if (maxInliers > 0) {
+     //  std::vector<float > sorted_dists;
+     //  for (int j = 0; j < match_points_b.size(); j++) {
+     //     float ndx = match_points_b[j].x - match_points_a[j].x - best_dx;
+     //     float ndy = match_points_b[j].y - match_points_a[j].y - best_dy;
+     //     float dist = ndx*ndx+ndy*ndy;
+     //     if (dist <= thresh*thresh) {
+     //       sorted_dists.push_back(dist);
+     //     }
+     //  }
+     //  std::sort(sorted_dists.begin(), sorted_dists.end());
+     //  median_dist = sorted_dists[sorted_dists.size()/2];
+     //}
 
       // mark inliers
       for (int j = 0; j < match_points_b.size(); j++) {
         double ndx = match_points_b[j].x - match_points_a[j].x - best_dx;
         double ndy = match_points_b[j].y - match_points_a[j].y - best_dy;
         double dist = ndx*ndx+ndy*ndy;
-        if (dist <= thresh*thresh) {
+        if (dist <= thresh*thresh /*&& dist < median_dist*/) {
           mask[j]=true;
+        } else {
+          mask[j] = false;
         }
       }
       return cv::Point2f(best_dx, best_dy);

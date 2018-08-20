@@ -2,13 +2,21 @@
 #include "matchtilepairtask.hpp"
 namespace tfk {
 
-    MatchTilesTask::MatchTilesTask (Tile* tile, std::vector<Tile*> neighbors) {
+    MatchTilesTask::MatchTilesTask (Tile* tile, std::vector<Tile*> _neighbors) {
         //TODO(wheatman) should be a different paramdb, but we aren't using it yet
       this->tile = tile;
-      this->neighbors = neighbors;
       this->task_type_id = MATCH_TILES_TASK_ID;
       this->paramDB = tile->paramdbs[this->task_type_id];
       this->model = tile->ml_models[this->task_type_id];
+
+      this->all_neighbors = _neighbors; 
+
+      //this->neighbors = neighbors;
+      for (int i = 0; i < _neighbors.size(); i++) {
+        if (_neighbors[i]->random_int < tile->random_int || (_neighbors[i]->random_int == tile->random_int && _neighbors[i]->tile_id < tile->tile_id)) {
+          this->neighbors.push_back(_neighbors[i]);
+        }
+      }
       for (int i = 0; i < neighbors.size(); i++) {
         Tile* b_tile = neighbors[i];
         child_tasks[b_tile] = new MatchTilePairTask(tile, b_tile);
@@ -51,6 +59,27 @@ namespace tfk {
 //TODO(wheatman) mark to neighbors as bad
 
     bool MatchTilesTask::error_check(float false_negative_rate) {
+
+
+      if (false_negative_rate > 2.5) {
+        int neighbor_success_count = 0;
+        //printf("all neighbors size is %d\n", all_neighbors.size());
+        for (int x = 0; x < all_neighbors.size(); x++) {
+          if (all_neighbors[x]->ideal_offsets.find(tile->tile_id) != all_neighbors[x]->ideal_offsets.end() ||
+              tile->ideal_offsets.find(all_neighbors[x]->tile_id) != tile->ideal_offsets.end()) {
+            neighbor_success_count++;
+            //printf("success!\n");
+          }
+        }
+        //printf("all neighbors success count is %d\n", neighbor_success_count);
+        if (neighbor_success_count >= all_neighbors.size()*2.0/4.0 && neighbor_success_count >= 2.0) return true;
+        return false;
+      }
+
+
+
+
+
       int neighbor_success_count = 0;
       int neighbor_needs_recomputation_count = 0;
       for (int i = 0; i < neighbors.size(); i++) {
@@ -130,13 +159,14 @@ namespace tfk {
         //printf("Neighbor needs recomputation count is %d\n", neighbor_needs_recomputation_count);
         return false;
       }
-
-      if (neighbor_success_count >= neighbors.size() * 2.0/4.0 && neighbor_success_count >= 2.0) {
-      //if (neighbor_needs_recomputation_count > 0) {
-        return true;
-      } else {
-        return false;
-      }
+      return true;
+      //if (neighbor_success_count >= neighbors.size() * 2.0/4.0 && neighbor_success_count >= 2.0) {
+      ////if (neighbor_needs_recomputation_count > 0) {
+      //  return true;
+      //} else {
+      //  return false;
+      //  //return false;
+      //}
     }
 
     void MatchTilesTask::commit() {

@@ -15,7 +15,7 @@ class MatchTilePairTask : public MRTask {
 
     std::map<int, TileSiftTask*> dependencies;
 
-    cv::Point2d current_offset;
+    cv::Point2f current_offset;
 
     void set_random_train();
     //void update_result(float last_correct, float next_correct);
@@ -23,9 +23,18 @@ class MatchTilePairTask : public MRTask {
     cv::Point2f compute_quick(Tile* a_tile, Tile* b_tile);
     int min_features_num;
     bool second_pass;
+
+    float avg_response_a;
+    float avg_response_b;
+    float avg_size_a;
+    float avg_size_b;
+    float avg_octave_a;
+    float avg_octave_b;
+
+
     Tile* a_tile;
     Tile* b_tile;
-    cv::Point2d predicted_offset;
+    cv::Point2f predicted_offset;
     std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f> > matched_points;
     std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f> > alt_matched_points;
     cv::Point2f best_offset;

@@ -458,7 +458,7 @@ void train_fsj(align_data_t *p_align_data) {
     stack->init();
     printf("stack has sections %zu\n", stack->sections.size());
     std::vector<tfk::params> ps;
-    int trials = 20000;
+    int trials = 1000;
 
     stack->train_fsj(trials);
     return;

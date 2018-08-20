@@ -74,13 +74,16 @@ typedef struct params {
 
 class Tile {
   public:
-   std::map<int, cv::Point2d> ideal_offsets;
+   std::map<int, cv::Point2f> ideal_offsets;
 
    int iteration_count;
    bool highlight;
 
-   std::map<int, cv::Point2d> ideal_offsets_first;
-   std::map<int, cv::Point2d> ideal_offsets_second;
+
+   int random_int;
+
+   std::map<int, cv::Point2f> ideal_offsets_first;
+   std::map<int, cv::Point2f> ideal_offsets_second;
    bool both_passes;
 
    std::map<int, float> neighbor_correlations;
@@ -185,7 +188,7 @@ class Tile {
    void compute_sift_keypoints_with_params(params p);
 
    cv::Point2f rigid_transform(cv::Point2f pt);
-   cv::Point2d rigid_transform_d(cv::Point2d pt);
+   cv::Point2f rigid_transform_d(cv::Point2f pt);
 
    void release_2d_keypoints();
 

@@ -108,6 +108,14 @@ namespace tfk {
       std::vector< cv::Point2f > &filtered_match_points_a,
       std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh) {
 
+      this->avg_response_a = 0;
+      this->avg_response_b = 0;
+      this->avg_size_a = 0;
+      this->avg_size_b = 0;
+      this->avg_octave_a = 0;
+      this->avg_octave_b = 0;
+      this->successful_rod = 0;
+
       //std::vector<int> neighbors = get_all_close_tiles(a_tile->tile_id);
 
       if (a_tile_keypoints.size() < min_features_num) return;
@@ -117,6 +125,7 @@ namespace tfk {
       //   overlapping tile will be matches.
       std::vector< cv::KeyPoint > atile_kps_in_overlap, btile_kps_in_overlap;
 
+      //printf("preatile kps %d, prebtile kps %d, secondpass:%d\n", a_tile_keypoints.size(), b_tile_keypoints.size(), second_pass); 
       atile_kps_in_overlap.reserve(a_tile_keypoints.size());
       btile_kps_in_overlap.reserve(b_tile_keypoints.size());
 
@@ -174,7 +183,9 @@ namespace tfk {
         cv::vconcat(btile_kps_desc_in_overlap_list,
             (btile_kps_desc_in_overlap));
       } // End scoped block A
-    
+   
+
+      //printf("atile kps %d, btilekps %d, secondpass:%d\n", atile_kps_in_overlap.size(), btile_kps_in_overlap.size(), second_pass); 
       if (atile_kps_in_overlap.size() < min_features_num) return;
       if (btile_kps_in_overlap.size() < min_features_num) return;
 
@@ -182,11 +193,12 @@ namespace tfk {
       b_tile->keypoints_in_overlap[a_tile] = btile_kps_in_overlap.size();
     
       float trial_rod;
-      for (int trial = 0; trial < 4; trial++) {
+      for (int trial = 0; trial < 1; trial++) {
         if (trial == 0) trial_rod = 0.7;
         if (trial == 1) trial_rod = 0.8;
         if (trial == 2) trial_rod = 0.92;
         if (trial == 3) trial_rod = 0.96;
+        trial_rod = 0.92;
         // Match the features
         std::vector< cv::DMatch > matches;
         match_features(matches,
@@ -219,8 +231,26 @@ namespace tfk {
     
         int num_matches_filtered = 0;
         // Use the output mask to filter the matches
+        std::vector<float> responses;
+        std::vector<float> sizes;
+        std::vector<float> octaves;
+        float response_sum_a = 0.0;
+        float size_sum_a = 0.0;
+        float octave_sum_a = 0.0;
+        float response_sum_b = 0.0;
+        float size_sum_b = 0.0;
+        float octave_sum_b = 0.0;
         for (size_t i = 0; i < matches.size(); ++i) {
           if (mask[i]) {
+            response_sum_a += atile_kps_in_overlap[matches[i].queryIdx].response;
+            response_sum_b += btile_kps_in_overlap[matches[i].trainIdx].response;
+
+            size_sum_a += atile_kps_in_overlap[matches[i].queryIdx].size;
+            size_sum_b += btile_kps_in_overlap[matches[i].trainIdx].size;
+
+            octave_sum_a += atile_kps_in_overlap[matches[i].queryIdx].octave;
+            octave_sum_b += btile_kps_in_overlap[matches[i].trainIdx].octave;
+
             num_matches_filtered++;
             filtered_match_points_a.push_back(
                 atile_kps_in_overlap[matches[i].queryIdx].pt);
@@ -229,7 +259,14 @@ namespace tfk {
           }
         }
         free(mask);
-        if (num_matches_filtered >= min_features_num && filtered_match_points_a.size() >= 0.1*matches.size()) {
+        if (num_matches_filtered >= min_features_num && filtered_match_points_a.size() >= 0.05*matches.size()) {
+          this->avg_response_a = response_sum_a/num_matches_filtered;
+          this->avg_response_b = response_sum_b/num_matches_filtered;
+          this->avg_size_a = size_sum_a/num_matches_filtered;
+          this->avg_size_b = size_sum_b/num_matches_filtered;
+          this->avg_octave_a = octave_sum_a/num_matches_filtered;
+          this->avg_octave_b = octave_sum_b/num_matches_filtered;
+
           //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
           this->best_offset = best_offset;
           this->successful_rod = trial_rod;
@@ -383,9 +420,9 @@ namespace tfk {
   params best_params;
   best_params.num_features = 1000;
   best_params.num_octaves = 6;
-  best_params.contrast_threshold = .015;//CONTRAST_THRESH;
-  best_params.edge_threshold = 10;//EDGE_THRESH_2D;
-  best_params.sigma = 1.2;//1.6;
+  best_params.contrast_threshold = CONTRAST_THRESH;//.015;//CONTRAST_THRESH;
+  best_params.edge_threshold = EDGE_THRESH_2D;//10;//EDGE_THRESH_2D;
+  best_params.sigma = 1.6;//1.2;//1.6;
   best_params.scale_x = 1.0;
   best_params.scale_y = 1.0;
   best_params.res = FULL;
@@ -401,17 +438,17 @@ namespace tfk {
   //trial_params.res = FULL;
 
   params trial_params;
-  trial_params.num_features = 1000;
+  trial_params.num_features = 1001;
   trial_params.num_octaves = 6;
-  trial_params.contrast_threshold = 0.015;//.015;
-  trial_params.edge_threshold = 10;//10;
-  trial_params.sigma = 1.2;//1.05;//1.05;//1.05;
-  trial_params.scale_x = 0.99;
-  trial_params.scale_y = 0.99;
+  trial_params.contrast_threshold = CONTRAST_THRESH;////0.015;//.015;
+  trial_params.edge_threshold = EDGE_THRESH_2D;//10;//10;
+  trial_params.sigma = 1.6; //+ 0.2*0.2;//1.05;//1.05;//1.05;
+  trial_params.scale_x = 0.3;
+  trial_params.scale_y = 0.3;
   trial_params.res = FULL;
 
 
-  //trial_params = best_params;
+  trial_params = best_params;
 
 
       //tfk::params new_params;
@@ -452,7 +489,6 @@ namespace tfk {
         //a_tile_alt_keypoints = dependencies[a_tile->tile_id]->alt_tile_keypoints;
       }
 
-      if (a_tile_keypoints.size() < min_features_num) return; // failure.
 
       //int neighbor_success_count = 0;
 
@@ -482,7 +518,8 @@ namespace tfk {
         //b_tile_alt_desc = dependencies[b_tile->tile_id]->alt_tile_desc;
         //b_tile_alt_keypoints = dependencies[b_tile->tile_id]->alt_tile_keypoints;
       }
-      if (b_tile_keypoints.size() < min_features_num) return;
+      //if (a_tile_keypoints.size() < min_features_num) return; // failure.
+      //if (b_tile_keypoints.size() < min_features_num) return;
       std::vector< cv::Point2f > filtered_match_points_a(0);
       std::vector< cv::Point2f > filtered_match_points_b(0);
       std::vector< cv::Point2f > alt_filtered_match_points_a(0);
@@ -544,13 +581,13 @@ namespace tfk {
           double dx = 0.0;
           double dy = 0.0;
           for (int j = 0; j < filtered_match_points_a.size(); j++) {
-            cv::Point2d p1 = cv::Point2d(1.0l*filtered_match_points_b[j].x,
+            cv::Point2f p1 = cv::Point2f(1.0l*filtered_match_points_b[j].x,
                                          1.0l*filtered_match_points_b[j].y);
-            cv::Point2d p2 = cv::Point2d(1.0l*filtered_match_points_a[j].x,
+            cv::Point2f p2 = cv::Point2f(1.0l*filtered_match_points_a[j].x,
                                          1.0l*filtered_match_points_a[j].y);
 
-            //cv::Point2d dp = b_tile->rigid_transform_d(filtered_match_points_b[j]) - tmp_a_tile.rigid_transform(filtered_match_points_a[j]);
-            cv::Point2d dp = b_tile->rigid_transform_d(p1) - tmp_a_tile.rigid_transform_d(p2);
+            //cv::Point2f dp = b_tile->rigid_transform_d(filtered_match_points_b[j]) - tmp_a_tile.rigid_transform(filtered_match_points_a[j]);
+            cv::Point2f dp = b_tile->rigid_transform_d(p1) - tmp_a_tile.rigid_transform_d(p2);
             dx += 2*dp.x * 1.0 / (filtered_match_points_a.size());
             dy += 2*dp.y * 1.0 / (filtered_match_points_a.size());
           }
@@ -560,10 +597,10 @@ namespace tfk {
       }
       //tmp_a_tile.offset_x += best_offset.x;
       //tmp_a_tile.offset_y += best_offset.y;
-      cv::Point2d a_point = cv::Point2d(tmp_a_tile.x_start+tmp_a_tile.offset_x,
+      cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
                                           tmp_a_tile.y_start+tmp_a_tile.offset_y);
       //TODO(wheatman) tell tim I have this done even if it failed
-      cv::Point2d b_point = cv::Point2d(b_tile->x_start+b_tile->offset_x,
+      cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
                                         b_tile->y_start+b_tile->offset_y);
       current_offset = a_point - b_point;
       //printf("a_tile id and index %d %d\n", a_tile->index, a_tile->tile_id);
@@ -609,6 +646,15 @@ namespace tfk {
       //tmp_vector.push_back(val);
       this->feature_vector = tmp_a_tile.tile_pair_feature(b_tile);
       this->feature_vector.push_back(filtered_match_points_a.size());
+
+      this->feature_vector.push_back(avg_response_a);
+      this->feature_vector.push_back(avg_response_b);
+      this->feature_vector.push_back(avg_size_a);
+      this->feature_vector.push_back(avg_size_b);
+      this->feature_vector.push_back(avg_octave_a);
+      this->feature_vector.push_back(avg_octave_b);
+
+
       std::vector<float> tmp_feature_vector = a_tile->tile_pair_feature(b_tile);
       if (tmp_feature_vector.size() == 0) {
         printf("major error abort!\n");
@@ -632,7 +678,6 @@ namespace tfk {
         //bool guess_ml = false;//this->model->predict(a_tile->feature_vectors[b_tile]);
 
         bool guess_ml;
-
         if (false_negative_rate <= 1.0) {
       //    printf("called predict\n");
 
@@ -658,6 +703,15 @@ namespace tfk {
         //guess_ml = true;
         a_tile->ml_preds[b_tile] = guess_ml;
 
+
+        // indicates training mode
+        if (false_negative_rate > 100.0) {
+          if (filtered_match_points_a.size() >= min_features_num) {
+            return true;
+          } else {
+            return false;
+          }
+        }
 
         //if (false && /*guess_ml*/ val >= 0.75) {
         if ((guess_ml || false_negative_rate > 1.0) && filtered_match_points_a.size() >= min_features_num) {

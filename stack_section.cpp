@@ -39,12 +39,12 @@ void tfk::Section::print_2d_error_info(
     }
 
     
-      cv::Point2d a_point = cv::Point2d(t->x_start+t->offset_x,
+      cv::Point2f a_point = cv::Point2f(t->x_start+t->offset_x,
                                         t->y_start+t->offset_y);
-      cv::Point2d b_point = cv::Point2d(neighbor->x_start+neighbor->offset_x,
+      cv::Point2f b_point = cv::Point2f(neighbor->x_start+neighbor->offset_x,
                                         neighbor->y_start+neighbor->offset_y);
-    cv::Point2d delta = a_point-b_point;
-      cv::Point2d deviation;
+    cv::Point2f delta = a_point-b_point;
+      cv::Point2f deviation;
       if (t->ideal_offsets.find(neighbor->tile_id) != t->ideal_offsets.end()) {
         deviation = t->ideal_offsets[neighbor->tile_id] - delta;
       } else {
@@ -209,10 +209,17 @@ void tfk::Section::align_2d() {
       tiles[i]->match_tiles_task = new MatchTilesTask(tiles[i], close_tiles);
     }
     this->compute_keypoints_and_matches();
+
+    for (int i = 0; i < this->tiles.size(); i++) {
+      if (!tiles[i]->match_tiles_task->error_check(3.0)) {
+        tiles[i]->bad_2d_alignment = true;
+      }
+    }
+
     // End Compute keypoints task.
 
     int ncolors = this->graph->compute_trivial_coloring();
-    printf("ncolors is %d\n", ncolors);
+    printf("ncolors is %d for section %d\n", ncolors, this->real_section_id);
     Scheduler* scheduler;
     engine* e;
     scheduler =
@@ -376,8 +383,8 @@ void tfk::Section::align_2d() {
           bool guess_basic = task->neighbor_to_success[neighbor];
           if (neighbor->bad_2d_alignment) continue;
           //if (guess_basic == false) continue;
-          if (t->ideal_offsets.find(neighbor->tile_id) == t->ideal_offsets.end() ||
-              neighbor->ideal_offsets.find(t->tile_id) == neighbor->ideal_offsets.end()) continue;
+          if (t->ideal_offsets.find(neighbor->tile_id) == t->ideal_offsets.end()) continue;
+              //neighbor->ideal_offsets.find(t->tile_id) == neighbor->ideal_offsets.end()) continue;
 
           float val = t->compute_deviation(neighbor);
 
@@ -2312,6 +2319,8 @@ cv::Point2f tfk::Section::compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
         (btile_kps_desc_in_overlap));
   } // End scoped block A
 
+  printf("keypoints a: %d, keypoints b: %d\n", atile_kps_in_overlap.size(), btile_kps_in_overlap.size());
+
   if (atile_kps_in_overlap.size() < MIN_FEATURES_NUM) return ZERO;
   if (btile_kps_in_overlap.size() < MIN_FEATURES_NUM) return ZERO;
 
@@ -2465,12 +2474,12 @@ void tfk::Section::compute_tile_matches2(Tile* a_tile) {
         neighbor_success_count++;
         a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
 
-      cv::Point2d a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
+      cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
                                         tmp_a_tile.y_start+tmp_a_tile.offset_y);
-      cv::Point2d b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
+      cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
                                         b_tile->y_start+b_tile->offset_y);
 
-      cv::Point2d delta = a_point-b_point;
+      cv::Point2f delta = a_point-b_point;
 
       a_tile->ideal_offsets[b_tile->tile_id] = delta;
       a_tile->neighbor_correlations[b_tile->tile_id] = val;
@@ -2541,12 +2550,12 @@ void tfk::Section::compute_tile_matches(Tile* a_tile) {
       neighbor_success_count++;
       a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
 
-      cv::Point2d a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
+      cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
                                         tmp_a_tile.y_start+tmp_a_tile.offset_y);
-      cv::Point2d b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
+      cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
                                         b_tile->y_start+b_tile->offset_y);
 
-      cv::Point2d delta = a_point-b_point;
+      cv::Point2f delta = a_point-b_point;
 
       a_tile->ideal_offsets[b_tile->tile_id] = delta;
       a_tile->neighbor_correlations[b_tile->tile_id] = val;
@@ -2683,7 +2692,7 @@ void tfk::Section::compare_2d_alignment() {
       bool res1 = tiledata2.bad_2d_alignment() || tiledata.bad_2d_alignment();
       bool res2 = tile->bad_2d_alignment || neighbors[n]->bad_2d_alignment;
       //if (tiledata2.bad_2d_alignment() || tiledata.bad_2d_alignment() || tile->bad_2d_alignment || neighbors[n]->bad_2d_alignment) continue;
-      if (diff > 1.0/* && !res2 *//*&& !tile->highlight*//*|| res1 != res2*/ /*&& this->real_section_id != 30 && this->real_section_id != 30*/) {
+      if (diff > 1.0 && !res2 /*&& !tile->highlight*//*|| res1 != res2*/ /*&& this->real_section_id != 30 && this->real_section_id != 30*/) {
         max_error = std::max(diff, max_error);
         //count_errors_1++;
         //if (diff > 2.0) count_errors_2++;
@@ -2707,9 +2716,12 @@ void tfk::Section::compare_2d_alignment() {
         if (diff > 8.0) count_errors_8++;
         if (diff > 16.0) count_errors_16++;
         count_errors++;
-        tile->highlight = true;
-        //printf("Diff is %f\n", diff);
-      }
+        if (diff > 8.0) {
+          tile->highlight = true;
+          printf("Tile id is %d\n", tile->tile_id);
+          printf("Diff is %f\n", diff);
+        }
+        }
 
     float delta = std::sqrt(delta_corners.x*delta_corners.x + delta_corners.y*delta_corners.y);
     if (delta > 15.0 || true) {
@@ -3017,7 +3029,8 @@ void tfk::Section::compute_keypoints_and_matches() {
         //cilk_spawn this->compute_tile_matches2(tiles_to_process_matches[i]);
         if (!tiles_to_process_matches[i]->match_tiles_task->error_check(1.9)) {
           //printf("Tile failed second error check.\n");
-          tiles_to_process_matches[i]->bad_2d_alignment = true;
+          //tiles_to_process_matches[i]->bad_2d_alignment = true;
+          tiles_to_process_matches[i]->match_tiles_task->commit();
           //tiles_to_process_matches[i]->match_tiles_task->commit();
         } else {
           tiles_to_process_matches[i]->match_tiles_task->commit();
@@ -3205,12 +3218,17 @@ tfk::Section::Section(SectionData& section_data, std::pair<cv::Point2f, cv::Poin
   }
 
 
+ std::mt19937 g1 (234);  // mt19937 is a standard mersenne_twister_engine
+ std::uniform_int_distribution<int> distribution(0,100000000);
+
+
   int added_count = 0; 
   for (int j = 0; j < section_data.tiles_size(); j++) {
     TileData tile_data = section_data.tiles(j);
 
     Tile* tile = new Tile(tile_data);
     tile->tile_id = j;
+    tile->random_int = distribution(g1);
 
     double x_diff = tile->x_finish - tile->x_start;
     double y_diff = tile->y_finish - tile->y_start;
