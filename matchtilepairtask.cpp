@@ -448,7 +448,7 @@ namespace tfk {
   trial_params.res = FULL;
 
 
-  trial_params = best_params;
+  //trial_params = best_params;
 
 
       //tfk::params new_params;

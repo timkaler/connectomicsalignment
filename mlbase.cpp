@@ -262,7 +262,8 @@ namespace tfk {
 
 
   bool MLBase::predict(std::vector<float> vec) {
-    return true;
+    //return true;
+    //return true;
     //return false;
     //return false;
     //return true;
@@ -360,7 +361,7 @@ namespace tfk {
           } else {
               labels.at<float>(i, 0) = 0;
               //weights.at<float>(i,0) = 10000.0;//10000.0;
-              weights.at<float>(i,0) = new_errors[i] * 1.0*weight_2;//10000.0;
+              weights.at<float>(i,0) = /*std::min(10.0f, new_errors[i]) **/ 1.0*weight_2;//10000.0;
               //count_2++;
           }
           for (int j = 0; j < size_of_feature_vector; j++) {
