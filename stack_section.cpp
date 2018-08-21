@@ -190,7 +190,7 @@ cv::Point2f tfk::Section::elastic_transform(cv::Point2f p, Triangle _tri) {
 void tfk::Section::align_2d() {
     if (this->alignment2d_exists()) {
       std::string filename =
-      std::string(ALIGN_CACHE_FILE_DIRECTORY + "/prefix_"+std::to_string(this->real_section_id));
+      std::string(std::string(TFK_TMP_DIR) + "/prefix_"+std::to_string(this->real_section_id));
 
       this->load_2d_alignment();
       compare_2d_alignment();
@@ -713,8 +713,9 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
 
 bool tfk::Section::section_data_exists() {
   std::string filename =
-      std::string(ALIGN_CACHE_FILE_DIRECTORY+"/prefix_"+std::to_string(this->real_section_id));
+      std::string(std::string(TFK_TMP_DIR)+"/prefix_"+std::to_string(this->real_section_id));
 
+  printf("the filename is %s\n", filename.c_str());
 
   cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"), cv::FileStorage::READ);
   cv::FileStorage fs2(filename+std::string("_2d_matches.yml.gz"), cv::FileStorage::READ);
@@ -793,7 +794,7 @@ void tfk::Section::save_elastic_mesh(Section* neighbor) {
     *(triangleMesh.mutable_triangles(i)) = ref;
   }
 
-  std::fstream output(ALIGN_CACHE_FILE_DIRECTORY+"/emesh_"+std::to_string(this->real_section_id)+"_"+
+  std::fstream output(std::string(TFK_TMP_DIR)+"/emesh_"+std::to_string(this->real_section_id)+"_"+
                       std::to_string(neighbor->real_section_id)+".pbuf",
                       std::ios::out | std::ios::trunc | std::ios::binary);
   triangleMesh.SerializeToOstream(&output); 
@@ -1930,7 +1931,7 @@ bool tfk::Section::load_elastic_mesh(Section* neighbor) {
   TriangleMeshProto triangleMesh;
 
 
-  std::fstream input(ALIGN_CACHE_FILE_DIRECTORY+"/emesh_"+std::to_string(this->real_section_id)+"_"+
+  std::fstream input(std::string(TFK_TMP_DIR)+"/emesh_"+std::to_string(this->real_section_id)+"_"+
                       std::to_string(neighbor->real_section_id)+".pbuf",
                       std::ios::in | std::ios::binary);
 
@@ -2236,7 +2237,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
 
   this->coarse_transform = A.clone();
 
-  std::string path = ALIGN_CACHE_FILE_DIRECTORY + "/coarse_transform_" +
+  std::string path = std::string(TFK_TMP_DIR) + "/coarse_transform_" +
       std::to_string(this->real_section_id) + "_" + std::to_string(neighbor->real_section_id);
   cv::FileStorage fs(path, cv::FileStorage::WRITE);
   cv::write(fs, "transform", this->coarse_transform);
@@ -2573,7 +2574,10 @@ void tfk::Section::compute_tile_matches(Tile* a_tile) {
 
 
 bool tfk::Section::alignment2d_exists() {
-  std::ifstream f(ALIGN_CACHE_FILE_DIRECTORY + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf");
+
+  printf("ALIGNMENT2D EXISTS PATH: %s\n", TFK_TMP_DIR.c_str());
+
+  std::ifstream f(std::string(TFK_TMP_DIR) + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf");
   return f.good();
 
   //std::string filename =
@@ -2590,7 +2594,7 @@ bool tfk::Section::alignment2d_exists() {
 
 void tfk::Section::read_3d_keypoints(std::string filename) {
 
-  filename = std::string(ALIGN_CACHE_FILE_DIRECTORY + "/prefix_"+std::to_string(this->real_section_id));
+  filename = std::string(std::string(TFK_TMP_DIR) + "/prefix_"+std::to_string(this->real_section_id));
 
   cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"),
                      cv::FileStorage::READ);
@@ -2611,7 +2615,7 @@ void tfk::Section::compare_2d_alignment() {
   printf("Comparing 2d alignment\n");
 
   Saved2DAlignmentSection sectiondata;
-  std::fstream input(ALIGN_CACHE_FILE_DIRECTORY + "_compare/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
+  std::fstream input(std::string(TFK_TMP_DIR) + "_compare/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
 
   sectiondata.ParseFromIstream(&input);
 
@@ -2630,7 +2634,7 @@ void tfk::Section::compare_2d_alignment() {
   input.close();
 
   Saved2DAlignmentSection sectiondata2;
-  std::fstream input2(ALIGN_CACHE_FILE_DIRECTORY + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
+  std::fstream input2(std::string(TFK_TMP_DIR) + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
 
   sectiondata2.ParseFromIstream(&input2);
 
@@ -2705,7 +2709,7 @@ void tfk::Section::compare_2d_alignment() {
       }
 
     }
-
+    //if (tile->tile_id == 41 || tile->tile_id == 109) tile->highlight = true;
 
     float diff = max_error;
       if (diff > 1.0 /*&& !tile->highlight*//*|| res1 != res2*/ /*&& this->real_section_id != 30 && this->real_section_id != 30*/) {
@@ -2764,7 +2768,7 @@ void tfk::Section::load_2d_alignment() {
 
 
   Saved2DAlignmentSection sectiondata;
-  std::fstream input(ALIGN_CACHE_FILE_DIRECTORY + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
+  std::fstream input(std::string(TFK_TMP_DIR) + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
 
   sectiondata.ParseFromIstream(&input);
 
@@ -2801,7 +2805,7 @@ void tfk::Section::save_2d_alignment() {
     sectiondata.add_tiles();
     *(sectiondata.mutable_tiles(i)) = tiledata; 
   }
-  std::fstream output(ALIGN_CACHE_FILE_DIRECTORY + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::out | std::ios::trunc | std::ios::binary);
+  std::fstream output(std::string(TFK_TMP_DIR) + "/2d_alignment_"+std::to_string(this->real_section_id)+".pbuf", std::ios::out | std::ios::trunc | std::ios::binary);
   sectiondata.SerializeToOstream(&output); 
   output.close();
 }
@@ -2880,7 +2884,7 @@ void tfk::Section::read_2d_graph(std::string filename) {
 void tfk::Section::read_tile_matches() {
 
   std::string filename =
-      std::string(ALIGN_CACHE_FILE_DIRECTORY + "/prefix_"+std::to_string(this->real_section_id));
+      std::string(std::string(TFK_TMP_DIR) + "/prefix_"+std::to_string(this->real_section_id));
 
   this->read_3d_keypoints(filename);
   this->read_2d_graph(filename);
@@ -2889,7 +2893,7 @@ void tfk::Section::read_tile_matches() {
 void tfk::Section::save_tile_matches() {
 
   std::string filename =
-      std::string(ALIGN_CACHE_FILE_DIRECTORY+"/prefix_"+std::to_string(this->real_section_id));
+      std::string(std::string(TFK_TMP_DIR)+"/prefix_"+std::to_string(this->real_section_id));
 
   this->save_3d_keypoints(filename);
   this->save_2d_graph(filename);
@@ -2997,7 +3001,7 @@ void tfk::Section::compute_keypoints_and_matches() {
          Tile* tile = tiles_to_process_keypoints[i];
          //tile->compute_sift_keypoints2d();
          dependencies[tile->tile_id]->compute(0.9);//compute_with_params(NULL);
-         //tile->compute_sift_keypoints3d();
+         tile->compute_sift_keypoints3d();
          tile->match_tiles_task->dependencies = dependencies;
       }
 

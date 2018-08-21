@@ -4,6 +4,7 @@
 #include <vector>
 #include <mutex>
 #include <cmath>
+#include "common.h"
 #include "mrparams.hpp"
 
 #ifndef PARAMDB
@@ -17,7 +18,11 @@ namespace tfk {
       //MRParams* min_params;
       //MRParams* max_params;
 
+      bool active = false;
+
       std::mutex* mutex;
+
+      align_data_t* align_data;
 
       std::vector<MRParams*> possible_params;
 

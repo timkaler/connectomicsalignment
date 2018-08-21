@@ -167,6 +167,9 @@ fasttime_t global_start;
     stack->max_y = p_align_data->max_y;
     //printf("2 bounding box is %f %f %f %f\n", p_align_data->bounding_box.first.x, p_align_data->bounding_box.first.y, p_align_data->bounding_box.second.x, p_align_data->bounding_box.second.y);
     stack->_bounding_box = p_align_data->bounding_box;
+
+
+
     stack->init();
     
 
@@ -278,7 +281,16 @@ void align_execute(align_data_t *p_align_data) {
 
     stack->_bounding_box = p_align_data->bounding_box;
     stack->use_bbox_prefilter = false;
+    stack->align_data = p_align_data;
     stack->init();
+
+  {
+    stack->paramdbs[MATCH_TILE_PAIR_TASK_ID]->align_data = p_align_data;
+  }
+  stack->align_data = p_align_data;
+
+
+
     printf("Got past the init\n");
     printf("stack has sections %zu\n", stack->sections.size());
     global_start = gettime();
@@ -289,7 +301,7 @@ void align_execute(align_data_t *p_align_data) {
     //return;
     stack->align_2d();
     printf("Done with align 2d\n");
-    //stack->align_3d();
+    stack->align_3d();
     printf("Done with align 3d\n");
     //stack->coarse_affine_align();
     //stack->elastic_align();
@@ -330,7 +342,7 @@ void align_execute(align_data_t *p_align_data) {
     //render->render_stack(stack, smaller_bbox, tfk::FULL, ALIGN_OUTPUT_FILE_DIRECTORY + "/rendertest0");
     //render->render_stack(stack, entire_bbox, tfk::THUMBNAIL, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
 
-    //render->render_stack(stack, entire_bbox, tfk::FULL, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
+    render->render_stack(stack, entire_bbox, tfk::FULL, ALIGN_OUTPUT_FILE_DIRECTORY+"/rendertest1");
 
     printf("Right before render\n");
     //printf("Is Overlap: %d\n",tfk::mesh_overlaps(stack));
@@ -455,7 +467,12 @@ void train_fsj(align_data_t *p_align_data) {
     stack->max_y = p_align_data->max_y;
     stack->_bounding_box = p_align_data->bounding_box;
     stack->use_bbox_prefilter = false;
+    stack->align_data = p_align_data;
     stack->init();
+  {
+    stack->paramdbs[MATCH_TILE_PAIR_TASK_ID]->align_data = p_align_data;
+  }
+
     printf("stack has sections %zu\n", stack->sections.size());
     std::vector<tfk::params> ps;
     int trials = 10000;

@@ -26,6 +26,7 @@ namespace tfk {
         this->paramDB = a_tile->paramdbs[this->task_type_id];
         this->model = a_tile->ml_models[this->task_type_id];
       }
+      FORCE_FAST_PASS_SUCCEED = false;
     }
 
     MatchTilePairTask::MatchTilePairTask (Tile* a_tile, Tile* b_tile) {
@@ -35,6 +36,8 @@ namespace tfk {
       this->paramDB = a_tile->paramdbs[this->task_type_id];
       this->model = a_tile->ml_models[this->task_type_id];
       this->min_features_num = MIN_FEATURES_NUM;
+      FORCE_FAST_PASS_SUCCEED = false;
+      align_data = a_tile->paramdbs[this->task_type_id]->align_data;
     }
 
     //MatchTilePairTask::~MatchTilePairTask () {}
@@ -417,6 +420,8 @@ namespace tfk {
 
       this->mr_params = mr_params_local;
 
+
+
   params best_params;
   best_params.num_features = 1000;
   best_params.num_octaves = 6;
@@ -426,6 +431,14 @@ namespace tfk {
   best_params.scale_x = 1.0;
   best_params.scale_y = 1.0;
   best_params.res = FULL;
+
+  if (align_data->use_params) {
+    if (align_data->skip_octave_slow) {
+      best_params.num_features = 1001;
+    } else {
+      best_params.num_features = 1000;
+    }
+  }
 
   //params trial_params;
   //trial_params.num_features = 2;
@@ -447,6 +460,35 @@ namespace tfk {
   trial_params.scale_y = 0.3;
   trial_params.res = FULL;
 
+  if (align_data->use_params) {
+    if (align_data->skip_octave_fast) {
+      trial_params.num_features = 1001;
+    } else {
+      trial_params.num_features = 1000;
+    }
+    trial_params.scale_x = align_data->scale_fast;
+    trial_params.scale_y = align_data->scale_fast;
+    if (!align_data->use_fsj) {
+      FORCE_FAST_PASS_SUCCEED = true;
+    } else {
+      FORCE_FAST_PASS_SUCCEED = false;
+    }
+  }
+
+
+
+  //printf("trial param info: \n");
+  //printf("\t\tscale_x: \t%f \n", trial_params.scale_x);
+  //printf("\t\tscale_y: \t%f \n", trial_params.scale_y);
+  //printf("\t\tnfeatures: \t%d \n", trial_params.num_features);
+  //printf("\t\tFORCE_FAST: \t%d \n", FORCE_FAST_PASS_SUCCEED);
+
+  //printf("best param info: \n");
+  //printf("\t\tscale_x: \t%f \n", best_params.scale_x);
+  //printf("\t\tscale_y: \t%f \n", best_params.scale_y);
+  //printf("\t\tnfeatures: \t%d \n", best_params.num_features);
+  //printf("\t\tFORCE_FAST: \t%d \n", FORCE_FAST_PASS_SUCCEED);
+  //exit(0);
 
   //trial_params = best_params;
 
@@ -684,7 +726,12 @@ namespace tfk {
       //for (int i = 0; i < feature_vector.size(); i++) {
       //  printf("%f\n", feature_vector[i]);
       //}
+        if (FORCE_FAST_PASS_SUCCEED) {
+          guess_ml = true;
+        } else {
           guess_ml = this->model->predict(this->feature_vector);//this->model->predict(a_tile->feature_vectors[b_tile]);
+        }
+
         //if (filtered_match_points_a.size() < min_features_num) {
         //  guess_ml = false;
         //}
@@ -701,6 +748,12 @@ namespace tfk {
         //guess_ml = true;
         //guess_ml = true;
         //guess_ml = true;
+
+
+        if (FORCE_FAST_PASS_SUCCEED) {
+          guess_ml = true;
+        }
+
         a_tile->ml_preds[b_tile] = guess_ml;
 
 

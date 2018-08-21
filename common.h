@@ -15,6 +15,7 @@
 #include <opencv2/imgproc/types_c.h>
 //#define FILE "dset.h5"
 
+extern std::string TFK_TMP_DIR;
 
 typedef struct {
   cv::Point2f p[3];
@@ -205,7 +206,7 @@ typedef struct _tile_data {
     int tile_id; // index of this tile structure in tiles array of section_data.
     int mfov_id; // index of the mfov within which this tile resides.
     int index; // the location 0-61 of tile within the mfov.
-    char filepath[MAX_FILEPATH];
+    //char filepath[MAX_FILEPATH];
     cv::Mat *p_image;
 
     int x_start;
@@ -213,11 +214,11 @@ typedef struct _tile_data {
     int y_start;
     int y_finish;
 
-    std::vector<cv::KeyPoint> *p_kps;
-    cv::Mat *p_kps_desc;
+    //std::vector<cv::KeyPoint> *p_kps;
+    //cv::Mat *p_kps_desc;
 
-    std::vector<cv::KeyPoint> *p_kps_3d;
-    cv::Mat *p_kps_desc_3d;
+    //std::vector<cv::KeyPoint> *p_kps_3d;
+    //cv::Mat *p_kps_desc_3d;
 
 	double a00;
 	double a10;
@@ -239,7 +240,7 @@ typedef struct _section_data {
     int section_id; 
     
     int n_tiles;
-    tile_data_t tiles[MAX_TILES];
+    //tile_data_t tiles[MAX_TILES];
     
     int out_d1;
     int out_d2;
@@ -259,6 +260,7 @@ typedef struct _align_data {
     char *work_dirpath;
     char *output_dirpath;
     
+    char *TMP_DIR;
     int base_section;
     int n_sections;
     bool do_subvolume;
@@ -266,7 +268,20 @@ typedef struct _align_data {
     int min_y;
     int max_x;
     int max_y;
-    section_data_t sec_data[MAX_SECTIONS];
+
+
+    bool use_params;
+
+    float scale_fast; // scale parameter for fast pass.
+
+    // 1000 vs 1001 for fast/slow
+    bool skip_octave_fast;
+    bool skip_octave_slow;
+
+    bool use_fsj;
+
+
+    //section_data_t sec_data[MAX_SECTIONS];
     std::pair<cv::Point2f, cv::Point2f> bounding_box;  
     //cv::Mat *p_section_transforms[MAX_SECTIONS];
     

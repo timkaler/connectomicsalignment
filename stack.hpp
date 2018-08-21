@@ -239,6 +239,8 @@ class Section {
     std::string cached_2d_matches;
     std::string cached_3d_keypoints;
 
+    align_data_t* align_data;
+
     std::vector<cv::Mat> affine_transforms;
 
     std::vector<Tile*> tiles;
@@ -455,6 +457,8 @@ class Stack {
     MLBase* ml_models[NUM_MRTASKS];
     ParamDB* paramdbs[NUM_MRTASKS];
 
+
+    align_data_t* align_data;
 
     // Init functions
     Stack(int base_section, int n_sections, std::string input_filepath,

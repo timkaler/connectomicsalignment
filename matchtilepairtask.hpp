@@ -13,6 +13,10 @@ class MatchTilePairTask : public MRTask {
     std::vector<int> param_adjustments;
     std::vector<int> param_train_deltas;
 
+
+    align_data_t* align_data;
+
+
     std::map<int, TileSiftTask*> dependencies;
 
     cv::Point2f current_offset;
@@ -23,6 +27,9 @@ class MatchTilePairTask : public MRTask {
     cv::Point2f compute_quick(Tile* a_tile, Tile* b_tile);
     int min_features_num;
     bool second_pass;
+
+
+    bool FORCE_FAST_PASS_SUCCEED;
 
     float avg_response_a;
     float avg_response_b;

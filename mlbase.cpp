@@ -719,6 +719,7 @@ namespace tfk {
     //cv::FileStorage fs(filename, cv::FileStorage::WRITE);
     model->save(filename);
   }
+
   void MLRandomForest::load(std::string filename, bool data_only) {
     trained = true;
     training_active = true;

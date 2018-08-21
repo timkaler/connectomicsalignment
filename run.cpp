@@ -15,6 +15,9 @@
 #include <gperftools/profiler.h>
 #endif
 
+
+std::string TFK_TMP_DIR;
+
 std::pair<cv::Point2f, cv::Point2f> process_bounding_box_string(std::string bounding_box_string) {
 
   std::stringstream ss(bounding_box_string);
@@ -47,6 +50,9 @@ int main(int argc, char **argv) {
   int zstart, numslices, mode;
   std::string datafile_path, outputdir_path;
 
+  bool use_params,usefsj,skipoctfast,skipoctslow;
+  float fast_scale;
+
   // parse the arguments.
   try {
     const int NUM_REQUIRED = 4;
@@ -57,7 +63,7 @@ int main(int argc, char **argv) {
          "outputdir"};
 
     std::string bounding_box_string = "";
-
+    std::string tmpdir;
     cxxopts::Options options(argv[0], " - testing command line options.");
     options.positional_help("Positional Help Text");
     options.add_options()
@@ -66,6 +72,12 @@ int main(int argc, char **argv) {
       ("d,datafile", "The protobuf containing the tilespec information.", cxxopts::value<std::string>(datafile_path))
       ("o,outputdir", "The directory used to output results.", cxxopts::value<std::string>(outputdir_path))
       ("m,mode", "what mode to run in 1 to run the alignment 2 to run the paramter optimization", cxxopts::value<int>(mode))
+      ("useparams", "use params for matchtilepairtask and fsj", cxxopts::value<bool>(use_params))
+      ("fastscale", "param for fast pass image scale", cxxopts::value<float>(fast_scale))
+      ("skipoctfast", "skip first octave for fast", cxxopts::value<bool>(skipoctfast))
+      ("skipoctslow", "skip first octave for slow", cxxopts::value<bool>(skipoctslow))
+      ("usefsj", "enable fsj, o.w. fast pass always succeeds", cxxopts::value<bool>(usefsj))
+      ("tmpdir", "enable fsj, o.w. fast pass always succeeds", cxxopts::value<std::string>(tmpdir))
       ("help", "Print help")
       ("b,bbox", "Bounding box", cxxopts::value<std::string>(bounding_box_string));
 
@@ -88,6 +100,25 @@ int main(int argc, char **argv) {
       }
     }
 
+    if (!options.count("useparams") ) {
+      p_align_data->use_params = false;
+    } else {
+      p_align_data->use_params = true;
+      printf("using params!\n");
+      if (!options.count("fastscale") ||
+          !options.count("tmpdir")) {
+        printf("Missing required options that go withn params\n");
+        exit(0);
+      }
+      p_align_data->scale_fast = fast_scale;
+      p_align_data->skip_octave_fast = options.count("skipoctfast");
+      p_align_data->skip_octave_slow = options.count("skipoctslow");
+      p_align_data->use_fsj = options.count("usefsj");
+      p_align_data->TMP_DIR = (char*) tmpdir.c_str();
+      TFK_TMP_DIR = tmpdir;
+    }
+
+
     if (missing_required) {
       std::cout << "Missing at least one required argument, stopping program" << std::endl;
       exit(0);
@@ -99,6 +130,7 @@ int main(int argc, char **argv) {
     p_align_data->input_filepath = (char*)datafile_path.c_str();
     p_align_data->work_dirpath = (char*)outputdir_path.c_str(); // use same path for both.
     p_align_data->output_dirpath = (char*)outputdir_path.c_str();
+    //TFK_TMP_DIR = std::to_string(output_dir_path);
     p_align_data->do_subvolume = false;
     if (options.count("bbox")) {
       p_align_data->bounding_box = process_bounding_box_string(bounding_box_string);

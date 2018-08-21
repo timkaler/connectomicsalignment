@@ -262,6 +262,7 @@ void tfk::Stack::train_fsj(int trials) {
     dependencies[tile_a->tile_id]->compute(0.9);
     dependencies[tile_b->tile_id]->compute(0.9);
     MatchTilePairTask* task2 = new MatchTilePairTask(tile_a, tile_b, true);
+    task2->align_data = this->align_data;
     task2->dependencies = dependencies;
     task2->compute_with_params(trial_mr_params);
     bool res1 = task2->error_check(1000*1.9);
@@ -271,6 +272,7 @@ void tfk::Stack::train_fsj(int trials) {
 
 
     MatchTilePairTask* task1 = new MatchTilePairTask(tile_a, tile_b, true);
+    task1->align_data = this->align_data;
     task1->compute_with_params(best_mr_params);
     bool res2 = task1->error_check(1000*1.9);
     cv::Point2f offset1 = task1->predicted_offset;
@@ -305,7 +307,7 @@ void tfk::Stack::train_fsj(int trials) {
       }
       local_failure_count = __sync_fetch_and_add(&failure_count, 1)+1;
 
-      model->add_training_example(task2->get_feature_vector(), 0, dist+1);
+      model->add_training_example(task2->get_feature_vector(), 0, dist);
       //std::vector<float> vec = task2->get_feature_vector();
       //printf("fast:");
       //for (int x = 0; x < vec.size(); x++) {

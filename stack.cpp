@@ -55,6 +55,12 @@ void tfk::Stack::init() {
     std::cerr << "Failed to parse protocal buffer." << std::endl;
     exit(1);
   }
+
+  if (!this->align_data->use_params) {
+    //ALIGN_CACHE_FILE_DIRECTORY = std::string(this->align_data->TMP_DIR);
+    this->align_data->TMP_DIR = (char*)ALIGN_CACHE_FILE_DIRECTORY.c_str();
+  }
+
   // first deal with AlignData level
   if (align_data.has_mode()) {
     this->mode = align_data.mode();
@@ -123,6 +129,7 @@ void tfk::Stack::init() {
     //printf("doing section %d\n", i);
     //printf("bounding box is %f %f %f %f\n", _bounding_box.first.x, _bounding_box.first.y, _bounding_box.second.x, _bounding_box.second.y);
     Section* sec = new Section(section_data, _bounding_box, use_bbox_prefilter);
+    sec->align_data = this->align_data;
     //printf("doing section %d\n", i);
     sec->section_id = this->sections.size();
     //printf("doing section %d\n", i);
