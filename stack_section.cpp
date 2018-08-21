@@ -194,7 +194,7 @@ void tfk::Section::align_2d() {
 
       this->load_2d_alignment();
       compare_2d_alignment();
-      //this->read_3d_keypoints(filename);
+      this->read_3d_keypoints(filename);
       return;
     }
 
@@ -667,7 +667,7 @@ void tfk::Section::elastic_gradient_descent_section(Section* _neighbor) {
         }
 
           if (max_iterations - iter < 1000) {
-            if (prev_cost - cost > 1.0/1000) {
+            if (prev_cost - cost > 1.0/10 && max_iterations < 10000) {
               max_iterations += 1000;
             }
           }
@@ -2003,9 +2003,9 @@ void tfk::Section::align_3d(Section* neighbor) {
     this->elastic_gradient_descent_section(neighbor);
     this->triangle_mesh->build_index_post();
 
-    this->get_elastic_matches_relative(neighbor);
-    this->elastic_gradient_descent_section(neighbor);
-    this->triangle_mesh->build_index_post();
+    //this->get_elastic_matches_relative(neighbor);
+    //this->elastic_gradient_descent_section(neighbor);
+    //this->triangle_mesh->build_index_post();
 
     //this->get_elastic_matches_relative(neighbor);
     //this->elastic_gradient_descent_section(neighbor);
@@ -3001,7 +3001,7 @@ void tfk::Section::compute_keypoints_and_matches() {
          Tile* tile = tiles_to_process_keypoints[i];
          //tile->compute_sift_keypoints2d();
          dependencies[tile->tile_id]->compute(0.9);//compute_with_params(NULL);
-         tile->compute_sift_keypoints3d();
+         //tile->compute_sift_keypoints3d();
          tile->match_tiles_task->dependencies = dependencies;
       }
 
