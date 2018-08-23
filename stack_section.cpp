@@ -251,7 +251,7 @@ void tfk::Section::align_2d() {
       double lr = 0.1;
       int iter_count = 0;
       while (true) {
-      if (iter_count++ > 5) break;
+      if (iter_count++ > 0) break;
       for (int _i = 0; _i < this->graph->num_vertices(); _i++) {
         int i = _i;//vertex_ids[_i];
         this->graph->getVertexData(i)->iteration_count = 0;
@@ -267,35 +267,96 @@ void tfk::Section::align_2d() {
 
       printf("starting run\n");
 
-      double last_energy = 0.0;
-      for (int x = 0; x < this->tiles.size(); x++) {
-        last_energy += this->tiles[x]->local2DAlignUpdateEnergy();
-      }
+     double* tile_momentum_x = (double*) malloc(this->tiles.size()*sizeof(double));
+     double* tile_momentum_y = (double*) malloc(this->tiles.size()*sizeof(double));
+     for (int i = 0; i < this->tiles.size(); i++) {
+       tile_momentum_x[i] = 0.0;
+       tile_momentum_y[i] = 0.0;
+     }
+     bool keep_going = false;
+     int iter2d = 0;
+     for (int i = 0; i < 10000; i++) {
+        double last_energy = 0.0;
+        double MOMENTUM = 0.1;
 
-      //e->run();
-      for (int c = 0; c < 10000; c++) {
-        cilk_for (int x = 0; x < this->tiles.size(); x++) {
-          this->tiles[x]->local2DAlignUpdate(lr);
+
+        double* last_energies = (double*) malloc(sizeof(double)*__cilkrts_get_nworkers());
+
+        for (int j = 0; j < __cilkrts_get_nworkers(); j++) {
+          last_energies[j] = 0.0;
         }
-        cilk_for (int x = 0; x < this->tiles.size(); x++) {
-          this->tiles[x]->offset_x += this->tiles[x]->grad_error_x*lr;
-          this->tiles[x]->offset_y += this->tiles[x]->grad_error_y*lr;
-        }
 
-      }
-
-
-      double energy = 0.0;
-      printf("ending run\n");
         for (int x = 0; x < this->tiles.size(); x++) {
-          energy += this->tiles[x]->local2DAlignUpdateEnergy();
+          //last_energies[__cilkrts_get_worker_number()] += this->tiles[x]->local2DAlignUpdateEnergy();
+          last_energy += this->tiles[x]->local2DAlignUpdateEnergy();
         }
-        printf("Total energy is %f lr is %f\n", energy, lr);
-        if (energy + 0.1 > last_energy) {
-          //iter_count += 20;
-          lr = lr * 0.5;
+
+        //for (int j = 0; j < __cilkrts_get_nworkers(); j++) {
+        //  last_energy += last_energies[__cilkrts_get_worker_number()];
+        //}
+        free(last_energies);
+          cilk_for (int x = 0; x < this->tiles.size(); x++) {
+            this->tiles[x]->local2DAlignUpdate(lr);
+          }
+          cilk_for (int x = 0; x < this->tiles.size(); x++) {
+            this->tiles[x]->grad_error_x += MOMENTUM*tile_momentum_x[x];
+            this->tiles[x]->grad_error_y += MOMENTUM*tile_momentum_y[x];
+
+            tile_momentum_x[x] = this->tiles[x]->grad_error_x;
+            tile_momentum_y[x] = this->tiles[x]->grad_error_y;
+
+            this->tiles[x]->offset_x += (this->tiles[x]->grad_error_x)*lr;
+            this->tiles[x]->offset_y += (this->tiles[x]->grad_error_y)*lr;
+          }
+        double energy = 0.0;
+        double* energies = (double*) malloc(sizeof(double)*__cilkrts_get_nworkers());
+        //printf("ending run\n");
+          for (int j = 0; j < __cilkrts_get_nworkers(); j++) {
+            energies[j] = 0.0;
+          }
+          for (int x = 0; x < this->tiles.size(); x++) {
+            //energies[__cilkrts_get_worker_number()] += this->tiles[x]->local2DAlignUpdateEnergy();
+            energy += this->tiles[x]->local2DAlignUpdateEnergy();
+          }
+          //for (int j = 0; j < __cilkrts_get_nworkers(); j++) {
+          //  energy += energies[j];
+          //}
+          free(energies);
+
+          //printf("Total energy is %f lr is %f\n", energy, lr);
+          if (energy > last_energy) {
+            //iter_count += 20;
+            lr = lr * 0.9;
+          } else {
+            for (int j = 0; j < this->tiles.size(); j++) {
+              tile_momentum_x[j] = 0.0;
+              tile_momentum_y[j] = 0.0;
+            }
+            lr += 0.0001;
+          }
+          iter2d++;
+          if (iter2d >= 1000 && iter2d%1000 == 0) {
+            if (!keep_going) break;
+            keep_going = false;
+          }
+          if (energy + 0.01 < last_energy) keep_going = true;
+          if (iter2d > 10000) break;
         }
       }
+
+     double energy_sum = 0.0;
+      for (int i = 0; i < this->tiles.size(); i++) {
+        double energy = this->tiles[i]->local2DAlignUpdateEnergy();
+        energy_sum += energy;
+        this->tiles[i]->energy = energy;
+        this->tiles[i]->highlight = true;
+        //if (energy > 5*5) {
+        //  this->tiles[i]->highlight = true;
+        //} else {
+        //  this->tiles[i]->highlight = false;
+        //}
+      }
+      printf("total energy for section %d is %f\n", this->real_section_id, energy_sum);
       //this->coarse_affine_align();
       //this->elastic_align();
       //int count = 0;
@@ -3001,7 +3062,7 @@ void tfk::Section::compute_keypoints_and_matches() {
          Tile* tile = tiles_to_process_keypoints[i];
          //tile->compute_sift_keypoints2d();
          dependencies[tile->tile_id]->compute(0.9);//compute_with_params(NULL);
-         //tile->compute_sift_keypoints3d();
+         tile->compute_sift_keypoints3d();
          tile->match_tiles_task->dependencies = dependencies;
       }
 

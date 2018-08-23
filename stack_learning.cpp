@@ -165,6 +165,7 @@ void tfk::Stack::parameter_optimization(int trials, double threshold, std::vecto
 
 
 void tfk::Stack::train_fsj(int trials) {
+  float PX_ERROR_THRESH = 1.0;
   params best_params;
   best_params.num_features = 1;
   best_params.num_octaves = 6;
@@ -298,15 +299,18 @@ void tfk::Stack::train_fsj(int trials) {
     int local_failure_count = failure_count;
     int local_success_count = success_count;
     int local_failure_type2_count = failure_type2_count;
-    if (res1 != res2 || dist > 1.0) {
+
+    if (!res1) continue; // if the fast pass doesn't succeed, that means we're falling onto slow pass anyways.
+
+    if (res1 != res2 || dist > PX_ERROR_THRESH) {
       if (res1 == res2) {
         local_failure_type2_count = __sync_fetch_and_add(&failure_type2_count,1);
         printf("failure dist is %f\n", dist);
       } else {
-        printf("failure, results don't match. %d, %d, dist %f\n", res1, res2, dist);
+        //printf("failure, results don't match. %d, %d, dist %f\n", res1, res2, dist);
+        dist = 1;
       }
       local_failure_count = __sync_fetch_and_add(&failure_count, 1)+1;
-
       model->add_training_example(task2->get_feature_vector(), 0, dist);
       //std::vector<float> vec = task2->get_feature_vector();
       //printf("fast:");
@@ -325,9 +329,9 @@ void tfk::Stack::train_fsj(int trials) {
     } else {
       //if (!res1) printf("both failed\n");
       //printf("success\n");
-      if (dist < 0.5) {
+      if (dist < PX_ERROR_THRESH/2) {
       local_success_count = __sync_fetch_and_add(&success_count, 1)+1;
-        model->add_training_example(task2->get_feature_vector(), 1, dist+1);
+       model->add_training_example(task2->get_feature_vector(), 1, -1.0);
       }
     }
     if (i%100 == 0 || i == trials-1) {

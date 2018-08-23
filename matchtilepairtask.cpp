@@ -452,10 +452,10 @@ namespace tfk {
 
   params trial_params;
   trial_params.num_features = 1001;
-  trial_params.num_octaves = 6;
+  trial_params.num_octaves = 3;
   trial_params.contrast_threshold = CONTRAST_THRESH;////0.015;//.015;
   trial_params.edge_threshold = EDGE_THRESH_2D;//10;//10;
-  trial_params.sigma = 1.6; //+ 0.2*0.2;//1.05;//1.05;//1.05;
+  trial_params.sigma = 1.2; //+ 0.2*0.2;//1.05;//1.05;//1.05;
   trial_params.scale_x = 0.3;
   trial_params.scale_y = 0.3;
   trial_params.res = FULL;
@@ -766,6 +766,11 @@ namespace tfk {
           }
         }
 
+        if (!(filtered_match_points_a.size() >= min_features_num)) {
+          guess_ml = false;
+        }
+
+        //guess_ml = filtered_match_points_a.size() >= min_features_num;
         //if (false && /*guess_ml*/ val >= 0.75) {
         if ((guess_ml || false_negative_rate > 1.0) && filtered_match_points_a.size() >= min_features_num) {
           a_tile->ideal_offsets[b_tile->tile_id] = current_offset;

@@ -827,8 +827,13 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
     //printf("detect and compute\n");
 
     int firstOctave = -1, actualNOctaves = 0, actualNLayers = 0;
-    if (nfeatures == 1001) firstOctave = 0;
 
+    if (nfeatures == 1001) firstOctave = 0;
+    float min_size = 2.0;//1.0*nfeatures;
+
+    if (firstOctave == 0) {
+      min_size = 1.0;
+    }
 
     //int firstOctave = -1, actualNOctaves = 0, actualNLayers = 0;
     Mat image = _image.getMat(), mask = _mask.getMat();
@@ -870,7 +875,6 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
 
     //t = (double)getTickCount() - t;
     //printf("pyramid construction time: %g\n", t*1000./tf);
-    float min_size = 2.0;//1.0*nfeatures;
 
     //if (nfeatures == 1000) {
     //  min_size = 4;

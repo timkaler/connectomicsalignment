@@ -22,7 +22,7 @@ void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, cv::Mat
     //                 raw_matches,
     //                 2);
     //} else {
-    if (brute || true) {
+    if (brute) {
     cv::BFMatcher matcher(cv::NORM_L2, false);
     //static const cv::Ptr<cv::flann::IndexParams> index_params = new cv::flann::KDTreeIndexParams(16);
     //static const cv::Ptr<cv::flann::SearchParams> search_params = new cv::flann::SearchParams(128, 0, false);

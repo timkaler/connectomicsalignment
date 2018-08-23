@@ -1896,7 +1896,7 @@ void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
   if (true || !recomputation) {
   // NOTE(TFK): I need to check these parameters against the prefix_ cached ones.
   p_sift = new cv::xfeatures2d::SIFT_Impl(
-            1,  // num_features --- unsupported.
+            1000,  // num_features --- unsupported.
             6,  // number of octaves
             //24,  // number of octaves
             CONTRAST_THRESH_3D,  // contrast threshold.

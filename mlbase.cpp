@@ -356,12 +356,12 @@ namespace tfk {
       for (int i = 0; i < new_training_examples; i++) {
           if (old_labels[i]) {
               labels.at<float>(i, 0) = 1;
-              weights.at<float>(i,0) = 1.0*weight_1;
+              weights.at<float>(i,0) = weight_1;
               //count_1++;
           } else {
               labels.at<float>(i, 0) = 0;
               //weights.at<float>(i,0) = 10000.0;//10000.0;
-              weights.at<float>(i,0) = /*std::min(10.0f, new_errors[i]) **/ 1.0*weight_2;//10000.0;
+              weights.at<float>(i,0) = /*std::min(10.0f, new_errors[i]) **/ weight_2;//10000.0;
               //count_2++;
           }
           for (int j = 0; j < size_of_feature_vector; j++) {
@@ -379,10 +379,23 @@ namespace tfk {
         //ann_model->setTrainMethod(0, 0.1,0.1);
         ann_model->setTermCriteria(term_crit);
         ann_model->setMaxDepth(4);
-        //ann_model->setMinSampleCount(2); 
+        ann_model->setMinSampleCount(2); 
         ann_model->setCalculateVarImportance(true);
         model->train(tdata);
         printf("after training\n");
+
+        for (int i = 0; i < new_training_examples; i++) {
+          bool pred = predict(old_data[i]);
+          bool actual = old_labels[i];
+          if (pred != actual) {
+            if (actual) {
+              //printf("false negative dist: %f\n", new_errors[i]);
+            } else {
+              printf("false positive dist: %f\n", new_errors[i]);
+            }
+          }
+        }
+
         //model->train(tdata);
           /*
            model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS);
@@ -509,11 +522,12 @@ namespace tfk {
           }
         } else {
           if (prediction) {
-            printf("dist of false positive is %f\n", new_errors[i]);
+            //printf("dist of false positive is %f\n", new_errors[i]);
             fp++;
             neg_preds.push_back(pred_f);
           } else {
             fn++;
+            //printf("dist of false negative is %f\n", new_errors[i]);
             pos_preds.push_back(pred_f);
           }
         } 
@@ -576,10 +590,11 @@ namespace tfk {
           }
         } else {
           if (prediction) {
-            printf("dist of false positive is %f\n", new_errors[i]);
+            //printf("dist of false positive is %f\n", new_errors[i]);
             fp++;
             neg_preds.push_back(pred_f);
           } else {
+            //printf("dist of false negative is %f\n", new_errors[i]);
             fn++;
             pos_preds.push_back(pred_f);
           }

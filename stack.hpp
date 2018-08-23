@@ -75,7 +75,7 @@ typedef struct params {
 class Tile {
   public:
    std::map<int, cv::Point2f> ideal_offsets;
-
+   double energy;
    int iteration_count;
    bool highlight;
 

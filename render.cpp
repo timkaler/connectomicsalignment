@@ -265,7 +265,7 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
                            section_p_out_ncount, nrows, ncols, lower_x, lower_y, nomesh,
                            0,0,tile_p_image.size().width, tile_p_image.size().height);
 
-        if (highlight_tiles && tile->highlight && false) {
+        if (highlight_tiles && tile->highlight) {
           for (int _y = 0; _y < (tile_p_image).size().height; _y++) {
             for (int _x = 0; _x < (tile_p_image).size().width; _x++) {
               //if (_x > 10 && _x < tile_p_image.size().width-10 &&
@@ -284,7 +284,7 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
                   unsigned char val = 0;//tile_p_image.at<unsigned char>(_y, _x);
                   int x = x_c+k;
                   int y = y_c+m;
-                  heat_floats.at<float>(y-lower_y,x-lower_x) = 0.5;
+                  heat_floats.at<float>(y-lower_y,x-lower_x) = std::min(1.0,tile->energy / 100.0);
                   //if (y-lower_y >= 0 && y-lower_y < nrows && x-lower_x >= 0 && x-lower_x < ncols) {
                   //  section_p_out_sum->at<unsigned short>(y-lower_y, x-lower_x) = val;
                   //  section_p_out_ncount->at<unsigned short>(y-lower_y, x-lower_x) = 1000;
@@ -348,9 +348,9 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
   }
 
 
-  //cv::Mat colored = apply_heatmap_to_grayscale(&section_p_out, &heat_floats, nrows, ncols);
+  cv::Mat colored = apply_heatmap_to_grayscale(&section_p_out, &heat_floats, nrows, ncols);
 
-  //imwrite("colored.jpg", colored);
+  imwrite("colored.jpg", colored);
 
   //if (write) {
   //  cv::imwrite(filename, (*section_p_out));
@@ -376,29 +376,29 @@ void Render::render_stack(Stack* stack,
     std::pair<cv::Point2f, cv::Point2f> bbox, tfk::Resolution resolution,
     std::string filename_prefix) {
 
-  int tile_count = 0;
-  for (int i = 0; i < stack->sections.size(); i++) {
-    Section* section = stack->sections[i];
-
-    for (int j = 0; j < section->tiles.size(); j++) {
-      Tile* tile = section->tiles[j];
-      if (tile->highlight) {
-        tile_count++;
-        auto tbbox = tile->get_bbox();
-        //tbbox.first -= cv::Point2f(500.0,500.0);
-        //tbbox.second += cv::Point2f(500.0,500.0);
-        render(section, tbbox, resolution, filename_prefix+"_" +
-               std::to_string(section->real_section_id)+"_"+std::to_string(tile_count)+".tif");
-      }
-    }
-  }
-
-
+  //int tile_count = 0;
   //for (int i = 0; i < stack->sections.size(); i++) {
   //  Section* section = stack->sections[i];
-  //  render(section, bbox, resolution,
-  //         filename_prefix+"_"+std::to_string(section->real_section_id)+".tif"); 
+
+  //  for (int j = 0; j < section->tiles.size(); j++) {
+  //    Tile* tile = section->tiles[j];
+  //    if (tile->highlight) {
+  //      tile_count++;
+  //      auto tbbox = tile->get_bbox();
+  //      //tbbox.first -= cv::Point2f(500.0,500.0);
+  //      //tbbox.second += cv::Point2f(500.0,500.0);
+  //      render(section, tbbox, resolution, filename_prefix+"_" +
+  //             std::to_string(section->real_section_id)+"_"+std::to_string(tile_count)+".tif");
+  //    }
+  //  }
   //}
+
+
+  for (int i = 0; i < stack->sections.size(); i++) {
+    Section* section = stack->sections[i];
+    render(section, bbox, resolution,
+           filename_prefix+"_"+std::to_string(section->real_section_id)+".tif"); 
+  }
 }
 
 void Render::render_stack_with_patch(Stack* stack,
