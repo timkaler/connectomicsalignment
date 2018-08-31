@@ -255,6 +255,7 @@ class Section {
     double offset_x;
     double offset_y;
 
+    std::pair<cv::KeyPoint,cv::Mat> proto_to_keypoint(KeyPointProto kptproto);
     void print_2d_error_info(Tile* t, Tile* n, float val);
     bool alignment2d_exists();
     void load_2d_alignment();
@@ -289,6 +290,7 @@ class Section {
     bool load_elastic_mesh(Section* neighbor);
     void save_elastic_mesh(Section* neighbor);
 
+    KeyPointProto keypoint_to_proto(cv::KeyPoint pt, cv::Mat desc);
 
     void compute_on_tile_neighborhood(tfk::Tile* tile);
     Section(int section_id);

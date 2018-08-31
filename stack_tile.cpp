@@ -1996,7 +1996,7 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       //} else if (this->tile_id % 3 == 1) {
       //  new_path = this->filepath.replace(0,5, "/ebs2/");
       //} else if (this->tile_id % 3 == 2) {
-        new_path = this->filepath.replace(0,5, "/efs/");
+        new_path = this->filepath.replace(0,5, "/home/gridsan/groups/supertech/connectomix/");
       //}
       new_path = this->filepath + "_.jpg";
       //printf("New %s\n", new_path.c_str());
@@ -2021,11 +2021,13 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       //} else if (this->tile_id % 3 == 1) {
       //  new_path = this->filepath.replace(0,5, "/ebs2/");
       //} else if (this->tile_id % 3 == 2) {
-      //new_path = this->filepath.replace(0,5, "/efs/");
+      //new_path = this->filepath.replace(0,5, "/home/gridsan/groups/supertech/connectomix/");
+      new_path = this->filepath;
       //}
       //new_path = this->filepath + "_.jpg";
       //new_path = this->filepath+".jp2";
-      new_path = this->filepath;
+      //new_path = this->filepath;
+      //printf("The filepath is %s\n", this->filepath.c_str());
       //new_path = this->filepath;
       //new_path = new_path.replace(new_path.find("_compressed_10percent"),21,"");
       //new_path = new_path.replace(new_path.find(".jp2"), 4, ".bmp");

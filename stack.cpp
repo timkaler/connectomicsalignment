@@ -239,12 +239,14 @@ void tfk::Stack::align_3d() {
 
   //this->sections[0]->read_3d_keypoints("");
   //sections_with_3d_keypoints.insert(0);
-  cilk_spawn this->sections[0]->align_3d(this->sections[0]);
+  //cilk_spawn this->sections[0]->align_3d(this->sections[0]);
 
-  cilk_for (int i = 1; i < this->sections.size(); i++) {
-    //this->sections[i]->read_3d_keypoints("");
-    //sections_with_3d_keypoints.insert(i);
-    this->sections[i]->align_3d(this->sections[i-1]);
+  cilk_for (int i = 0; i < this->sections.size(); i++) {
+    if (i == 0) {
+      this->sections[0]->align_3d(this->sections[0]);
+    } else {
+      this->sections[i]->align_3d(this->sections[i-1]);
+    }
     //if (i >= 2) {
     //  this->sections[i-2]->erase_3d_keypoints();
     //  sections_with_3d_keypoints.erase(i-2);
@@ -284,7 +286,7 @@ void tfk::Stack::align_2d() {
   int j = 0;
   int i = 0;
   while (j < this->sections.size()) {
-    j += 8;
+    j += 4;
     if (j >= this->sections.size()) j = this->sections.size();
     if (j-i > 1) {
       for (; i < j; i++) {

@@ -265,7 +265,7 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
                            section_p_out_ncount, nrows, ncols, lower_x, lower_y, nomesh,
                            0,0,tile_p_image.size().width, tile_p_image.size().height);
 
-        if (highlight_tiles && tile->highlight) {
+        if (highlight_tiles && tile->highlight && false) {
           for (int _y = 0; _y < (tile_p_image).size().height; _y++) {
             for (int _x = 0; _x < (tile_p_image).size().width; _x++) {
               //if (_x > 10 && _x < tile_p_image.size().width-10 &&
@@ -348,9 +348,9 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
   }
 
 
-  cv::Mat colored = apply_heatmap_to_grayscale(&section_p_out, &heat_floats, nrows, ncols);
+  //cv::Mat colored = apply_heatmap_to_grayscale(&section_p_out, &heat_floats, nrows, ncols);
 
-  imwrite("colored.jpg", colored);
+  //imwrite("colored.jpg", colored);
 
   //if (write) {
   //  cv::imwrite(filename, (*section_p_out));

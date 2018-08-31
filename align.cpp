@@ -301,7 +301,7 @@ void align_execute(align_data_t *p_align_data) {
     //return;
     stack->align_2d();
     printf("Done with align 2d\n");
-    stack->align_3d();
+    //stack->align_3d();
     printf("Done with align 3d\n");
     //stack->coarse_affine_align();
     //stack->elastic_align();

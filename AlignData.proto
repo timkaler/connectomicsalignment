@@ -6,7 +6,14 @@ message Matrix {
     repeated uint64 data = 3;
 }
 
-message KeyPoint {
+
+message KeyPointDesc {
+  required uint64 rows = 1;
+  required uint64 cols = 2;
+  repeated uint32 data = 3;
+}
+
+message KeyPointProto {
     required double x = 1;
     required double y = 2;
     required double size = 3;
@@ -14,6 +21,17 @@ message KeyPoint {
     required double response = 5;
     required uint64 octave = 6;
     required uint64 class_id = 7;
+    required KeyPointDesc desc = 8;
+}
+
+message Saved3DAlignmentTile {
+  required uint64 tile_id = 1;
+  repeated KeyPointProto keypoint = 2;
+}
+
+message Saved3DAlignment {
+  required uint64 section_id = 1;
+  repeated Saved3DAlignmentTile tiles = 2;
 }
 
 message PairInt {
@@ -93,12 +111,12 @@ message TileData {
 
 
     // std::vector<cv::KeyPoint> *p_kps;
-    repeated KeyPoint p_kps = 11;
+    repeated KeyPointProto p_kps = 11;
     // cv::Mat *p_kps_desc;
     optional Matrix p_kps_desc = 12;
 
     // std::vector<cv::KeyPoint> *p_kps_3d;
-    repeated KeyPoint p_kps_3d = 13;
+    repeated KeyPointProto p_kps_3d = 13;
     // cv::Mat *p_kps_desc_3d;
     optional Matrix p_kps_desc_3d = 14;
 
@@ -145,7 +163,7 @@ message SectionData {
 
     optional Matrix p_out = 9;
     // std::vector<cv::KeyPoint> *p_kps;
-    repeated KeyPoint p_kps = 10;
+    repeated KeyPointProto p_kps = 10;
     optional string cached_2d_matches = 11;
     optional string cached_3d_keypoints = 12;
 

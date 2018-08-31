@@ -28,7 +28,7 @@ export OPENCV_ROOT=/efs/tools/OpenCV3
 
 #export OPENCV_ROOT=/efs/home/lemon510/cv
 export LD_LIBRARY_PATH=$OPENCV_ROOT/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH=/efs/home/tfk/archive-linux/lib/:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/efs/home/tfk/archive-linux/lib/:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$TAPIR_PREFIX/lib:$LD_LIBRARY_PATH
 export OMP_NUM_THREADS=1
 export EXTRA_CFLAGS="-fcilkplus -Wall"

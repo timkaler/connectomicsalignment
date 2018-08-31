@@ -193,7 +193,7 @@ void tfk::Section::align_2d() {
       std::string(std::string(TFK_TMP_DIR) + "/prefix_"+std::to_string(this->real_section_id));
 
       this->load_2d_alignment();
-      compare_2d_alignment();
+      //compare_2d_alignment();
       this->read_3d_keypoints(filename);
       return;
     }
@@ -2655,20 +2655,39 @@ bool tfk::Section::alignment2d_exists() {
 
 void tfk::Section::read_3d_keypoints(std::string filename) {
 
-  filename = std::string(std::string(TFK_TMP_DIR) + "/prefix_"+std::to_string(this->real_section_id));
+  Saved3DAlignment alignment3d;
+  std::fstream input(std::string(TFK_TMP_DIR) + "/3d_keypoints_"+std::to_string(this->real_section_id)+".pbuf", std::ios::in | std::ios::binary);
+  alignment3d.ParseFromIstream(&input);
+  input.close();
 
-  cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"),
-                     cv::FileStorage::READ);
-  int count = 0;
-  for (int i = 0; i < this->tiles.size(); i++) {
+  cilk_for (int i = 0; i < this->tiles.size(); i++) {
+    Saved3DAlignmentTile tiledata = alignment3d.tiles(i);
     Tile* tile = this->tiles[i];
     tile->p_kps_3d = new std::vector<cv::KeyPoint>();
     tile->p_kps_desc_3d = new cv::Mat();
-    fs["keypoints_"+std::to_string(i)] >> *(tile->p_kps_3d);
-    count += tile->p_kps_3d->size();
-    fs["descriptors_"+std::to_string(i)] >> *(tile->p_kps_desc_3d);
+    for (int j = 0; j < tiledata.keypoint_size(); j++) {
+      KeyPointProto kproto = tiledata.keypoint(j);
+      std::pair<cv::KeyPoint, cv::Mat> ret = proto_to_keypoint(kproto);
+      tile->p_kps_3d->push_back(ret.first);
+      tile->p_kps_desc_3d->push_back(ret.second);
+    }
   }
-  fs.release();
+
+
+  //filename = std::string(std::string(TFK_TMP_DIR) + "/prefix_"+std::to_string(this->real_section_id));
+
+  //cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"),
+  //                   cv::FileStorage::READ);
+  //int count = 0;
+  //for (int i = 0; i < this->tiles.size(); i++) {
+  //  Tile* tile = this->tiles[i];
+  //  tile->p_kps_3d = new std::vector<cv::KeyPoint>();
+  //  tile->p_kps_desc_3d = new cv::Mat();
+  //  fs["keypoints_"+std::to_string(i)] >> *(tile->p_kps_3d);
+  //  count += tile->p_kps_3d->size();
+  //  fs["descriptors_"+std::to_string(i)] >> *(tile->p_kps_desc_3d);
+  //}
+  //fs.release();
 }
 
 
@@ -2871,18 +2890,85 @@ void tfk::Section::save_2d_alignment() {
   output.close();
 }
 
-void tfk::Section::save_3d_keypoints(std::string filename) {
-  cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"),
-                     cv::FileStorage::WRITE);
-  // store the 3d keypoints
-  for (int i = 0; i < this->tiles.size(); i++) {
-    Tile* tile = this->tiles[i];
-    cv::write(fs, "keypoints_"+std::to_string(i),
-              (*(tile->p_kps_3d)));
-    cv::write(fs, "descriptors_"+std::to_string(i),
-              (*(tile->p_kps_desc_3d)));
+
+
+KeyPointProto tfk::Section::keypoint_to_proto(cv::KeyPoint pt, cv::Mat desc) {
+  KeyPointProto kpt;
+  kpt.set_x(pt.pt.x);
+  kpt.set_y(pt.pt.y);
+  kpt.set_size(pt.size);
+  kpt.set_angle(pt.angle);
+  kpt.set_response(pt.response);
+  kpt.set_octave(pt.octave);
+  kpt.set_class_id(pt.class_id);
+
+  KeyPointDesc kpdesc;
+  kpdesc.set_rows(desc.rows);
+  kpdesc.set_cols(desc.cols);
+  for (int r = 0; r < desc.rows; r++) {
+    for (int c = 0; c < desc.cols; c++) {
+      kpdesc.add_data(desc.at<float>(r,c));
+    }
   }
-  fs.release();
+  *(kpt.mutable_desc()) = kpdesc;
+  return kpt;
+}
+
+std::pair<cv::KeyPoint,cv::Mat> tfk::Section::proto_to_keypoint(KeyPointProto kptproto) {
+  cv::KeyPoint kpt;
+  kpt.pt = cv::Point2f(kptproto.x(), kptproto.y());
+  kpt.size = kptproto.size();
+  kpt.angle = kptproto.angle();
+  kpt.response = kptproto.response();
+  kpt.octave = kptproto.octave();
+  kpt.class_id = kptproto.class_id();
+
+  KeyPointDesc kpdesc = kptproto.desc();
+  cv::Mat desc = cv::Mat(kpdesc.rows(), kpdesc.cols(), CV_32F);
+  int j = 0;
+  for (int r = 0; r < desc.rows; r++) {
+    for (int c = 0; c < desc.cols; c++) {
+      desc.at<float>(r,c) = 1.0*kpdesc.data(j);
+      j++;
+    }
+  }
+  return std::make_pair(kpt, desc);
+}
+
+
+void tfk::Section::save_3d_keypoints(std::string filename) {
+
+  Saved3DAlignment alignment3d;
+  alignment3d.set_section_id(this->real_section_id);
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Saved3DAlignmentTile tiledata;
+    tiledata.set_tile_id(i);
+    Tile* t = this->tiles[i];
+    for (int j = 0; j < t->p_kps_3d->size(); j++) {
+      tiledata.add_keypoint();
+      *(tiledata.mutable_keypoint(j)) =
+          keypoint_to_proto((*(t->p_kps_3d))[j], (*(t->p_kps_desc_3d)).row(j));
+    }
+    alignment3d.add_tiles();
+    *(alignment3d.mutable_tiles(i)) = tiledata;
+  }
+
+  std::fstream output(std::string(TFK_TMP_DIR) + "/3d_keypoints_"+std::to_string(this->real_section_id)+".pbuf", std::ios::out | std::ios::trunc | std::ios::binary);
+  alignment3d.SerializeToOstream(&output);
+  output.close();
+
+
+  //cv::FileStorage fs(filename+std::string("_3d_keypoints.yml.gz"),
+  //                   cv::FileStorage::WRITE);
+  //// store the 3d keypoints
+  //for (int i = 0; i < this->tiles.size(); i++) {
+  //  Tile* tile = this->tiles[i];
+  //  cv::write(fs, "keypoints_"+std::to_string(i),
+  //            (*(tile->p_kps_3d)));
+  //  cv::write(fs, "descriptors_"+std::to_string(i),
+  //            (*(tile->p_kps_desc_3d)));
+  //}
+  //fs.release();
 }
 
 void tfk::Section::save_2d_graph(std::string filename) {
