@@ -312,7 +312,7 @@ class Section {
       std::vector< cv::Point2f > &filtered_match_points_a,
       std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh);
 
-    void elastic_gradient_descent_section(Section* _neighbor);
+    //void elastic_gradient_descent_section(Section* _neighbor);
 
     void align_2d();
     void optimize_tile_grid();

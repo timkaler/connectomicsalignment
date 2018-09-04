@@ -143,6 +143,8 @@ $(BUILD_DIR)/matchtilepairtask.o: matchtilepairtask.cpp matchtilepairtask.hpp
 $(BUILD_DIR)/stack_helpers.o: stack_helpers.cpp stack_helpers.h
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
+$(BUILD_DIR)/elastic_optimization.o: elastic_optimization.cpp elastic_optimization.h
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 #engine.o: cilk_tools/Graph.cpp cilk_tools/engine.cpp cilk_tools/scheduler.cpp
 #	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
@@ -154,7 +156,7 @@ $(BUILD_DIR)/stack_helpers.o: stack_helpers.cpp stack_helpers.h
 $(BUILD_DIR)/run.S: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: $(BUILD_DIR)/Graph.o $(BUILD_DIR)/scheduler.o $(BUILD_DIR)/engine.o $(BUILD_DIR)/common.o $(BUILD_DIR)/align.o $(BUILD_DIR)/match.o $(BUILD_DIR)/ransac.o $(BUILD_DIR)/run.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/mrparams.o $(BUILD_DIR)/paramdb.o $(BUILD_DIR)/data.o $(BUILD_DIR)/render.o $(BUILD_DIR)/triangle_mesh.o $(BUILD_DIR)/range_tree.o $(BUILD_DIR)/mlbase.o $(BUILD_DIR)/matchtilestask.o $(BUILD_DIR)/tilesifttask.o $(BUILD_DIR)/matchtilepairtask.o $(BUILD_DIR)/stack_helpers.o
+run_align: $(BUILD_DIR)/Graph.o $(BUILD_DIR)/scheduler.o $(BUILD_DIR)/engine.o $(BUILD_DIR)/common.o $(BUILD_DIR)/align.o $(BUILD_DIR)/match.o $(BUILD_DIR)/ransac.o $(BUILD_DIR)/run.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/mrparams.o $(BUILD_DIR)/paramdb.o $(BUILD_DIR)/data.o $(BUILD_DIR)/render.o $(BUILD_DIR)/triangle_mesh.o $(BUILD_DIR)/range_tree.o $(BUILD_DIR)/mlbase.o $(BUILD_DIR)/matchtilestask.o $(BUILD_DIR)/tilesifttask.o $(BUILD_DIR)/matchtilepairtask.o $(BUILD_DIR)/stack_helpers.o $(BUILD_DIR)/elastic_optimization.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:
