@@ -1,43 +1,54 @@
+// Copyright 2016 - Supertech Research Group
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-#include <mutex>
-#include <thread>
-#include <future>
-#include "opencv2/opencv.hpp"
-#include "opencv2/features2d.hpp"
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/features2d.hpp>
 #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/ml.hpp>
 #include <opencv2/imgproc/types_c.h>
+
+
+
+#include <mutex>
+#include <thread>
+#include <future>
+#include <utility>
+#include <map>
+#include <string>
+#include <vector>
+#include <set>
+
+
 #include "cilk_tools/Graph.h"
-//#include "cilk_tools/engine.h"
 #include "./common.h"
 #include "./fasttime.h"
-#include "AlignData.pb.h"
+#include "./AlignData.pb.h"
 
 #include "./match.h"
 #include "./ransac.h"
 
 #include "cilk_tools/engine.h"
-#include "mrtask.hpp"
-#include "mrparams.hpp"
-#include "paramdb.hpp"
-#include "mlbase.hpp"
-#include "triangle_mesh.hpp"
-#include "triangle.h"
-//#include "./meshoptimize.h"
+#include "./mrtask.hpp"
+#include "./mrparams.hpp"
+#include "./paramdb.hpp"
+#include "./mlbase.hpp"
+#include "./triangle_mesh.hpp"
+#include "./triangle.h"
 
-#include "matchtilestask.hpp"
-#include "matchtilepairtask.hpp"
+#include "./matchtilestask.hpp"
+#include "./matchtilepairtask.hpp"
+
 
 #ifndef ALIGNSTACK
 #define ALIGNSTACK
 
 
 
-//static std::string ALIGN_CACHE_FILE_DIRECTORY = "newcached_data"
 static std::string ALIGN_CACHE_FILE_DIRECTORY = "tmp";
 static std::string ALIGN_OUTPUT_FILE_DIRECTORY = "out";
 
@@ -62,7 +73,7 @@ class MatchTilesTask;
 enum Resolution {THUMBNAIL, FULL, PERCENT30, THUMBNAIL2, FILEIOTEST};
 
 typedef struct params {
-    int num_features; // actually what size to start on but thats what we call it
+    int num_features;
     int num_octaves;
     float contrast_threshold;
     float edge_threshold;
@@ -74,150 +85,144 @@ typedef struct params {
 
 class Tile {
   public:
-   std::map<int, cv::Point2f> ideal_offsets;
-   double energy;
-   int iteration_count;
-   bool highlight;
+    std::map<int, cv::Point2f> ideal_offsets;
+    double energy;
+    int iteration_count;
+    bool highlight;
 
 
-   int random_int;
+    int random_int;
 
-   std::map<int, cv::Point2f> ideal_offsets_first;
-   std::map<int, cv::Point2f> ideal_offsets_second;
-   bool both_passes;
+    std::map<int, cv::Point2f> ideal_offsets_first;
+    std::map<int, cv::Point2f> ideal_offsets_second;
+    bool both_passes;
 
-   std::map<int, float> neighbor_correlations;
-   int section_id;
-   int tile_id;
-   int mfov_id;
-   int index;
-   std::string filepath;
-   cv::Mat * p_image;
-   double x_start;
-   double x_finish;
-   double y_start;
-   double y_finish;
-
-
-   double grad_error_x, grad_error_y;
-
-   bool bad_2d_alignment;
-   bool tmp_bad_2d_alignment;
-   double shape_dx;
-   double shape_dy;
-   std::pair<cv::Mat, cv::Mat> get_overlap_matrix(Tile* other, float scale, std::pair<cv::Point2f, cv::Point2f>& overlap_matrix);
-
-   //MRTask* match_tiles_task;
-
-   MatchTilesTask* match_tiles_task;
+    std::map<int, float> neighbor_correlations;
+    int section_id;
+    int tile_id;
+    int mfov_id;
+    int index;
+    std::string filepath;
+    cv::Mat * p_image;
+    double x_start;
+    double x_finish;
+    double y_start;
+    double y_finish;
 
 
-   std::vector<cv::KeyPoint>* p_kps;
-   cv::Mat* p_kps_desc;
-   std::vector<cv::KeyPoint>* alt_p_kps;
-   cv::Mat* alt_p_kps_desc;
+    double grad_error_x, grad_error_y;
 
-   std::vector<cv::KeyPoint>* p_kps_fallback;
-   cv::Mat* p_kps_desc_fallback;
+    bool bad_2d_alignment;
+    bool tmp_bad_2d_alignment;
+    double shape_dx;
+    double shape_dy;
+    std::pair<cv::Mat, cv::Mat> get_overlap_matrix(Tile* other, float scale,
+        std::pair<cv::Point2f, cv::Point2f>& overlap_matrix);
 
-   void compute_sift_keypoints2d_params(tfk::params params,
-      std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc);
-   void compute_sift_keypoints2d_params(tfk::params params,
-      std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile);
-   void compute_alternative_keypoints2d_params(tfk::params params,
-      std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc);
-   void compute_alternative_keypoints2d_params(tfk::params params,
-      std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile);
-   void release_3d_keypoints();
-   float compute_deviation(Tile* b_tile);
+    MatchTilesTask* match_tiles_task;
 
-   std::vector<cv::KeyPoint>* p_kps_3d;
-   cv::Mat* p_kps_desc_3d;
+    std::vector<cv::KeyPoint>* p_kps;
+    cv::Mat* p_kps_desc;
+    std::vector<cv::KeyPoint>* alt_p_kps;
+    cv::Mat* alt_p_kps_desc;
 
-   double a00;
-   double a10;
-   double a11;
-   double a01;
-   double offset_x;
-   double offset_y;
+    std::vector<cv::KeyPoint>* p_kps_fallback;
+    cv::Mat* p_kps_desc_fallback;
 
-   bool* ignore;
-   std::vector<renderTriangle>* mesh_triangles;
-   int level;
-   bool bad;
+    void compute_sift_keypoints2d_params(tfk::params params,
+       std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc);
+    void compute_sift_keypoints2d_params(tfk::params params,
+       std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile);
+    void release_3d_keypoints();
+    float compute_deviation(Tile* b_tile);
 
-   TileData tile_data;
+    std::vector<cv::KeyPoint>* p_kps_3d;
+    cv::Mat* p_kps_desc_3d;
+
+    double a00;
+    double a10;
+    double a11;
+    double a01;
+    double offset_x;
+    double offset_y;
+
+    bool* ignore;
+    std::vector<renderTriangle>* mesh_triangles;
+    int level;
+    bool bad;
+
+    TileData tile_data;
 
 
-   bool has_full_image;
-   bool has_percent30_image;
-   cv::Mat full_image;
-   cv::Mat percent30_image;
+    bool has_full_image;
+    bool has_percent30_image;
+    cv::Mat full_image;
+    cv::Mat percent30_image;
 
 
-   std::mutex* full_image_lock;
-   std::mutex* percent30_lock;
+    std::mutex* full_image_lock;
+    std::mutex* percent30_lock;
 
-   bool image_data_replaced;
+    bool image_data_replaced;
 
-   std::vector<edata> edges;
-   std::vector<edata> add_edges; //temporary.
+    std::vector<edata> edges;
+    std::vector<edata> add_edges;
 
-   // an array of pointers
-   MLBase* *ml_models;
-   ParamDB* *paramdbs;
+    // an array of pointers
+    MLBase* *ml_models;
+    ParamDB* *paramdbs;
 
-   std::map<Tile*, std::vector<float>> feature_vectors;
-   std::map<Tile*, bool> ml_preds;
+    std::map<Tile*, std::vector<float>> feature_vectors;
+    std::map<Tile*, bool> ml_preds;
 
-   std::map<Tile*, int> keypoints_in_overlap;
-   std::map<Tile*, int> matched_keypoints_in_overlap;
+    std::map<Tile*, int> keypoints_in_overlap;
+    std::map<Tile*, int> matched_keypoints_in_overlap;
 
-   int incident_bad_edges;
+    int incident_bad_edges;
 
-   Tile(int section_id, int tile_id, int index, std::string filepath,
-            int x_start, int x_finish, int y_start, int y_finish);
+    Tile(int section_id, int tile_id, int index, std::string filepath,
+             int x_start, int x_finish, int y_start, int y_finish);
 
-   Tile(TileData& tile_data);
+    explicit Tile(TileData& tile_data);
 
-   void release_full_image();
+    void release_full_image();
 
-   void compute_sift_keypoints2d();
-   void compute_alternative_keypoints2d();
-   void compute_sift_keypoints3d(bool recomputation = false);
-   void compute_sift_keypoints_with_params(params p);
+    void compute_sift_keypoints2d();
+    void compute_sift_keypoints3d(bool recomputation = false);
+    void compute_sift_keypoints_with_params(params p);
 
-   cv::Point2f rigid_transform(cv::Point2f pt);
-   cv::Point2f rigid_transform_d(cv::Point2f pt);
+    cv::Point2f rigid_transform(cv::Point2f pt);
+    cv::Point2f rigid_transform_d(cv::Point2f pt);
 
-   void release_2d_keypoints();
+    void release_2d_keypoints();
 
-   float error_tile_pair(Tile *other);
+    float error_tile_pair(Tile *other);
 
-   std::vector<float> tile_pair_feature(Tile* other);
+    std::vector<float> tile_pair_feature(Tile* other);
 
-   void get_3d_keypoints(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::Mat>& desc);
+    void get_3d_keypoints(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::Mat>& desc);
 
-   void recompute_3d_keypoints(std::vector<cv::KeyPoint>& atile_all_kps,
+    void recompute_3d_keypoints(std::vector<cv::KeyPoint>& atile_all_kps,
                                        std::vector<cv::Mat>& atile_all_kps_desc,
                                        tfk::params sift_parameters);
 
 
-   bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
-   bool overlaps_with(Tile* other);
-   void local2DAlignUpdate();
-   void local2DAlignUpdate(double lr);
-   double local2DAlignUpdateEnergy();
-   void local2DAlignUpdateLimited(std::set<Tile*>* active_set);
-   void insert_matches(Tile* neighbor, std::vector<cv::Point2f>& points_a, std::vector<cv::Point2f>& points_b);
-   void make_symmetric(int phase, std::vector<Tile*>& tile_list);
-   void write_wafer(FILE* wafer_file, int section_id, int base_section);
+    bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
+    bool overlaps_with(Tile* other);
+    void local2DAlignUpdate();
+    void local2DAlignUpdate(double lr);
+    double local2DAlignUpdateEnergy();
+    void local2DAlignUpdateLimited(std::set<Tile*>* active_set);
+    void insert_matches(Tile* neighbor,
+                        std::vector<cv::Point2f>& points_a, std::vector<cv::Point2f>& points_b);
+    void make_symmetric(int phase, std::vector<Tile*>& tile_list);
+    void write_wafer(FILE* wafer_file, int section_id, int base_section);
 
-   std::pair<cv::Point2f, cv::Point2f> get_bbox();
-   std::vector<cv::Point2f> get_corners();
+    std::pair<cv::Point2f, cv::Point2f> get_bbox();
+    std::vector<cv::Point2f> get_corners();
 
-   cv::Mat get_tile_data(Resolution res);
-   cv::Mat get_feature_vector(Tile *other, int boxes, int type);
+    cv::Mat get_tile_data(Resolution res);
+    cv::Mat get_feature_vector(Tile *other, int boxes, int type);
 };
 
 
@@ -255,21 +260,15 @@ class Section {
     double offset_x;
     double offset_y;
 
-    std::pair<cv::KeyPoint,cv::Mat> proto_to_keypoint(KeyPointProto kptproto);
+    std::pair<cv::KeyPoint, cv::Mat> proto_to_keypoint(KeyPointProto kptproto);
     void print_2d_error_info(Tile* t, Tile* n, float val);
     bool alignment2d_exists();
     void load_2d_alignment();
     void save_2d_alignment();
     void erase_3d_keypoints();
     std::vector<cv::Point2f>* off_grid;
-    //std::vector<cv::Point2f>* mesh_orig;
     std::vector<cv::Point2f>* mesh_orig_save;
     std::vector<cv::Point2f>* mesh_old;
-    //std::vector<cv::Point2f>* mesh;
-
-    //std::vector<std::vector<tfkTriangle>* > triangles;
-
-    //std::vector<tfkTriangle>* triangles;
 
     cv::Point2f* gradients;
     cv::Point2f* gradients_with_momentum;
@@ -293,8 +292,9 @@ class Section {
     KeyPointProto keypoint_to_proto(cv::KeyPoint pt, cv::Mat desc);
 
     void compute_on_tile_neighborhood(tfk::Tile* tile);
-    Section(int section_id);
-    Section(SectionData& section_data, std::pair<cv::Point2f, cv::Point2f> bounding_box, bool use_bbox_prefilter);
+    explicit Section(int section_id);
+    Section(SectionData& section_data, std::pair<cv::Point2f, cv::Point2f> bounding_box,
+            bool use_bbox_prefilter);
     std::vector<int> get_all_close_tiles(int atile_id);
     std::vector<Tile*> get_all_close_tiles(Tile* atile_id);
     void compute_keypoints_and_matches();
@@ -315,6 +315,8 @@ class Section {
     void elastic_gradient_descent_section(Section* _neighbor);
 
     void align_2d();
+    void optimize_tile_grid();
+    void mark_bad_2d_alignment();
 
     void recompute_keypoints();
 
@@ -323,35 +325,37 @@ class Section {
         tfk::params sift_parameters,
         std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex, bool apply_transform);
 
-   void find_3d_matches_in_box(Section* neighbor,
-       std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
-       std::vector<cv::Point2f>& test_filtered_match_points_a,
-       std::vector<cv::Point2f>& test_filtered_match_points_b,
-       bool use_cached, tfk::params sift_parameters,
-       std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
+    void find_3d_matches_in_box(Section* neighbor,
+        std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
+        std::vector<cv::Point2f>& test_filtered_match_points_a,
+        std::vector<cv::Point2f>& test_filtered_match_points_b,
+        bool use_cached, tfk::params sift_parameters,
+        std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
 
 
 
-  void find_3d_matches_in_box_cache(Section* neighbor,
-    std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
-    std::vector<cv::Point2f>& test_filtered_match_points_a,
-    std::vector<cv::Point2f>& test_filtered_match_points_b,
-    bool use_cached, tfk::params sift_parameters, std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex, std::vector<cv::KeyPoint>& prev_keypoints, cv::Mat& prev_desc,
-              std::vector<cv::KeyPoint>& my_keypoints, cv::Mat& my_desc);
+    void find_3d_matches_in_box_cache(Section* neighbor,
+        std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
+        std::vector<cv::Point2f>& test_filtered_match_points_a,
+        std::vector<cv::Point2f>& test_filtered_match_points_b,
+        bool use_cached, tfk::params sift_parameters, std::vector<Tile*>& tiles_loaded,
+        std::mutex& tiles_loaded_mutex, std::vector<cv::KeyPoint>& prev_keypoints,
+        cv::Mat& prev_desc,
+        std::vector<cv::KeyPoint>& my_keypoints, cv::Mat& my_desc);
 
-void get_elastic_matches_relative(Section* neighbor);
-
-
-
-
-   TriangleMesh* triangle_mesh;
+    void get_elastic_matches_relative(Section* neighbor);
 
 
-   double compute_3d_error_in_box(Section* neighbor,
-       std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
-       std::vector<cv::Point2f>& test_filtered_match_points_a,
-       std::vector<cv::Point2f>& test_filtered_match_points_b,
-       std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
+
+
+    TriangleMesh* triangle_mesh;
+
+
+    double compute_3d_error_in_box(Section* neighbor,
+        std::pair<cv::Point2f, cv::Point2f> sliding_bbox,
+        std::vector<cv::Point2f>& test_filtered_match_points_a,
+        std::vector<cv::Point2f>& test_filtered_match_points_b,
+        std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
 
 
 
@@ -365,8 +369,7 @@ void get_elastic_matches_relative(Section* neighbor);
     cv::Point2f elastic_transform(cv::Point2f pt, Triangle tri);
     cv::Point2f affine_transform(cv::Mat A, cv::Point2f pt);
     cv::Point2f affine_transform_plusA(cv::Point2f pt, cv::Mat A);
-    
-	cv::Mat* read_tile(std::string filepath, Resolution res);
+    cv::Mat* read_tile(std::string filepath, Resolution res);
 
 
     bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
@@ -376,34 +379,20 @@ void get_elastic_matches_relative(Section* neighbor);
     std::pair<cv::Point2f, cv::Point2f> elastic_transform_bbox(
         std::pair<cv::Point2f, cv::Point2f> bbox);
     void affine_transform_keypoints(std::vector<cv::KeyPoint>& keypoints);
-    //std::vector<cv::Point2f>* generate_hex_grid(double* bounding_box, double spacing);
     void affine_transform_mesh();
-    //void construct_triangles();
 
     void write_wafer(FILE* wafer_file, int base_section);
-
-
     std::pair<cv::Point2f, cv::Point2f> scale_bbox(std::pair<cv::Point2f, cv::Point2f> bbox,
         cv::Point2f scale);
     bool tile_in_render_box(Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox);
-	bool tile_in_render_box_affine(cv::Mat A, Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox);
+    bool tile_in_render_box_affine(cv::Mat A, Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox);
 
 
 
+    //std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f> >,
+    //          std::vector<std::pair<cv::Point2f, cv::Point2f> > >
 
-    cv::Mat render_affine(cv::Mat A, std::pair<cv::Point2f, cv::Point2f> bbox, Resolution resolution,
-                          std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
-    cv::Mat render(std::pair<cv::Point2f, cv::Point2f> bbox, Resolution resolution);
-    void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename, Resolution res);
-    cv::Point2f get_render_scale(Resolution resolution);
-
-     std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> render_error(Section* neighbor, Section* other_neighbor, Section* other2_neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
-                      std::string filename);
-
-     //std::pair<std::vector<std::pair<cv::Point2f, cv::Point2f>> , std::vector<std::pair<cv::Point2f, cv::Point2f>>> 
-    double render_error_affine(Section* neighbor, std::pair<cv::Point2f, cv::Point2f> bbox,
-                      std::string filename, cv::Mat A,
-                      std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
+    //                  std::vector<Tile*>& tiles_loaded, std::mutex& tiles_loaded_mutex);
 
     renderTriangle getRenderTriangle(tfkTriangle tri);
     std::tuple<bool, float, float, float, int> get_triangle_for_point(cv::Point2f pt);
@@ -430,8 +419,9 @@ void get_elastic_matches_relative(Section* neighbor);
 
     bool transformed_tile_overlaps_with(Tile* tile,
         std::pair<cv::Point2f, cv::Point2f> bbox, bool use_elastic);
-    
-    std::vector<std::tuple<int, double, int>> parameter_optimization(int trials, double threshold, std::vector<params> &ps);
+
+    std::vector<std::tuple<int, double, int>> parameter_optimization(int trials,
+        double threshold, std::vector<params> &ps);
 };
 
 
@@ -475,18 +465,14 @@ class Stack {
     void test_io();
     void compute_on_tile_neighborhood(Section* section, Tile* tile);
 
-    // Rendering functions
-    void render(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix, Resolution res);
-    void render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix);
 
     // Alignment algorithms
     void align_2d();
     void align_3d();
 
-    //void render_error(std::pair<cv::Point2f, cv::Point2f> bbox, std::string filename_prefix);
-    void parameter_optimization(int trials, double threshold, std::vector<params> ps, std::vector<std::tuple<int, double, int>>& results);
+    void parameter_optimization(int trials, double threshold, std::vector<params> ps,
+                                std::vector<std::tuple<int, double, int> >& results);
     void test_learning(int trials, int vector_grid_size, int vector_mode);
-
 };
 
 
@@ -495,5 +481,5 @@ class Stack {
 
 
 
-} // end namespace tfk.
-#endif // ALIGNSTACK
+}  // end namespace tfk.
+#endif  // ALIGNSTACK

@@ -5,7 +5,7 @@
 #include <mutex>
 #include <cmath>
 #include "stack.hpp"
-
+#include "stack_helpers.h"
 #ifndef TFK_RENDER
 #define TFK_RENDER
 

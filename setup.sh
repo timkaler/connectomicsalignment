@@ -31,7 +31,7 @@ export LD_LIBRARY_PATH=$OPENCV_ROOT/lib:$LD_LIBRARY_PATH
 #export LD_LIBRARY_PATH=/efs/home/tfk/archive-linux/lib/:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=$TAPIR_PREFIX/lib:$LD_LIBRARY_PATH
 export OMP_NUM_THREADS=1
-export EXTRA_CFLAGS="-fcilkplus -Wall"
+export EXTRA_CFLAGS="-fcilkplus -Wall -Werror"
 #export LD_PRELOAD=/usr/lib/libtcmalloc.so.4
 export LD_PRELOAD=/efs/tools/jemalloc/lib/libjemalloc.so
 
@@ -64,5 +64,6 @@ protoc --cpp_out=. --python_out=. ParamsDatabase.proto
 mkdir -p newcached_data
 mkdir -p tmp
 mkdir -p out
+mkdir -p build
 #HEAPCHECK=normal $@
 $@

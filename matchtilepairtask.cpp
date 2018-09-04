@@ -91,9 +91,9 @@ namespace tfk {
           //if (result2.at<float>(r,c) < 0 || result1.at<float>(r,c) < 0) continue;
           if (val > best_val) {
             best_val = val;
-            cv::Point2f a_point = a_tile->rigid_transform(cv::Point2f(overlap_offsets.first.x+1.0*start_c, overlap_offsets.first.y + 1.0*start_r));
+            //cv::Point2f a_point = a_tile->rigid_transform(cv::Point2f(overlap_offsets.first.x+1.0*start_c, overlap_offsets.first.y + 1.0*start_r));
 
-            cv::Point2f b_point = b_tile->rigid_transform(cv::Point2f(overlap_offsets.second.x+1.0*start_c, overlap_offsets.second.y + 1.0*start_r));
+            //cv::Point2f b_point = b_tile->rigid_transform(cv::Point2f(overlap_offsets.second.x+1.0*start_c, overlap_offsets.second.y + 1.0*start_r));
             best_offset = cv::Point2f(1.0*c,1.0*r);
 
             best = cv::Point2f(1.0*overlap_offsets.second.x-1.0*overlap_offsets.first.x, 1.0*overlap_offsets.second.y - 1.0*overlap_offsets.first.y);
@@ -273,137 +273,6 @@ namespace tfk {
           //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
           this->best_offset = best_offset;
           this->successful_rod = trial_rod;
-          break;
-        } else {
-          filtered_match_points_a.clear();
-          filtered_match_points_b.clear();
-        }
-      }
-    }
-
-
-    void MatchTilePairTask::alternative_compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
-      std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
-      cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
-      std::vector< cv::Point2f > &filtered_match_points_a,
-      std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh){
-
-      if (a_tile_keypoints.size() < min_features_num) return;
-      if (b_tile_keypoints.size() < min_features_num) return;
-
-      // Filter the features, so that only features that are in the
-      //   overlapping tile will be matches.
-      std::vector< cv::KeyPoint > atile_kps_in_overlap, btile_kps_in_overlap;
-
-      atile_kps_in_overlap.reserve(a_tile_keypoints.size());
-      btile_kps_in_overlap.reserve(b_tile_keypoints.size());
-
-      // atile_kps_in_overlap.clear(); btile_kps_in_overlap.clear();
-      cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
-
-      { // Begin scoped block A.
-        // Compute bounding box of overlap
-        int overlap_x_start = a_tile->x_start > b_tile->x_start ?
-                                  a_tile->x_start : b_tile->x_start;
-        int overlap_x_finish = a_tile->x_finish < b_tile->x_finish ?
-                                  a_tile->x_finish : b_tile->x_finish;
-        int overlap_y_start = a_tile->y_start > b_tile->y_start ?
-                                  a_tile->y_start : b_tile->y_start;
-        int overlap_y_finish = a_tile->y_finish < b_tile->y_finish ?
-                                  a_tile->y_finish : b_tile->y_finish;
-        // Add 50-pixel offset
-        const int OFFSET = 50;
-        overlap_x_start -= OFFSET;
-        overlap_x_finish += OFFSET;
-        overlap_y_start -= OFFSET;
-        overlap_y_finish += OFFSET;
-
-        std::vector< cv::Mat > atile_kps_desc_in_overlap_list;
-        atile_kps_desc_in_overlap_list.reserve(a_tile_keypoints.size());
-        std::vector< cv::Mat > btile_kps_desc_in_overlap_list;
-        btile_kps_desc_in_overlap_list.reserve(b_tile_keypoints.size());
-    
-        // Filter the points in a_tile.
-        for (size_t pt_idx = 0; pt_idx < a_tile_keypoints.size(); ++pt_idx) {
-          cv::Point2f pt = a_tile_keypoints[pt_idx].pt;
-          if (bbox_contains(pt.x + a_tile->x_start,
-                            pt.y + a_tile->y_start,  // transformed_pt[0],
-                            overlap_x_start, overlap_x_finish,
-                            overlap_y_start, overlap_y_finish)) {
-            atile_kps_in_overlap.push_back(a_tile_keypoints[pt_idx]);
-            atile_kps_desc_in_overlap_list.push_back(
-                a_tile_desc.row(pt_idx).clone());
-          }
-        }
-        cv::vconcat(atile_kps_desc_in_overlap_list,
-            (atile_kps_desc_in_overlap));
-    
-        // Filter the points in b_tile.
-        for (size_t pt_idx = 0; pt_idx < b_tile_keypoints.size(); ++pt_idx) {
-          cv::Point2f pt = b_tile_keypoints[pt_idx].pt;
-          if (bbox_contains(pt.x + b_tile->x_start,
-                            pt.y + b_tile->y_start,  // transformed_pt[0],
-                            overlap_x_start, overlap_x_finish,
-                            overlap_y_start, overlap_y_finish)) {
-            btile_kps_in_overlap.push_back(b_tile_keypoints[pt_idx]);
-            btile_kps_desc_in_overlap_list.push_back(b_tile_desc.row(pt_idx).clone());
-          }
-        }
-        cv::vconcat(btile_kps_desc_in_overlap_list,
-            (btile_kps_desc_in_overlap));
-      } // End scoped block A
-    
-      if (atile_kps_in_overlap.size() < min_features_num) return;
-      if (btile_kps_in_overlap.size() < min_features_num) return;
-    
-      float trial_rod;
-      for (int trial = 0; trial < 4; trial++) {
-        if (trial == 0) trial_rod = 0.7;
-        if (trial == 1) trial_rod = 0.8;
-        if (trial == 2) trial_rod = 0.92;
-        if (trial == 3) trial_rod = 0.96;
-        // Match the features
-        std::vector< cv::DMatch > matches;
-        alternative_match_features(matches,
-                       atile_kps_desc_in_overlap,
-                       btile_kps_desc_in_overlap,
-                       trial_rod);
-    
-        // Filter the matches with RANSAC
-        std::vector<cv::Point2f> match_points_a, match_points_b;
-        for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
-          match_points_a.push_back(
-              atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
-          match_points_b.push_back(
-              btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
-        }
-    
-        if (matches.size() < min_features_num) {
-          continue;
-        }
-    
-        bool* mask = (bool*) calloc(match_points_a.size(), 1);
-        double thresh = ransac_thresh;//5.0;
-        tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
-    
-    
-        filtered_match_points_a.clear();
-        filtered_match_points_b.clear();
-    
-        int num_matches_filtered = 0;
-        // Use the output mask to filter the matches
-        for (size_t i = 0; i < matches.size(); ++i) {
-          if (mask[i]) {
-            num_matches_filtered++;
-            filtered_match_points_a.push_back(
-                atile_kps_in_overlap[matches[i].queryIdx].pt);
-            filtered_match_points_b.push_back(
-                btile_kps_in_overlap[matches[i].trainIdx].pt);
-          }
-        }
-        free(mask);
-        if (num_matches_filtered >= min_features_num && filtered_match_points_a.size() >= 0.05*matches.size()) {
-          //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
           break;
         } else {
           filtered_match_points_a.clear();

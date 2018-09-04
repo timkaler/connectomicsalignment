@@ -1,5 +1,4 @@
 #include "render.hpp"
-#include "stack_helpers.cpp"
 namespace tfk {
 
 
@@ -281,7 +280,7 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
               for (int k = -1; k < 2; k++) {
                 for (int m = -1; m < 2; m++) {
                   if (k != 0 || m!=0) continue;
-                  unsigned char val = 0;//tile_p_image.at<unsigned char>(_y, _x);
+                  //unsigned char val = 0;//tile_p_image.at<unsigned char>(_y, _x);
                   int x = x_c+k;
                   int y = y_c+m;
                   heat_floats.at<float>(y-lower_y,x-lower_x) = std::min(1.0,tile->energy / 100.0);
@@ -333,7 +332,8 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
   //}
 
   //cilk_sync;
-  cilk_for (int y = 0; y < section_p_out.size().height; y++) {
+  int cilk_loop_height = section_p_out.size().height;
+  cilk_for (int y = 0; y < cilk_loop_height; y++) {
     for (int x = 0; x < section_p_out.size().width; x++) {
       if (section_p_out_ncount->at<unsigned short>(y,x) == 0) {
         continue;

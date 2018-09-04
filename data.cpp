@@ -6,7 +6,8 @@ namespace tfk {
 void sample_stack(Stack* stack, int num_samples, int box_size, std::string filename_prefix){
   auto entire_bbox = stack->sections[0]->get_bbox();
   tfk::Render* render = new tfk::Render();
-  srand(time(NULL));
+  //srand(time(NULL));
+  //srand();
   for (int i=0; i<num_samples; ++i){
     int section_num = rand() % (stack->sections.size()-1);
     Section* section1 = stack->sections[section_num];
@@ -84,16 +85,16 @@ void overlay_triangles(Section* section, std::pair<cv::Point2f, cv::Point2f> bbo
   img = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
   cv::Point2f render_scale = render->get_render_scale(section, resolution);
 
-  std::pair<cv::Point2f, cv::Point2f> scaled_bbox = render->scale_bbox(bbox, render_scale);
+  //std::pair<cv::Point2f, cv::Point2f> scaled_bbox = render->scale_bbox(bbox, render_scale);
   int input_lower_x = bbox.first.x;
   int input_lower_y = bbox.first.y;
-  int input_upper_x = bbox.second.x;
-  int input_upper_y = bbox.second.y;
-  int nrows = (input_upper_y-input_lower_y)/render_scale.y;
-  int ncols = (input_upper_x-input_lower_x)/render_scale.x;
+  //int input_upper_x = bbox.second.x;
+  //int input_upper_y = bbox.second.y;
+  //int nrows = (input_upper_y-input_lower_y)/render_scale.y;
+  //int ncols = (input_upper_x-input_lower_x)/render_scale.x;
 
   std::vector<Triangle>* bad_list = bad_triangles(section);
-  printf("Detected %d Flipped Triangles in Section %d\n",bad_list->size(), section->real_section_id);
+  printf("Detected %zu Flipped Triangles in Section %d\n",bad_list->size(), section->real_section_id);
   for(int i = 0; i<bad_list->size(); i++){
     Triangle tri = (*bad_list)[i];
     for(int j = 0; j<3; j++){
@@ -116,18 +117,18 @@ void overlay_mesh(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
   img = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
   cv::Point2f render_scale = render->get_render_scale(section, resolution);
 
-  std::pair<cv::Point2f, cv::Point2f> scaled_bbox = render->scale_bbox(bbox, render_scale);
+  //std::pair<cv::Point2f, cv::Point2f> scaled_bbox = render->scale_bbox(bbox, render_scale);
   int input_lower_x = bbox.first.x;
   int input_lower_y = bbox.first.y;
-  int input_upper_x = bbox.second.x;
-  int input_upper_y = bbox.second.y;
-  int nrows = (input_upper_y-input_lower_y)/render_scale.y;
-  int ncols = (input_upper_x-input_lower_x)/render_scale.x;
+  //int input_upper_x = bbox.second.x;
+  //int input_upper_y = bbox.second.y;
+  //int nrows = (input_upper_y-input_lower_y)/render_scale.y;
+  //int ncols = (input_upper_x-input_lower_x)/render_scale.x;
 
   std::vector<Triangle>* triangles_list = new std::vector<Triangle>();
   //std::vector<Triangle>* triangles_old = new std::vector<Triangle>();
   std::vector<Triangle>* bad_list = bad_triangles(section);
-  printf("Matches try %d\n", section->section_mesh_matches.size());
+  printf("Matches try %zu\n", section->section_mesh_matches.size());
   std::vector<tfkMatch>& mesh_matches = section->section_mesh_matches;
 
 
@@ -166,7 +167,7 @@ void overlay_mesh(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
   //  }
   //}
 
-  printf("There are %d matches\n", mesh_matches.size());
+  printf("There are %zu matches\n", mesh_matches.size());
   for(int i = 0; i < mesh_matches.size(); i++){
     Triangle tri;
     tri.points[0] = (*(section->triangle_mesh->mesh))[mesh_matches[i].my_tri.index1];

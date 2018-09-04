@@ -129,7 +129,7 @@ namespace tfk {
 
     // now deduplicate with old data
     for (int i = 0; i < tmp_data2.size(); i++) {
-      bool add = true;
+      //bool add = true;
       /*
       for (int j = 0; j < old_data.size(); j++) {
         float dist = feature_dist(tmp_data2[i], old_data[j]);

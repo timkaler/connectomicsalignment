@@ -148,13 +148,13 @@ int main(int argc, char **argv) {
     if (mode == 1) {
       align_execute(p_align_data);
     } else if (mode == 2) {
-      param_optimize(p_align_data);
+      //param_optimize(p_align_data);
     } else if (mode == 3) {
-      test_learning(p_align_data);
+      //test_learning(p_align_data);
     } else if (mode == 4) {
-      fill_match_tiles_task_pdb(p_align_data);
+      //fill_match_tiles_task_pdb(p_align_data);
     } else if (mode == 5) {
-      testing_corralation_test(p_align_data);
+      //testing_corralation_test(p_align_data);
     } else if (mode == 6) {
       train_fsj(p_align_data);
     } else {

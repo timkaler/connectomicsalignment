@@ -546,7 +546,7 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
 
     //int mutex = 0;
   
-    float min_size = 1.0;//nfeatures*1.0;
+    //float min_size = 1.0;//nfeatures*1.0;
     for( int o = 0; o < nOctaves; o++ )
         for( int i = 1; i <= nOctaveLayers; i++ )
         {
@@ -557,7 +557,7 @@ void SIFT_Impl::findScaleSpaceExtrema( const std::vector<Mat>& gauss_pyr, const 
             int step = (int)img.step1();
             int rows = img.rows, cols = img.cols;
 
-            float size_ub = sigma*powf(2.f, 1)*(1 << o)*2;
+            //float size_ub = sigma*powf(2.f, 1)*(1 << o)*2;
             //if (size_ub < min_size && nfeatures == 1001) continue;
             
             for( int r = SIFT_IMG_BORDER; r < rows-SIFT_IMG_BORDER; r++)

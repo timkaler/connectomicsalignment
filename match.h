@@ -40,8 +40,5 @@ cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local);
 //                           cv::Mat &descs1, cv::Mat &descs2,
 //                           float rod);
 
-void alternative_match_features(std::vector< cv::DMatch > &matches,
-                           cv::Mat &descs1, cv::Mat &descs2,
-                           float rod);
 
 #endif // MATCH_H

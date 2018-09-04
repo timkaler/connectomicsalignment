@@ -1,5 +1,4 @@
 #include "stack.hpp"
-#include "stack_helpers.cpp"
 #include "./othersift2.hpp"
 #include "./stack_tile.cpp"
 #include "./stack_section.cpp"

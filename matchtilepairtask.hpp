@@ -53,12 +53,6 @@ class MatchTilePairTask : public MRTask {
       std::vector< cv::Point2f > &filtered_match_points_a,
       std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh);
 
-    void alternative_compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
-      std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector< cv::KeyPoint >& b_tile_keypoints,
-      cv::Mat& a_tile_desc, cv::Mat& b_tile_desc,
-      std::vector< cv::Point2f > &filtered_match_points_a,
-      std::vector< cv::Point2f > &filtered_match_points_b, float ransac_thresh);
-
     MatchTilePairTask(Tile* a_tile, Tile* b_tile);
     MatchTilePairTask(Tile* a_tile, Tile* b_tile, bool train);
     virtual ~MatchTilePairTask() final;

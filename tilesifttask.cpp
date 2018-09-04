@@ -23,7 +23,7 @@ namespace tfk {
       }
       computed = false;
 
-      MRParams* mr_params = mr_params_local;
+      //MRParams* mr_params = mr_params_local;
 
   //params trial_params;
   //trial_params.num_features = 2;
@@ -98,8 +98,6 @@ namespace tfk {
       //tile->compute_sift_keypoints2d_params(best_params, tile_keypoints,
       //                                        tile_desc, tile);
 
-      //tile->compute_alternative_keypoints2d_params(new_params, alt_tile_keypoints,
-      //                                        alt_tile_desc, tile);
     }
 
     void TileSiftTask::commit() {

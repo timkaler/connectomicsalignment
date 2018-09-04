@@ -1,7 +1,7 @@
-#ifndef STACK_HELPERS_H
-#define STACK_HELPERS_H
+#include "./stack_helpers.h"
+
 namespace cv {
-  static bool computeAffineTFK(const std::vector<cv::Point2f> &srcPoints, const std::vector<cv::Point2f> &dstPoints, Mat &transf)
+  bool computeAffineTFK(const std::vector<cv::Point2f> &srcPoints, const std::vector<cv::Point2f> &dstPoints, Mat &transf)
   {
       // sanity check
       if ((srcPoints.size() < 3) || (srcPoints.size() != dstPoints.size()))
@@ -40,7 +40,7 @@ namespace cv {
 
 
 
-static inline std::string matchPadTo(std::string str, const size_t num, const char paddingChar = '0')
+inline std::string matchPadTo(std::string str, const size_t num, const char paddingChar)
 {
     // suppress unused function warning.
     (void) matchPadTo;
@@ -50,7 +50,7 @@ static inline std::string matchPadTo(std::string str, const size_t num, const ch
 }
 
 
-static cv::Mat colorize(cv::Mat c1, cv::Mat c2, cv::Mat c3, unsigned int channel = 0) {
+cv::Mat colorize(cv::Mat c1, cv::Mat c2, cv::Mat c3, unsigned int channel) {
     std::vector<cv::Mat> channels;
     channels.push_back(c1);
     channels.push_back(c2);
@@ -61,7 +61,7 @@ static cv::Mat colorize(cv::Mat c1, cv::Mat c2, cv::Mat c3, unsigned int channel
 }
 
 
-static cv::Mat apply_heatmap_to_grayscale(cv::Mat* gray, cv::Mat* heat_floats, int nrows, int ncols) {
+cv::Mat apply_heatmap_to_grayscale(cv::Mat* gray, cv::Mat* heat_floats, int nrows, int ncols) {
   cv::Mat c1,c2,c3;
   c1.create(nrows, ncols, CV_8UC1);
   c2.create(nrows, ncols, CV_8UC1);
@@ -83,7 +83,7 @@ static cv::Mat apply_heatmap_to_grayscale(cv::Mat* gray, cv::Mat* heat_floats, i
 // Helper method to check if a key point is inside a given bounding
 // box.
 __attribute__((const))
-static bool bbox_contains(float pt_x, float pt_y,
+bool bbox_contains(float pt_x, float pt_y,
                           int x_start, int x_finish,
                           int y_start, int y_finish) {
   // TRACE_1("  -- pt: (%f, %f)\n", pt.x, pt.y);
@@ -94,11 +94,11 @@ static bool bbox_contains(float pt_x, float pt_y,
     (pt_y >= y_start && pt_y <= y_finish);
 }
 
-static float Dot(cv::Point2f a, cv::Point2f b) {
+float Dot(cv::Point2f a, cv::Point2f b) {
   return a.x*b.x + a.y*b.y;
 }
 
-static double computeTriangleArea(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3) {
+double computeTriangleArea(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3) {
 
 
   double v01x = p2.x - p1.x;
@@ -127,7 +127,7 @@ static double computeTriangleArea(cv::Point2f p1, cv::Point2f p2, cv::Point2f p3
   //return area;
 }
 
-static double c_huber(double value, double target, double sigma, double d_value_dx, double d_value_dy,
+double c_huber(double value, double target, double sigma, double d_value_dx, double d_value_dy,
                double* d_huber_dx, double* d_huber_dy) {
   double diff, a, b;
 
@@ -145,7 +145,7 @@ static double c_huber(double value, double target, double sigma, double d_value_
   }
 }
 
-static double c_reglen(double vx, double vy, double d_vx_dx, double d_vy_dy,
+double c_reglen(double vx, double vy, double d_vx_dx, double d_vy_dy,
                 double* d_reglen_dx, double* d_reglen_dy) {
   double sq_len, sqrt_len;
   double small_value = 0.0001;
@@ -164,15 +164,15 @@ static double c_reglen(double vx, double vy, double d_vx_dx, double d_vy_dy,
 
 
 
-static double crosslink_mesh_derivs(std::vector<cv::Point2f>* mesh1,
+double crosslink_mesh_derivs(std::vector<cv::Point2f>* mesh1,
                              cv::Point2f* d_cost_d_mesh1,
                              int* indices1, double* barys1,
                              double all_weight, double sigma, cv::Point2f dest_p) {
   double px, py, qx, qy;
   int pidx0, pidx1, pidx2;
-  int qidx0, qidx1, qidx2;
+  //int qidx0, qidx1, qidx2;
   double pb0, pb1, pb2;
-  double qb0, qb1, qb2;
+  //double qb0, qb1, qb2;
   double r, h;
   double dr_dx, dr_dy, dh_dx, dh_dy;
   double cost;
@@ -227,7 +227,7 @@ static double crosslink_mesh_derivs(std::vector<cv::Point2f>* mesh1,
   return cost;
 }
 
-static double internal_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* d_cost_d_mesh,
+double internal_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* d_cost_d_mesh,
                             std::pair<int, int> edge_indices,
                             double rest_length, double all_weight,
                             double sigma) {
@@ -264,7 +264,7 @@ static double internal_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* 
   return cost;
 }
 
-static double area_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* d_cost_d_mesh,
+double area_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* d_cost_d_mesh,
                         int* triangle_indices, double rest_area, double all_weight) {
   int idx0, idx1, idx2;
   double v01x, v01y, v02x, v02y, area, r_area;
@@ -309,7 +309,7 @@ static double area_mesh_derivs(std::vector<cv::Point2f>* mesh, cv::Point2f* d_co
 
 
 
-static void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
+void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f c,
    float &u, float &v, float &w)
 {
     cv::Point2f v0 = b - a, v1 = c - a, v2 = p - a;
@@ -323,4 +323,3 @@ static void Barycentric(cv::Point2f p, cv::Point2f a, cv::Point2f b, cv::Point2f
     w = (d00 * d21 - d01 * d20) / denom;
     u = 1.0f - v - w;
 }
-#endif

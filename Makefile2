@@ -1,22 +1,15 @@
 
+
+BUILD_DIR := build
+
 CC := $(CXX) #g++
 LD := $(CXX) #g++
 
-#OPENCV_LIB=/efs/tools/OpenCV3/lib/
-#OPENCV_INCLUDE=/efs/tools/OpenCV3/include/
-#OPENCV_INCLUDE=/home/armafire/tools/opencv-3-install-test/include/
-#OPENCV_LIB=/home/armafire/tools/opencv-3-install-test/lib/
+CFLAGS += -std=c++17 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=native -pthread -I/efs/tools/protobuf_c4/include
 
-#=======
-#OPENCV_ROOT=/efs/home/lemon510/cv
 OPENCV_INCLUDE=$(OPENCV_ROOT)/include
 OPENCV_LIB=$(OPENCV_ROOT)/lib
-#>>>>>>> 84dd39cb1a6e33998c46f5e549f732adc98b358f
 
-#CFLAGS += -fcilkplus -m64 -ffast-math -mfma
-CFLAGS += -std=c++17 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=native -pthread -I/efs/tools/protobuf_c4/include
-#CFLAGS += -Wall
-#-Winline
 CFLAGS += -I$(OPENCV_INCLUDE)
 LDFLAGS = $(EXTRA_LDFLAGS) -L/efs/tools/protobuf_c4/lib -lprotobuf -lpthread
 
@@ -55,7 +48,6 @@ endif
 
 ifeq ($(CILKSAN),1)
 CFLAGS += -fsanitize=cilk
-#LDFLAGS += -fsanitize=cilk
 endif
 
 
@@ -71,9 +63,7 @@ else
 	#-Ofast
 endif
 
-LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_flann -lopencv_video -lopencv_videostab -lopencv_calib3d -lopencv_ml 
-#LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_video -lopencv_videostab -lopencv_calib3d -lhdf5 -lgomp
-
+LDFLAGS += -L$(OPENCV_LIB) -lcilkrts -lopencv_imgcodecs -lopencv_core -lopencv_imgproc -lopencv_features2d -lopencv_xfeatures2d -lopencv_flann -lopencv_video -lopencv_videostab -lopencv_calib3d -lopencv_ml
 
 ifdef ASSEMBLY
 	BINS = common.S align.S run.S
@@ -85,81 +75,72 @@ endif
 
 all: $(BINS)
 
-#img_io.o: ezsift/img_io.cpp
-#	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
-#
-#img_io.S: ezsift/img_io.cpp
-#	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
-#
-#ezsift.o: ezsift/ezsift.cpp
-#	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
-#
-#ezsift.S: ezsift/ezsift.cpp
-#	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
-
-common.o: common.cpp
+$(BUILD_DIR)/common.o: common.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-common.S: common.cpp
+$(BUILD_DIR)/common.S: common.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-match.o: match.cpp ransac.h
+$(BUILD_DIR)/match.o: match.cpp ransac.h
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-ransac.o: ransac.cpp ransac.h
+$(BUILD_DIR)/ransac.o: ransac.cpp ransac.h
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-align.o: align.cpp othersift2.cpp
+$(BUILD_DIR)/align.o: align.cpp othersift2.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-align.S: align.cpp othersift2.cpp
+$(BUILD_DIR)/align.S: align.cpp othersift2.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-run.o: run.cpp
+$(BUILD_DIR)/run.o: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-stack.o: stack.cpp stack.hpp stack_section.cpp stack_tile.cpp stack_learning.cpp
+$(BUILD_DIR)/stack.o: stack.cpp stack.hpp stack_section.cpp stack_tile.cpp stack_learning.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 
-engine.o: cilk_tools/engine.cpp cilk_tools/scheduler.cpp cilk_tools/Graph.cpp
+$(BUILD_DIR)/engine.o: cilk_tools/engine.cpp cilk_tools/scheduler.cpp cilk_tools/Graph.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-scheduler.o: cilk_tools/scheduler.cpp cilk_tools/Graph.cpp
+$(BUILD_DIR)/scheduler.o: cilk_tools/scheduler.cpp cilk_tools/Graph.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-Graph.o: cilk_tools/Graph.cpp cilk_tools/scheduler.cpp cilk_tools/Graph.cpp
+$(BUILD_DIR)/Graph.o: cilk_tools/Graph.cpp cilk_tools/scheduler.cpp cilk_tools/Graph.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-mrparams.o: mrparams.cpp mrparams.hpp
+$(BUILD_DIR)/mrparams.o: mrparams.cpp mrparams.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-paramdb.o: paramdb.cpp paramdb.hpp
+$(BUILD_DIR)/paramdb.o: paramdb.cpp paramdb.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-render.o: render.cpp render.hpp
+$(BUILD_DIR)/render.o: render.cpp render.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-data.o: data.cpp data.hpp
+$(BUILD_DIR)/data.o: data.cpp data.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 
-triangle_mesh.o: triangle_mesh.cpp triangle_mesh.hpp
+$(BUILD_DIR)/triangle_mesh.o: triangle_mesh.cpp triangle_mesh.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-range_tree.o: range_tree.cpp range_tree.hpp
+$(BUILD_DIR)/range_tree.o: range_tree.cpp range_tree.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-mlbase.o: mlbase.cpp mlbase.hpp
+$(BUILD_DIR)/mlbase.o: mlbase.cpp mlbase.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-matchtilestask.o: matchtilestask.cpp matchtilestask.hpp
+$(BUILD_DIR)/matchtilestask.o: matchtilestask.cpp matchtilestask.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-tilesifttask.o: tilesifttask.cpp tilesifttask.hpp
+$(BUILD_DIR)/tilesifttask.o: tilesifttask.cpp tilesifttask.hpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
-matchtilepairtask.o: matchtilepairtask.cpp matchtilepairtask.hpp
+$(BUILD_DIR)/matchtilepairtask.o: matchtilepairtask.cpp matchtilepairtask.hpp
+	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
+
+$(BUILD_DIR)/stack_helpers.o: stack_helpers.cpp stack_helpers.h
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<
 
 #engine.o: cilk_tools/Graph.cpp cilk_tools/engine.cpp cilk_tools/scheduler.cpp
@@ -170,11 +151,11 @@ matchtilepairtask.o: matchtilepairtask.cpp matchtilepairtask.hpp
 #
 #Graph.o: Graph.cpp Graph.h
 #	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
-run.S: run.cpp
+$(BUILD_DIR)/run.S: run.cpp
 	$(CC) $(CFLAGS) $(DEFINES) -c -o $@ $<    	
 
-run_align: Graph.o scheduler.o engine.o common.o align.o match.o ransac.o run.o stack.o mrparams.o paramdb.o data.o render.o triangle_mesh.o range_tree.o mlbase.o matchtilestask.o tilesifttask.o matchtilepairtask.o
+run_align: $(BUILD_DIR)/Graph.o $(BUILD_DIR)/scheduler.o $(BUILD_DIR)/engine.o $(BUILD_DIR)/common.o $(BUILD_DIR)/align.o $(BUILD_DIR)/match.o $(BUILD_DIR)/ransac.o $(BUILD_DIR)/run.o $(BUILD_DIR)/stack.o $(BUILD_DIR)/mrparams.o $(BUILD_DIR)/paramdb.o $(BUILD_DIR)/data.o $(BUILD_DIR)/render.o $(BUILD_DIR)/triangle_mesh.o $(BUILD_DIR)/range_tree.o $(BUILD_DIR)/mlbase.o $(BUILD_DIR)/matchtilestask.o $(BUILD_DIR)/tilesifttask.o $(BUILD_DIR)/matchtilepairtask.o $(BUILD_DIR)/stack_helpers.o
 	$(LD) -o $@ $^ $(LDFLAGS)
 
 clean:
-	rm -f $(BINS) *.o
+	rm -f $(BINS) $(BUILD_DIR)/*.o

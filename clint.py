@@ -2269,7 +2269,7 @@ def CheckStyle(filename, clean_lines, linenum, file_extension, class_state,
 
   # Check if the line is a header guard.
   is_header_guard = False
-  if file_extension == 'h':
+  if file_extension == 'h' or file_extension == 'hpp':
     cppvar = GetHeaderGuardCPPVariable(filename)
     if (line.startswith('#ifndef %s' % cppvar) or
         line.startswith('#define %s' % cppvar) or
@@ -2613,9 +2613,10 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension, include_state,
     if not Search(
         r'(swap|Swap|operator[<>][<>])\s*\(\s*(?:[\w:]|<.*>)+\s*&',
         fnline):
-      error(filename, linenum, 'runtime/references', 2,
-            'Is this a non-const reference? '
-            'If so, make const or use a pointer.')
+      pass #TFKNOTE
+      #error(filename, linenum, 'runtime/references', 5,
+      #      'Is this a non-const reference? '
+      #      'If so, make const or use a pointer.')
 
   # Check to see if they're using an conversion function cast.
   # I just try to capture the most common basic types, though there are more.
@@ -2691,7 +2692,7 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension, include_state,
     error(filename, linenum, 'runtime/init', 4,
           'You seem to be initializing a member variable with itself.')
 
-  if file_extension == 'h':
+  if file_extension == 'h' or file_extension == 'hpp':
     # TODO(unknown): check that 1-arg constructors are explicit.
     #                How to tell it's a constructor?
     #                (handled in CheckForNonStandardConstructs for now)
@@ -2839,7 +2840,7 @@ def CheckLanguage(filename, clean_lines, linenum, file_extension, include_state,
   # Check for use of unnamed namespaces in header files.  Registration
   # macros are typically OK, so we allow use of "namespace {" on lines
   # that end with backslashes.
-  if (file_extension == 'h'
+  if ((file_extension == 'h' or file_extension == 'hpp')
       and Search(r'\bnamespace\s*{', line)
       and line[-1] != '\\'):
     error(filename, linenum, 'build/namespaces', 4,
@@ -3235,7 +3236,7 @@ def ProcessFileData(filename, file_extension, lines, error,
 
   CheckForCopyright(filename, lines, error)
 
-  if file_extension == 'h':
+  if file_extension == 'h' or file_extension == 'hpp':
     CheckForHeaderGuard(filename, lines, error)
 
   RemoveMultiLineComments(filename, lines, error)
@@ -3307,7 +3308,7 @@ def ProcessFile(filename, vlevel, extra_check_functions=[]):
 
   # When reading from stdin, the extension is unknown, so no cpplint tests
   # should rely on the extension.
-  if (filename != '-' and file_extension != 'c' and file_extension != 'h'
+  if (filename != '-' and file_extension != 'c' and (file_extension != 'h' and file_extension != 'hpp')
       and file_extension != 'cpp'):
     sys.stderr.write(bcolors.color('Ignoring %s; not a .c or .h file\n' % filename, ""))
   else:
