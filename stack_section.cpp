@@ -855,7 +855,7 @@ void tfk::Section::find_3d_matches_in_box_cache(Section* neighbor,
                  btile_kps_desc_in_overlap,
                  0.65, false);
 
-  printf("Num matches is %zu\n", matches.size());
+  //printf("Num matches is %zu\n", matches.size());
 
   // Bad don't add filtered matches.
   if (matches.size() < 12) return;
@@ -897,7 +897,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
     bool use_cached, tfk::params sift_parameters, std::vector<Tile*>& tiles_loaded,
     std::mutex& tiles_loaded_mutex) {
 
-  //double ransac_thresh = 64.0;
+  double ransac_thresh = 64.0;
   int num_filtered = 0;
 
   std::vector<cv::KeyPoint> atile_kps_in_overlap;
@@ -938,7 +938,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
                  btile_kps_desc_in_overlap,
                  0.92, false);
 
-  printf("Num matches is %zu\n", matches.size());
+  //printf("Num matches is %zu\n", matches.size());
 
   // Bad don't add filtered matches.
   if (matches.size() < 12) return;
@@ -951,8 +951,8 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
   }
 
   bool* mask = (bool*)calloc(match_points_a.size()+1, 1);
-  //vdata transform = tfk_simple_ransac_strict_ret_affine(match_points_a,
-  //                                                      match_points_b, ransac_thresh, mask);
+  tfk_simple_ransac_strict_ret_affine(match_points_a,
+                                      match_points_b, ransac_thresh, mask);
 
 
   for (int c = 0; c < match_points_a.size(); c++) {
@@ -1067,7 +1067,7 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
 
         this->find_3d_matches_in_box(neighbor, sliding_bbox, test_filtered_match_points_a,
             test_filtered_match_points_b, true, sift_parameters, tiles_loaded, tiles_loaded_mutex);
-
+        //printf("test filtered match points size is %zu\n", test_filtered_match_points_a.size());
         if (test_filtered_match_points_a.size() > 12) _bad_fraction = 0.0;
 
       } else {
@@ -1108,6 +1108,7 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
     }
 
     if (bad_fraction <= 0.2) {
+      //printf("bad fraction was small enough\n");
       for (int c = 0; c < test_filtered_match_points_a.size(); c++) {
         filtered_match_points_a.push_back(test_filtered_match_points_a[c]);
         filtered_match_points_b.push_back(test_filtered_match_points_b[c]);
@@ -1115,90 +1116,90 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
     }
 
 
-    // divide all the points into triangles.
-    std::map<int, std::vector<cv::Point2f> > parted_points_a;
-    std::map<int, std::vector<cv::Point2f> > parted_points_b;
+  //  // divide all the points into triangles.
+  //  std::map<int, std::vector<cv::Point2f> > parted_points_a;
+  //  std::map<int, std::vector<cv::Point2f> > parted_points_b;
 
-    for (int m = 0; m < filtered_match_points_a.size(); m++) {
-      cv::Point2f my_pt = filtered_match_points_a[m];
-      cv::Point2f n_pt = filtered_match_points_b[m];
-      Triangle my_tri = this->triangle_mesh->find_triangle_post(my_pt);
-      if (my_tri.index == -1) continue;
-      parted_points_a[my_tri.index].push_back(my_pt);
-      parted_points_b[my_tri.index].push_back(n_pt);
-    }
+  //  for (int m = 0; m < filtered_match_points_a.size(); m++) {
+  //    cv::Point2f my_pt = filtered_match_points_a[m];
+  //    cv::Point2f n_pt = filtered_match_points_b[m];
+  //    Triangle my_tri = this->triangle_mesh->find_triangle_post(my_pt);
+  //    if (my_tri.index == -1) continue;
+  //    parted_points_a[my_tri.index].push_back(my_pt);
+  //    parted_points_b[my_tri.index].push_back(n_pt);
+  //  }
 
-  // after dividing all the points filter out any triangles that don't have at least 3 points.
-  for (auto iter = parted_points_a.begin(); iter != parted_points_a.end(); ++iter) {
-    std::vector<tfkTriangle>* triangles = this->triangle_mesh->triangles;
-    std::vector<cv::Point2f>* mesh = this->triangle_mesh->mesh;
+  //// after dividing all the points filter out any triangles that don't have at least 3 points.
+  //for (auto iter = parted_points_a.begin(); iter != parted_points_a.end(); ++iter) {
+  //  std::vector<tfkTriangle>* triangles = this->triangle_mesh->triangles;
+  //  std::vector<cv::Point2f>* mesh = this->triangle_mesh->mesh;
 
-    int s = iter->first;
-    cv::Point2f opt1 = (*mesh)[(*triangles)[s].index1];
-    cv::Point2f opt2 = (*mesh)[(*triangles)[s].index2];
-    cv::Point2f opt3 = (*mesh)[(*triangles)[s].index3];
+  //  int s = iter->first;
+  //  cv::Point2f opt1 = (*mesh)[(*triangles)[s].index1];
+  //  cv::Point2f opt2 = (*mesh)[(*triangles)[s].index2];
+  //  cv::Point2f opt3 = (*mesh)[(*triangles)[s].index3];
 
-    cv::Point2f pt1 = (*mesh)[(*triangles)[s].index1];
-    cv::Point2f pt2 = (*mesh)[(*triangles)[s].index2];
-    cv::Point2f pt3 = (*mesh)[(*triangles)[s].index3];
-    if (parted_points_a.size() < 3) continue;
+  //  cv::Point2f pt1 = (*mesh)[(*triangles)[s].index1];
+  //  cv::Point2f pt2 = (*mesh)[(*triangles)[s].index2];
+  //  cv::Point2f pt3 = (*mesh)[(*triangles)[s].index3];
+  //  if (parted_points_a.size() < 3) continue;
 
-    for (int gs = 0; gs < 1000; gs++) {
-       cv::Point2f d_pt1 = cv::Point2f(0.0, 0.0);
-       cv::Point2f d_pt2 = cv::Point2f(0.0, 0.0);
-       cv::Point2f d_pt3 = cv::Point2f(0.0, 0.0);
+  //  for (int gs = 0; gs < 1000; gs++) {
+  //     cv::Point2f d_pt1 = cv::Point2f(0.0, 0.0);
+  //     cv::Point2f d_pt2 = cv::Point2f(0.0, 0.0);
+  //     cv::Point2f d_pt3 = cv::Point2f(0.0, 0.0);
 
-       for (int k = 0; k < parted_points_a[s].size(); k++) {
-         cv::Point2f my_pt = parted_points_a[s][k];
-         cv::Point2f n_pt = parted_points_b[s][k];
-         float u, v, w;
-         Barycentric(my_pt, opt1, opt2, opt3, u, v, w);
-         if (std::isnan(u) || std::isnan(v) || std::isnan(w)) continue;
-         cv::Point2f test_pt = pt1*u + pt2*v + pt3*w;
-         d_pt1 += u*(n_pt - test_pt);
-         d_pt2 += v*(n_pt - test_pt);
-         d_pt3 += w*(n_pt - test_pt);
-       }
+  //     for (int k = 0; k < parted_points_a[s].size(); k++) {
+  //       cv::Point2f my_pt = parted_points_a[s][k];
+  //       cv::Point2f n_pt = parted_points_b[s][k];
+  //       float u, v, w;
+  //       Barycentric(my_pt, opt1, opt2, opt3, u, v, w);
+  //       if (std::isnan(u) || std::isnan(v) || std::isnan(w)) continue;
+  //       cv::Point2f test_pt = pt1*u + pt2*v + pt3*w;
+  //       d_pt1 += u*(n_pt - test_pt);
+  //       d_pt2 += v*(n_pt - test_pt);
+  //       d_pt3 += w*(n_pt - test_pt);
+  //     }
 
-       d_pt1 = d_pt1/(1.0*parted_points_a.size());
-       d_pt2 = d_pt2/(1.0*parted_points_a.size());
-       d_pt3 = d_pt3/(1.0*parted_points_a.size());
+  //     d_pt1 = d_pt1/(1.0*parted_points_a.size());
+  //     d_pt2 = d_pt2/(1.0*parted_points_a.size());
+  //     d_pt3 = d_pt3/(1.0*parted_points_a.size());
 
-       pt1 += 0.4*d_pt1;
-       pt2 += 0.4*d_pt2;
-       pt3 += 0.4*d_pt3;
-    }
+  //     pt1 += 0.4*d_pt1;
+  //     pt2 += 0.4*d_pt2;
+  //     pt3 += 0.4*d_pt3;
+  //  }
 
-    tfkMatch match1;
-    match1.my_tri = (*triangles)[s];
-    match1.my_barys[0] = (double)1.0;
-    match1.my_barys[1] = 0.0;
-    match1.my_barys[2] = 0.0;
-    match1.dest_p = pt1;
+  //  tfkMatch match1;
+  //  match1.my_tri = (*triangles)[s];
+  //  match1.my_barys[0] = (double)1.0;
+  //  match1.my_barys[1] = 0.0;
+  //  match1.my_barys[2] = 0.0;
+  //  match1.dest_p = pt1;
 
-    tfkMatch match2;
-    match2.my_tri = (*triangles)[s];
-    match2.my_barys[0] = 0.0;
-    match2.my_barys[1] = (double)1.0;
-    match2.my_barys[2] = 0.0;
-    match2.dest_p = pt2;
+  //  tfkMatch match2;
+  //  match2.my_tri = (*triangles)[s];
+  //  match2.my_barys[0] = 0.0;
+  //  match2.my_barys[1] = (double)1.0;
+  //  match2.my_barys[2] = 0.0;
+  //  match2.dest_p = pt2;
 
-    tfkMatch match3;
-    match3.my_tri = (*triangles)[s];
-    match3.my_barys[0] = 0.0;
-    match3.my_barys[1] = 0.0;
-    match3.my_barys[2] = (double)1.0;
-    match3.dest_p = pt3;
+  //  tfkMatch match3;
+  //  match3.my_tri = (*triangles)[s];
+  //  match3.my_barys[0] = 0.0;
+  //  match3.my_barys[1] = 0.0;
+  //  match3.my_barys[2] = (double)1.0;
+  //  match3.dest_p = pt3;
 
 
-    match1.my_section = (void*) this;
-    match1.n_section = (void*) neighbor;
-    match2.my_section = (void*) this;
-    match2.n_section = (void*) neighbor;
-    match3.my_section = (void*) this;
-    match3.n_section = (void*) neighbor;
-  }
-
+  //  match1.my_section = (void*) this;
+  //  match1.n_section = (void*) neighbor;
+  //  match2.my_section = (void*) this;
+  //  match2.n_section = (void*) neighbor;
+  //  match3.my_section = (void*) this;
+  //  match3.n_section = (void*) neighbor;
+  //}
+  //printf("before loop over filtered match points of size %zu\n", filtered_match_points_a.size());
   for (int m = 0; m < filtered_match_points_a.size(); m++) {
     cv::Point2f my_pt = filtered_match_points_a[m];
     cv::Point2f n_pt = filtered_match_points_b[m];
@@ -1206,6 +1207,7 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
     Triangle my_tri = this->triangle_mesh->find_triangle_post(my_pt);
     Triangle n_tri = neighbor->triangle_mesh->find_triangle(my_pt);
     if (my_tri.index == -1 || n_tri.index == -1) continue;
+    //printf("triangle index found\n");
     tfkMatch match;
 
     // find the triangle...
@@ -1250,6 +1252,7 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
     match.dest_p = n_pt;
     section_mesh_matches_mutex->lock();
     this->section_mesh_matches.push_back(match);
+    //printf("inserted a match\n");
     section_mesh_matches_mutex->unlock();
   }
   }
@@ -1397,6 +1400,14 @@ void tfk::Section::align_3d(Section* neighbor) {
     this->get_elastic_matches_relative(neighbor);
     elastic_gradient_descent_section(this, neighbor);
     this->triangle_mesh->build_index_post();
+
+    //this->get_elastic_matches_relative(neighbor);
+    //elastic_gradient_descent_section(this, neighbor);
+    //this->triangle_mesh->build_index_post();
+
+    //this->get_elastic_matches_relative(neighbor);
+    //elastic_gradient_descent_section(this, neighbor);
+    //this->triangle_mesh->build_index_post();
 
     this->save_elastic_mesh(neighbor);
 

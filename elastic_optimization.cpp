@@ -138,6 +138,7 @@ void elastic_gradient_descent_section(Section* _this, Section* _neighbor) {
       {
         Section* section = _this;
         std::vector<tfkMatch>& mesh_matches = section->section_mesh_matches;
+        //printf("num mesh matches %zu\n", mesh_matches.size());
         for (int j = 0; j < mesh_matches.size(); j++) {
           Section* _my_section = (Section*) mesh_matches[j].my_section;
           Section* _n_section = (Section*) mesh_matches[j].n_section;
@@ -193,7 +194,7 @@ void elastic_gradient_descent_section(Section* _this, Section* _neighbor) {
         }
 
           if (max_iterations - iter < 1000) {
-            if (prev_cost - cost > 1.0/10 && max_iterations < 10000) {
+            if (prev_cost - cost > 1.0/1000 && max_iterations < 10000) {
               max_iterations += 1000;
             }
           }

@@ -258,7 +258,7 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
 
         //cv::Mat* tile_p_image = this->read_tile(tile->filepath, resolution);
         cv::Mat tile_p_image = tile->get_tile_data(resolution);
-        printf("rendering a tile?\n");
+        //printf("rendering a tile?\n");
 
         render_tile_helper(tile_p_image, section, tile, render_scale, section_p_out_sum,
                            section_p_out_ncount, nrows, ncols, lower_x, lower_y, nomesh,
