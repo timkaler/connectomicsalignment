@@ -109,6 +109,8 @@ class Tile {
     double y_start;
     double y_finish;
 
+    double angle;
+
 
     double grad_error_x, grad_error_y;
 
@@ -216,12 +218,13 @@ class Tile {
     void insert_matches(Tile* neighbor,
                         std::vector<cv::Point2f>& points_a, std::vector<cv::Point2f>& points_b);
     void make_symmetric(int phase, std::vector<Tile*>& tile_list);
-    void write_wafer(FILE* wafer_file, int section_id, int base_section);
 
     std::pair<cv::Point2f, cv::Point2f> get_bbox();
     std::vector<cv::Point2f> get_corners();
 
     cv::Mat get_tile_data(Resolution res);
+    cv::Mat read_tile_image();
+
     cv::Mat get_feature_vector(Tile *other, int boxes, int type);
 };
 
@@ -381,7 +384,6 @@ class Section {
     void affine_transform_keypoints(std::vector<cv::KeyPoint>& keypoints);
     void affine_transform_mesh();
 
-    void write_wafer(FILE* wafer_file, int base_section);
     std::pair<cv::Point2f, cv::Point2f> scale_bbox(std::pair<cv::Point2f, cv::Point2f> bbox,
         cv::Point2f scale);
     bool tile_in_render_box(Tile* tile, std::pair<cv::Point2f, cv::Point2f> bbox);

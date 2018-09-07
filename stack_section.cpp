@@ -17,6 +17,7 @@
 #include "./render.hpp"
 #include "./matchtilestask.hpp"
 #include "./elastic_optimization.h"
+#include <cilk/reducer_opadd.h>
 
 extern fasttime_t global_start;
 static int64_t ALL_2D_ERRORS_1 = 0;
@@ -155,7 +156,7 @@ cv::Point2f tfk::Section::elastic_transform(cv::Point2f p, Triangle _tri) {
 // BEGIN alignment functions
 void tfk::Section::optimize_tile_grid() {
   double lr = 0.1;
-  for (int _i = 0; _i < this->tiles.size(); _i++) {
+  cilk_for (int _i = 0; _i < this->tiles.size(); _i++) {
     int i = _i;
     this->tiles[i]->grad_error_x = 0.0;
     this->tiles[i]->grad_error_y = 0.0;
@@ -164,24 +165,30 @@ void tfk::Section::optimize_tile_grid() {
   printf("starting run\n");
   double* tile_momentum_x = (double*) malloc(this->tiles.size()*sizeof(double));
   double* tile_momentum_y = (double*) malloc(this->tiles.size()*sizeof(double));
-  for (int i = 0; i < this->tiles.size(); i++) {
+  cilk_for (int i = 0; i < this->tiles.size(); i++) {
     tile_momentum_x[i] = 0.0;
     tile_momentum_y[i] = 0.0;
   }
 
   bool keep_going = false;
-  int iter2d = 0;
-  for (int i = 0; i < 10000; i++) {
-    double last_energy = 0.0;
-    double MOMENTUM = 0.1;
-
-    for (int x = 0; x < this->tiles.size(); x++) {
-      last_energy += this->tiles[x]->local2DAlignUpdateEnergy();
+  double last_energy = 0.0;
+  for (int i = 0; i < 50000; i++) {
+    double MOMENTUM = 0.5;
+    // first iteration compute last energy directly.
+    if (i == 0) {
+      cilk::reducer_opadd<double> last_energy_reducer(0.0);
+      cilk_for (int x = 0; x < this->tiles.size(); x++) {
+        *last_energy_reducer += this->tiles[x]->local2DAlignUpdateEnergy();
+      }
+      last_energy = last_energy_reducer.get_value();
     }
 
     cilk_for (int x = 0; x < this->tiles.size(); x++) {
       this->tiles[x]->local2DAlignUpdate(lr);
     }
+
+
+    cv::Point2f* previous_offsets = (cv::Point2f*) calloc(this->tiles.size(), sizeof(cv::Point2f));
 
     cilk_for (int x = 0; x < this->tiles.size(); x++) {
       this->tiles[x]->grad_error_x += MOMENTUM*tile_momentum_x[x];
@@ -189,32 +196,47 @@ void tfk::Section::optimize_tile_grid() {
 
       tile_momentum_x[x] = this->tiles[x]->grad_error_x;
       tile_momentum_y[x] = this->tiles[x]->grad_error_y;
-
+      previous_offsets[x] = cv::Point2f(this->tiles[x]->offset_x, this->tiles[x]->offset_y);
       this->tiles[x]->offset_x += (this->tiles[x]->grad_error_x)*lr;
       this->tiles[x]->offset_y += (this->tiles[x]->grad_error_y)*lr;
     }
 
     double energy = 0.0;
-    for (int x = 0; x < this->tiles.size(); x++) {
-      energy += this->tiles[x]->local2DAlignUpdateEnergy();
+    cilk::reducer_opadd<double> energy_reducer(0.0);
+    cilk_for (int x = 0; x < this->tiles.size(); x++) {
+      *energy_reducer += this->tiles[x]->local2DAlignUpdateEnergy();
     }
+    energy = energy_reducer.get_value();
 
-    if (energy > last_energy) {
-      lr = lr * 0.9;
+    if (energy < last_energy) {
+      // Decreased the energy. Increase the learning rate a little bit.
+      lr += 0.01;
     } else {
-      for (int j = 0; j < this->tiles.size(); j++) {
+      // Increased the energy. Reset the step and decrease the learning rate.
+      cilk_for (int j = 0; j < this->tiles.size(); j++) {
+        // reset the momentum.
         tile_momentum_x[j] = 0.0;
         tile_momentum_y[j] = 0.0;
+        // reset the previous offsets.
+        this->tiles[j]->offset_x = previous_offsets[j].x;
+        this->tiles[j]->offset_y = previous_offsets[j].y;
       }
-      lr += 0.0001;
+      lr = lr * 0.99;
+      energy = last_energy;
     }
-    iter2d++;
-    if (iter2d >= 1000 && iter2d%1000 == 0) {
+    if (energy + 1 < last_energy) keep_going = true;
+
+    free(previous_offsets);
+
+    // after 1000 iterations stop early if no past
+    //   iteration has improved the energy.
+    if (i >= 1000 && i%1000 == 0) {
       if (!keep_going) break;
       keep_going = false;
     }
-    if (energy + 0.01 < last_energy) keep_going = true;
-    if (iter2d > 10000) break;
+
+    last_energy = energy; // store last energy for next iter.
+    //printf("intermediate energy for section %d with lr %f is %f\n", this->real_section_id, lr, last_energy);
   }
 
   double energy_sum = 0.0;
@@ -361,7 +383,8 @@ void tfk::Section::align_2d() {
       std::string(std::string(TFK_TMP_DIR) + "/prefix_"+std::to_string(this->real_section_id));
 
       this->load_2d_alignment();
-      // compare_2d_alignment();
+      compare_2d_alignment();
+      //this->load_2d_alignment();
       this->read_3d_keypoints(filename);
       return;
     }
@@ -1285,22 +1308,6 @@ void tfk::Section::construct_triangles() {
   triangle_mesh = new TriangleMesh(hex_spacing, bbox);
 }
 
-void tfk::Section::write_wafer(FILE* wafer_file, int base_section) {
-  fprintf(wafer_file, "[\n");
-  for (int i = 0; i < this->tiles.size(); i++) {
-    Tile* tile = this->tiles[i];
-    // Begin tile.
-    fprintf(wafer_file, "\t{\n");
-    tile->write_wafer(wafer_file, this->section_id, base_section);
-    // End tile.
-    if (i != graph->num_vertices()-1) {
-      fprintf(wafer_file, "\t},\n");
-    } else {
-      fprintf(wafer_file, "\t}\n]");
-    }
-  }
-}
-
 std::pair<cv::Point2f, cv::Point2f> tfk::Section::get_bbox() {
   float min_x = 0;
   float max_x = 0;
@@ -2011,7 +2018,7 @@ void tfk::Section::compare_2d_alignment() {
         if (diff > 8.0) count_errors_8++;
         if (diff > 16.0) count_errors_16++;
         count_errors++;
-        if (diff > 8.0) {
+        if (diff > 4.0) {
           tile->highlight = true;
           printf("Tile id is %d\n", tile->tile_id);
           printf("Diff is %f\n", diff);
@@ -2271,7 +2278,7 @@ void tfk::Section::compute_keypoints_and_matches() {
     }
     printf("Num tiles in sweep 0 is %lu\n", active_set.size());
 
-      std::map<int, TileSiftTask*> dependencies;
+    std::map<int, TileSiftTask*> dependencies;
     while (active_set.size() > 0) {
       printf("Current active set size is %lu\n", active_set.size());
       // find all the neighbors.
@@ -2321,6 +2328,7 @@ void tfk::Section::compute_keypoints_and_matches() {
         dependencies[tile->tile_id] = sift_task;
       }
 
+      #pragma cilk grainsize 1
       cilk_for (int i = 0; i < tiles_to_process_keypoints.size(); i++) {
          Tile* tile = tiles_to_process_keypoints[i];
          dependencies[tile->tile_id]->compute(0.9);
@@ -2328,25 +2336,51 @@ void tfk::Section::compute_keypoints_and_matches() {
          tile->match_tiles_task->dependencies = dependencies;
       }
 
+      std::vector<std::pair<float, Tile*> > sorted_y_tiles;
+      for (int i = 0; i < tiles_to_process_matches.size(); i++) {
+        sorted_y_tiles.push_back(std::make_pair(tiles_to_process_matches[i]->y_start,
+                                                tiles_to_process_matches[i]));
+      }
+      std::sort(sorted_y_tiles.begin(), sorted_y_tiles.end());
+
+      #pragma cilk grainsize 1
       cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
-        tiles_to_process_matches[i]->match_tiles_task->dependencies = dependencies;
-        tiles_to_process_matches[i]->match_tiles_task->compute(0.9);
+        Tile* t = sorted_y_tiles[i].second;
+        t->match_tiles_task->dependencies = dependencies;
+        t->match_tiles_task->compute(0.9);
+        //tiles_to_process_matches[i]->match_tiles_task->dependencies = dependencies;
+        //tiles_to_process_matches[i]->match_tiles_task->compute(0.9);
       }
 
+      #pragma cilk grainsize 1
       cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
-        if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.4)) {
+        Tile* t = sorted_y_tiles[i].second;
+        if (!t->match_tiles_task->error_check(0.4)) {
           std::map<int, TileSiftTask*> empty_map;
-          tiles_to_process_matches[i]->match_tiles_task->dependencies = empty_map;
-          tiles_to_process_matches[i]->match_tiles_task->compute(1.0);
+          t->match_tiles_task->dependencies = empty_map;
+          t->match_tiles_task->compute(1.0);
         }
+        //if (!tiles_to_process_matches[i]->match_tiles_task->error_check(0.4)) {
+        //  std::map<int, TileSiftTask*> empty_map;
+        //  tiles_to_process_matches[i]->match_tiles_task->dependencies = empty_map;
+        //  tiles_to_process_matches[i]->match_tiles_task->compute(1.0);
+        //}
       }
 
+      #pragma cilk grainsize 1
       cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
-        if (!tiles_to_process_matches[i]->match_tiles_task->error_check(1.9)) {
-          tiles_to_process_matches[i]->match_tiles_task->commit();
+        Tile* t = sorted_y_tiles[i].second;
+        if (!t->match_tiles_task->error_check(1.9)) {
+          t->match_tiles_task->commit();
         } else {
-          tiles_to_process_matches[i]->match_tiles_task->commit();
+          t->match_tiles_task->commit();
         }
+
+        //if (!tiles_to_process_matches[i]->match_tiles_task->error_check(1.9)) {
+        //  tiles_to_process_matches[i]->match_tiles_task->commit();
+        //} else {
+        //  tiles_to_process_matches[i]->match_tiles_task->commit();
+        //}
       }
 
       opened_set.clear();

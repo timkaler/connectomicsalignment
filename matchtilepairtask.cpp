@@ -207,8 +207,8 @@ namespace tfk {
         match_features(matches,
                        atile_kps_desc_in_overlap,
                        btile_kps_desc_in_overlap,
-                       trial_rod, second_pass);
-    
+                       trial_rod, /*second_pass*/ true); // always do deterministic brute.
+
         // Filter the matches with RANSAC
         std::vector<cv::Point2f> match_points_a, match_points_b;
         for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {

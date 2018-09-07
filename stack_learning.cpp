@@ -165,7 +165,7 @@ void tfk::Stack::parameter_optimization(int trials, double threshold, std::vecto
 
 
 void tfk::Stack::train_fsj(int trials) {
-  float PX_ERROR_THRESH = 1.0;
+  float PX_ERROR_THRESH = 1.5;
   params best_params;
   best_params.num_features = 1;
   best_params.num_octaves = 6;

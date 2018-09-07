@@ -378,7 +378,7 @@ namespace tfk {
       printf("training the model\n");
         //ann_model->setTrainMethod(0, 0.1,0.1);
         ann_model->setTermCriteria(term_crit);
-        ann_model->setMaxDepth(4);
+        //ann_model->setMaxDepth(4);
         ann_model->setMinSampleCount(2); 
         ann_model->setCalculateVarImportance(true);
         model->train(tdata);

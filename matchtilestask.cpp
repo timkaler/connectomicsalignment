@@ -13,7 +13,8 @@ namespace tfk {
 
       //this->neighbors = neighbors;
       for (int i = 0; i < _neighbors.size(); i++) {
-        if (_neighbors[i]->random_int < tile->random_int || (_neighbors[i]->random_int == tile->random_int && _neighbors[i]->tile_id < tile->tile_id)) {
+        //if (_neighbors[i]->random_int < tile->random_int || (_neighbors[i]->random_int == tile->random_int && _neighbors[i]->tile_id < tile->tile_id)) {
+        if (_neighbors[i]->tile_id < tile->tile_id) {
           this->neighbors.push_back(_neighbors[i]);
         }
       }

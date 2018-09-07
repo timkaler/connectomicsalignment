@@ -35,6 +35,13 @@
 #include "./data.hpp"
 #include "./ParamsDatabase.pb.h"
 
+int sched_yield(void) {
+for (int i=0; i< 4000; i++) _mm_pause(); usleep(1);
+
+return 0;
+
+}
+
 tfk::Stack* make_stack(align_data_t* p_align_data) {
     tfk::Stack* stack = new tfk::Stack(p_align_data->base_section,
                                        p_align_data->n_sections,
@@ -88,10 +95,9 @@ void align_execute(align_data_t *p_align_data) {
     //int _start_x = 100000;
     //int _start_y = 100000;
 
-
     tfk::Render* render = new tfk::Render();
     auto entire_bbox = stack->sections[0]->get_bbox();
-    render->render_stack(stack,entire_bbox,tfk::Resolution::THUMBNAIL,"out/stack_");
+    render->render_stack(stack,entire_bbox,tfk::Resolution::THUMBNAIL,"out/stack");
     //float x1 = (entire_bbox.first.x + entire_bbox.second.x)/2 + 5000;  // -2500 + 5000;
     //float x2 = x1+5000;
     //float y1 = (entire_bbox.first.y+entire_bbox.second.y)/2+5000;  // -2500 + 5000;
@@ -143,7 +149,7 @@ void train_fsj(align_data_t *p_align_data) {
 
     printf("stack has sections %zu\n", stack->sections.size());
     std::vector<tfk::params> ps;
-    int trials = 10000;
+    int trials = 5000;
 
     stack->train_fsj(trials);
     return;

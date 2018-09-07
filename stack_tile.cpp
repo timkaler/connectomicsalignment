@@ -2,7 +2,6 @@
 
 int DEBUG_total_read_count = 0;
 
-
 void updateTile2DAlign(int vid, void* scheduler_void) {
   //double global_learning_rate = 0.49;
 
@@ -497,91 +496,8 @@ float tfk::Tile::error_tile_pair(Tile *other) {
 	return result_CCOEFF_NORMED.at<float>(0,0);
 }
 
-
-
-//float tfk::Tile::error_tile_pair(Tile *other) {
-//  if (!(this->overlaps_with(other))) {
-//    return -2;
-//  }
-//
-//
-//  cv::Mat tile_p_image_1;
-//  cv::Mat tile_p_image_2;
-//  tile_p_image_1 = this->get_tile_data(Resolution::FULL); //cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
-//  tile_p_image_2 = other->get_tile_data(Resolution::FULL); //cv::imread(other->filepath, CV_LOAD_IMAGE_UNCHANGED);
-//
-//
-//  std::pair<cv::Point2f, cv::Point2f> tile_1_bounds = this->get_bbox(); 
-//  std::pair<cv::Point2f, cv::Point2f> tile_2_bounds = other->get_bbox(); 
-//
-//  int nrows = std::min(tile_1_bounds.second.y, tile_2_bounds.second.y) - std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
-//  int ncols = std::min(tile_1_bounds.second.x, tile_2_bounds.second.x) - std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
-//  //printf("rows = %d, cols = %d\n", nrows, ncols);
-//  if ((nrows <= 0) || (ncols <= 0) ) {
-//    return -2;
-//  }
-//  int offset_x = std::max(tile_1_bounds.first.x, tile_2_bounds.first.x);
-//  int offset_y = std::max(tile_1_bounds.first.y, tile_2_bounds.first.y);
-//  cv::Mat transform_1 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
-//  cv::Mat transform_2 = cv::Mat::zeros(nrows, ncols, CV_8UC1);
-//
-//  // make the transformed images in the same size with the same cells in the same locations
-//  for (int _y = 0; _y < tile_p_image_1.rows; _y++) {
-//    for (int _x = 0; _x < tile_p_image_1.cols; _x++) {
-//      cv::Point2f p = cv::Point2f(_x, _y);
-//      cv::Point2f transformed_p = this->rigid_transform(p);
-//
-//      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
-//      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
-//      if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
-//        transform_1.at<unsigned char>(y_c, x_c) +=
-//           tile_p_image_1.at<unsigned char>(_y, _x);
-//      }
-//    }
-//  }
-//
-//  for (int _y = 0; _y < tile_p_image_2.rows; _y++) {
-//    for (int _x = 0; _x < tile_p_image_2.cols; _x++) {
-//      cv::Point2f p = cv::Point2f(_x, _y);
-//      cv::Point2f transformed_p = other->rigid_transform(p);
-//
-//      int x_c = ((int)(transformed_p.x + 0.5)) - offset_x;
-//      int y_c = ((int)(transformed_p.y + 0.5)) - offset_y;
-//      if ((y_c >= 0) && (y_c < nrows) && (x_c >= 0) && (x_c < ncols)) {
-//        transform_2.at<unsigned char>(y_c, x_c) +=
-//           tile_p_image_2.at<unsigned char>(_y, _x);
-//      }
-//    }
-//  }
-//
-//  // clear any location which only has a value for one of them
-//  // note that the transforms are the same size
-//  for (int _y = 0; _y < transform_1.rows; _y++) {
-//    for (int _x = 0; _x < transform_1.cols; _x++) {
-//      if (transform_2.at<unsigned char>(_y, _x) == 0) {
-//       transform_1.at<unsigned char>(_y, _x) = 0;
-//      }
-//      else if (transform_1.at<unsigned char>(_y, _x) == 0) {
-//       transform_2.at<unsigned char>(_y, _x) = 0;
-//      }
-//    }
-//  }
-//  cv::Mat result_CCOEFF_NORMED;
-//
-//  //cv::Mat _transform_1, _transform_2;
-//  //cv::resize(transform_1, _transform_1, cv::Size(), 1.0,1.0, CV_INTER_AREA);
-//  //cv::resize(transform_2, _transform_2, cv::Size(), 1.0,1.0, CV_INTER_AREA);
-//
-//  //cv::matchTemplate(_transform_1, _transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
-//  cv::matchTemplate(transform_1, transform_2, result_CCOEFF_NORMED, CV_TM_CCOEFF_NORMED);
-//  return result_CCOEFF_NORMED.at<float>(0,0);
-//}
-
-
 std::pair<cv::Mat, cv::Mat> tfk::Tile::get_overlap_matrix(Tile* other, float scale,
 		std::pair<cv::Point2f, cv::Point2f>& offset_info) {
-
-
 	if (!(this->overlaps_with(other))) {
 		return std::make_pair(cv::Mat(0,0,CV_8UC1), cv::Mat(0,0,CV_8UC1));
 	}
@@ -1064,14 +980,6 @@ void tfk::Tile::release_2d_keypoints() {
 	std::vector<cv::KeyPoint>().swap(*(this->alt_p_kps));
 
 	this->alt_p_kps_desc->release();
-
-	//// clean up the memory
-	//for (auto del : known_set) {
-	//  tile_data_t *a_tile = &(p_sec_data->tiles[del]);
-	//  a_tile->p_kps->clear();
-	//  std::vector<cv::KeyPoint>().swap(*(a_tile->p_kps));
-	//  ((a_tile->p_kps_desc))->release();
-	//}
 }
 
 
@@ -1117,7 +1025,6 @@ void tfk::Tile::get_3d_keypoints(std::vector<cv::KeyPoint>& keypoints, std::vect
 	if (this->p_kps_3d->size() <= 0) return;
 
 	for (int pt_idx = 0; pt_idx < this->p_kps_3d->size(); ++pt_idx) {
-		//if (this->ignore[pt_idx]) continue;
 		cv::Point2f pt = this->rigid_transform((*(this->p_kps_3d))[pt_idx].pt);
 		cv::KeyPoint kpt = (*(this->p_kps_3d))[pt_idx];
 		kpt.pt = pt;
@@ -1126,62 +1033,6 @@ void tfk::Tile::get_3d_keypoints(std::vector<cv::KeyPoint>& keypoints, std::vect
 	}
 }
 
-
-void tfk::Tile::write_wafer(FILE* wafer_file, int section_id, int base_section) {
-	fprintf(wafer_file, "\t\t\"bbox\": [\n");
-
-	fprintf(wafer_file,
-			"\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f,\n\t\t\t%f\n],",
-			this->x_start+this->offset_x, (this->x_finish+this->offset_x),
-			this->y_start+this->offset_y, (this->y_finish+this->offset_y));
-	fprintf(wafer_file, "\t\t\"height\": %d,\n",SIFT_D1_SHIFT_3D);
-	fprintf(wafer_file, "\t\t\"layer\": %d,\n",section_id + base_section+1);
-	fprintf(wafer_file, "\t\t\"maxIntensity\": %f,\n",255.0);
-	fprintf(wafer_file, "\t\t\"mfov\": %d,\n",
-			this->mfov_id);
-	fprintf(wafer_file, "\t\t\"minIntensity\": %f,\n",
-			0.0);
-	fprintf(wafer_file, "\t\t\"mipmapLevels\": {\n");
-	fprintf(wafer_file, "\t\t\"0\": {\n");
-	fprintf(wafer_file, "\t\t\t\"imageUrl\": \"%s\"\n", this->filepath.c_str());
-	fprintf(wafer_file, "\t\t\t}\n");
-	fprintf(wafer_file, "\t\t},\n");
-	fprintf(wafer_file, "\t\t\"tile_index\": %d,\n",
-			this->index);
-	fprintf(wafer_file, "\t\t\"transforms\": [\n");
-	// {'className': 'mpicbg.trakem2.transform.AffineModel2D', 'dataString': '0.1 0.0 0.0 0.1 0.0 0.0'}
-
-	fprintf(wafer_file, "\t\t\t{\n");
-	fprintf(wafer_file,
-			"\t\t\t\t\"className\": \"mpicbg.trakem2.transform.AffineModel2D\",\n");
-	fprintf(wafer_file,
-			"\t\t\t\t\"dataString\": \"%f %f %f %f %f %f\"\n", this->a00,
-			this->a10, this->a01, this->a11, this->x_start+this->offset_x, this->y_start+this->offset_y);
-	//#ifdef ALIGN3D
-	//if (true) {
-	//#else
-	//if (false) {
-	//#endif 
-	//fprintf(wafer_file,
-	//    "\t\t\t},\n");
-
-	//fprintf(wafer_file, "\t\t\t{\n");
-	//fprintf(wafer_file,
-	//    "\t\t\t\t\"className\": \"mpicbg.trakem2.transform.PointsTransformModel\",\n");
-	//fprintf(wafer_file,
-	//    "\t\t\t\t\"dataString\": \"%s\"\n", get_point_transform_string(graph, vd).c_str());
-	//fprintf(wafer_file,
-	//    "\t\t\t}\n");
-	//} else {
-	fprintf(wafer_file,
-			"\t\t\t}\n");
-	//}
-
-	fprintf(wafer_file,
-			"\t\t],\n");
-	fprintf(wafer_file,
-			"\t\t\"width\":%d\n",SIFT_D2_SHIFT_3D);
-}
 
 void tfk::Tile::local2DAlignUpdateLimited(std::set<Tile*>* active_set) {
 	//if (this->bad_2d_alignment) return;
@@ -1896,7 +1747,7 @@ void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
   if (true || !recomputation) {
   // NOTE(TFK): I need to check these parameters against the prefix_ cached ones.
   p_sift = new cv::xfeatures2d::SIFT_Impl(
-            1000,  // num_features --- unsupported.
+            1001,  // num_features --- unsupported.
             6,  // number of octaves
             //24,  // number of octaves
             CONTRAST_THRESH_3D,  // contrast threshold.
@@ -1948,117 +1799,60 @@ void tfk::Tile::compute_sift_keypoints3d(bool recomputation) {
 
 }
 
+// Just returns a mat with the full resolution tile data.
+cv::Mat tfk::Tile::read_tile_image() {
+  return cv::imread(this->filepath, CV_LOAD_IMAGE_GRAYSCALE);
+}
+
+
 cv::Mat tfk::Tile::get_tile_data(Resolution res) {
 
   std::string thumbnailpath = std::string(this->filepath);
-  //thumbnailpath = thumbnailpath.replace(thumbnailpath.find(".jp2"), 4,".jpg");
-  //thumbnailpath = thumbnailpath.insert(thumbnailpath.find_last_of("/") + 1, "thumbnail_");
-  //printf("the filepath is %s\n", this->filepath.c_str());
   switch(res) {
-
     case THUMBNAIL: {
       cv::Mat tmp = this->get_tile_data(Resolution::FULL);//cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
       cv::Mat ret;
-      //cv::Mat src = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
       cv::Mat dst;
-      //cv::equalizeHist( tmp, dst );
-      //cv::resize(dst, ret, cv::Size(), 0.1,0.1,CV_INTER_AREA);
       cv::resize(tmp, ret, cv::Size(), 0.1,0.1,CV_INTER_AREA);
-      
-      //int scale = 1;
-      //cv::Laplacian(src, dst, CV_8U, 3, scale, 0, cv::BORDER_DEFAULT);
-      //return src;
       return ret;
-      //return dst;//cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
       break;
     }
     case THUMBNAIL2: {
       return get_tile_data(Resolution::THUMBNAIL);
       cv::Mat src = cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
       return src;
-      //cv::Mat dst;
-      ////cv::equalizeHist( src, dst );
-      //int scale = 1;
-      //cv::Laplacian(src, dst, CV_8U, 3, scale, 0, cv::BORDER_DEFAULT);
-
-      //return dst;//cv::imread(thumbnailpath, CV_LOAD_IMAGE_GRAYSCALE);
       break;
     }
-
     case FILEIOTEST: {
       std::vector<int> params;
       params.push_back(CV_IMWRITE_JPEG_QUALITY);
       params.push_back(70);
-      //std::string new_path = this->filepath + "_.jpg";
       std::string new_path;
-      //if (this->tile_id % 3 == 0) {
-      //  new_path = this->filepath.replace(0,5, "/ebs/");
-      //} else if (this->tile_id % 3 == 1) {
-      //  new_path = this->filepath.replace(0,5, "/ebs2/");
-      //} else if (this->tile_id % 3 == 2) {
-        new_path = this->filepath.replace(0,5, "/home/gridsan/groups/supertech/connectomix/");
-      //}
+      new_path = this->filepath.replace(0,5, "/home/gridsan/groups/supertech/connectomix/");
       new_path = this->filepath + "_.jpg";
-      //printf("New %s\n", new_path.c_str());
-
       cv::Mat full_image = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
       cv::imwrite(new_path, full_image, params);
-
-      //cv::Mat full_image = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
-      //cv::Mat full_image = cv::imread(this->filepath, CV_LOAD_IMAGE_GRAYSCALE);
       return full_image;
-      //return cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
       break;
     }
 
     case FULL: {
       full_image_lock->lock();
-      if (/*true || */!has_full_image) {
-      //  std::string new_path = this->filepath.replace(0,5,"/ebs/");
-      std::string new_path;
-      //if (this->tile_id % 3 == 0) {
-      //  new_path = this->filepath.replace(0,5, "/ebs/");
-      //} else if (this->tile_id % 3 == 1) {
-      //  new_path = this->filepath.replace(0,5, "/ebs2/");
-      //} else if (this->tile_id % 3 == 2) {
-      //new_path = this->filepath.replace(0,5, "/home/gridsan/groups/supertech/connectomix/");
-      new_path = this->filepath;
-      //}
-      //new_path = this->filepath + "_.jpg";
-      //new_path = this->filepath+".jp2";
-      //new_path = this->filepath;
-      //printf("The filepath is %s\n", this->filepath.c_str());
-      //new_path = this->filepath;
-      //new_path = new_path.replace(new_path.find("_compressed_10percent"),21,"");
-      //new_path = new_path.replace(new_path.find(".jp2"), 4, ".bmp");
-      //printf("new_path %s\n", new_path.c_str());
-        //printf("%s\n", path.c_str());
-        //std::string new_path = this->filepath + "_.jpg";
-        //printf("%s\n", new_path.c_str());
-        cv::Mat tmp = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+      if (!has_full_image) {
+        std::string new_path;
+        new_path = this->filepath;
         //full_image = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+        full_image = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+        //cv::Mat tmp = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
 
-        cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
-        clahe->setClipLimit(4.0);
-        clahe->apply(tmp,full_image);
-        //int val = __sync_fetch_and_add(&DEBUG_total_read_count, 1);
-        //printf("Total read is %d\n", val);
-        //printf("image rows %d and cols %d\n", full_image.rows, full_image.cols);
-        //full_image = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
-        //cv::imwrite(new_path,full_image);
-        //full_image = cv::imread(path, CV_LOAD_IMAGE_UNCHANGED);
+        //cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
+        //clahe->setClipLimit(10.0);
+        //clahe->apply(tmp,full_image);
         has_full_image = true; //uncomment for cashing
       }
       cv::Mat ret = full_image.clone();
-      //cv::Mat preret = full_image.clone();
-      //cv::Mat ret;
-      //cv::equalizeHist(preret, ret);
-      //printf("rows %d, cols %d\n", ret.rows, ret.cols);
       full_image_lock->unlock();
-      //full_image.release(); // remove for caching
-      //printf("image rows %d and cols %d\n", ret.rows, ret.cols);
       return ret;
-      //return cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
       break;
     }
     case PERCENT30: {
@@ -2072,14 +1866,10 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       cv::Mat tmp = this->get_tile_data(Resolution::FULL);//cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
       cv::Mat ret;
       cv::Mat dst;
-      
-      //cv::equalizeHist( tmp, dst );
-      //cv::resize(dst, ret, cv::Size(), 0.3,0.3,CV_INTER_AREA);
       cv::resize(tmp, ret, cv::Size(), 0.3,0.3,CV_INTER_AREA);
       percent30_image = ret.clone();
       has_percent30_image = true;
       percent30_lock->unlock();
-      //tmp.release();
       return ret;
       break;
     }

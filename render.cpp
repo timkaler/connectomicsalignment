@@ -385,8 +385,8 @@ void Render::render_stack(Stack* stack,
   //    if (tile->highlight) {
   //      tile_count++;
   //      auto tbbox = tile->get_bbox();
-  //      //tbbox.first -= cv::Point2f(500.0,500.0);
-  //      //tbbox.second += cv::Point2f(500.0,500.0);
+  //      tbbox.first -= cv::Point2f(500.0,500.0);
+  //      tbbox.second += cv::Point2f(500.0,500.0);
   //      render(section, tbbox, resolution, filename_prefix+"_" +
   //             std::to_string(section->real_section_id)+"_"+std::to_string(tile_count)+".tif");
   //    }
