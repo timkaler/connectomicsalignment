@@ -172,8 +172,9 @@ void tfk::Section::optimize_tile_grid() {
 
   bool keep_going = false;
   double last_energy = 0.0;
+  int num_angles = 1;
   for (int i = 0; i < 50000; i++) {
-    double MOMENTUM = 0.5;
+    double MOMENTUM = 0.0;
     // first iteration compute last energy directly.
     if (i == 0) {
       cilk::reducer_opadd<double> last_energy_reducer(0.0);
@@ -184,12 +185,12 @@ void tfk::Section::optimize_tile_grid() {
     }
 
     cilk_for (int x = 0; x < this->tiles.size(); x++) {
-      this->tiles[x]->local2DAlignUpdate(lr);
+      this->tiles[x]->local2DAlignUpdate(lr, num_angles);
     }
 
 
     cv::Point2f* previous_offsets = (cv::Point2f*) calloc(this->tiles.size(), sizeof(cv::Point2f));
-
+    double* previous_angles = (double*) calloc(this->tiles.size(), sizeof(double));
     cilk_for (int x = 0; x < this->tiles.size(); x++) {
       this->tiles[x]->grad_error_x += MOMENTUM*tile_momentum_x[x];
       this->tiles[x]->grad_error_y += MOMENTUM*tile_momentum_y[x];
@@ -197,8 +198,10 @@ void tfk::Section::optimize_tile_grid() {
       tile_momentum_x[x] = this->tiles[x]->grad_error_x;
       tile_momentum_y[x] = this->tiles[x]->grad_error_y;
       previous_offsets[x] = cv::Point2f(this->tiles[x]->offset_x, this->tiles[x]->offset_y);
+      previous_angles[x] = this->tiles[x]->angle;
       this->tiles[x]->offset_x += (this->tiles[x]->grad_error_x)*lr;
       this->tiles[x]->offset_y += (this->tiles[x]->grad_error_y)*lr;
+      this->tiles[x]->angle += this->tiles[x]->grad_error_angle*lr;
     }
 
     double energy = 0.0;
@@ -210,7 +213,7 @@ void tfk::Section::optimize_tile_grid() {
 
     if (energy < last_energy) {
       // Decreased the energy. Increase the learning rate a little bit.
-      lr += 0.01;
+      lr = lr * 1.001;
     } else {
       // Increased the energy. Reset the step and decrease the learning rate.
       cilk_for (int j = 0; j < this->tiles.size(); j++) {
@@ -218,8 +221,9 @@ void tfk::Section::optimize_tile_grid() {
         tile_momentum_x[j] = 0.0;
         tile_momentum_y[j] = 0.0;
         // reset the previous offsets.
-        this->tiles[j]->offset_x = previous_offsets[j].x;
-        this->tiles[j]->offset_y = previous_offsets[j].y;
+        //this->tiles[j]->offset_x = previous_offsets[j].x;
+        //this->tiles[j]->offset_y = previous_offsets[j].y;
+        //this->tiles[j]->angle = previous_angles[j];
       }
       lr = lr * 0.99;
       energy = last_energy;
@@ -227,16 +231,18 @@ void tfk::Section::optimize_tile_grid() {
     if (energy + 1 < last_energy) keep_going = true;
 
     free(previous_offsets);
+    free(previous_angles);
 
     // after 1000 iterations stop early if no past
     //   iteration has improved the energy.
     if (i >= 1000 && i%1000 == 0) {
-      if (!keep_going) break;
+      if (!keep_going/* && num_angles != 1*/) break;
+      //if (!keep_going) num_angles = 50;
       keep_going = false;
     }
 
     last_energy = energy; // store last energy for next iter.
-    //printf("intermediate energy for section %d with lr %f is %f\n", this->real_section_id, lr, last_energy);
+    printf("intermediate energy for section %d with lr %f is %.10f num_angles %d\n", this->real_section_id, lr, last_energy, num_angles);
   }
 
   double energy_sum = 0.0;
@@ -284,7 +290,7 @@ void tfk::Section::mark_bad_2d_alignment() {
 
           float val = t->compute_deviation(neighbor);
 
-          if (val > 15.0) {
+          if (val > 10.0) {
               t->incident_bad_edges += 1;
               neighbor->incident_bad_edges += 1;
             if (guess_ml) {
@@ -330,7 +336,7 @@ void tfk::Section::mark_bad_2d_alignment() {
 
           float val = t->compute_deviation(neighbor);
 
-          if (val > 15.0) {
+          if (val > 10.0) {
                 t->tmp_bad_2d_alignment = true;
                 neighbor->tmp_bad_2d_alignment = true;
             if (guess_ml) {
@@ -959,7 +965,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
   match_features(matches,
                  atile_kps_desc_in_overlap,
                  btile_kps_desc_in_overlap,
-                 0.92, false);
+                 0.92, true/*false*/);
 
   //printf("Num matches is %zu\n", matches.size());
 
@@ -1043,8 +1049,8 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
   double max_x = bbox.second.x;
   double max_y = bbox.second.y;
   std::vector<std::pair<double, double> > valid_boxes;
-  for (double box_iter_x = min_x; box_iter_x < max_x + 12000; box_iter_x += 12000) {
-    for (double box_iter_y = min_y; box_iter_y < max_y + 12000; box_iter_y += 12000) {
+  for (double box_iter_x = min_x; box_iter_x < max_x + 24000; box_iter_x += 12000) {
+    for (double box_iter_y = min_y; box_iter_y < max_y + 24000; box_iter_y += 12000) {
       valid_boxes.push_back(std::make_pair(box_iter_x, box_iter_y));
     }
   }
@@ -1303,7 +1309,7 @@ void tfk::Section::affine_transform_mesh() {
 
 void tfk::Section::construct_triangles() {
   printf("called construct triangles\n");
-  float hex_spacing = 3000.0;
+  float hex_spacing = 6000.0;
   std::pair<cv::Point2f, cv::Point2f> bbox = this->get_bbox();
   triangle_mesh = new TriangleMesh(hex_spacing, bbox);
 }
@@ -1408,9 +1414,9 @@ void tfk::Section::align_3d(Section* neighbor) {
     elastic_gradient_descent_section(this, neighbor);
     this->triangle_mesh->build_index_post();
 
-    //this->get_elastic_matches_relative(neighbor);
-    //elastic_gradient_descent_section(this, neighbor);
-    //this->triangle_mesh->build_index_post();
+    this->get_elastic_matches_relative(neighbor);
+    elastic_gradient_descent_section(this, neighbor);
+    this->triangle_mesh->build_index_post();
 
     //this->get_elastic_matches_relative(neighbor);
     //elastic_gradient_descent_section(this, neighbor);

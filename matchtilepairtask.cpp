@@ -482,10 +482,7 @@ namespace tfk {
       tmp_vector.push_back(b_tile->index);
 
       Tile tmp_a_tile = *a_tile;
-      //std::vector<cv::Point2f> alt_filtered_match_points_a = alt_matched_points.first;
-      //std::vector<cv::Point2f> alt_filtered_match_points_b = alt_matched_points.second;
-      //Tile alt_a_tile = *a_tile;
-      
+
       // put b at 0,0
       if (filtered_match_points_a.size() >= min_features_num) {
         for (int _i = 0; _i < 5000; _i++) {
@@ -506,14 +503,33 @@ namespace tfk {
           tmp_a_tile.offset_y += 0.4*dy;
         }
       }
-      //tmp_a_tile.offset_x += best_offset.x;
-      //tmp_a_tile.offset_y += best_offset.y;
+
+        int overlap_x_start = a_tile->x_start > b_tile->x_start ?
+                                  a_tile->x_start : b_tile->x_start;
+        int overlap_x_finish = a_tile->x_finish < b_tile->x_finish ?
+                                  a_tile->x_finish : b_tile->x_finish;
+        int overlap_y_start = a_tile->y_start > b_tile->y_start ?
+                                  a_tile->y_start : b_tile->y_start;
+        int overlap_y_finish = a_tile->y_finish < b_tile->y_finish ?
+                                  a_tile->y_finish : b_tile->y_finish;
+
+
+      // compute the overlap region
+
+
+      cv::Point2f overlap_midpoint = 0.5*cv::Point2f(overlap_x_start + overlap_x_finish,
+                                                     overlap_y_start + overlap_y_finish);
+
+      cv::Point2f overlap_point_a = overlap_midpoint - cv::Point2f(a_tile->x_start, a_tile->y_start);
+      cv::Point2f overlap_point_b = overlap_midpoint - cv::Point2f(b_tile->x_start, b_tile->y_start);
+
+
       cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
                                           tmp_a_tile.y_start+tmp_a_tile.offset_y);
-      //TODO(wheatman) tell tim I have this done even if it failed
       cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
                                         b_tile->y_start+b_tile->offset_y);
-      current_offset = a_point - b_point;
+
+      current_offset = cv::Point2f(tmp_a_tile.offset_x, tmp_a_tile.offset_y);//a_point - b_point;
       //printf("a_tile id and index %d %d\n", a_tile->index, a_tile->tile_id);
       //if (!second_pass) {
       //  this->predicted_offset = compute_quick(a_tile, b_tile);
@@ -643,12 +659,14 @@ namespace tfk {
         //if (false && /*guess_ml*/ val >= 0.75) {
         if ((guess_ml || false_negative_rate > 1.0) && filtered_match_points_a.size() >= min_features_num) {
           a_tile->ideal_offsets[b_tile->tile_id] = current_offset;
+          a_tile->ideal_points[b_tile->tile_id] = std::make_pair(overlap_point_a, overlap_point_b);
           a_tile->neighbor_correlations[b_tile->tile_id] = val;
           a_tile->ml_preds[b_tile] = guess_ml;
           success = true;
           return true;
         } else {
           a_tile->ideal_offsets.erase(b_tile->tile_id);
+          a_tile->ideal_points.erase(b_tile->tile_id);
           a_tile->ml_preds[b_tile] = guess_ml;
           success = false;
           //if (!second_pass) {
