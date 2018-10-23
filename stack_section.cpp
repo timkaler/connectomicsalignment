@@ -897,7 +897,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
     bool use_cached, tfk::params sift_parameters, std::vector<Tile*>& tiles_loaded,
     std::mutex& tiles_loaded_mutex) {
 
-  //double ransac_thresh = 64.0;
+  double ransac_thresh = 64.0;
   int num_filtered = 0;
 
   std::vector<cv::KeyPoint> atile_kps_in_overlap;
@@ -951,8 +951,8 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
   }
 
   bool* mask = (bool*)calloc(match_points_a.size()+1, 1);
-  //vdata transform = tfk_simple_ransac_strict_ret_affine(match_points_a,
-  //                                                      match_points_b, ransac_thresh, mask);
+  tfk_simple_ransac_strict_ret_affine(match_points_a,
+                                      match_points_b, ransac_thresh, mask);
 
 
   for (int c = 0; c < match_points_a.size(); c++) {
@@ -1255,6 +1255,18 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
   }
 }
 
+cv::Point2f tfk::Section::affine_transform_point(cv::Point2f pt){
+  double a00 = this->total_affine_transform.at<double>(0, 0);
+  double a01 = this->total_affine_transform.at<double>(0, 1);
+  double a10 = this->total_affine_transform.at<double>(1, 0);
+  double a11 = this->total_affine_transform.at<double>(1, 1);
+  double offset_x = this->total_affine_transform.at<double>(0, 2);
+  double offset_y = this->total_affine_transform.at<double>(1, 2);
+
+  float new_x = pt.x * a00 + pt.y * a01 + offset_x;
+  float new_y = pt.x * a10 + pt.y * a11 + offset_y;
+  return cv::Point2f(new_x, new_y);
+}
 
 void tfk::Section::affine_transform_mesh() {
   for (int mesh_index = 0; mesh_index < this->triangle_mesh->mesh->size(); mesh_index++) {
@@ -1274,6 +1286,40 @@ void tfk::Section::affine_transform_mesh() {
   this->triangle_mesh->build_index_post();
 }
 
+void tfk::Section::affine_transform_mesh(cv::Mat transform) {
+  for (int mesh_index = 0; mesh_index < this->triangle_mesh->mesh->size(); mesh_index++) {
+        cv::Point2f pt = (*this->triangle_mesh->mesh)[mesh_index];
+
+        double a00 = transform.at<double>(0, 0);
+        double a01 = transform.at<double>(0, 1);
+        double a10 = transform.at<double>(1, 0);
+        double a11 = transform.at<double>(1, 1);
+        double offset_x = transform.at<double>(0, 2);
+        double offset_y = transform.at<double>(1, 2);
+
+        float new_x = pt.x*a00 + pt.y * a01 + offset_x;
+        float new_y = pt.x*a10 + pt.y * a11 + offset_y;
+        (*this->triangle_mesh->mesh)[mesh_index] = cv::Point2f(new_x, new_y);
+  }
+  this->triangle_mesh->build_index_post();
+}
+
+void tfk::Section::expand_mesh(){
+  float hex_spacing = 3000.0;
+  int mesh_size = (int)this->triangle_mesh->mesh->size();
+  int triangle_size = (int)this->triangle_mesh->triangles->size();
+  int edge_size = (int)this->triangle_mesh->triangle_edges->size();
+  this->added_triangles = triangle_size;
+  this->added_points= mesh_size;
+  this->triangle_mesh->expand_bbox(hex_spacing, this->estimate_bbox);
+  for (int i = mesh_size; i<this->triangle_mesh->mesh->size(); i++){
+    (*this->triangle_mesh->mesh)[i] = this->affine_transform_point((*this->triangle_mesh->mesh)[i]);
+    // this->unaligned->push_back(i);
+  }
+  this->elastic_align_unaligned(mesh_size, triangle_size, edge_size);
+  printf("%d \n FIXING MESH\n ___________\n",(int)this->triangle_mesh->mesh->size()-mesh_size);
+  this->triangle_mesh->build_index_post();
+}
 
 void tfk::Section::construct_triangles() {
   printf("called construct triangles\n");
@@ -1390,7 +1436,14 @@ void tfk::Section::align_3d(Section* neighbor) {
     this->coarse_affine_align(neighbor);
 
     // affine transform the mesh.
-    this->affine_transform_mesh();
+    this->affine_transform_mesh(this->coarse_transform);
+
+    // do the fine affine align with the neighbor.
+    this->fine_affine_align(neighbor);
+
+    // fine affine transform the mesh.
+    this->affine_transform_mesh(this->fine_transform);
+    this->total_affine_transform = this->fine_transform * this->coarse_transform;
 
     // do the elastic alignment.
 
@@ -1401,11 +1454,353 @@ void tfk::Section::align_3d(Section* neighbor) {
     this->save_elastic_mesh(neighbor);
 
   } else {
+    this->load_coarse_transform(neighbor);
+    this->load_fine_transform(neighbor);
+    this->total_affine_transform = this->fine_transform * this->coarse_transform;
     this->apply_affine_transforms();
   }
 }
 
+bool tfk::Section::load_coarse_transform(Section* neighbor) {
+  printf("Loaded coarse affine transform for %d\n", this->real_section_id);
 
+  std::string path = std::string(TFK_TMP_DIR) + "/coarse_transform_" +
+      std::to_string(this->real_section_id) + "_" + std::to_string(neighbor->real_section_id);
+
+  cv::FileStorage fs(path, cv::FileStorage::READ);
+  fs["transform"] >> this->coarse_transform;
+  fs.release();
+  if (this->coarse_transform.rows == 0){
+    cv::Mat A(3, 3, cv::DataType<double>::type);
+    A.at<double>(0,0) = 1.0;
+    A.at<double>(0,1) = 0.0;
+    A.at<double>(0,2) = 0.0;
+    A.at<double>(1,0) = 0.0;
+    A.at<double>(1,1) = 1.0;
+    A.at<double>(1,2) = 0.0;
+    A.at<double>(2,0) = 0.0;
+    A.at<double>(2,1) = 0.0;
+    A.at<double>(2,2) = 1.0;
+    this->coarse_transform = A.clone();
+  }
+
+  return true;
+}
+
+bool tfk::Section::load_fine_transform(Section* neighbor) {
+  printf("Loaded coarse affine transform for %d\n", this->real_section_id);
+
+ std::string path = std::string(TFK_TMP_DIR) + "/fine_transform_" +
+                    std::to_string(this->real_section_id) + "_" + std::to_string(neighbor->real_section_id);
+
+  cv::FileStorage fs(path, cv::FileStorage::READ);
+  fs["transform"] >> this->fine_transform;
+  fs.release();
+  if (this->fine_transform.rows == 0){
+    cv::Mat A(3, 3, cv::DataType<double>::type);
+    A.at<double>(0,0) = 1.0;
+    A.at<double>(0,1) = 0.0;
+    A.at<double>(0,2) = 0.0;
+    A.at<double>(1,0) = 0.0;
+    A.at<double>(1,1) = 1.0;
+    A.at<double>(1,2) = 0.0;
+    A.at<double>(2,0) = 0.0;
+    A.at<double>(2,1) = 0.0;
+    A.at<double>(2,2) = 1.0;
+    this->fine_transform= A.clone();
+  }
+
+  return true;
+}
+
+void tfk::Section::elastic_align_unaligned(int mesh_start_index, int triangle_start_index, int edge_start_index){
+  double intra_slice_weight = 1.0;
+  double intra_slice_winsor = 200.0;
+  int max_iterations = 10000; //ORIGINALL 5000
+  double stepsize = 0.1;
+  double momentum = 0.9;
+
+  if((int)this->triangle_mesh->mesh->size() == mesh_start_index){
+    printf("No alignment issues in section %d\n", this->real_section_id);
+    return;
+  }
+
+  // INIT:
+  std::map<int, double> gradient_momentum;
+  std::vector<tfkTriangle>* relevant_triangles = new std::vector<tfkTriangle>();
+  std::vector<std::pair<int,int>>* relevant_edges = new std::vector<std::pair<int,int>>();
+  this->mesh_old = new std::vector<cv::Point2f>();
+
+  for (int j = 0; j < this->triangle_mesh->mesh_orig->size(); j++){
+    this->mesh_old->push_back((*(this->triangle_mesh->mesh))[j]);
+  }
+
+  // Find all edges that connect to not matched points
+  for (int i = edge_start_index; i < this->triangle_mesh->triangle_edges->size(); i++){
+    int p1 = (*(this->triangle_mesh->triangle_edges))[i].first;
+    int p2 = (*(this->triangle_mesh->triangle_edges))[i].second;
+    relevant_edges->push_back(std::make_pair(p1,p2));
+  }
+
+  for (int i = triangle_start_index; i < this->triangle_mesh->triangles->size(); i++) {
+    relevant_triangles->push_back((*(this->triangle_mesh->triangles))[i]);
+  }
+
+  this->gradients = new cv::Point2f[this->triangle_mesh->mesh_orig->size()];
+  this->gradients_with_momentum = new cv::Point2f[this->triangle_mesh->mesh_orig->size()];
+
+  for (int j = 0; j < this->triangle_mesh->mesh_orig->size(); j++) {
+    this->gradients[j] = cv::Point2f(0.0,0.0);
+    this->gradients_with_momentum[j] = cv::Point2f(0.0,0.0);
+  }
+
+  // Optimize Variables
+  double* rest_lengths = new double[relevant_edges->size()];
+  double* rest_areas = new double[relevant_triangles->size()];
+
+  for (int j = 0; j < relevant_edges->size(); j++) {
+    cv::Point2f p1 = this->affine_transform_point((*(this->triangle_mesh->mesh_orig))[(*relevant_edges)[j].first]);
+    cv::Point2f p2 = this->affine_transform_point((*(this->triangle_mesh->mesh_orig))[(*relevant_edges)[j].second]);
+    double dx = p1.x-p2.x;
+    double dy = p1.y-p2.y;
+    double len = std::sqrt(dx*dx+dy*dy);
+    rest_lengths[j] = len;
+  }
+  for (int j = 0; j < relevant_triangles->size(); j++) {
+    tfkTriangle tri = (*relevant_triangles)[j];
+    cv::Point2f p1 = this->affine_transform_point((*(this->triangle_mesh->mesh_orig))[tri.index1]);
+    cv::Point2f p2 = this->affine_transform_point((*(this->triangle_mesh->mesh_orig))[tri.index2]);
+    cv::Point2f p3 = this->affine_transform_point((*(this->triangle_mesh->mesh_orig))[tri.index3]);
+    rest_areas[j] = computeTriangleArea(p1,p2,p3);
+  }
+
+  // Do the alignment
+  double prev_cost = 0.0;
+  for (int iter = 0; iter < max_iterations; iter++) {
+    double cost = 0.0;
+    // reset old gradients
+    for (int j = mesh_start_index; j < this->triangle_mesh->mesh->size(); j++) {
+      (this->gradients)[j] = cv::Point2f(0.0,0.0);
+    }
+    {
+      Section* section = this;
+      // internal_mesh_derivs
+      double all_weight = intra_slice_weight;
+      double sigma = intra_slice_winsor;
+      std::vector<cv::Point2f>* mesh = section->triangle_mesh->mesh;
+
+      std::vector<std::pair<int, int> >* triangle_edges = relevant_edges;
+      std::vector<tfkTriangle >* triangles =  relevant_triangles;
+
+      //// update all edges
+      for (int j = 0; j < triangle_edges->size(); j++) {
+        cost += internal_mesh_derivs(mesh, gradients, (*triangle_edges)[j], rest_lengths[j],
+            all_weight/section->triangle_mesh->triangle_edges->size(), sigma);
+      }
+
+      //// update all triangles
+      for (int j = 0; j < triangles->size(); j++) {
+        int triangle_indices[3] = {(*triangles)[j].index1,
+          (*triangles)[j].index2,
+          (*triangles)[j].index3};
+        cost += area_mesh_derivs(mesh, gradients, triangle_indices, rest_areas[j],
+            all_weight/section->triangle_mesh->triangles->size());
+      }
+    }
+
+    if (iter == 0) prev_cost = cost+10.0;
+
+    if (cost <= prev_cost) {
+      stepsize *= 1.1;
+      if (stepsize > 10.0) {
+        stepsize = 10.0;
+      }
+      // TODO(TFK): momentum.
+
+      //for (std::map<int, graph_section_data>::iterator it = section_data_map.begin();
+      //     it != section_data_map.end(); ++it) {
+      {
+        Section* section = this;
+        std::vector<cv::Point2f>* mesh = section->triangle_mesh->mesh; 
+        std::vector<cv::Point2f>* mesh_old = section->mesh_old;
+        cv::Point2f* gradients = section->gradients;
+        cv::Point2f* gradients_with_momentum = section->gradients_with_momentum;
+        for (int j = mesh_start_index; j < mesh->size(); j++) {
+          gradients_with_momentum[j] = gradients[j] + momentum*gradients_with_momentum[j];
+        }
+
+        for (int j = mesh_start_index; j < mesh->size(); j++) {
+          (*mesh_old)[j] = (*mesh)[j];
+        }
+        for (int j = mesh_start_index; j < mesh->size(); j++) {
+          (*mesh)[j].x -= (float)(stepsize * (gradients_with_momentum)[j].x);
+          (*mesh)[j].y -= (float)(stepsize * (gradients_with_momentum)[j].y);
+        }
+      }
+
+      if (max_iterations - iter < 1000) {
+        if (prev_cost - cost > 1.0/100) {
+          max_iterations += 1000;
+        }
+      }
+
+      if (iter%100 == 0) {
+
+        printf("Good step old cost %f, new cost %f, iteration %d, max %d\n", prev_cost, cost, iter, max_iterations);
+      }
+      prev_cost = cost;
+    } else {
+      stepsize *= 0.5;
+      // bad step undo.
+      //for (std::map<int, graph_section_data>::iterator it = section_data_map.begin();
+      //     it != section_data_map.end(); ++it) {
+      {
+        Section* section = this;
+        std::vector<cv::Point2f>* mesh = section->triangle_mesh->mesh;
+        std::vector<cv::Point2f>* mesh_old = section->mesh_old;
+        cv::Point2f* gradients_with_momentum = section->gradients_with_momentum;
+        for (int j = mesh_start_index; j < mesh->size(); j++) {
+          gradients_with_momentum[j] = cv::Point2f(0.0,0.0);
+        }
+
+        //if (mesh_old->size() != mesh->size()) continue;
+        for (int j = mesh_start_index; j < mesh->size(); j++) {
+          (*mesh)[j] = (*mesh_old)[j];
+        }
+      }
+      if (iter%1000 == 0) {
+        printf("Bad step old cost %f, new cost %f, iteration %d\n", prev_cost, cost, iter);
+      }
+    }
+    
+  }
+
+}
+
+void tfk::Section::fine_affine_align(Section* neighbor){
+  printf("STARTING THE FINE ALIGNMENT IT SO FINE (I hope)\n");
+  if (neighbor == NULL || neighbor->real_section_id == this->real_section_id) {
+    cv::Mat A(3, 3, cv::DataType<double>::type);
+    A.at<double>(0,0) = 1.0;
+    A.at<double>(0,1) = 0.0;
+    A.at<double>(0,2) = 0.0;
+    A.at<double>(1,0) = 0.0;
+    A.at<double>(1,1) = 1.0;
+    A.at<double>(1,2) = 0.0;
+    A.at<double>(2,0) = 0.0;
+    A.at<double>(2,1) = 0.0;
+    A.at<double>(2,2) = 1.0;
+
+    //printf("Printing out A\n");
+    //std::cout << A << std::endl;
+
+    this->fine_transform= A.clone(); 
+    return;
+  }
+
+  int box_size = 48000;
+  //int tile_size = 12000;
+ 
+  auto bbox = this->get_bbox();
+  // transforms section to align to neighbor.
+  bbox = this->elastic_transform_bbox(bbox);
+
+  double min_x = bbox.first.x; 
+  double min_y = bbox.first.y; 
+  double max_x = bbox.second.x; 
+  double max_y = bbox.second.y;
+  std::vector<std::pair<double, double> > valid_boxes;
+  for (double box_iter_x = min_x; box_iter_x < max_x + box_size; box_iter_x += box_size/2) {
+    for (double box_iter_y = min_y; box_iter_y < max_y + box_size; box_iter_y += box_size/2) {
+      valid_boxes.push_back(std::make_pair(box_iter_x, box_iter_y));
+    }
+  }
+  std::vector<cv::Point2f> filtered_match_points_a(0);
+  std::vector<cv::Point2f> filtered_match_points_b(0);
+
+  std::mutex lock;
+  for (int bbox_iter = 0; bbox_iter<valid_boxes.size(); bbox_iter++){
+    auto bbox = valid_boxes[bbox_iter];
+    double box_iter_x = bbox.first;
+    double box_iter_y = bbox.second;
+    std::vector<Tile*> tiles_loaded;
+    std::mutex tiles_loaded_mutex;
+    std::pair<cv::Point2f, cv::Point2f> sliding_bbox =
+        std::make_pair(cv::Point2f(box_iter_x, box_iter_y),
+                       cv::Point2f(box_iter_x + box_size, box_iter_y + box_size));
+
+    std::vector<cv::Point2f> test_filtered_match_points_a(0);
+    std::vector<cv::Point2f> test_filtered_match_points_b(0);
+
+    tfk::params sift_parameters; //We don't actually need these...
+    this->find_3d_matches_in_box(neighbor, sliding_bbox, test_filtered_match_points_a,
+                                 test_filtered_match_points_b, true, sift_parameters, tiles_loaded, tiles_loaded_mutex);
+    for (int i = 0; i < tiles_loaded.size(); i++){
+      tiles_loaded[i]->release_full_image();
+    }
+    //for (int c = 0; c < test_filtered_match_points_a.size(); c++){
+    //  filtered_match_points_a.push_back(test_filtered_match_points_a[c]);
+    //  filtered_match_points_b.push_back(test_filtered_match_points_b[c]);
+    //}
+
+    if (test_filtered_match_points_a.size() == 0) {
+      printf("No filtered matches, unfiltered size is %zu\n", test_filtered_match_points_a.size());
+      continue;
+    }
+
+    int num_filtered = 0;
+    bool *mask = (bool *)calloc(test_filtered_match_points_a.size() + 1, 1);
+    tfk_simple_ransac_strict_ret_affine(test_filtered_match_points_a, test_filtered_match_points_b, 64.0, mask);
+    for (int c = 0; c < test_filtered_match_points_a.size(); c++){
+      if (mask[c]){
+        num_filtered++;
+      }
+    }
+
+    
+    printf("unfiltered size %zu filtered size is %d\n", test_filtered_match_points_a.size(), num_filtered);
+
+    if (num_filtered < 12) {
+      free(mask);
+      continue;
+    }
+    for (int c = 0; c < test_filtered_match_points_a.size(); c++){
+      if (mask[c]){
+        filtered_match_points_a.push_back(
+            test_filtered_match_points_a[c]);
+        filtered_match_points_b.push_back(
+            test_filtered_match_points_b[c]);
+      }
+    }
+    free(mask);
+  }
+  cv::Mat section_transform;
+  //printf("%d points for section %d\n", filtered_match_points_a.size(), this->real_section_id);
+  bool res = cv::computeAffineTFK(filtered_match_points_a, filtered_match_points_b, section_transform);
+
+  if (!res) {
+    printf("The result of the affine transform was false. size of filtered matches %zu %zu\n", filtered_match_points_a.size(), filtered_match_points_b.size());
+  }
+
+  cv::Mat A(3, 3, cv::DataType<double>::type);
+
+  A.at<double>(0, 0) = section_transform.at<double>(0, 0);
+  A.at<double>(0, 1) = section_transform.at<double>(0, 1);
+  A.at<double>(0, 2) = section_transform.at<double>(0, 2);
+  A.at<double>(1, 0) = section_transform.at<double>(1, 0);
+  A.at<double>(1, 1) = section_transform.at<double>(1, 1);
+  A.at<double>(1, 2) = section_transform.at<double>(1, 2);
+  A.at<double>(2, 0) = 0.0;
+  A.at<double>(2, 1) = 0.0;
+  A.at<double>(2, 2) = 1.0;
+
+ this->fine_transform = A.clone();
+ std::string path = std::string(TFK_TMP_DIR) + "/fine_transform_" +
+                    std::to_string(this->real_section_id) + "_" + std::to_string(neighbor->real_section_id);
+ cv::FileStorage fs(path, cv::FileStorage::WRITE);
+ cv::write(fs, "transform", this->fine_transform);
+ fs.release();
+}
 
 
 // Find affine transform for this section that aligns it to neighbor.

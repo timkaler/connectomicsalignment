@@ -239,6 +239,7 @@ class Section {
     int num_bad_2d_matches;
     bool use_bbox_prefilter;
     std::pair<cv::Point2f, cv::Point2f> _bounding_box;
+    std::pair<cv::Point2f, cv::Point2f> estimate_bbox;
     cv::Mat* p_out;
     std::vector<cv::KeyPoint>* p_kps;
     std::string cached_2d_matches;
@@ -280,6 +281,10 @@ class Section {
 
     std::vector<tfkMatch> section_mesh_matches;
     cv::Mat coarse_transform;
+    cv::Mat fine_transform;
+    cv::Mat total_affine_transform;
+    int added_triangles;
+    int added_points;
 
     // an array of pointers
     MLBase* *ml_models;
@@ -304,7 +309,8 @@ class Section {
     void compare_2d_alignment();
 
     void align_3d(Section* neighbor);
-
+    void elastic_align_unaligned(int mesh_start_index, int triangle_start_index, int edge_start_index);
+    void expand_mesh();
 
     cv::Point2f compute_tile_matches_pair(Tile* a_tile, Tile* b_tile,
       std::vector< cv::KeyPoint >& a_tile_keypoints, std::vector <cv::KeyPoint>& b_tile_keypoints,
@@ -360,11 +366,15 @@ class Section {
 
 
     void coarse_affine_align(Section* neighbor);
+    void fine_affine_align(Section* neighbor);
+    bool load_coarse_transform(Section* neighbor);
+    bool load_fine_transform(Section* neighbor);
     void construct_triangles();
 
     std::pair<cv::Point2f, cv::Point2f> get_bbox();
 
     cv::Point2f affine_transform(cv::Point2f pt);
+    cv::Point2f affine_transform_point(cv::Point2f);
     cv::Point2f elastic_transform(cv::Point2f pt);
     cv::Point2f elastic_transform(cv::Point2f pt, Triangle tri);
     cv::Point2f affine_transform(cv::Mat A, cv::Point2f pt);
@@ -380,6 +390,7 @@ class Section {
         std::pair<cv::Point2f, cv::Point2f> bbox);
     void affine_transform_keypoints(std::vector<cv::KeyPoint>& keypoints);
     void affine_transform_mesh();
+    void affine_transform_mesh(cv::Mat transform);
 
     void write_wafer(FILE* wafer_file, int base_section);
     std::pair<cv::Point2f, cv::Point2f> scale_bbox(std::pair<cv::Point2f, cv::Point2f> bbox,

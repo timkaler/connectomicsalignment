@@ -146,10 +146,10 @@ TriangleMesh::TriangleMesh(double hex_spacing,
                            std::pair<cv::Point2f, cv::Point2f> _bbox) {
 
   this->bbox = _bbox;
-  bbox.first.x-=hex_spacing*3+0.01 + 100000;
-  bbox.first.y-=hex_spacing*3+0.01 + 100000;
-  bbox.second.x+=hex_spacing*3+0.01 + 100000;
-  bbox.second.y+=hex_spacing*3+0.01 + 100000;
+  bbox.first.x-=hex_spacing*3+0.01;
+  bbox.first.y-=hex_spacing*3+0.01;
+  bbox.second.x+=hex_spacing*3+0.01;
+  bbox.second.y+=hex_spacing*3+0.01;
 
   double min_x = bbox.first.x;
   double min_y = bbox.first.y;
@@ -305,6 +305,223 @@ std::vector<cv::Point2f>* TriangleMesh::generate_hex_grid(double* bounding_box, 
 }
 
 
+void TriangleMesh::expand_bbox(double hex_spacing,
+                               std::pair<cv::Point2f, cv::Point2f> _bbox){
+
+  // this->bbox = _bbox;
+  double min_x = _bbox.first.x;
+  double min_y = _bbox.first.y;
+  double max_x = _bbox.second.x;
+  double max_y = _bbox.second.y;
+
+  // double min_x_orig = bbox.first.x;
+  // double min_y_orig = bbox.first.y;
+  // double max_x_orig = bbox.second.x;
+  // double max_y_orig = bbox.second.y;
+  this->bbox = _bbox;
+
+  double bounding_box[4] = {min_x,max_x,min_y,max_y};
+
+  cv::Rect rect(min_x-hex_spacing*3,min_y-hex_spacing*3,max_x-min_x+hex_spacing*6, max_y-min_y + hex_spacing*6);
+
+  // Set to max possible
+  double min_x_orig = bbox.second.x;
+  double min_y_orig = bbox.second.y;
+  double max_x_orig = bbox.first.x;
+  double max_y_orig = bbox.first.y;
+  cv::Subdiv2D subdiv(rect);
+  subdiv.initDelaunay(rect);
+  int prev_mesh_size = (int)(this->mesh->size());
+  for (int i = 0; i < prev_mesh_size; i++) {
+    cv::Point2f pt = (*this->mesh_orig)[i];
+    subdiv.insert(pt);
+    if(pt.x < min_x_orig) min_x_orig = pt.x;
+    if(pt.y < min_y_orig) min_y_orig = pt.y;
+    if(pt.x > max_x_orig) max_x_orig = pt.x;
+    if(pt.y > max_y_orig) max_y_orig = pt.y;
+  }
+  double bounding_box_orig[4] = {min_x_orig,max_x_orig,min_y_orig,max_y_orig};
+  this->add_mesh_border(bounding_box, bounding_box_orig, hex_spacing);
+
+  for(int i=prev_mesh_size; i<this->mesh_orig->size(); i++){
+    cv::Point2f pt = (*this->mesh_orig)[i];
+    subdiv.insert(pt);
+  }
+
+  std::vector<cv::Vec6f> triangle_list;
+  subdiv.getTriangleList(triangle_list);
+  std::vector<tfkTriangle> triangle_list_index;
+
+  for (int i = 0; i < triangle_list.size(); i++) {
+    cv::Point2f tpt1 = cv::Point2f(triangle_list[i][0],triangle_list[i][1]);
+    cv::Point2f tpt2 = cv::Point2f(triangle_list[i][2],triangle_list[i][3]);
+    cv::Point2f tpt3 = cv::Point2f(triangle_list[i][4],triangle_list[i][5]);
+    int index1=-1;
+    int index2=-1;
+    int index3=-1;
+
+    for (int j = 0; j < this->mesh_orig->size(); j++) {
+      cv::Point2f pt = (*this->mesh_orig)[j];
+      if (std::abs(pt.x-tpt1.x) < 0.01 && std::abs(pt.y-tpt1.y) < 0.01) {
+        index1 = j;
+      }
+
+      if (std::abs(pt.x-tpt2.x) < 0.01 && std::abs(pt.y-tpt2.y) < 0.01) {
+        index2 = j;
+      }
+
+      if (std::abs(pt.x-tpt3.x) < 0.01 && std::abs(pt.y-tpt3.y) < 0.01) {
+        index3 = j;
+      }
+    }
+    if (!(index1 >= 0 && index2 >= 0 && index3 >=0)) continue;
+    if (index1<prev_mesh_size && index2<prev_mesh_size && index3<prev_mesh_size) continue;
+    tfkTriangle tri;
+    tri.index1 = index3;
+    tri.index2 = index2;
+    tri.index3 = index1;
+    triangle_list_index.push_back(tri);
+  }
+
+  std::vector<std::pair<int,int> > triangle_edges;
+  for (int i = 0; i < triangle_list_index.size(); i++) {
+    tfkTriangle tri = triangle_list_index[i];
+
+    if(tri.index1>=prev_mesh_size || tri.index2>=prev_mesh_size){
+      if (tri.index1 < tri.index2) {
+        triangle_edges.push_back(std::make_pair(tri.index1,tri.index2));
+      } else {
+        triangle_edges.push_back(std::make_pair(tri.index2,tri.index1));
+      }
+    }
+
+    if(tri.index3>=prev_mesh_size || tri.index2>=prev_mesh_size){
+      if (tri.index2 < tri.index3) {
+        triangle_edges.push_back(std::make_pair(tri.index2,tri.index3));
+      } else {
+        triangle_edges.push_back(std::make_pair(tri.index3,tri.index2));
+      }
+    }
+
+    if(tri.index3>=prev_mesh_size || tri.index1>=prev_mesh_size){
+      if (tri.index1 < tri.index3) {
+        triangle_edges.push_back(std::make_pair(tri.index1,tri.index3));
+      } else {
+        triangle_edges.push_back(std::make_pair(tri.index3,tri.index1));
+      }
+    }
+  }
+
+  std::vector<std::pair<int,int> > triangle_edges_dedupe;
+  std::set<std::pair<int, int> > triangle_edges_set;
+  for (int i = 0; i < triangle_edges.size(); i++) {
+    if (triangle_edges_set.find(triangle_edges[i]) == triangle_edges_set.end()) {
+      triangle_edges_set.insert(triangle_edges[i]);
+      triangle_edges_dedupe.push_back(triangle_edges[i]);
+    }
+  }
+
+  for (int i = 0; i < triangle_edges_dedupe.size(); i++) {
+    this->triangle_edges->push_back(triangle_edges_dedupe[i]);
+  }
+
+
+  for (int i = 0; i < triangle_list_index.size(); i++) {
+    this->triangles->push_back(triangle_list_index[i]);
+  }
+
+  build_index();
+} 
+
+
+void TriangleMesh::add_mesh_border(double* bounding_box, double* old_bounding_box, double spacing) {
+  double hexheight = spacing;
+  double hexwidth = sqrt(3.0) * spacing / 2.0;
+  double vertspacing = 0.75 * hexheight;
+  double horizspacing = hexwidth;
+  int sizex = (int)(round((old_bounding_box[1]-old_bounding_box[0])/horizspacing))+1; 
+  int sizey = (int)(round((old_bounding_box[3]-old_bounding_box[2])/vertspacing))+1;
+
+  int extend_left = (int)((bounding_box[0] - old_bounding_box[0])/horizspacing)-1;
+  int extend_up = (int)((bounding_box[2] - old_bounding_box[2])/vertspacing)-1;
+  int extend_right = (int)((bounding_box[1] - old_bounding_box[1])/horizspacing)+1;
+  int extend_down = (int)((bounding_box[3] - old_bounding_box[3])/vertspacing)+1;
+  //if(abs(bounding_box[0]-old_bounding_box[0])<.1) extend_left = 0;
+  //if(abs(bounding_box[2]-old_bounding_box[2])<.1) extend_up = 0;
+  //if(abs(bounding_box[1]-old_bounding_box[1])<.1) extend_right = 0;
+  //if(abs(bounding_box[3]-old_bounding_box[3])<.1) extend_down = 0;
+  if(extend_left>-1) extend_left = -1;
+  if(extend_right<1) extend_right = 1;
+  if(extend_up>-1) extend_up = -2;
+  if(extend_down<1) extend_down = 2;
+  if(extend_up % 2 != 0) {
+    extend_up-=1;
+  }
+  if(extend_down % 2 != 0) {
+    extend_down+=1;
+  }
+  printf("top_left: (%d,%d), bottom_right (%d,%d)\n", extend_left, extend_up,extend_right,extend_down);
+  double left_pos = old_bounding_box[0];
+  double top_pos = old_bounding_box[2];
+
+  // Add the left side of the mesh
+  for(int i = extend_left; i<0; i++){
+    for (int j=extend_up; j<extend_down+sizey; j++){
+      double xpos = i * horizspacing;
+      double ypos = j * vertspacing;
+      if (j % 2 == 1) {
+        xpos += spacing * 0.5;
+      }
+      this->mesh_orig->push_back(cv::Point2f(xpos+left_pos, ypos+top_pos));
+      this->mesh->push_back(cv::Point2f(xpos+left_pos, ypos+top_pos));
+    }
+  }
+  // Add the right side of the mesh
+  for(int i = sizex-1; i<extend_right+sizex && extend_right>0; i++){
+    for (int j=extend_up; j<extend_down+sizey; j++){
+      double xpos = i * horizspacing;
+      double ypos = j * vertspacing;
+      if (j % 2 == 1) {
+        xpos += spacing * 0.5;
+      }
+      if (j % 2 == 1 && i == extend_right+sizex-1) {
+        continue;
+      }
+      if (j % 2 == 0 && i == sizex-1) {
+        continue;
+      }
+      this->mesh_orig->push_back(cv::Point2f(xpos+left_pos, ypos+top_pos));
+      this->mesh->push_back(cv::Point2f(xpos+left_pos, ypos+top_pos));
+    }
+  }
+  // Add top and bottom of the mesh
+  for(int i = 0; i<sizex; i++){
+    for(int j = extend_up; j<0; j++){
+      double xpos = i * horizspacing;
+      double ypos = j * vertspacing;
+      if (j % 2 == 1) {
+        xpos += spacing * 0.5;
+      }
+      if (j % 2 == 1 && i == sizex-1) {
+        continue;
+      }
+      this->mesh_orig->push_back(cv::Point2f(xpos+left_pos, ypos+top_pos));
+      this->mesh->push_back(cv::Point2f(xpos+left_pos, ypos+top_pos));
+    }
+    for(int j = sizey; j<sizey+extend_down; j++){
+      double xpos = i * horizspacing;
+      double ypos = j * vertspacing;
+      if (j % 2 == 1) {
+        xpos += spacing * 0.5;
+      }
+      if (j % 2 == 1 && i == sizex-1) {
+        continue;
+      }
+      this->mesh_orig->push_back(cv::Point2f(xpos+left_pos, ypos+top_pos));
+      this->mesh->push_back(cv::Point2f(xpos+left_pos, ypos+top_pos));
+    }
+  }
+}
 
 
 
