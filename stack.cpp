@@ -159,6 +159,37 @@ void tfk::Stack::align_3d() {
     }
   }
 
+  // calculate bounding points for bounding box.
+  std::vector<cv::Point2f> edges; 
+  for (int i = this->sections.size()-1; i>=0; i--){
+   auto sec_bbox = this->sections[i]->triangle_mesh->index->bbox;
+   edges.push_back(sec_bbox.first);
+   edges.push_back(sec_bbox.second);
+   edges.push_back(cv::Point2f(sec_bbox.first.x, sec_bbox.second.y));
+   edges.push_back(cv::Point2f(sec_bbox.second.x, sec_bbox.first.y));
+   double min_x = sec_bbox.second.x;
+   double min_y = sec_bbox.second.y;
+   double max_x = sec_bbox.first.x;
+   double max_y = sec_bbox.first.y;
+   for (int j=0; j<edges.size(); j++){
+     double x = edges[j].x;
+     double y = edges[j].y;
+     if (x < min_x) min_x = x;
+     if (y < min_y) min_y = y;
+     if (x > max_x) max_x = x;
+     if (y > max_y) max_y = y;
+   }
+   this->sections[i]->estimate_bbox = std::make_pair(cv::Point2f(min_x,min_y), cv::Point2f(max_x, max_y));
+   cilk_for(int j=0; j<edges.size(); j++){
+     edges[j] = this->sections[i]->affine_transform_point(edges[j]);
+   }
+  }
+  
+  // Expand and align the borders of the mesh to accomodate the borders of the section above
+  cilk_for(int i = 0; i<this->sections.size()-1;  i++){
+   this->sections[i]->expand_mesh();
+  }
+
   // section i is aligned to section i-1;
   for (int i = 1; i < this->sections.size(); i++) {
     Section* sec = this->sections[i];

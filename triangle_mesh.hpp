@@ -36,6 +36,7 @@ namespace tfk {
       Triangle find_triangle(cv::Point2f pt);
       Triangle find_triangle_post(cv::Point2f pt);
       void build_index_post();
+      void expand_bbox(double hex_spacing, std::pair<cv::Point2f, cv::Point2f> bbox);
 
       std::vector<cv::Point2f>* mesh_orig;
       std::vector<cv::Point2f>* mesh;
@@ -47,6 +48,7 @@ namespace tfk {
       void build_index();
 
       std::vector<cv::Point2f>* generate_hex_grid(double* bounding_box, double spacing);
+      void add_mesh_border(double *bounding_box, double *old_bounding_box, double spacing);
   };
 }
 

@@ -152,6 +152,8 @@ void overlay_mesh(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
       tri.points[j].x = (tri.points[j].x-(float)input_lower_x)/render_scale.x;
       tri.points[j].y = (tri.points[j].y-(float)input_lower_y)/render_scale.y;
     }
+    auto color = CV_RGB(0,0,255);
+    if(i >= section->added_triangles) color = CV_RGB(175,0,175);
     for(int j=0; j<3; j++){
       cv::line(img, tri.points[j], tri.points[(j+1)%3],CV_RGB(0,0,255),5);
     }
@@ -188,10 +190,10 @@ void overlay_mesh(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
     cv::circle(img,p, 5, CV_RGB(0,255,255),5, 8, 0); 
   }
 
-  for(int i=0; i<section->off_grid->size(); i++){
+  for(int i=section->added_points; i<section->triangle_mesh->mesh->size(); i++){
     float px, py;
-    px = ((*(section->off_grid))[i].x-(float)input_lower_x)/render_scale.x;
-    py = ((*(section->off_grid))[i].y-(float)input_lower_y)/render_scale.y;
+    px = ((*(section->triangle_mesh->mesh))[i].x-(float)input_lower_x)/render_scale.x;
+    py = ((*(section->triangle_mesh->mesh))[i].y-(float)input_lower_y)/render_scale.y;
     cv::Point2f p = cv::Point2f(px,py);
     cv::circle(img,p, 5, CV_RGB(255,0,255),5, 8, 0); 
   }
