@@ -87,6 +87,7 @@ class Tile {
   public:
     std::map<int, cv::Point2f> ideal_offsets;
     std::map<int, std::pair<cv::Point2f, cv::Point2f> > ideal_points;
+    std::map<int, double > ideal_angles;
     double energy;
     int iteration_count;
     bool highlight;

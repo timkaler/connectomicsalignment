@@ -160,12 +160,14 @@ void tfk::Section::optimize_tile_grid() {
     int i = _i;
     this->tiles[i]->grad_error_x = 0.0;
     this->tiles[i]->grad_error_y = 0.0;
+    this->tiles[i]->angle = 0.0;
+    this->tiles[i]->grad_error_angle = 0.0;
   }
 
   printf("starting run\n");
   double* tile_momentum_x = (double*) malloc(this->tiles.size()*sizeof(double));
   double* tile_momentum_y = (double*) malloc(this->tiles.size()*sizeof(double));
-  cilk_for (int i = 0; i < this->tiles.size(); i++) {
+  for (int i = 0; i < this->tiles.size(); i++) {
     tile_momentum_x[i] = 0.0;
     tile_momentum_y[i] = 0.0;
   }
@@ -173,25 +175,25 @@ void tfk::Section::optimize_tile_grid() {
   bool keep_going = false;
   double last_energy = 0.0;
   int num_angles = 1;
-  for (int i = 0; i < 50000; i++) {
+  for (int i = 0; i < 100000; i++) {
     double MOMENTUM = 0.0;
     // first iteration compute last energy directly.
     if (i == 0) {
       cilk::reducer_opadd<double> last_energy_reducer(0.0);
-      cilk_for (int x = 0; x < this->tiles.size(); x++) {
+      for (int x = 0; x < this->tiles.size(); x++) {
         *last_energy_reducer += this->tiles[x]->local2DAlignUpdateEnergy();
       }
       last_energy = last_energy_reducer.get_value();
     }
 
-    cilk_for (int x = 0; x < this->tiles.size(); x++) {
+    for (int x = 0; x < this->tiles.size(); x++) {
       this->tiles[x]->local2DAlignUpdate(lr, num_angles);
     }
 
 
     cv::Point2f* previous_offsets = (cv::Point2f*) calloc(this->tiles.size(), sizeof(cv::Point2f));
     double* previous_angles = (double*) calloc(this->tiles.size(), sizeof(double));
-    cilk_for (int x = 0; x < this->tiles.size(); x++) {
+    for (int x = 0; x < this->tiles.size(); x++) {
       this->tiles[x]->grad_error_x += MOMENTUM*tile_momentum_x[x];
       this->tiles[x]->grad_error_y += MOMENTUM*tile_momentum_y[x];
 
@@ -201,12 +203,14 @@ void tfk::Section::optimize_tile_grid() {
       previous_angles[x] = this->tiles[x]->angle;
       this->tiles[x]->offset_x += (this->tiles[x]->grad_error_x)*lr;
       this->tiles[x]->offset_y += (this->tiles[x]->grad_error_y)*lr;
-      this->tiles[x]->angle += this->tiles[x]->grad_error_angle*lr;
+      //if (num_angles > 1) {
+      //  this->tiles[x]->angle += this->tiles[x]->grad_error_angle*lr;
+      //}
     }
 
     double energy = 0.0;
     cilk::reducer_opadd<double> energy_reducer(0.0);
-    cilk_for (int x = 0; x < this->tiles.size(); x++) {
+    for (int x = 0; x < this->tiles.size(); x++) {
       *energy_reducer += this->tiles[x]->local2DAlignUpdateEnergy();
     }
     energy = energy_reducer.get_value();
@@ -216,13 +220,13 @@ void tfk::Section::optimize_tile_grid() {
       lr = lr * 1.001;
     } else {
       // Increased the energy. Reset the step and decrease the learning rate.
-      cilk_for (int j = 0; j < this->tiles.size(); j++) {
+      for (int j = 0; j < this->tiles.size(); j++) {
         // reset the momentum.
         tile_momentum_x[j] = 0.0;
         tile_momentum_y[j] = 0.0;
         // reset the previous offsets.
-        //this->tiles[j]->offset_x = previous_offsets[j].x;
-        //this->tiles[j]->offset_y = previous_offsets[j].y;
+        this->tiles[j]->offset_x = previous_offsets[j].x;
+        this->tiles[j]->offset_y = previous_offsets[j].y;
         //this->tiles[j]->angle = previous_angles[j];
       }
       lr = lr * 0.99;
@@ -236,8 +240,11 @@ void tfk::Section::optimize_tile_grid() {
     // after 1000 iterations stop early if no past
     //   iteration has improved the energy.
     if (i >= 1000 && i%1000 == 0) {
-      if (!keep_going/* && num_angles != 1*/) break;
-      //if (!keep_going) num_angles = 50;
+      if (!keep_going && num_angles != 1) break;
+      if (!keep_going) {
+        num_angles++;
+        lr = 0.1;
+      }
       keep_going = false;
     }
 

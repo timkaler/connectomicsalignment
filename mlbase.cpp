@@ -350,7 +350,7 @@ namespace tfk {
       }
 
       float weight_1 = 1.0;//(1.0*count_2/count_2;
-      float weight_2 = 1.0*(count_1*1.0)/count_2;
+      float weight_2 = 0.25*(count_1*1.0)/count_2;
 
 
       for (int i = 0; i < new_training_examples; i++) {
@@ -379,7 +379,7 @@ namespace tfk {
         //ann_model->setTrainMethod(0, 0.1,0.1);
         ann_model->setTermCriteria(term_crit);
         //ann_model->setMaxDepth(4);
-        ann_model->setMinSampleCount(2); 
+        //ann_model->setMinSampleCount(2);
         ann_model->setCalculateVarImportance(true);
         model->train(tdata);
         printf("after training\n");

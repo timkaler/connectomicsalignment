@@ -17,6 +17,7 @@ namespace tfk {
     std::vector<float> MatchTilePairTask::get_feature_vector () {
       return feature_vector;
     }
+
     MatchTilePairTask::MatchTilePairTask (Tile* a_tile, Tile* b_tile, bool train) {
       this->a_tile = a_tile;
       this->b_tile = b_tile;
@@ -88,12 +89,8 @@ namespace tfk {
           float res3 = result3.at<float>(r,c);
           float val = std::min(res1,res2);
           val = std::min(val,res3);
-          //if (result2.at<float>(r,c) < 0 || result1.at<float>(r,c) < 0) continue;
           if (val > best_val) {
             best_val = val;
-            //cv::Point2f a_point = a_tile->rigid_transform(cv::Point2f(overlap_offsets.first.x+1.0*start_c, overlap_offsets.first.y + 1.0*start_r));
-
-            //cv::Point2f b_point = b_tile->rigid_transform(cv::Point2f(overlap_offsets.second.x+1.0*start_c, overlap_offsets.second.y + 1.0*start_r));
             best_offset = cv::Point2f(1.0*c,1.0*r);
 
             best = cv::Point2f(1.0*overlap_offsets.second.x-1.0*overlap_offsets.first.x, 1.0*overlap_offsets.second.y - 1.0*overlap_offsets.first.y);
@@ -156,7 +153,7 @@ namespace tfk {
         atile_kps_desc_in_overlap_list.reserve(a_tile_keypoints.size());
         std::vector< cv::Mat > btile_kps_desc_in_overlap_list;
         btile_kps_desc_in_overlap_list.reserve(b_tile_keypoints.size());
-    
+
         // Filter the points in a_tile.
         for (size_t pt_idx = 0; pt_idx < a_tile_keypoints.size(); ++pt_idx) {
           cv::Point2f pt = a_tile_keypoints[pt_idx].pt;
@@ -171,7 +168,7 @@ namespace tfk {
         }
         cv::vconcat(atile_kps_desc_in_overlap_list,
             (atile_kps_desc_in_overlap));
-    
+
         // Filter the points in b_tile.
         for (size_t pt_idx = 0; pt_idx < b_tile_keypoints.size(); ++pt_idx) {
           cv::Point2f pt = b_tile_keypoints[pt_idx].pt;
@@ -186,7 +183,7 @@ namespace tfk {
         cv::vconcat(btile_kps_desc_in_overlap_list,
             (btile_kps_desc_in_overlap));
       } // End scoped block A
-   
+
 
       //printf("atile kps %d, btilekps %d, secondpass:%d\n", atile_kps_in_overlap.size(), btile_kps_in_overlap.size(), second_pass); 
       if (atile_kps_in_overlap.size() < min_features_num) return;
@@ -194,7 +191,7 @@ namespace tfk {
 
       a_tile->keypoints_in_overlap[b_tile] = atile_kps_in_overlap.size();
       b_tile->keypoints_in_overlap[a_tile] = btile_kps_in_overlap.size();
-    
+
       float trial_rod;
       for (int trial = 0; trial < 1; trial++) {
         if (trial == 0) trial_rod = 0.7;
@@ -217,21 +214,21 @@ namespace tfk {
           match_points_b.push_back(
               b_tile->rigid_transform(btile_kps_in_overlap[matches[tmpi].trainIdx].pt));
         }
-    
+
         if (matches.size() < min_features_num) {
           continue;
         }
         a_tile->matched_keypoints_in_overlap[b_tile] = matches.size();
         b_tile->matched_keypoints_in_overlap[a_tile] = matches.size();
-    
+
         bool* mask = (bool*) calloc(match_points_a.size(), 1);
         double thresh = ransac_thresh;//5.0;
         cv::Point2f best_offset = tfk_simple_ransac(match_points_a, match_points_b, thresh, mask);
-    
-    
+
+
         filtered_match_points_a.clear();
         filtered_match_points_b.clear();
-    
+
         int num_matches_filtered = 0;
         // Use the output mask to filter the matches
         std::vector<float> responses;
@@ -321,10 +318,10 @@ namespace tfk {
 
   params trial_params;
   trial_params.num_features = 1001;
-  trial_params.num_octaves = 3;
+  trial_params.num_octaves = 6;
   trial_params.contrast_threshold = CONTRAST_THRESH;////0.015;//.015;
   trial_params.edge_threshold = EDGE_THRESH_2D;//10;//10;
-  trial_params.sigma = 1.2; //+ 0.2*0.2;//1.05;//1.05;//1.05;
+  trial_params.sigma = 1.6; //+ 0.2*0.2;//1.05;//1.05;//1.05;
   trial_params.scale_x = 0.3;
   trial_params.scale_y = 0.3;
   trial_params.res = FULL;
@@ -343,36 +340,6 @@ namespace tfk {
       FORCE_FAST_PASS_SUCCEED = false;
     }
   }
-
-
-
-  //printf("trial param info: \n");
-  //printf("\t\tscale_x: \t%f \n", trial_params.scale_x);
-  //printf("\t\tscale_y: \t%f \n", trial_params.scale_y);
-  //printf("\t\tnfeatures: \t%d \n", trial_params.num_features);
-  //printf("\t\tFORCE_FAST: \t%d \n", FORCE_FAST_PASS_SUCCEED);
-
-  //printf("best param info: \n");
-  //printf("\t\tscale_x: \t%f \n", best_params.scale_x);
-  //printf("\t\tscale_y: \t%f \n", best_params.scale_y);
-  //printf("\t\tnfeatures: \t%d \n", best_params.num_features);
-  //printf("\t\tFORCE_FAST: \t%d \n", FORCE_FAST_PASS_SUCCEED);
-  //exit(0);
-
-  //trial_params = best_params;
-
-
-      //tfk::params new_params;
-      //new_params.scale_x = mr_params->get_float_param("scale");
-      //new_params.scale_y = mr_params->get_float_param("scale");
-      ////printf("scale %f\n", new_params.scale_x);
-      ////printf("scale x %f scale y %f\n", new_params.scale_x, new_params.scale_y);
-      //new_params.num_features = mr_params->get_int_param("num_features");
-      //new_params.num_octaves = mr_params->get_int_param("num_octaves");
-      //new_params.contrast_threshold = 0.015;//mr_params->get_float_param("contrast_threshold");
-      //new_params.edge_threshold = 6;// mr_params->get_float_param("edge_threshold");
-      //new_params.sigma = 1.6;//mr_params->get_float_param("sigma");
-
 
       second_pass = false;
 
@@ -393,11 +360,6 @@ namespace tfk {
           a_tile->compute_sift_keypoints2d_params(trial_params, a_tile_keypoints,
                                                   a_tile_desc, b_tile);
         }
-        //a_tile->compute_sift_keypoints2d_params(trial_params, a_tile_keypoints,
-        //                                        a_tile_desc, b_tile);
-
-        //a_tile_alt_desc = dependencies[a_tile->tile_id]->alt_tile_desc;
-        //a_tile_alt_keypoints = dependencies[a_tile->tile_id]->alt_tile_keypoints;
       }
 
 
@@ -424,10 +386,6 @@ namespace tfk {
           b_tile->compute_sift_keypoints2d_params(trial_params, b_tile_keypoints,
                                                   b_tile_desc, a_tile);
         }
-        //b_tile->compute_sift_keypoints2d_params(trial_params, b_tile_keypoints,
-        //                                        b_tile_desc, a_tile);
-        //b_tile_alt_desc = dependencies[b_tile->tile_id]->alt_tile_desc;
-        //b_tile_alt_keypoints = dependencies[b_tile->tile_id]->alt_tile_keypoints;
       }
       //if (a_tile_keypoints.size() < min_features_num) return; // failure.
       //if (b_tile_keypoints.size() < min_features_num) return;
@@ -450,11 +408,6 @@ namespace tfk {
     bool MatchTilePairTask::error_check(float false_negative_rate) {
       std::vector<cv::Point2f> filtered_match_points_a = matched_points.first;
       std::vector<cv::Point2f> filtered_match_points_b = matched_points.second;
-      //a_tile->release_full_image();
-      //b_tile->release_full_image();
-      //a_tile->release_2d_keypoints();
-      //b_tile->release_2d_keypoints();
-    
 
       std::vector<float> tmp_vector;
       tmp_vector.push_back(filtered_match_points_a.size()*1.0);
@@ -483,11 +436,15 @@ namespace tfk {
 
       Tile tmp_a_tile = *a_tile;
 
+
+
       // put b at 0,0
       if (filtered_match_points_a.size() >= min_features_num) {
-        for (int _i = 0; _i < 5000; _i++) {
+        double energy_before = 0.0;
+        for (int _i = 0; _i < 5001; _i++) {
           double dx = 0.0;
           double dy = 0.0;
+          energy_before = 0.0;
           for (int j = 0; j < filtered_match_points_a.size(); j++) {
             cv::Point2f p1 = cv::Point2f(1.0l*filtered_match_points_b[j].x,
                                          1.0l*filtered_match_points_b[j].y);
@@ -495,13 +452,88 @@ namespace tfk {
                                          1.0l*filtered_match_points_a[j].y);
 
             //cv::Point2f dp = b_tile->rigid_transform_d(filtered_match_points_b[j]) - tmp_a_tile.rigid_transform(filtered_match_points_a[j]);
-            cv::Point2f dp = b_tile->rigid_transform_d(p1) - tmp_a_tile.rigid_transform_d(p2);
+            cv::Point2f dp = b_tile->rigid_transform(p1) - tmp_a_tile.rigid_transform(p2);
             dx += 2*dp.x * 1.0 / (filtered_match_points_a.size());
             dy += 2*dp.y * 1.0 / (filtered_match_points_a.size());
+            energy_before += dp.x*dp.x + dp.y*dp.y;
           }
-          tmp_a_tile.offset_x += 0.4*dx;
-          tmp_a_tile.offset_y += 0.4*dy;
+          if (_i != 5000) {
+            tmp_a_tile.offset_x += 0.4*dx;
+            tmp_a_tile.offset_y += 0.4*dy;
+          }
         }
+
+        // find angle.
+        double ANGLE_STEP = 1e-4;
+        double energy_after = energy_before;
+        double energy_after_best = energy_before;
+        for (int _i = 0; _i < 10000; _i++) {
+          //double dx = 0.0;
+          //double dy = 0.0;
+          tmp_a_tile.angle += ANGLE_STEP;
+          energy_after = 0.0;
+
+          for (int j = 0; j < filtered_match_points_a.size(); j++) {
+            cv::Point2f p1 = cv::Point2f(1.0l*filtered_match_points_b[j].x,
+                                         1.0l*filtered_match_points_b[j].y);
+            cv::Point2f p2 = cv::Point2f(1.0l*filtered_match_points_a[j].x,
+                                         1.0l*filtered_match_points_a[j].y);
+
+            cv::Point2f dp = b_tile->rigid_transform(p1) - tmp_a_tile.rigid_transform(p2);
+            energy_after += dp.x*dp.x + dp.y*dp.y;
+          }
+
+          if (energy_after < energy_after_best) {
+            energy_after_best = energy_after;
+            continue;
+          }
+
+          tmp_a_tile.angle -= 2*ANGLE_STEP;
+          energy_after = 0.0;
+          for (int j = 0; j < filtered_match_points_a.size(); j++) {
+            cv::Point2f p1 = cv::Point2f(1.0l*filtered_match_points_b[j].x,
+                                         1.0l*filtered_match_points_b[j].y);
+            cv::Point2f p2 = cv::Point2f(1.0l*filtered_match_points_a[j].x,
+                                         1.0l*filtered_match_points_a[j].y);
+
+            cv::Point2f dp = b_tile->rigid_transform(p1) - tmp_a_tile.rigid_transform(p2);
+            energy_after += dp.x*dp.x + dp.y*dp.y;
+         }
+         if (energy_after < energy_after_best) {
+            energy_after_best = energy_after;
+            continue;
+         }
+         tmp_a_tile.angle += ANGLE_STEP;
+         ANGLE_STEP = ANGLE_STEP/10.0;
+         if (ANGLE_STEP < 1e-12) break;
+       }
+       double energy_after2 = 0.0;
+        for (int _i = 0; _i < 5001; _i++) {
+          double dx = 0.0;
+          double dy = 0.0;
+          energy_after2 = 0.0;
+          for (int j = 0; j < filtered_match_points_a.size(); j++) {
+            cv::Point2f p1 = cv::Point2f(1.0l*filtered_match_points_b[j].x,
+                                         1.0l*filtered_match_points_b[j].y);
+            cv::Point2f p2 = cv::Point2f(1.0l*filtered_match_points_a[j].x,
+                                         1.0l*filtered_match_points_a[j].y);
+
+            //cv::Point2f dp = b_tile->rigid_transform_d(filtered_match_points_b[j]) - tmp_a_tile.rigid_transform(filtered_match_points_a[j]);
+            cv::Point2f dp = b_tile->rigid_transform(p1) - tmp_a_tile.rigid_transform(p2);
+            dx += 2*dp.x * 1.0 / (filtered_match_points_a.size());
+            dy += 2*dp.y * 1.0 / (filtered_match_points_a.size());
+            energy_after2 += dp.x*dp.x + dp.y*dp.y;
+          }
+          if (_i != 5000) {
+            tmp_a_tile.offset_x += 0.4*dx;
+            tmp_a_tile.offset_y += 0.4*dy;
+          }
+        }
+
+        if (energy_after_best < energy_before) {
+          printf("energy before %f energy after %f energy after 2 %f angle %.10e\n", energy_before, energy_after, energy_after2, tmp_a_tile.angle);
+        }
+
       }
 
         int overlap_x_start = a_tile->x_start > b_tile->x_start ?
@@ -530,44 +562,10 @@ namespace tfk {
                                         b_tile->y_start+b_tile->offset_y);
 
       current_offset = cv::Point2f(tmp_a_tile.offset_x, tmp_a_tile.offset_y);//a_point - b_point;
-      //printf("a_tile id and index %d %d\n", a_tile->index, a_tile->tile_id);
-      //if (!second_pass) {
-      //  this->predicted_offset = compute_quick(a_tile, b_tile);
-      //  printf("predicted offset %f, %f\n", predicted_offset.x, predicted_offset.y);
-      //  for (int i = 0; i < min_features_num+1; i++) { 
-      //  filtered_match_points_a.push_back(cv::Point2f(0,0));
-      //  filtered_match_points_b.push_back(cv::Point2f(0,0));
-      //  }
-      //} else {
-      //this->predicted_offset = best_offset;//current_offset;
+
       this->predicted_offset = current_offset;
 
 
-      //printf("predicted offset %f, %f\n", predicted_offset.x, predicted_offset.y);
-      //}
-      //printf("predicted offset %f %f\n", current_offset.x, current_offset.y);
-
-      //tmp_a_tile.get_feature_vector(b_tile, 5, 4).copyTo(a_tile->feature_vectors[b_tile]);
-      // for fast path computation
-      //this->feature_vector = a_tile->feature_vectors[b_tile];
-
-      //printf("feature vector size: %d\n", feature_vector.size());
-
-        //printf("%d, %d\n", alt_filtered_match_points_a.size(), filtered_match_points_a.size() );
-      //if (alt_filtered_match_points_a.size() >= min_features_num) {
-      //  //printf("We also got to move the alt part %d, %d\n", alt_filtered_match_points_a.size(), filtered_match_points_a.size() );
-      //  for (int _i = 0; _i < 1000; _i++) {
-      //    float dx = 0.0;
-      //    float dy = 0.0;
-      //    for (int j = 0; j < alt_filtered_match_points_a.size(); j++) {
-      //      cv::Point2f dp = b_tile->rigid_transform(alt_filtered_match_points_b[j]) - alt_a_tile.rigid_transform(alt_filtered_match_points_a[j]);
-      //      dx += 2*dp.x * 1.0 / (alt_filtered_match_points_a.size());
-      //      dy += 2*dp.y * 1.0 / (alt_filtered_match_points_a.size());
-      //    }
-      //    alt_a_tile.offset_x += 0.4*dx;
-      //    alt_a_tile.offset_y += 0.4*dy;
-      //  }
-      //}
 
       float val = 2.0;//tmp_a_tile.error_tile_pair(b_tile);
       //tmp_vector.push_back(val);
@@ -621,7 +619,7 @@ namespace tfk {
         //  guess_ml = false;
         //}
         if (guess_ml == false) {
-          //printf("guess ml was false\n");
+          printf("guess ml was false\n");
         }
         } else {
           guess_ml = true;
@@ -660,6 +658,7 @@ namespace tfk {
         if ((guess_ml || false_negative_rate > 1.0) && filtered_match_points_a.size() >= min_features_num) {
           a_tile->ideal_offsets[b_tile->tile_id] = current_offset;
           a_tile->ideal_points[b_tile->tile_id] = std::make_pair(overlap_point_a, overlap_point_b);
+          a_tile->ideal_angles[b_tile->tile_id] = tmp_a_tile.angle;
           a_tile->neighbor_correlations[b_tile->tile_id] = val;
           a_tile->ml_preds[b_tile] = guess_ml;
           success = true;
@@ -667,6 +666,7 @@ namespace tfk {
         } else {
           a_tile->ideal_offsets.erase(b_tile->tile_id);
           a_tile->ideal_points.erase(b_tile->tile_id);
+          a_tile->ideal_angles.erase(b_tile->tile_id);
           a_tile->ml_preds[b_tile] = guess_ml;
           success = false;
           //if (!second_pass) {
