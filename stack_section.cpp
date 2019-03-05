@@ -1065,7 +1065,7 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
 
 
   this->section_mesh_matches.clear();
-  std::mutex lock;
+  //std::mutex lock;
   cilk_for (int bbox_iter = 0; bbox_iter < valid_boxes.size(); bbox_iter++) {
     std::vector< cv::Point2f > filtered_match_points_a(0);
     std::vector< cv::Point2f > filtered_match_points_b(0);
@@ -1749,7 +1749,7 @@ void tfk::Section::fine_affine_align(Section* neighbor){
   std::vector<cv::Point2f> filtered_match_points_a(0);
   std::vector<cv::Point2f> filtered_match_points_b(0);
 
-  std::mutex lock;
+  //std::mutex lock;
   for (int bbox_iter = 0; bbox_iter<valid_boxes.size(); bbox_iter++){
     auto bbox = valid_boxes[bbox_iter];
     double box_iter_x = bbox.first;
