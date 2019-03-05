@@ -97,7 +97,18 @@ void align_execute(align_data_t *p_align_data) {
 
     tfk::Render* render = new tfk::Render();
     auto entire_bbox = stack->sections[0]->get_bbox();
+//<<<<<<< HEAD
     render->render_stack(stack,entire_bbox,tfk::Resolution::THUMBNAIL,"out/stack");
+//=======
+//    int start_y = entire_bbox.first.y - (entire_bbox.second.y-entire_bbox.first.y)/2;
+//    int end_y = entire_bbox.second.y + (entire_bbox.second.y-entire_bbox.first.y)/2;
+//    int start_x = entire_bbox.first.x - (entire_bbox.second.x-entire_bbox.first.x)/2;
+//    int end_x = entire_bbox.second.x + (entire_bbox.second.x-entire_bbox.first.x)/2;
+//    auto bigger_bbox = std::make_pair(cv::Point2f(start_x, start_y), cv::Point2f(end_x, end_y));
+//    render->render_stack(stack, bigger_bbox, tfk::Resolution::THUMBNAIL, "out/stack");
+//    overlay_triangles_stack(stack, bigger_bbox, tfk::Resolution::THUMBNAIL, "out/stack");
+//
+//>>>>>>> 046e98482dc6b2b9033f1b418f1806e18a4b5504
     //float x1 = (entire_bbox.first.x + entire_bbox.second.x)/2 + 5000;  // -2500 + 5000;
     //float x2 = x1+5000;
     //float y1 = (entire_bbox.first.y+entire_bbox.second.y)/2+5000;  // -2500 + 5000;
