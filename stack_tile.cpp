@@ -1235,14 +1235,13 @@ double tfk::Tile::local2DAlignUpdateEnergy() {
   //}
 }
 
-void tfk::Tile::local2DAlignUpdate(double lr, int num_angles) {
+void tfk::Tile::local2DAlignUpdate(double lr) {//, int num_angles) {
   if (this->bad_2d_alignment) return;
-  //std::vector<edata>& edges = graph->edgeData[vid];
-  //double global_learning_rate = lr;
+
   if (this->edges.size() == 0) return;
   if (this->edges.size() == 0) return;
 
-  double best_delta_angle = 0.0;
+  //double best_delta_angle = 0.0;
   double best_grad_error_x = 0.0;
   double best_grad_error_y = 0.0;
   double best_deviation_energy = 0.0;
@@ -1251,14 +1250,15 @@ void tfk::Tile::local2DAlignUpdate(double lr, int num_angles) {
   //for (int angle_step = 1-num_angles; angle_step < num_angles; angle_step++) {
   for (int angle_step = 0; angle_step < 1; angle_step++) {
 
-    double delta_angle = angle_step*0.00001;
+    //double delta_angle = angle_step*0.00001;
 
     double grad_error_x = 0.0;
     double grad_error_y = 0.0;
     double weight_sum = 0.0;
     std::set<int> found_tile_ids;
-    double angle_sum = 0.0;
-    double angle_sum_count = 0.0;
+    //double angle_sum = 0.0;
+    //double angle_sum_count = 0.0;
+
     for (int i = 0; i < this->edges.size(); i++) {
       std::vector<cv::Point2f>* v_points = this->edges[i].v_points;
       std::vector<cv::Point2f>* n_points = this->edges[i].n_points;
@@ -1274,32 +1274,19 @@ void tfk::Tile::local2DAlignUpdate(double lr, int num_angles) {
       if (v_points->size() == 0 && n_points->size() == 0) continue; 
       cv::Point2f deviation;
       if (this->ideal_offsets.find(neighbor->tile_id) != this->ideal_offsets.end()) {
-        cv::Point2f a_point = this->rigid_transform_angle(this->ideal_points[neighbor->tile_id].first, this->angle + delta_angle);
+        cv::Point2f a_point = this->rigid_transform(this->ideal_points[neighbor->tile_id].first);
         cv::Point2f b_point = neighbor->rigid_transform(this->ideal_points[neighbor->tile_id].second);
         cv::Point2f delta =  a_point - b_point;
         deviation = this->ideal_offsets[neighbor->tile_id] - delta;
-        angle_sum -= (this->angle - neighbor->angle) - this->ideal_angles[neighbor->tile_id];
-        angle_sum_count += 1.0;
       } else {
         cv::Point2f a_point =
-            this->rigid_transform_angle(neighbor->ideal_points[this->tile_id].second, this->angle + delta_angle);
+            this->rigid_transform(neighbor->ideal_points[this->tile_id].second);
         cv::Point2f b_point =
             neighbor->rigid_transform(neighbor->ideal_points[this->tile_id].first);
 
         cv::Point2f delta =  a_point - b_point;
-        //          c_b_point - c_a_point - b_point + a_point
-        //          a_point - b_point + c_b_point - c_a_point
-        //          b_point - a_point + c_a_point - c_b_point
 
-
-        //            c_b_point - c_a_point + b_point - a_point
-        //            c_a_point - c_b_point + b_point - a_point
-        //            c_a_point - a_point + b_point - c_b_point
-
-        //            - c_b_point + c_a_point - a_point + b_point
         deviation = -1*neighbor->ideal_offsets[this->tile_id] - delta;
-        angle_sum += ((neighbor->angle - this->angle) - neighbor->ideal_angles[this->tile_id]);
-        angle_sum_count += 1.0;
         //continue;
       }
       weight_sum = 1;
@@ -1316,23 +1303,17 @@ void tfk::Tile::local2DAlignUpdate(double lr, int num_angles) {
     //if (deviation.x*deviation.x + deviation.y*deviation.y < best_deviation_energy || first_step) {
     if (first_step /*deviation.x*deviation.x + deviation.y*deviation.y < best_deviation_energy || first_step*/) {
       //best_deviation_energy = deviation.x*deviation.x + deviation.y*deviation.y;
-      best_grad_error_x = grad_error_x;
-      best_grad_error_y = grad_error_y;
-      best_delta_angle = 0.0;
-      if (angle_sum_count > 0.0) {
-        best_delta_angle = angle_sum / angle_sum_count;
-      }
+      best_grad_error_x = grad_error_x / this->edges.size();
+      best_grad_error_y = grad_error_y / this->edges.size();
     }
     if (deviation.x*deviation.x + deviation.y*deviation.y < best_deviation_energy || first_step) {
       best_deviation_energy = deviation.x*deviation.x + deviation.y*deviation.y;
-      best_delta_angle = angle_sum / this->edges.size();
     }
     first_step = false;
   }
 
   this->grad_error_x = best_grad_error_x;
   this->grad_error_y = best_grad_error_y;
-  this->grad_error_angle = best_delta_angle;
   //printf("gradient %f %f\n", grad_error_x, grad_error_y);
   //if (weight_sum > 0.5) {
   //// update the gradients.
@@ -1547,7 +1528,7 @@ tfk::Tile::Tile(int section_id, int tile_id, int index, std::string filepath,
   this->y_finish = y_finish;
   this->offset_x = 0.0;
   this->offset_y = 0.0;
-  this->angle = 0.0;
+  //this->angle = 0.0;
   this->image_data_replaced = false;
 }
 
@@ -1573,8 +1554,8 @@ cv::Point2f rotatePoint(const cv::Point2f& inPoint, const cv::Point2f& center, c
 
 cv::Point2f tfk::Tile::rigid_transform(cv::Point2f pt) {
   // apply rotation.
-  double dx = this->shape_dx;
-  double dy = this->shape_dy;
+  //double dx = this->shape_dx;
+  //double dy = this->shape_dy;
 
   //cv::Point2f corners[4];
   //corners[0] = cv::Point2f(0.0,0.0);
@@ -1582,37 +1563,38 @@ cv::Point2f tfk::Tile::rigid_transform(cv::Point2f pt) {
   //corners[2] = cv::Point2f(0.0,dy);
   //corners[3] = cv::Point2f(dx,dy);
 
-  cv::Point2f midpoint = 0.5*cv::Point2f(dx,dy);
-  double _angle = this->angle;
-  cv::Point rotated_pt = rotatePoint(pt, midpoint, _angle);
+  //cv::Point2f midpoint = 0.5*cv::Point2f(dx,dy);
 
-  cv::Point2f pt2 = cv::Point2f(rotated_pt.x+this->offset_x+this->x_start, rotated_pt.y+this->offset_y+this->y_start);
+  //double _angle = this->angle;
+  //cv::Point rotated_pt = rotatePoint(pt, midpoint, _angle);
 
-  //cv::Point2f pt2 = cv::Point2f(pt.x+this->offset_x+this->x_start, pt.y+this->offset_y+this->y_start);
+  //cv::Point2f pt2 = cv::Point2f(rotated_pt.x+this->offset_x+this->x_start, rotated_pt.y+this->offset_y+this->y_start);
+
+  cv::Point2f pt2 = cv::Point2f(pt.x+this->offset_x+this->x_start, pt.y+this->offset_y+this->y_start);
   //cv::Point2f pt2 = cv::Point2f(pt.x+this->x_start, pt.y+this->y_start);
   return pt2;
 }
 
-cv::Point2f tfk::Tile::rigid_transform_angle(cv::Point2f pt, double _angle) {
-  //return rigid_transform(pt);
-  // apply rotation.
-  double dx = this->shape_dx;
-  double dy = this->shape_dy;
-
-  //cv::Point2f corners[4];
-  //corners[0] = cv::Point2f(0.0,0.0);
-  //corners[1] = cv::Point2f(dx,0.0);
-  //corners[2] = cv::Point2f(0.0,dy);
-  //corners[3] = cv::Point2f(dx,dy);
-  cv::Point2f midpoint = 0.5*cv::Point2f(dx,dy);
-  cv::Point rotated_pt = rotatePoint(pt, midpoint, _angle);
-
-  cv::Point2f pt2 = cv::Point2f(rotated_pt.x+this->offset_x+this->x_start, rotated_pt.y+this->offset_y+this->y_start);
-
-  //cv::Point2f pt2 = cv::Point2f(pt.x+this->offset_x+this->x_start, pt.y+this->offset_y+this->y_start);
-  //cv::Point2f pt2 = cv::Point2f(pt.x+this->x_start, pt.y+this->y_start);
-  return pt2;
-}
+//cv::Point2f tfk::Tile::rigid_transform_angle(cv::Point2f pt, double _angle) {
+//  //return rigid_transform(pt);
+//  // apply rotation.
+//  double dx = this->shape_dx;
+//  double dy = this->shape_dy;
+//
+//  //cv::Point2f corners[4];
+//  //corners[0] = cv::Point2f(0.0,0.0);
+//  //corners[1] = cv::Point2f(dx,0.0);
+//  //corners[2] = cv::Point2f(0.0,dy);
+//  //corners[3] = cv::Point2f(dx,dy);
+//  cv::Point2f midpoint = 0.5*cv::Point2f(dx,dy);
+//  cv::Point rotated_pt = rotatePoint(pt, midpoint, _angle);
+//
+//  cv::Point2f pt2 = cv::Point2f(rotated_pt.x+this->offset_x+this->x_start, rotated_pt.y+this->offset_y+this->y_start);
+//
+//  //cv::Point2f pt2 = cv::Point2f(pt.x+this->offset_x+this->x_start, pt.y+this->offset_y+this->y_start);
+//  //cv::Point2f pt2 = cv::Point2f(pt.x+this->x_start, pt.y+this->y_start);
+//  return pt2;
+//}
 
 
 
@@ -1676,11 +1658,14 @@ tfk::Tile::Tile(TileData& tile_data) {
     this->y_finish = tile_data.y_finish();
     this->offset_x = 0.0;
     this->offset_y = 0.0;
-    this->angle = 0.0;
+    //this->angle = 0.0;
     this->filepath = tile_data.tile_filepath();
     //printf("mfov id is %d\n", mfov_id);
 
     // NOTE TFK HACK
+
+    this->filepath = this->filepath.replace(this->filepath.find("/efs"), 4, "/home/gridsan/groups/supertech/connectomix");
+
     this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jpg");
     this->filepath = this->filepath.replace(this->filepath.find("sep14iarpa"),10,"compressed2");
 

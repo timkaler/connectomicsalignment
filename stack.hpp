@@ -87,7 +87,7 @@ class Tile {
   public:
     std::map<int, cv::Point2f> ideal_offsets;
     std::map<int, std::pair<cv::Point2f, cv::Point2f> > ideal_points;
-    std::map<int, double > ideal_angles;
+    //std::map<int, double > ideal_angles;
     double energy;
     int iteration_count;
     bool highlight;
@@ -111,10 +111,10 @@ class Tile {
     double y_start;
     double y_finish;
 
-    double angle;
+    //double angle;
 
 
-    double grad_error_x, grad_error_y, grad_error_angle;
+    double grad_error_x, grad_error_y;//, grad_error_angle;
 
     bool bad_2d_alignment;
     bool tmp_bad_2d_alignment;
@@ -197,7 +197,7 @@ class Tile {
     void compute_sift_keypoints_with_params(params p);
 
     cv::Point2f rigid_transform(cv::Point2f pt);
-    cv::Point2f rigid_transform_angle(cv::Point2f pt, double _angle);
+    //cv::Point2f rigid_transform_angle(cv::Point2f pt, double _angle);
     cv::Point2f rigid_transform_d(cv::Point2f pt);
 
     void release_2d_keypoints();
@@ -216,7 +216,7 @@ class Tile {
     bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
     bool overlaps_with(Tile* other);
     void local2DAlignUpdate();
-    void local2DAlignUpdate(double lr, int num_angles);
+    void local2DAlignUpdate(double lr);//, int num_angles);
     double local2DAlignUpdateEnergy();
     void local2DAlignUpdateLimited(std::set<Tile*>* active_set);
     void insert_matches(Tile* neighbor,

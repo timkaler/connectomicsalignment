@@ -6,7 +6,7 @@
 
 #include "./common.h"
 
-void align_execute(align_data_t *p_align_data);
+void align_execute(align_data_t *p_align_data, bool do_3d, bool do_render);
 
 void param_optimize(align_data_t *p_align_data);
 

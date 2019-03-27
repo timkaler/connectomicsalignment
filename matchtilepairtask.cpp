@@ -464,75 +464,75 @@ namespace tfk {
         }
 
         // find angle.
-        double ANGLE_STEP = 1e-4;
-        double energy_after = energy_before;
-        double energy_after_best = energy_before;
-        for (int _i = 0; _i < 10000; _i++) {
-          //double dx = 0.0;
-          //double dy = 0.0;
-          tmp_a_tile.angle += ANGLE_STEP;
-          energy_after = 0.0;
+       //double ANGLE_STEP = 1e-4;
+       //double energy_after = energy_before;
+       //double energy_after_best = energy_before;
+       // for (int _i = 0; _i < 10000; _i++) {
+       //   //double dx = 0.0;
+       //   //double dy = 0.0;
+       //   tmp_a_tile.angle += ANGLE_STEP;
+       //   energy_after = 0.0;
 
-          for (int j = 0; j < filtered_match_points_a.size(); j++) {
-            cv::Point2f p1 = cv::Point2f(1.0l*filtered_match_points_b[j].x,
-                                         1.0l*filtered_match_points_b[j].y);
-            cv::Point2f p2 = cv::Point2f(1.0l*filtered_match_points_a[j].x,
-                                         1.0l*filtered_match_points_a[j].y);
+       //   for (int j = 0; j < filtered_match_points_a.size(); j++) {
+       //     cv::Point2f p1 = cv::Point2f(1.0l*filtered_match_points_b[j].x,
+       //                                  1.0l*filtered_match_points_b[j].y);
+       //     cv::Point2f p2 = cv::Point2f(1.0l*filtered_match_points_a[j].x,
+       //                                  1.0l*filtered_match_points_a[j].y);
 
-            cv::Point2f dp = b_tile->rigid_transform(p1) - tmp_a_tile.rigid_transform(p2);
-            energy_after += dp.x*dp.x + dp.y*dp.y;
-          }
+       //     cv::Point2f dp = b_tile->rigid_transform(p1) - tmp_a_tile.rigid_transform(p2);
+       //     energy_after += dp.x*dp.x + dp.y*dp.y;
+       //   }
 
-          if (energy_after < energy_after_best) {
-            energy_after_best = energy_after;
-            continue;
-          }
+       //   if (energy_after < energy_after_best) {
+       //     energy_after_best = energy_after;
+       //     continue;
+       //   }
 
-          tmp_a_tile.angle -= 2*ANGLE_STEP;
-          energy_after = 0.0;
-          for (int j = 0; j < filtered_match_points_a.size(); j++) {
-            cv::Point2f p1 = cv::Point2f(1.0l*filtered_match_points_b[j].x,
-                                         1.0l*filtered_match_points_b[j].y);
-            cv::Point2f p2 = cv::Point2f(1.0l*filtered_match_points_a[j].x,
-                                         1.0l*filtered_match_points_a[j].y);
+       //   tmp_a_tile.angle -= 2*ANGLE_STEP;
+       //   energy_after = 0.0;
+       //   for (int j = 0; j < filtered_match_points_a.size(); j++) {
+       //     cv::Point2f p1 = cv::Point2f(1.0l*filtered_match_points_b[j].x,
+       //                                  1.0l*filtered_match_points_b[j].y);
+       //     cv::Point2f p2 = cv::Point2f(1.0l*filtered_match_points_a[j].x,
+       //                                  1.0l*filtered_match_points_a[j].y);
 
-            cv::Point2f dp = b_tile->rigid_transform(p1) - tmp_a_tile.rigid_transform(p2);
-            energy_after += dp.x*dp.x + dp.y*dp.y;
-         }
-         if (energy_after < energy_after_best) {
-            energy_after_best = energy_after;
-            continue;
-         }
-         tmp_a_tile.angle += ANGLE_STEP;
-         ANGLE_STEP = ANGLE_STEP/10.0;
-         if (ANGLE_STEP < 1e-12) break;
-       }
-       double energy_after2 = 0.0;
-        for (int _i = 0; _i < 5001; _i++) {
-          double dx = 0.0;
-          double dy = 0.0;
-          energy_after2 = 0.0;
-          for (int j = 0; j < filtered_match_points_a.size(); j++) {
-            cv::Point2f p1 = cv::Point2f(1.0l*filtered_match_points_b[j].x,
-                                         1.0l*filtered_match_points_b[j].y);
-            cv::Point2f p2 = cv::Point2f(1.0l*filtered_match_points_a[j].x,
-                                         1.0l*filtered_match_points_a[j].y);
+       //     cv::Point2f dp = b_tile->rigid_transform(p1) - tmp_a_tile.rigid_transform(p2);
+       //     energy_after += dp.x*dp.x + dp.y*dp.y;
+       //  }
+       //  if (energy_after < energy_after_best) {
+       //     energy_after_best = energy_after;
+       //     continue;
+       //  }
+       //  tmp_a_tile.angle += ANGLE_STEP;
+       //  ANGLE_STEP = ANGLE_STEP/10.0;
+       //  if (ANGLE_STEP < 1e-12) break;
+       //}
+       //double energy_after2 = 0.0;
+       // for (int _i = 0; _i < 5001; _i++) {
+       //   double dx = 0.0;
+       //   double dy = 0.0;
+       //   energy_after2 = 0.0;
+       //   for (int j = 0; j < filtered_match_points_a.size(); j++) {
+       //     cv::Point2f p1 = cv::Point2f(1.0l*filtered_match_points_b[j].x,
+       //                                  1.0l*filtered_match_points_b[j].y);
+       //     cv::Point2f p2 = cv::Point2f(1.0l*filtered_match_points_a[j].x,
+       //                                  1.0l*filtered_match_points_a[j].y);
 
-            //cv::Point2f dp = b_tile->rigid_transform_d(filtered_match_points_b[j]) - tmp_a_tile.rigid_transform(filtered_match_points_a[j]);
-            cv::Point2f dp = b_tile->rigid_transform(p1) - tmp_a_tile.rigid_transform(p2);
-            dx += 2*dp.x * 1.0 / (filtered_match_points_a.size());
-            dy += 2*dp.y * 1.0 / (filtered_match_points_a.size());
-            energy_after2 += dp.x*dp.x + dp.y*dp.y;
-          }
-          if (_i != 5000) {
-            tmp_a_tile.offset_x += 0.4*dx;
-            tmp_a_tile.offset_y += 0.4*dy;
-          }
-        }
+       //     //cv::Point2f dp = b_tile->rigid_transform_d(filtered_match_points_b[j]) - tmp_a_tile.rigid_transform(filtered_match_points_a[j]);
+       //     cv::Point2f dp = b_tile->rigid_transform(p1) - tmp_a_tile.rigid_transform(p2);
+       //     dx += 2*dp.x * 1.0 / (filtered_match_points_a.size());
+       //     dy += 2*dp.y * 1.0 / (filtered_match_points_a.size());
+       //     energy_after2 += dp.x*dp.x + dp.y*dp.y;
+       //   }
+       //   if (_i != 5000) {
+       //     tmp_a_tile.offset_x += 0.4*dx;
+       //     tmp_a_tile.offset_y += 0.4*dy;
+       //   }
+       // }
 
-        if (energy_after_best < energy_before) {
-          printf("energy before %f energy after %f energy after 2 %f angle %.10e\n", energy_before, energy_after, energy_after2, tmp_a_tile.angle);
-        }
+       // if (energy_after_best < energy_before) {
+       //   printf("energy before %f energy after %f energy after 2 %f angle %.10e\n", energy_before, energy_after, energy_after2, tmp_a_tile.angle);
+       // }
 
       }
 
@@ -658,7 +658,7 @@ namespace tfk {
         if ((guess_ml || false_negative_rate > 1.0) && filtered_match_points_a.size() >= min_features_num) {
           a_tile->ideal_offsets[b_tile->tile_id] = current_offset;
           a_tile->ideal_points[b_tile->tile_id] = std::make_pair(overlap_point_a, overlap_point_b);
-          a_tile->ideal_angles[b_tile->tile_id] = tmp_a_tile.angle;
+          //a_tile->ideal_angles[b_tile->tile_id] = tmp_a_tile.angle;
           a_tile->neighbor_correlations[b_tile->tile_id] = val;
           a_tile->ml_preds[b_tile] = guess_ml;
           success = true;
@@ -666,7 +666,7 @@ namespace tfk {
         } else {
           a_tile->ideal_offsets.erase(b_tile->tile_id);
           a_tile->ideal_points.erase(b_tile->tile_id);
-          a_tile->ideal_angles.erase(b_tile->tile_id);
+          //a_tile->ideal_angles.erase(b_tile->tile_id);
           a_tile->ml_preds[b_tile] = guess_ml;
           success = false;
           //if (!second_pass) {

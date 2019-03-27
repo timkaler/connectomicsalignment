@@ -160,8 +160,8 @@ void tfk::Section::optimize_tile_grid() {
     int i = _i;
     this->tiles[i]->grad_error_x = 0.0;
     this->tiles[i]->grad_error_y = 0.0;
-    this->tiles[i]->angle = 0.0;
-    this->tiles[i]->grad_error_angle = 0.0;
+    //this->tiles[i]->angle = 0.0;
+    //this->tiles[i]->grad_error_angle = 0.0;
   }
 
   printf("starting run\n");
@@ -174,9 +174,9 @@ void tfk::Section::optimize_tile_grid() {
 
   bool keep_going = false;
   double last_energy = 0.0;
-  int num_angles = 1;
+  //int num_angles = 1;
   for (int i = 0; i < 100000; i++) {
-    double MOMENTUM = 0.0;
+    double MOMENTUM = 0.1;
     // first iteration compute last energy directly.
     if (i == 0) {
       cilk::reducer_opadd<double> last_energy_reducer(0.0);
@@ -187,12 +187,12 @@ void tfk::Section::optimize_tile_grid() {
     }
 
     for (int x = 0; x < this->tiles.size(); x++) {
-      this->tiles[x]->local2DAlignUpdate(lr, num_angles);
+      this->tiles[x]->local2DAlignUpdate(lr);
     }
 
 
     cv::Point2f* previous_offsets = (cv::Point2f*) calloc(this->tiles.size(), sizeof(cv::Point2f));
-    double* previous_angles = (double*) calloc(this->tiles.size(), sizeof(double));
+    //double* previous_angles = (double*) calloc(this->tiles.size(), sizeof(double));
     for (int x = 0; x < this->tiles.size(); x++) {
       this->tiles[x]->grad_error_x += MOMENTUM*tile_momentum_x[x];
       this->tiles[x]->grad_error_y += MOMENTUM*tile_momentum_y[x];
@@ -200,7 +200,7 @@ void tfk::Section::optimize_tile_grid() {
       tile_momentum_x[x] = this->tiles[x]->grad_error_x;
       tile_momentum_y[x] = this->tiles[x]->grad_error_y;
       previous_offsets[x] = cv::Point2f(this->tiles[x]->offset_x, this->tiles[x]->offset_y);
-      previous_angles[x] = this->tiles[x]->angle;
+      //previous_angles[x] = this->tiles[x]->angle;
       this->tiles[x]->offset_x += (this->tiles[x]->grad_error_x)*lr;
       this->tiles[x]->offset_y += (this->tiles[x]->grad_error_y)*lr;
       //if (num_angles > 1) {
@@ -217,7 +217,7 @@ void tfk::Section::optimize_tile_grid() {
 
     if (energy < last_energy) {
       // Decreased the energy. Increase the learning rate a little bit.
-      lr = lr * 1.001;
+      lr = lr + 0.001;
     } else {
       // Increased the energy. Reset the step and decrease the learning rate.
       for (int j = 0; j < this->tiles.size(); j++) {
@@ -235,21 +235,17 @@ void tfk::Section::optimize_tile_grid() {
     if (energy + 1 < last_energy) keep_going = true;
 
     free(previous_offsets);
-    free(previous_angles);
+    //free(previous_angles);
 
     // after 1000 iterations stop early if no past
     //   iteration has improved the energy.
     if (i >= 1000 && i%1000 == 0) {
-      if (!keep_going && num_angles != 1) break;
-      if (!keep_going) {
-        num_angles++;
-        lr = 0.1;
-      }
+      if (!keep_going) break; 
       keep_going = false;
     }
 
     last_energy = energy; // store last energy for next iter.
-    printf("intermediate energy for section %d with lr %f is %.10f num_angles %d\n", this->real_section_id, lr, last_energy, num_angles);
+    //printf("intermediate energy for section %d with lr %f is %.10f\n", this->real_section_id, lr, last_energy);
   }
 
   double energy_sum = 0.0;
@@ -1462,17 +1458,17 @@ void tfk::Section::align_3d(Section* neighbor) {
     this->affine_transform_mesh(this->coarse_transform);
 
     // do the fine affine align with the neighbor.
-    this->fine_affine_align(neighbor);
+    //this->fine_affine_align(neighbor);
 
     // fine affine transform the mesh.
-    this->affine_transform_mesh(this->fine_transform);
-    this->total_affine_transform = this->fine_transform * this->coarse_transform;
+    //this->affine_transform_mesh(this->fine_transform);
+    this->total_affine_transform = /*this->fine_transform * */this->coarse_transform;
 
     // do the elastic alignment.
 
-    this->get_elastic_matches_relative(neighbor);
-    elastic_gradient_descent_section(this, neighbor);
-    this->triangle_mesh->build_index_post();
+    //this->get_elastic_matches_relative(neighbor);
+    //elastic_gradient_descent_section(this, neighbor);
+    //this->triangle_mesh->build_index_post();
 
     this->get_elastic_matches_relative(neighbor);
     elastic_gradient_descent_section(this, neighbor);
@@ -1485,10 +1481,10 @@ void tfk::Section::align_3d(Section* neighbor) {
     this->save_elastic_mesh(neighbor);
 
   } else {
-    this->load_coarse_transform(neighbor);
-    this->load_fine_transform(neighbor);
-    this->total_affine_transform = this->fine_transform * this->coarse_transform;
-    this->apply_affine_transforms();
+    //this->load_coarse_transform(neighbor);
+    //this->load_fine_transform(neighbor);
+    //this->total_affine_transform = this->fine_transform * this->coarse_transform;
+    //this->apply_affine_transforms();
   }
 }
 

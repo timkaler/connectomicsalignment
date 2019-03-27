@@ -5,7 +5,7 @@ BUILD_DIR := build
 CC := $(CXX) #g++
 LD := $(CXX) #g++
 
-CFLAGS += -std=c++17 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=native -pthread -I/efs/tools/protobuf_c4/include
+CFLAGS += -std=c++17 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=sandybridge -pthread -I/efs/tools/protobuf_c4/include
 
 OPENCV_INCLUDE=$(OPENCV_ROOT)/include
 OPENCV_LIB=$(OPENCV_ROOT)/lib
@@ -59,7 +59,8 @@ ifdef DEBUG
 	CFLAGS += -O1 -g
 else
 	CFLAGS += -DNDEBUG
-	CFLAGS += -O3 -g -mavx2 -m64 -march=native
+	#CFLAGS += -O3 -g -mavx2 -m64 -march=native
+	CFLAGS += -O3 -g -mavx -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -m64 -march=sandybridge
 	#-Ofast
 endif
 

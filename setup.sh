@@ -13,7 +13,11 @@ export TAPIR_PREFIX=/efs/tools/tapir-6/build
 #export PATH=$TAPIR_PREFIX/bin:/efs/home/wheatman/install_dir/protobufs/bin:$PATH
 
 #export PATH=$TAPIR_PREFIX/bin:/efs/tools/protobuf/bin:$PATH
+
+
 export PATH=$TAPIR_PREFIX/bin:/efs/tools/protobuf_c4/bin:$PATH
+#export PATH=$TAPIR_PREFIX/bin:/efs/tools/proto-prebuilt/bin:$PATH
+
 
 
 #export C_INCLUDE_PATH=$TAPIR_PREFIX/lib/clang/5.0.0/include/
@@ -23,7 +27,8 @@ export PATH=$TAPIR_PREFIX/bin:/efs/tools/protobuf_c4/bin:$PATH
 export CXX=clang++
 #export CPATH=$CPATH:/usr/include/c++/7/
 #export OPENCV_ROOT=/home/armafire/tools/opencv-3-install-test/
-export OPENCV_ROOT=/efs/tools/OpenCV3
+#export OPENCV_ROOT=/efs/tools/OpenCV3
+export OPENCV_ROOT=/efs/tools/OpenCV_noavx2
 
 #export OPENCV_ROOT=/efs/tools/OpenCV3_c5
 
@@ -44,6 +49,7 @@ export N_TEMPORARY_BYTES=500000000
 export PYTHONPATH=$PYTHONPATH:/efs/python_local/lib/python2.7/site-packages
 #export LD_LIBRARY_PATH=/efs/tools/protobuf/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH=/efs/tools/protobuf_c4/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=/efs/tools/proto-prebuilt/lib:$LD_LIBRARY_PATH
 
 #export LD_LIBRARY_PATH=/efs/home/tfk/maprecurse/sift_features4/new_machine:$LD_LIBRARY_PATH
 

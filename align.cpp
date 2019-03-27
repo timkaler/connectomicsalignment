@@ -72,7 +72,7 @@ tfk::Stack* make_stack(align_data_t* p_align_data) {
 }
 
 
-void align_execute(align_data_t *p_align_data) {
+void align_execute(align_data_t *p_align_data, bool do_3d, bool do_render) {
     tfk::Stack* stack = make_stack(p_align_data);
     printf("Got past the init\n");
     printf("stack has sections %zu\n", stack->sections.size());
@@ -80,8 +80,15 @@ void align_execute(align_data_t *p_align_data) {
     printf("starting align 2d\n");
     stack->align_2d();
     printf("Done with align 2d\n");
-    stack->align_3d();
-    printf("Done with align 3d\n");
+
+    if (do_3d) {
+      printf("starting 3d alignment\n");
+      stack->align_3d();
+      printf("Done with align 3d\n");
+    } else {
+      printf("skipping 3d alignment since do_3d=false\n");
+    }
+
 
     for (int i = 0; i < stack->sections.size(); i++) {
       stack->sections[i]->elastic_transform_ready = true;
@@ -98,7 +105,12 @@ void align_execute(align_data_t *p_align_data) {
     tfk::Render* render = new tfk::Render();
     auto entire_bbox = stack->sections[0]->get_bbox();
 //<<<<<<< HEAD
-    render->render_stack(stack,entire_bbox,tfk::Resolution::THUMBNAIL,"out/stack");
+    if (do_render) {
+      printf("doing rendering\n");
+      render->render_stack(stack,entire_bbox,tfk::Resolution::THUMBNAIL,"out/stack");
+    } else {
+      printf("not rendering because do_render=false\n");
+    }
 //=======
 //    int start_y = entire_bbox.first.y - (entire_bbox.second.y-entire_bbox.first.y)/2;
 //    int end_y = entire_bbox.second.y + (entire_bbox.second.y-entire_bbox.first.y)/2;

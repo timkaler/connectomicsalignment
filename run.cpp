@@ -53,6 +53,10 @@ int main(int argc, char **argv) {
   bool use_params,usefsj,skipoctfast,skipoctslow;
   float fast_scale;
 
+
+  bool do_3d = false;
+  bool do_render = false;
+
   // parse the arguments.
   try {
     const int NUM_REQUIRED = 4;
@@ -73,6 +77,8 @@ int main(int argc, char **argv) {
       ("o,outputdir", "The directory used to output results.", cxxopts::value<std::string>(outputdir_path))
       ("m,mode", "what mode to run in 1 to run the alignment 2 to run the paramter optimization", cxxopts::value<int>(mode))
       ("useparams", "use params for matchtilepairtask and fsj", cxxopts::value<bool>(use_params))
+      ("do_3d", "use params for matchtilepairtask and fsj", cxxopts::value<bool>(do_3d))
+      ("do_render", "use params for matchtilepairtask and fsj", cxxopts::value<bool>(do_render))
       ("fastscale", "param for fast pass image scale", cxxopts::value<float>(fast_scale))
       ("skipoctfast", "skip first octave for fast", cxxopts::value<bool>(skipoctfast))
       ("skipoctslow", "skip first octave for slow", cxxopts::value<bool>(skipoctslow))
@@ -141,12 +147,16 @@ int main(int argc, char **argv) {
     exit(0);
   }
 
+  
+
+
+
   // Execute the actual alignment code.
   #ifdef PROFILE
     ProfilerStart("profile.data");
   #endif
     if (mode == 1) {
-      align_execute(p_align_data);
+      align_execute(p_align_data, do_3d, do_render);
     } else if (mode == 2) {
       //param_optimize(p_align_data);
     } else if (mode == 3) {
