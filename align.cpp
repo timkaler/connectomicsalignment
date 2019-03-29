@@ -34,13 +34,13 @@
 #include "./render.hpp"
 #include "./data.hpp"
 #include "./ParamsDatabase.pb.h"
-
-int sched_yield(void) {
-for (int i=0; i< 4000; i++) _mm_pause(); usleep(1);
-
-return 0;
-
-}
+//#include "decode_jp2.cpp"
+//int sched_yield(void) {
+//for (int i=0; i< 4000; i++) _mm_pause(); usleep(1);
+//
+//return 0;
+//
+//}
 
 tfk::Stack* make_stack(align_data_t* p_align_data) {
     tfk::Stack* stack = new tfk::Stack(p_align_data->base_section,
@@ -77,9 +77,18 @@ void align_execute(align_data_t *p_align_data, bool do_3d, bool do_render) {
     printf("Got past the init\n");
     printf("stack has sections %zu\n", stack->sections.size());
 
+    //cv::Mat img = cv::imread("/efs/home/tfk/test.jp2", CV_LOAD_IMAGE_GRAYSCALE);
+    //cv::Mat img;
+
+    //getJP2Image("/efs/home/tfk/test.jp2", img);
+
+    //printf("img.rows %d img.cols %d\n", img.rows, img.cols);
+    //printf("after read\n");
+    //exit(0);
     printf("starting align 2d\n");
     stack->align_2d();
     printf("Done with align 2d\n");
+
 
     if (do_3d) {
       printf("starting 3d alignment\n");
@@ -107,7 +116,14 @@ void align_execute(align_data_t *p_align_data, bool do_3d, bool do_render) {
 //<<<<<<< HEAD
     if (do_render) {
       printf("doing rendering\n");
-      render->render_stack(stack,entire_bbox,tfk::Resolution::THUMBNAIL,"out/stack");
+
+    float x1 = (entire_bbox.first.x + entire_bbox.second.x)/2 + 5000;  // -2500 + 5000;
+    float x2 = x1+5000;
+    float y1 = (entire_bbox.first.y+entire_bbox.second.y)/2+5000;  // -2500 + 5000;
+    float y2 = y1+5000;
+    auto smaller_bbox = std::make_pair(cv::Point2f(x1, y1), cv::Point2f(x2, y2));
+
+      render->render_stack(stack,smaller_bbox,tfk::Resolution::FULL,"out/stack");
     } else {
       printf("not rendering because do_render=false\n");
     }
@@ -121,11 +137,7 @@ void align_execute(align_data_t *p_align_data, bool do_3d, bool do_render) {
 //    overlay_triangles_stack(stack, bigger_bbox, tfk::Resolution::THUMBNAIL, "out/stack");
 //
 //>>>>>>> 046e98482dc6b2b9033f1b418f1806e18a4b5504
-    //float x1 = (entire_bbox.first.x + entire_bbox.second.x)/2 + 5000;  // -2500 + 5000;
-    //float x2 = x1+5000;
-    //float y1 = (entire_bbox.first.y+entire_bbox.second.y)/2+5000;  // -2500 + 5000;
-    //float y2 = y1+5000;
-    ////auto smaller_bbox = std::make_pair(cv::Point2f(x1, y1), cv::Point2f(x2, y2));
+
 
 
     //float delta_x = entire_bbox.second.x - entire_bbox.first.x;

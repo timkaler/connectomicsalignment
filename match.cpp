@@ -36,14 +36,18 @@ void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, cv::Mat
                      2);
     } else {
 
+      //std::vector<std::vector< std::vector < cv::DMatch > > > raw_matches_tmp (descs1.rows/1000 + 4);
+
       cv::FlannBasedMatcher matcher;
       matcher.knnMatch(descs1, descs2,
                        raw_matches,
                        2);
     }
 
-    //}
+
+
     matches.reserve(raw_matches.size());
+    //}
     // Apply ratio test
     for (size_t i = 0; i < raw_matches.size(); i++) {
       if(raw_matches[i].size() >= 2){

@@ -167,7 +167,7 @@ void tfk::Section::optimize_tile_grid() {
   printf("starting run\n");
   double* tile_momentum_x = (double*) malloc(this->tiles.size()*sizeof(double));
   double* tile_momentum_y = (double*) malloc(this->tiles.size()*sizeof(double));
-  for (int i = 0; i < this->tiles.size(); i++) {
+  cilk_for (int i = 0; i < this->tiles.size(); i++) {
     tile_momentum_x[i] = 0.0;
     tile_momentum_y[i] = 0.0;
   }
@@ -180,20 +180,20 @@ void tfk::Section::optimize_tile_grid() {
     // first iteration compute last energy directly.
     if (i == 0) {
       cilk::reducer_opadd<double> last_energy_reducer(0.0);
-      for (int x = 0; x < this->tiles.size(); x++) {
+      cilk_for (int x = 0; x < this->tiles.size(); x++) {
         *last_energy_reducer += this->tiles[x]->local2DAlignUpdateEnergy();
       }
       last_energy = last_energy_reducer.get_value();
     }
 
-    for (int x = 0; x < this->tiles.size(); x++) {
+    cilk_for (int x = 0; x < this->tiles.size(); x++) {
       this->tiles[x]->local2DAlignUpdate(lr);
     }
 
 
     cv::Point2f* previous_offsets = (cv::Point2f*) calloc(this->tiles.size(), sizeof(cv::Point2f));
     //double* previous_angles = (double*) calloc(this->tiles.size(), sizeof(double));
-    for (int x = 0; x < this->tiles.size(); x++) {
+    cilk_for (int x = 0; x < this->tiles.size(); x++) {
       this->tiles[x]->grad_error_x += MOMENTUM*tile_momentum_x[x];
       this->tiles[x]->grad_error_y += MOMENTUM*tile_momentum_y[x];
 
@@ -210,7 +210,7 @@ void tfk::Section::optimize_tile_grid() {
 
     double energy = 0.0;
     cilk::reducer_opadd<double> energy_reducer(0.0);
-    for (int x = 0; x < this->tiles.size(); x++) {
+    cilk_for (int x = 0; x < this->tiles.size(); x++) {
       *energy_reducer += this->tiles[x]->local2DAlignUpdateEnergy();
     }
     energy = energy_reducer.get_value();
@@ -220,7 +220,7 @@ void tfk::Section::optimize_tile_grid() {
       lr = lr + 0.001;
     } else {
       // Increased the energy. Reset the step and decrease the learning rate.
-      for (int j = 0; j < this->tiles.size(); j++) {
+      cilk_for (int j = 0; j < this->tiles.size(); j++) {
         // reset the momentum.
         tile_momentum_x[j] = 0.0;
         tile_momentum_y[j] = 0.0;
@@ -232,11 +232,12 @@ void tfk::Section::optimize_tile_grid() {
       lr = lr * 0.99;
       energy = last_energy;
     }
-    if (energy + 1 < last_energy) keep_going = true;
+    if (energy + 5 < last_energy) keep_going = true;
 
     free(previous_offsets);
     //free(previous_angles);
 
+    printf("intermediate energy for section %d with lr %f is %.10f\n", this->real_section_id, lr, last_energy);
     // after 1000 iterations stop early if no past
     //   iteration has improved the energy.
     if (i >= 1000 && i%1000 == 0) {
@@ -249,7 +250,7 @@ void tfk::Section::optimize_tile_grid() {
   }
 
   double energy_sum = 0.0;
-  for (int i = 0; i < this->tiles.size(); i++) {
+  cilk_for (int i = 0; i < this->tiles.size(); i++) {
     double energy = this->tiles[i]->local2DAlignUpdateEnergy();
     energy_sum += energy;
     // Following two lines are used to generate grid-energy heatmaps.
@@ -1052,12 +1053,14 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
   double max_x = bbox.second.x;
   double max_y = bbox.second.y;
   std::vector<std::pair<double, double> > valid_boxes;
+  printf("elastic matches relative genreating bounding boxes\n");
   for (double box_iter_x = min_x; box_iter_x < max_x + 24000; box_iter_x += 12000) {
     for (double box_iter_y = min_y; box_iter_y < max_y + 24000; box_iter_y += 12000) {
       valid_boxes.push_back(std::make_pair(box_iter_x, box_iter_y));
     }
   }
 
+  printf("elastic matches relative genreating bounding boxes DONE\n");
 
 
   this->section_mesh_matches.clear();
@@ -1436,9 +1439,9 @@ bool tfk::Section::load_elastic_mesh(Section* neighbor) {
                       std::ios::in | std::ios::binary);
 
   if (!input.good()) return false;
-
+  printf("right before parsing from input stream.\n");
   triangleMesh.ParseFromIstream(&input);
-
+  printf("right before constructing triangle mesh in load\n");
   triangle_mesh = new TriangleMesh(triangleMesh);
   printf("section %d constructed triangle mesh\n", this->real_section_id);
 
@@ -1458,11 +1461,13 @@ void tfk::Section::align_3d(Section* neighbor) {
     this->affine_transform_mesh(this->coarse_transform);
 
     // do the fine affine align with the neighbor.
-    //this->fine_affine_align(neighbor);
+    this->fine_affine_align(neighbor);
 
     // fine affine transform the mesh.
     //this->affine_transform_mesh(this->fine_transform);
-    this->total_affine_transform = /*this->fine_transform * */this->coarse_transform;
+    this->total_affine_transform = this->fine_transform * this->coarse_transform;
+
+    this->affine_transform_mesh(this->fine_transform);
 
     // do the elastic alignment.
 
@@ -1473,6 +1478,22 @@ void tfk::Section::align_3d(Section* neighbor) {
     this->get_elastic_matches_relative(neighbor);
     elastic_gradient_descent_section(this, neighbor);
     this->triangle_mesh->build_index_post();
+
+    this->get_elastic_matches_relative(neighbor);
+    elastic_gradient_descent_section(this, neighbor);
+    this->triangle_mesh->build_index_post();
+
+    this->get_elastic_matches_relative(neighbor);
+    elastic_gradient_descent_section(this, neighbor);
+    this->triangle_mesh->build_index_post();
+
+    this->get_elastic_matches_relative(neighbor);
+    elastic_gradient_descent_section(this, neighbor);
+    this->triangle_mesh->build_index_post();
+
+    //this->get_elastic_matches_relative(neighbor);
+    //elastic_gradient_descent_section(this, neighbor);
+    //this->triangle_mesh->build_index_post();
 
     //this->get_elastic_matches_relative(neighbor);
     //elastic_gradient_descent_section(this, neighbor);
@@ -1745,8 +1766,8 @@ void tfk::Section::fine_affine_align(Section* neighbor){
   std::vector<cv::Point2f> filtered_match_points_a(0);
   std::vector<cv::Point2f> filtered_match_points_b(0);
 
-  //std::mutex lock;
-  for (int bbox_iter = 0; bbox_iter<valid_boxes.size(); bbox_iter++){
+  std::mutex lock;
+  cilk_for (int bbox_iter = 0; bbox_iter<valid_boxes.size(); bbox_iter++){
     auto bbox = valid_boxes[bbox_iter];
     double box_iter_x = bbox.first;
     double box_iter_y = bbox.second;
@@ -1791,6 +1812,7 @@ void tfk::Section::fine_affine_align(Section* neighbor){
       free(mask);
       continue;
     }
+    lock.lock();
     for (int c = 0; c < test_filtered_match_points_a.size(); c++){
       if (mask[c]){
         filtered_match_points_a.push_back(
@@ -1799,6 +1821,7 @@ void tfk::Section::fine_affine_align(Section* neighbor){
             test_filtered_match_points_b[c]);
       }
     }
+    lock.unlock();
     free(mask);
   }
   cv::Mat section_transform;
@@ -1873,14 +1896,57 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   cv::vconcat(atile_kps_desc_in_overlap_list, (atile_kps_desc_in_overlap));
   cv::vconcat(btile_kps_desc_in_overlap_list, (btile_kps_desc_in_overlap));
 
+  printf("before match features in coarse\n");
+
+  //std::vector< std::vector<cv::DMatch> > matches_multiple(100);
   std::vector< cv::DMatch > matches;
-  match_features(matches,
-                 atile_kps_desc_in_overlap,
-                 btile_kps_desc_in_overlap,
-                 0.92, false);
+
+  //std::vector<std::vector<cv::Point2f> > match_points_a_list(100);
+  //std::vector<std::vector<cv::Point2f> > match_points_b_list(100);
+  //cilk_for (int i = 0; i < this->tiles.size(); i += 100) {
+  //  std::vector <cv::KeyPoint > atile_kps_in_overlap;
+  //  std::vector <cv::Mat > atile_kps_desc_in_overlap_list;
+
+  //  int end = i+100;
+  //  if (end > this->tiles.size()) end = this->tiles.size(); 
+  //  int start = i;
+
+  //  for (int k = start; k < end;/*this->tiles.size();*/ k++) {
+  //    if (this->tiles[k]->bad_2d_alignment) continue;
+  //    this->tiles[k]->get_3d_keypoints(atile_kps_in_overlap, atile_kps_desc_in_overlap_list);
+  //  }
+
+  //  cv::Mat atile_kps_desc_in_overlap;
+
+  //  // Grab the matches.
+  //  for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
+  //    match_points_a_list[i].push_back(atile_kps_in_overlap[matches[tmpi].queryIdx].pt);
+  //    match_points_b_list[i].push_back(btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
+  //  }
+
+  //}
+
+    match_features(matches,
+                   atile_kps_desc_in_overlap,
+                   btile_kps_desc_in_overlap,
+                   0.92, false);
+  //for (int i = 0; i < matches_multiple.size(); i++) {
+  //  for (int j = 0; j < matches_multiple[i].size(); j++) {
+  //    matches.push_back(matches_multiple[i][j]);
+  //  }
+  //}
+
+  printf("after match features in coarse\n");
 
   // Filter the matches with RANSAC
   std::vector<cv::Point2f> match_points_a, match_points_b;
+
+  //for (int i = 0; i < 100; i++) {
+  //  for (int j = 0; j < match_points_a_list[i].size(); j++) {
+  //    match_points_a.push_back(match_points_a_list[i][j]);
+  //    match_points_b.push_back(match_points_b_list[i][j]);
+  //  }
+  //}
 
   // Grab the matches.
   for (size_t tmpi = 0; tmpi < matches.size(); ++tmpi) {
@@ -1888,14 +1954,14 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
     match_points_b.push_back(btile_kps_in_overlap[matches[tmpi].trainIdx].pt);
   }
 
-  bool* mask = (bool*)calloc(matches.size()+1, 1);
+  bool* mask = (bool*)calloc(match_points_a.size()+1, 1);
 
   // pre-filter matches with very forgiving ransac threshold.
   tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 1024, mask);
   std::vector< cv::Point2f > filtered_match_points_a_pre(0);
   std::vector< cv::Point2f > filtered_match_points_b_pre(0);
   int num_filtered = 0;
-  for (int c = 0; c < matches.size(); c++) {
+  for (int c = 0; c < match_points_a.size(); c++) {
     if (mask[c]) {
       num_filtered++;
       filtered_match_points_a_pre.push_back(
@@ -1906,7 +1972,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   }
   free(mask);
 
-  mask = (bool*)calloc(matches.size()+1, 1);
+  mask = (bool*)calloc(match_points_a.size()+1, 1);
 
   if (num_filtered < 32) {
     return;
@@ -2296,13 +2362,16 @@ bool tfk::Section::alignment2d_exists() {
 }
 
 void tfk::Section::read_3d_keypoints(std::string filename) {
+  printf("right before read 3d keypoints\n");
   Saved3DAlignment alignment3d;
   std::fstream input(std::string(TFK_TMP_DIR) + "/3d_keypoints_" +
                          std::to_string(this->real_section_id)+".pbuf",
                      std::ios::in | std::ios::binary);
   alignment3d.ParseFromIstream(&input);
+  printf("right after parsing 3d keypoints\n");
   input.close();
 
+  printf("right before loop for putting data into tiles\n");
   cilk_for (int i = 0; i < this->tiles.size(); i++) {
     Saved3DAlignmentTile tiledata = alignment3d.tiles(i);
     Tile* tile = this->tiles[i];
@@ -2315,6 +2384,7 @@ void tfk::Section::read_3d_keypoints(std::string filename) {
       tile->p_kps_desc_3d->push_back(ret.second);
     }
   }
+  printf("right after loop for putting data into tiles\n");
 }
 
 
@@ -2668,7 +2738,7 @@ void tfk::Section::compute_keypoints_and_matches() {
     bool pivot_good = false;
     int pivot_search_start = 0;
     for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-      if (sorted_tiles[i].second->x_start > pivot->x_finish + 12000) {
+      if (sorted_tiles[i].second->x_start > pivot->x_finish + 120000) {
         pivot = sorted_tiles[i].second;
         pivot_search_start = i;
         pivot_good = true;
@@ -2684,7 +2754,7 @@ void tfk::Section::compute_keypoints_and_matches() {
 
     std::map<int, TileSiftTask*> dependencies;
     while (active_set.size() > 0) {
-      printf("Current active set size is %lu\n", active_set.size());
+      printf("Current active set size is %lu percent done %f%%\n", active_set.size(), (pivot_search_start*100.0)/sorted_tiles.size());
       // find all the neighbors.
       for (auto it = active_set.begin(); it != active_set.end(); ++it) {
         Tile* tile = *it;
@@ -2803,7 +2873,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       //float duration = tdiff(global_start, gettime());
       pivot_good = false;
       for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-        if (sorted_tiles[i].second->x_start > pivot->x_finish + 12000) {
+        if (sorted_tiles[i].second->x_start > pivot->x_finish + 120000) {
           pivot = sorted_tiles[i].second;
           pivot_search_start = i;
           pivot_good = true;

@@ -72,13 +72,13 @@ void tfk::Stack::init() {
     this->output_dirpath = align_data.output_dirpath();
   }
 
-  if (align_data.has_base_section()) {
-    this->base_section = align_data.base_section();
-  }
+  //if (align_data.has_base_section()) {
+  //  this->base_section = align_data.base_section();
+  //}
 
-  if (align_data.has_n_sections()) {
-    this->n_sections = align_data.n_sections();
-  }
+  //if (align_data.has_n_sections()) {
+  //  this->n_sections = align_data.n_sections();
+  //}
 
   if (align_data.has_do_subvolume()) {
     this->do_subvolume = align_data.do_subvolume();
@@ -205,7 +205,7 @@ void tfk::Stack::align_2d() {
   int j = 0;
   int i = 0;
   while (j < this->sections.size()) {
-    j += 4;
+    j += 1;
     if (j >= this->sections.size()) j = this->sections.size();
     if (j-i > 1) {
       for (; i < j; i++) {

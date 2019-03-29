@@ -1,4 +1,5 @@
 
+#include "decode_jp2.cpp"
 
 int DEBUG_total_read_count = 0;
 
@@ -1664,10 +1665,12 @@ tfk::Tile::Tile(TileData& tile_data) {
 
     // NOTE TFK HACK
 
-    this->filepath = this->filepath.replace(this->filepath.find("/efs"), 4, "/home/gridsan/groups/supertech/connectomix");
+    //this->filepath = this->filepath.replace(this->filepath.find("/efs"), 4, "/home/gridsan/groups/supertech/connectomix");
 
-    this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jpg");
-    this->filepath = this->filepath.replace(this->filepath.find("sep14iarpa"),10,"compressed2");
+    this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jp2");
+
+    //this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".bmp.jp2");
+    //this->filepath = this->filepath.replace(this->filepath.find("sep14iarpa"),10,"compressed2");
 
 
     this->p_image = new cv::Mat();
@@ -1911,9 +1914,17 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
       if (!has_full_image) {
         std::string new_path;
         new_path = this->filepath;
+        //printf("filepath is %s\n", new_path.c_str());
         //full_image = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
         //full_image = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
-        cv::Mat tmp = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+
+
+
+        //cv::Mat tmp = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+        cv::Mat tmp;// = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+        getJP2Image(new_path.c_str(), tmp);
+
+
 
         cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
         clahe->setClipLimit(10.0);

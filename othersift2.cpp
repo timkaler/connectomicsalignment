@@ -888,6 +888,7 @@ void SIFT_Impl::detectAndCompute(InputArray _image, InputArray _mask,
         KeyPointsFilter::removeDuplicated( keypoints );
 
         //if( nfeatures > 0 )
+        if (nfeatures == 1001) nfeatures = 128;
         if (nfeatures == 1001) nfeatures = 1000;
         KeyPointsFilter::retainBest(keypoints, nfeatures);
         //t = (double)getTickCount() - t;
