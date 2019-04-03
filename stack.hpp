@@ -207,6 +207,7 @@ class Tile {
     std::vector<float> tile_pair_feature(Tile* other);
 
     void get_3d_keypoints(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::Mat>& desc);
+    void get_3d_keypoints_limit(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::Mat>& desc, int limit);
 
     void recompute_3d_keypoints(std::vector<cv::KeyPoint>& atile_all_kps,
                                        std::vector<cv::Mat>& atile_all_kps_desc,
@@ -308,6 +309,9 @@ class Section {
     Section(SectionData& section_data, std::pair<cv::Point2f, cv::Point2f> bounding_box,
             bool use_bbox_prefilter);
     std::vector<int> get_all_close_tiles(int atile_id);
+
+    std::vector<int> get_all_close_tiles_with_min_overlap_percent(Tile* tile, float overlap);
+
     std::vector<Tile*> get_all_close_tiles(Tile* atile_id);
     void compute_keypoints_and_matches();
     void compute_tile_matches(Tile* a_tile);
@@ -372,7 +376,7 @@ class Section {
 
 
 
-    void coarse_affine_align(Section* neighbor);
+    bool coarse_affine_align(Section* neighbor);
     void fine_affine_align(Section* neighbor);
     bool load_coarse_transform(Section* neighbor);
     bool load_fine_transform(Section* neighbor);
@@ -390,6 +394,7 @@ class Section {
 
 
     bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
+    bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox, float overlap_percent);
 
     std::pair<cv::Point2f, cv::Point2f> affine_transform_bbox(
         std::pair<cv::Point2f, cv::Point2f> bbox);

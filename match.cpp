@@ -9,6 +9,67 @@ cv::Point2f transform_point(vdata* vertex, cv::Point2f point_local) {
   return cv::Point2f(new_x, new_y);
 }
 
+
+
+
+
+void match_features_brute_parallel(std::vector< cv::DMatch > &matches, cv::Mat &descs1, cv::Mat &descs2, float rod) {
+
+
+  std::vector<bool> is_good(descs1.rows);
+  std::vector<int> good_matches(descs1.rows);
+
+
+  std::cout << "type is " << descs1.type() << std::endl;
+  std::cout << "rows,cols is  " << descs1.rows << "," << descs1.cols << std::endl;
+
+  cilk_for (int i = 0; i < descs1.rows; i++) {
+    float max_value = FLT_MAX;
+    float second_max_value = FLT_MAX;
+
+    int max_index = 0;
+    int second_max_index = 0;
+
+    for (int j = 0; j < descs2.rows; j++) {
+      float dot_product = 0.0;
+      for (int k = 0; k < 128; k++) {
+        float val = (descs1.at<float>(i,k) - descs2.at<float>(j,k));
+        dot_product += val*val;//(descs1(i,k)-descs2(i,k));
+      }
+
+      dot_product = sqrt(dot_product);
+
+      if (dot_product < max_value) {
+        second_max_value = max_value;
+        second_max_index = max_index;
+        max_value = dot_product;
+        max_index = j;
+      } else if (dot_product < second_max_value) {
+        second_max_value = dot_product;
+        second_max_index = j;
+      } 
+    }
+
+
+      if (max_value < second_max_value * rod) {
+        is_good[i] = true;
+        good_matches[i] = max_index;
+      } else {
+        is_good[i] = false;
+        good_matches[i] = -1;
+      }
+  }
+
+  for (int i = 0; i < descs1.rows; i++) {
+    if (is_good[i]) {
+      matches.push_back(cv::DMatch(i, good_matches[i], 1.0));
+    }
+  }
+  printf("there are %zu good matches", matches.size());
+}
+
+
+
 // Helper method to match the features of two tiles.
 void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, cv::Mat &descs2, float rod, bool brute) {
   std::vector< std::vector < cv::DMatch > > raw_matches;
@@ -24,6 +85,9 @@ void match_features(std::vector< cv::DMatch > &matches, cv::Mat &descs1, cv::Mat
     //} else {
     if (brute) {
     cv::BFMatcher matcher(cv::NORM_L2, false);
+
+
+
     //static const cv::Ptr<cv::flann::IndexParams> index_params = new cv::flann::KDTreeIndexParams(16);
     //static const cv::Ptr<cv::flann::SearchParams> search_params = new cv::flann::SearchParams(128, 0, false);
     //static const cv::Ptr<cv::flann::IndexParams> index_params = new cv::flann::KDTreeIndexParams(4);

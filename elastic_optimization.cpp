@@ -9,7 +9,7 @@ void elastic_gradient_descent_section(Section* _this, Section* _neighbor) {
   double cross_slice_winsor = 20.0;
   double intra_slice_weight = 1.0;
   double intra_slice_winsor = 200.0;
-  int max_iterations = 2000;
+  int max_iterations = 10000;
   double stepsize = 0.1;
   double momentum = 0.9;
 
@@ -132,7 +132,7 @@ void elastic_gradient_descent_section(Section* _this, Section* _neighbor) {
         // update all edges
         cilk_for (int j = 0; j < triangle_edges->size(); j++) {
           *cost_reducer += internal_mesh_derivs(mesh, gradients, (*triangle_edges)[j], rest_lengths[j],
-                                       all_weight/triangle_edges->size(), sigma);
+                                       all_weight/(triangle_edges->size()), sigma);
         }
 
         // update all triangles
@@ -141,7 +141,7 @@ void elastic_gradient_descent_section(Section* _this, Section* _neighbor) {
                                      (*triangles)[j].index2,
                                      (*triangles)[j].index3};
           *cost_reducer += area_mesh_derivs(mesh, gradients, triangle_indices, rest_areas[j],
-                                   all_weight/triangles->size());
+                                   all_weight/(triangles->size()));
         }
       }
 
@@ -163,7 +163,7 @@ void elastic_gradient_descent_section(Section* _this, Section* _neighbor) {
 
           cv::Point2f* gradients1 = my_section->gradients;
           double* barys1 = mesh_matches[j].my_barys;
-          double all_weight = cross_slice_weight / mesh_matches.size();
+          double all_weight = cross_slice_weight / sqrt(mesh_matches.size()); // NOTE(TFK) may want sqrt(
           double sigma = cross_slice_winsor;
 
           int indices1[3] = {mesh_matches[j].my_tri.index1,
@@ -181,7 +181,7 @@ void elastic_gradient_descent_section(Section* _this, Section* _neighbor) {
       if (iter == 0) prev_cost = cost+10.0;
 
       if (cost <= prev_cost) {
-        stepsize *= 1.1;
+        stepsize *= 1.01;
         if (stepsize > 10.0) {
           stepsize = 10.0;
         }
@@ -206,7 +206,7 @@ void elastic_gradient_descent_section(Section* _this, Section* _neighbor) {
         }
 
           if (max_iterations - iter < 1000) {
-            if (prev_cost - cost > 1.0/sqrt(_this->triangle_mesh->triangles->size()) && max_iterations < 100000) {
+            if (prev_cost - cost > 0.1/sqrt(_this->triangle_mesh->triangles->size()) && max_iterations < 100000) {
               max_iterations += 1000;
             }
           }
@@ -217,7 +217,7 @@ void elastic_gradient_descent_section(Section* _this, Section* _neighbor) {
         }
         prev_cost = cost;
       } else {
-        stepsize *= 0.5;
+        stepsize *= 0.95;
         {
           Section* section = _this;
           std::vector<cv::Point2f>* mesh = section->triangle_mesh->mesh;

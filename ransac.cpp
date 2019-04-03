@@ -370,7 +370,7 @@ vdata tfk_simple_ransac_strict_ret_affine(std::vector<cv::Point2f>& match_points
     //        continue;
     //      }
     for (int _j = 0; _j < the_limit/10000 + 1; _j++) {
-    if (maxInliers > 0.1*match_points_a.size() && maxInliers > 12) { 
+    if (maxInliers > 0.1*match_points_a.size() && maxInliers > 12 && _j > 0) { 
       //printf("Max inliers is fraction %f breaking\n", maxInliers*1.0/match_points_a.size());
       break;
     }

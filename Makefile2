@@ -6,13 +6,13 @@ CC := $(CXX) #g++
 LD := $(CXX) #g++
 
 #CFLAGS += -std=c++17 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=sandybridge -pthread -I/efs/tools/protobuf_c4/include -Iopenjpeg-2.3.0/src/lib/openjp2 -Iopenjpeg/include/openjpeg-2.3
-CFLAGS += -std=c++17 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=native -pthread -I/efs/tools/protobuf_c4/include -Iopenjpeg-2.3.0/src/lib/openjp2 -Iopenjpeg/include/openjpeg-2.3
+CFLAGS += -std=c++17 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=skylake-avx512 -pthread -I/efs/tools/protobuf_c4/include -Iopenjpeg-2.3.0/src/lib/openjp2 -Iopenjpeg/include/openjpeg-2.3
 
 OPENCV_INCLUDE=$(OPENCV_ROOT)/include
 OPENCV_LIB=$(OPENCV_ROOT)/lib
 
 CFLAGS += -I$(OPENCV_INCLUDE) -flto
-LDFLAGS = $(EXTRA_LDFLAGS) -L/efs/tools/protobuf_c4/lib -lprotobuf -lpthread -Lopenjpeg/lib -lopenjp2 -flto -fuse-ld=gold
+LDFLAGS = $(EXTRA_LDFLAGS) -L/efs/tools/protobuf_c4/lib -lprotobuf -lpthread -Lopenjpeg/lib -lopenjp2 -flto -fuse-ld=gold -lprofiler
 
 ifdef PROFILE
   CFLAGS += -DPROFILE
@@ -61,7 +61,7 @@ ifdef DEBUG
 else
 	CFLAGS += -DNDEBUG
 	#CFLAGS += -O3 -g -mavx2 -m64 -march=native
-	CFLAGS += -O3 -g -march=native -m64 #-mavx -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -m64 -march=sandybridge
+	CFLAGS += -O3 -g -march=skylake-avx512 -m64 #-mavx -msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2 -m64 -march=sandybridge
 	#-Ofast
 endif
 

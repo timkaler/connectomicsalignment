@@ -1031,6 +1031,32 @@ std::pair<cv::Point2f, cv::Point2f> tfk::Tile::get_bbox() {
 	return std::make_pair(cv::Point2f(min_x,min_y), cv::Point2f(max_x, max_y));
 }
 
+void tfk::Tile::get_3d_keypoints_limit(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::Mat>& desc, int limit) {
+	if (this->p_kps_3d->size() <= 0) return;
+
+
+        float strongest_keypoint = 0.0;
+ 
+	for (int pt_idx = 0; pt_idx < this->p_kps_3d->size(); ++pt_idx) {
+		//cv::Point2f pt = this->rigid_transform((*(this->p_kps_3d))[pt_idx].pt);
+		cv::KeyPoint kpt = (*(this->p_kps_3d))[pt_idx];
+                if (strongest_keypoint < kpt.response) {
+                  strongest_keypoint = kpt.response;
+                }
+	}
+        
+
+	for (int pt_idx = 0; pt_idx < this->p_kps_3d->size(); ++pt_idx) {
+		cv::Point2f pt = this->rigid_transform((*(this->p_kps_3d))[pt_idx].pt);
+		cv::KeyPoint kpt = (*(this->p_kps_3d))[pt_idx];
+		kpt.pt = pt;
+                if (kpt.response >= strongest_keypoint*0.99) {
+		  keypoints.push_back(kpt);
+		  desc.push_back(this->p_kps_desc_3d->row(pt_idx).clone());
+                }
+	}
+}
+
 void tfk::Tile::get_3d_keypoints(std::vector<cv::KeyPoint>& keypoints, std::vector<cv::Mat>& desc) {
 	if (this->p_kps_3d->size() <= 0) return;
 

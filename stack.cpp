@@ -151,7 +151,7 @@ void tfk::Stack::align_3d() {
   }
 
 
-  cilk_for (int i = 0; i < this->sections.size(); i++) {
+  for (int i = 0; i < this->sections.size(); i++) {
     if (i == 0) {
       this->sections[0]->align_3d(this->sections[0]);
     } else {

@@ -7,6 +7,10 @@ Render::Render() {}
 void Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
                     std::string filename, Resolution res) {
   cv::Mat img = this->render(section, bbox, res);
+
+  //cv::Mat tmp; 
+  //cv::resize(img, tmp, cv::Size(), 0.25, 0.25, CV_INTER_AREA);
+
   cv::imwrite(filename, img);
 }
 
@@ -369,7 +373,14 @@ cv::Mat tfk::Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f
 void Render::render(Section* section, std::pair<cv::Point2f, cv::Point2f> bbox,
     tfk::Resolution resolution, std::string filename) {
   cv::Mat img = this->render(section, bbox, resolution);
-  cv::imwrite(filename, img); 
+
+  //cv::Mat tmp; 
+  //cv::resize(img, tmp, cv::Size(), 0.25, 0.25, CV_INTER_AREA);
+
+  cv::imwrite(filename, img);
+
+
+  //cv::imwrite(filename, img); 
 }
 
 void Render::render_stack(Stack* stack,
@@ -461,6 +472,7 @@ void Render::render_stack_with_patch(Stack* stack,
         }
       }
     }
+
     cv::imwrite(filename_prefix+"_"+std::to_string(section->real_section_id)+".tif", img);
     last_img = img;
     img = next_section_img;

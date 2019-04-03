@@ -117,10 +117,10 @@ void align_execute(align_data_t *p_align_data, bool do_3d, bool do_render) {
     if (do_render) {
       printf("doing rendering\n");
 
-    float x1 = (entire_bbox.first.x + entire_bbox.second.x)/2 + 5000;  // -2500 + 5000;
-    float x2 = x1+5000;
-    float y1 = (entire_bbox.first.y+entire_bbox.second.y)/2+5000;  // -2500 + 5000;
-    float y2 = y1+5000;
+    float x1 = (entire_bbox.first.x + entire_bbox.second.x)/2 + /*8**/5000;  // -2500 + 5000;
+    float x2 = x1+5000;//+4*10000;
+    float y1 = (entire_bbox.first.y+entire_bbox.second.y)/2+/*8**/5000;  // -2500 + 5000;
+    float y2 = y1+5000;//+4*10000;
     auto smaller_bbox = std::make_pair(cv::Point2f(x1, y1), cv::Point2f(x2, y2));
 
       render->render_stack(stack,smaller_bbox,tfk::Resolution::FULL,"out/stack");

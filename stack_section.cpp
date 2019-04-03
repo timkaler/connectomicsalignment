@@ -115,7 +115,7 @@ cv::Point2f tfk::Section::affine_transform_plusA(cv::Point2f pt, cv::Mat A) {
 cv::Point2f tfk::Section::elastic_transform(cv::Point2f p) {
   std::tuple<bool, float, float, float, int> info = this->get_triangle_for_point(p);
   if (!std::get<0>(info)) {
-    off_grid->push_back(p);
+    //off_grid->push_back(p);
     return p;
   }
 
@@ -393,7 +393,7 @@ void tfk::Section::align_2d() {
       std::string(std::string(TFK_TMP_DIR) + "/prefix_"+std::to_string(this->real_section_id));
 
       this->load_2d_alignment();
-      compare_2d_alignment();
+      //compare_2d_alignment();
       //this->load_2d_alignment();
       this->read_3d_keypoints(filename);
       return;
@@ -974,7 +974,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
   //printf("Num matches is %zu\n", matches.size());
 
   // Bad don't add filtered matches.
-  if (matches.size() < 12) return;
+  if (matches.size() < 120) return;
 
   std::vector<cv::Point2f> match_points_a, match_points_b;
 
@@ -999,7 +999,7 @@ void tfk::Section::find_3d_matches_in_box(Section* neighbor,
   }
 
   // Bad clear filtered matches.
-  if (num_filtered < 0.05*match_points_a.size() || num_filtered < 12) {
+  if (num_filtered < /*0.05**/0.1*match_points_a.size() || num_filtered < 12) {
      test_filtered_match_points_a.clear();
      test_filtered_match_points_b.clear();
   }
@@ -1234,7 +1234,10 @@ void tfk::Section::get_elastic_matches_relative(Section* neighbor) {
   //  match3.my_section = (void*) this;
   //  match3.n_section = (void*) neighbor;
   //}
-  //printf("before loop over filtered match points of size %zu\n", filtered_match_points_a.size());
+
+  //if (filtered_match_points_a.size() < 12 || filtered_match_points_b.size() < 12) continue;
+ 
+  printf("before loop over filtered match points of size %zu\n", filtered_match_points_a.size());
   for (int m = 0; m < filtered_match_points_a.size(); m++) {
     cv::Point2f my_pt = filtered_match_points_a[m];
     cv::Point2f n_pt = filtered_match_points_b[m];
@@ -1325,6 +1328,8 @@ void tfk::Section::affine_transform_mesh() {
 }
 
 void tfk::Section::affine_transform_mesh(cv::Mat transform) {
+  std::cout << "tfk debug" << std::endl;
+  std::cout << transform << std::endl;
   for (int mesh_index = 0; mesh_index < this->triangle_mesh->mesh->size(); mesh_index++) {
         cv::Point2f pt = (*this->triangle_mesh->mesh)[mesh_index];
 
@@ -1455,19 +1460,27 @@ void tfk::Section::align_3d(Section* neighbor) {
 
   if (!load_elastic_mesh(neighbor)) {
     // do the affine align with the neighbor.
-    this->coarse_affine_align(neighbor);
+
+
+    int trials = 10;
+    
+    for (int i = 0; i < trials; i++) {
+      bool success = this->coarse_affine_align(neighbor);
+      if (success) break;
+      printf("trial %d failed, retrying.\n", i);
+    }
 
     // affine transform the mesh.
     this->affine_transform_mesh(this->coarse_transform);
 
     // do the fine affine align with the neighbor.
-    this->fine_affine_align(neighbor);
+    //this->fine_affine_align(neighbor);
 
-    // fine affine transform the mesh.
+    //// fine affine transform the mesh.
+    ////this->affine_transform_mesh(this->fine_transform);
+    //this->total_affine_transform = this->fine_transform * this->coarse_transform;
+
     //this->affine_transform_mesh(this->fine_transform);
-    this->total_affine_transform = this->fine_transform * this->coarse_transform;
-
-    this->affine_transform_mesh(this->fine_transform);
 
     // do the elastic alignment.
 
@@ -1483,13 +1496,13 @@ void tfk::Section::align_3d(Section* neighbor) {
     elastic_gradient_descent_section(this, neighbor);
     this->triangle_mesh->build_index_post();
 
-    this->get_elastic_matches_relative(neighbor);
-    elastic_gradient_descent_section(this, neighbor);
-    this->triangle_mesh->build_index_post();
+    //this->get_elastic_matches_relative(neighbor);
+    //elastic_gradient_descent_section(this, neighbor);
+    //this->triangle_mesh->build_index_post();
 
-    this->get_elastic_matches_relative(neighbor);
-    elastic_gradient_descent_section(this, neighbor);
-    this->triangle_mesh->build_index_post();
+    //this->get_elastic_matches_relative(neighbor);
+    //elastic_gradient_descent_section(this, neighbor);
+    //this->triangle_mesh->build_index_post();
 
     //this->get_elastic_matches_relative(neighbor);
     //elastic_gradient_descent_section(this, neighbor);
@@ -1854,7 +1867,7 @@ void tfk::Section::fine_affine_align(Section* neighbor){
 
 
 // Find affine transform for this section that aligns it to neighbor.
-void tfk::Section::coarse_affine_align(Section* neighbor) {
+bool tfk::Section::coarse_affine_align(Section* neighbor) {
   if (neighbor == NULL || neighbor->real_section_id == this->real_section_id) {
     cv::Mat A(3, 3, cv::DataType<double>::type);
     A.at<double>(0, 0) = 1.0;
@@ -1871,7 +1884,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
     std::cout << A << std::endl;
 
     this->coarse_transform = A.clone();
-    return;
+    return true;
   }
 
   // a = neighbor.
@@ -1884,12 +1897,12 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
 
   for (int i = 0; i < this->tiles.size(); i++) {
     if (this->tiles[i]->bad_2d_alignment) continue;
-    this->tiles[i]->get_3d_keypoints(atile_kps_in_overlap, atile_kps_desc_in_overlap_list);
+    this->tiles[i]->get_3d_keypoints_limit(atile_kps_in_overlap, atile_kps_desc_in_overlap_list, 1);
   }
 
   for (int i = 0; i < neighbor->tiles.size(); i++) {
     if (neighbor->tiles[i]->bad_2d_alignment) continue;
-    neighbor->tiles[i]->get_3d_keypoints(btile_kps_in_overlap, btile_kps_desc_in_overlap_list);
+    neighbor->tiles[i]->get_3d_keypoints_limit(btile_kps_in_overlap, btile_kps_desc_in_overlap_list, 1);
   }
 
   cv::Mat atile_kps_desc_in_overlap, btile_kps_desc_in_overlap;
@@ -1926,10 +1939,15 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
 
   //}
 
-    match_features(matches,
+    match_features_brute_parallel(matches,
                    atile_kps_desc_in_overlap,
                    btile_kps_desc_in_overlap,
-                   0.92, false);
+                   0.92);
+
+    //match_features(matches,
+    //               atile_kps_desc_in_overlap,
+    //               btile_kps_desc_in_overlap,
+    //               0.92, false);
   //for (int i = 0; i < matches_multiple.size(); i++) {
   //  for (int j = 0; j < matches_multiple[i].size(); j++) {
   //    matches.push_back(matches_multiple[i][j]);
@@ -1957,7 +1975,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   bool* mask = (bool*)calloc(match_points_a.size()+1, 1);
 
   // pre-filter matches with very forgiving ransac threshold.
-  tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 1024, mask);
+  tfk_simple_ransac_strict_ret_affine(match_points_a, match_points_b, 64.0, mask);
   std::vector< cv::Point2f > filtered_match_points_a_pre(0);
   std::vector< cv::Point2f > filtered_match_points_b_pre(0);
   int num_filtered = 0;
@@ -1975,7 +1993,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   mask = (bool*)calloc(match_points_a.size()+1, 1);
 
   if (num_filtered < 32) {
-    return;
+    return false;
   }
 
   tfk_simple_ransac_strict_ret_affine(filtered_match_points_a_pre,
@@ -1997,7 +2015,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
 
   if (num_filtered < 12) {
     // printf("Not enough matches %d for section %d with thresh\n", num_filtered, this->section_id);
-    return;
+    return false;
   } else {
     // printf("Got enough matches %d for section %d with thresh\n", num_filtered, this->section_id);
   }
@@ -2028,6 +2046,7 @@ void tfk::Section::coarse_affine_align(Section* neighbor) {
   cv::FileStorage fs(path, cv::FileStorage::WRITE);
   cv::write(fs, "transform", this->coarse_transform);
   fs.release();
+  return true;
 }
 
 // returns the offset vector between the images in the scale of the images
@@ -2989,7 +3008,7 @@ std::vector<int> tfk::Section::get_all_close_tiles(int atile_id) {
 // Section from protobuf
 tfk::Section::Section(SectionData& section_data, std::pair<cv::Point2f, cv::Point2f> bounding_box,
                       bool use_bbox_prefilter) {
-  this->off_grid = new std::vector<cv::Point2f>();
+  //this->off_grid = new std::vector<cv::Point2f>();
   this->elastic_transform_ready = false;
   this->section_id = section_data.section_id();
   this->real_section_id = section_data.section_id();
