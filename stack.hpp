@@ -173,6 +173,12 @@ class Tile {
     std::vector<edata> edges;
     std::vector<edata> add_edges;
 
+
+    std::vector<Tile*> filtered_edges;
+    std::vector<std::pair<cv::Point2f, cv::Point2f> > filtered_edges_points;
+    std::vector<bool> filtered_edges_sign;
+    std::vector<cv::Point2f> filtered_edges_offset;
+
     // an array of pointers
     MLBase* *ml_models;
     ParamDB* *paramdbs;
@@ -219,7 +225,11 @@ class Tile {
     bool overlaps_with_threshold(Tile* other, int min_dim_overlap);
     void local2DAlignUpdate();
     void local2DAlignUpdate(double lr);//, int num_angles);
+    void local2DAlignUpdateFaster(double lr);//, int num_angles);
+    void local2DAlignUpdate_filter_edges();//, int num_angles);
+    void local2DAlignUpdate_filter_edges_cleanup();//, int num_angles);
     double local2DAlignUpdateEnergy();
+    double local2DAlignUpdateEnergyFaster();
     void local2DAlignUpdateLimited(std::set<Tile*>* active_set);
     void insert_matches(Tile* neighbor,
                         std::vector<cv::Point2f>& points_a, std::vector<cv::Point2f>& points_b);

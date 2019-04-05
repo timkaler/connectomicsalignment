@@ -175,6 +175,18 @@ void tfk::Section::optimize_tile_grid() {
   bool keep_going = false;
   double last_energy = 0.0;
   //int num_angles = 1;
+
+      TFK_TIMER_VAR(tfktimer); 
+      TFK_START_TIMER(&tfktimer); 
+      TFK_STOP_TIMER(&tfktimer, "begin"); 
+
+  cv::Point2f* previous_offsets = (cv::Point2f*) calloc(this->tiles.size(), sizeof(cv::Point2f));
+
+
+  cilk_for (int x = 0; x < this->tiles.size(); x++) {
+    this->tiles[x]->local2DAlignUpdate_filter_edges();
+  }
+
   for (int i = 0; i < 200000; i++) {
     double MOMENTUM = 0.1;
     // first iteration compute last energy directly.
@@ -187,11 +199,10 @@ void tfk::Section::optimize_tile_grid() {
     }
 
     cilk_for (int x = 0; x < this->tiles.size(); x++) {
-      this->tiles[x]->local2DAlignUpdate(lr);
+      this->tiles[x]->local2DAlignUpdateFaster(lr);
     }
 
 
-    cv::Point2f* previous_offsets = (cv::Point2f*) calloc(this->tiles.size(), sizeof(cv::Point2f));
     //double* previous_angles = (double*) calloc(this->tiles.size(), sizeof(double));
     cilk_for (int x = 0; x < this->tiles.size(); x++) {
       this->tiles[x]->grad_error_x += MOMENTUM*tile_momentum_x[x];
@@ -211,7 +222,15 @@ void tfk::Section::optimize_tile_grid() {
     double energy = 0.0;
     cilk::reducer_opadd<double> energy_reducer(0.0);
     cilk_for (int x = 0; x < this->tiles.size(); x++) {
-      *energy_reducer += this->tiles[x]->local2DAlignUpdateEnergy();
+      //int start = _x;
+      //int end = _x+100;
+      //if (end > this->tiles.size()) end = this->tiles.size();
+      //for (int x = 0; x < this->tiles.size(); x++) {
+      //double energy_sum = 0.0;
+      *energy_reducer += this->tiles[x]->local2DAlignUpdateEnergyFaster();
+      //for (int x = start; x < end; x++) {
+      //}
+      //*energy_reducer += energy_sum;
     }
     energy = energy_reducer.get_value();
 
@@ -234,10 +253,11 @@ void tfk::Section::optimize_tile_grid() {
     }
     if (energy + 5 < last_energy) keep_going = true;
 
-    free(previous_offsets);
+    //free(previous_offsets);
     //free(previous_angles);
-
-    printf("intermediate energy for section %d with lr %f is %.10f\n", this->real_section_id, lr, last_energy);
+    if (i%1000 == 0) { 
+      printf("intermediate energy for section %d with lr %f is %.10f\n", this->real_section_id, lr, last_energy);
+    }
     // after 1000 iterations stop early if no past
     //   iteration has improved the energy.
     if (i >= 1000 && i%1000 == 0) {
@@ -249,6 +269,12 @@ void tfk::Section::optimize_tile_grid() {
     //printf("intermediate energy for section %d with lr %f is %.10f\n", this->real_section_id, lr, last_energy);
   }
 
+  free(previous_offsets);
+  cilk_for (int x = 0; x < this->tiles.size(); x++) {
+    this->tiles[x]->local2DAlignUpdate_filter_edges_cleanup();
+  }
+
+  TFK_STOP_TIMER(&tfktimer, "done with gradient descent\n"); 
   double energy_sum = 0.0;
   cilk_for (int i = 0; i < this->tiles.size(); i++) {
     double energy = this->tiles[i]->local2DAlignUpdateEnergy();
@@ -2757,7 +2783,7 @@ void tfk::Section::compute_keypoints_and_matches() {
     bool pivot_good = false;
     int pivot_search_start = 0;
     for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-      if (sorted_tiles[i].second->x_start > pivot->x_finish + 120000) {
+      if (sorted_tiles[i].second->x_start > pivot->x_finish + 12000) {
         pivot = sorted_tiles[i].second;
         pivot_search_start = i;
         pivot_good = true;
@@ -2908,7 +2934,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       //float duration = tdiff(global_start, gettime());
       pivot_good = false;
       for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-        if (sorted_tiles[i].second->x_start > pivot->x_finish + 120000) {
+        if (sorted_tiles[i].second->x_start > pivot->x_finish + 12000) {
           pivot = sorted_tiles[i].second;
           pivot_search_start = i;
           pivot_good = true;

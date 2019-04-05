@@ -1176,6 +1176,33 @@ void tfk::Tile::local2DAlignUpdateLimited(std::set<Tile*>* active_set) {
 
 }
 
+double tfk::Tile::local2DAlignUpdateEnergyFaster() {
+  if (this->bad_2d_alignment) return 0.0;
+  if (this->edges.size() == 0) return 0.0;
+
+  double energy = 0.0;
+  for (int i = 0; i < this->filtered_edges.size(); i++) {
+    Tile* neighbor = this->filtered_edges[i];
+    cv::Point2f deviation;
+    if (this->filtered_edges_sign[i]) {
+      cv::Point2f a_point = this->rigid_transform(this->filtered_edges_points[i].first);
+      cv::Point2f b_point = neighbor->rigid_transform(this->filtered_edges_points[i].second);
+      cv::Point2f delta =  a_point - b_point;
+      deviation = this->filtered_edges_offset[i] - delta;
+    } else {
+      cv::Point2f a_point =
+          this->rigid_transform(this->filtered_edges_points[i].second);
+      cv::Point2f b_point =
+          neighbor->rigid_transform(this->filtered_edges_points[i].first);
+      cv::Point2f delta =  a_point - b_point;
+      deviation = -1*this->filtered_edges_offset[i] - delta;
+    }
+    energy += deviation.x*deviation.x + deviation.y*deviation.y;
+  }
+
+  return energy;
+}
+
 double tfk::Tile::local2DAlignUpdateEnergy() {
   if (this->bad_2d_alignment) return 0.0;
   //std::vector<edata>& edges = graph->edgeData[vid];
@@ -1189,7 +1216,7 @@ double tfk::Tile::local2DAlignUpdateEnergy() {
   double weight_sum = 0.0;
   double energy = 0.0;
 
-  std::set<int> found_tile_ids;
+  //std::set<int> found_tile_ids;
   for (int i = 0; i < this->edges.size(); i++) {
     std::vector<cv::Point2f>* v_points = this->edges[i].v_points;
     std::vector<cv::Point2f>* n_points = this->edges[i].n_points;
@@ -1201,8 +1228,8 @@ double tfk::Tile::local2DAlignUpdateEnergy() {
         neighbor->ideal_offsets.find(this->tile_id) == neighbor->ideal_offsets.end()) continue;
 
 
-    if (found_tile_ids.find(neighbor->tile_id) != found_tile_ids.end()) continue;
-    found_tile_ids.insert(neighbor->tile_id);
+    //if (found_tile_ids.find(neighbor->tile_id) != found_tile_ids.end()) {printf("does this ever happen?\n"); continue;}
+    //found_tile_ids.insert(neighbor->tile_id);
 
 
       //cv::Point2f a_point = cv::Point2f(this->x_start+this->offset_x,
@@ -1284,96 +1311,101 @@ double tfk::Tile::local2DAlignUpdateEnergy() {
   //}
 }
 
-void tfk::Tile::local2DAlignUpdate(double lr) {//, int num_angles) {
+void tfk::Tile::local2DAlignUpdate_filter_edges_cleanup() {
+
+   this->filtered_edges.clear();
+   std::vector<Tile*>().swap(this->filtered_edges);
+   this->filtered_edges_points.clear();
+   std::vector<std::pair<cv::Point2f, cv::Point2f> >().swap(this->filtered_edges_points);
+
+   this->filtered_edges_sign.clear();
+   std::vector<bool>().swap(this->filtered_edges_sign);
+}
+
+void tfk::Tile::local2DAlignUpdate_filter_edges() {//, int num_angles) {
+  this->filtered_edges.clear();
+  this->filtered_edges_points.clear();
+  this->filtered_edges_sign.clear();
+
+  if (this->bad_2d_alignment) return;
+  if (this->edges.size() == 0) return;
+
+  for (int i = 0; i < this->edges.size(); i++) {
+    Tile* neighbor = (Tile*) this->edges[i].neighbor_tile;
+    std::vector<cv::Point2f>* v_points = this->edges[i].v_points;
+    std::vector<cv::Point2f>* n_points = this->edges[i].n_points;
+    if (neighbor->bad_2d_alignment) continue;
+    if (this->ideal_offsets.find(neighbor->tile_id) == this->ideal_offsets.end() &&
+        neighbor->ideal_offsets.find(this->tile_id) == neighbor->ideal_offsets.end()) continue;
+
+
+    if (v_points->size() == 0 && n_points->size() == 0) continue;
+
+    this->filtered_edges.push_back(neighbor);
+
+    if (this->ideal_offsets.find(neighbor->tile_id) != this->ideal_offsets.end()) {
+      this->filtered_edges_points.push_back(this->ideal_points[neighbor->tile_id]); 
+      this->filtered_edges_sign.push_back(true);
+      this->filtered_edges_offset.push_back(this->ideal_offsets[neighbor->tile_id]);
+      //cv::Point2f a_point = this->rigid_transform(this->ideal_points[neighbor->tile_id].first);
+      //cv::Point2f b_point = neighbor->rigid_transform(this->ideal_points[neighbor->tile_id].second);
+      //cv::Point2f delta =  a_point - b_point;
+      //deviation = this->ideal_offsets[neighbor->tile_id] - delta;
+    } else {
+      this->filtered_edges_points.push_back(neighbor->ideal_points[this->tile_id]);
+      this->filtered_edges_sign.push_back(false);
+      this->filtered_edges_offset.push_back(neighbor->ideal_offsets[this->tile_id]);
+      //cv::Point2f a_point =
+      //    this->rigid_transform(neighbor->ideal_points[this->tile_id].second);
+      //cv::Point2f b_point =
+      //    neighbor->rigid_transform(neighbor->ideal_points[this->tile_id].first);
+
+      //cv::Point2f delta =  a_point - b_point;
+
+      //deviation = -1*neighbor->ideal_offsets[this->tile_id] - delta;
+      //continue;
+    }
+
+  }
+
+}
+
+void tfk::Tile::local2DAlignUpdateFaster(double lr) {//, int num_angles) {
   if (this->bad_2d_alignment) return;
 
   if (this->edges.size() == 0) return;
   if (this->edges.size() == 0) return;
 
-  //double best_delta_angle = 0.0;
-  double best_grad_error_x = 0.0;
-  double best_grad_error_y = 0.0;
-  double best_deviation_energy = 0.0;
-  bool first_step = true;
-
-  //for (int angle_step = 1-num_angles; angle_step < num_angles; angle_step++) {
-  for (int angle_step = 0; angle_step < 1; angle_step++) {
-
-    //double delta_angle = angle_step*0.00001;
 
     double grad_error_x = 0.0;
     double grad_error_y = 0.0;
     double weight_sum = 0.0;
-    std::set<int> found_tile_ids;
-    //double angle_sum = 0.0;
-    //double angle_sum_count = 0.0;
 
-    for (int i = 0; i < this->edges.size(); i++) {
-      std::vector<cv::Point2f>* v_points = this->edges[i].v_points;
-      std::vector<cv::Point2f>* n_points = this->edges[i].n_points;
-      Tile* neighbor = (Tile*) this->edges[i].neighbor_tile;
-      if (neighbor->bad_2d_alignment) continue;
-      if (this->ideal_offsets.find(neighbor->tile_id) == this->ideal_offsets.end() &&
-          neighbor->ideal_offsets.find(this->tile_id) == neighbor->ideal_offsets.end()) continue;
-
-      if (found_tile_ids.find(neighbor->tile_id) != found_tile_ids.end()) continue;
-
-      found_tile_ids.insert(neighbor->tile_id);
-
-      if (v_points->size() == 0 && n_points->size() == 0) continue; 
+    for (int i = 0; i < this->filtered_edges.size(); i++) {
+      Tile* neighbor = this->filtered_edges[i];
       cv::Point2f deviation;
-      if (this->ideal_offsets.find(neighbor->tile_id) != this->ideal_offsets.end()) {
-        cv::Point2f a_point = this->rigid_transform(this->ideal_points[neighbor->tile_id].first);
-        cv::Point2f b_point = neighbor->rigid_transform(this->ideal_points[neighbor->tile_id].second);
+      if (this->filtered_edges_sign[i]) {
+
+        cv::Point2f a_point = this->rigid_transform(this->filtered_edges_points[i].first);
+        cv::Point2f b_point = neighbor->rigid_transform(this->filtered_edges_points[i].second);
         cv::Point2f delta =  a_point - b_point;
-        deviation = this->ideal_offsets[neighbor->tile_id] - delta;
+        deviation = this->filtered_edges_offset[i] - delta;
       } else {
         cv::Point2f a_point =
-            this->rigid_transform(neighbor->ideal_points[this->tile_id].second);
+            this->rigid_transform(this->filtered_edges_points[i].second);
         cv::Point2f b_point =
-            neighbor->rigid_transform(neighbor->ideal_points[this->tile_id].first);
+            neighbor->rigid_transform(this->filtered_edges_points[i].first);
 
         cv::Point2f delta =  a_point - b_point;
-
-        deviation = -1*neighbor->ideal_offsets[this->tile_id] - delta;
-        //continue;
+        deviation = -1*this->filtered_edges_offset[i] - delta;
       }
       weight_sum = 1;
-
-      if (std::abs(deviation.x) > 3.0 || true ) {
-        grad_error_x += 2*deviation.x;
-      }
-      if (std::abs(deviation.y) > 3.0 || true ) {
-        grad_error_y += 2*deviation.y;
-      }
+      grad_error_x += 2*deviation.x;
+      grad_error_y += 2*deviation.y;
     }
-    cv::Point2f deviation = cv::Point2f(grad_error_x, grad_error_y);
+    this->grad_error_x = grad_error_x / this->edges.size();
+    this->grad_error_y = grad_error_y / this->edges.size();
 
-    //if (deviation.x*deviation.x + deviation.y*deviation.y < best_deviation_energy || first_step) {
-    if (first_step /*deviation.x*deviation.x + deviation.y*deviation.y < best_deviation_energy || first_step*/) {
-      //best_deviation_energy = deviation.x*deviation.x + deviation.y*deviation.y;
-      best_grad_error_x = grad_error_x / this->edges.size();
-      best_grad_error_y = grad_error_y / this->edges.size();
-    }
-    if (deviation.x*deviation.x + deviation.y*deviation.y < best_deviation_energy || first_step) {
-      best_deviation_energy = deviation.x*deviation.x + deviation.y*deviation.y;
-    }
-    first_step = false;
-  }
-
-  this->grad_error_x = best_grad_error_x;
-  this->grad_error_y = best_grad_error_y;
-  //printf("gradient %f %f\n", grad_error_x, grad_error_y);
-  //if (weight_sum > 0.5) {
-  //// update the gradients.
-  ////if (grad_error_x / (weight_sum) > 10.0 ||
-  ////    grad_error_y / (weight_sum) > 10.0) {
-  ////  printf("grad error x is %f y is %f\n", grad_error_x, grad_error_y); 
-  ////}
-  //this->offset_x += grad_error_x*learning_rate/(weight_sum);
-  //this->offset_y += grad_error_y*learning_rate/(weight_sum);
-  //printf("offset x is %f\n", this->offset_x);
-  //}
 }
 
 
@@ -1390,7 +1422,7 @@ void tfk::Tile::local2DAlignUpdate() {
   double weight_sum = 0.0;
 
 
-  std::set<int> found_tile_ids;
+  //std::set<int> found_tile_ids;
   //int index = (this->iteration_count++)%this->edges.size();
   for (int i = 0; i < this->edges.size(); i++) {
     //if (i != index) continue;
@@ -1404,8 +1436,8 @@ void tfk::Tile::local2DAlignUpdate() {
         neighbor->ideal_offsets.find(this->tile_id) == neighbor->ideal_offsets.end()) continue;
 
 
-    if (found_tile_ids.find(neighbor->tile_id) != found_tile_ids.end()) continue;
-    found_tile_ids.insert(neighbor->tile_id);
+    //if (found_tile_ids.find(neighbor->tile_id) != found_tile_ids.end()) continue;
+    //found_tile_ids.insert(neighbor->tile_id);
 
 
       cv::Point2f a_point = cv::Point2f(this->x_start+this->offset_x,
@@ -1496,6 +1528,219 @@ void tfk::Tile::local2DAlignUpdate() {
   //printf("offset x is %f\n", this->offset_x);
   //}
 }
+
+
+void tfk::Tile::local2DAlignUpdate(double lr) {//, int num_angles) {
+  if (this->bad_2d_alignment) return;
+
+  if (this->edges.size() == 0) return;
+  if (this->edges.size() == 0) return;
+
+  //double best_delta_angle = 0.0;
+  double best_grad_error_x = 0.0;
+  double best_grad_error_y = 0.0;
+  double best_deviation_energy = 0.0;
+  bool first_step = true;
+
+  //for (int angle_step = 1-num_angles; angle_step < num_angles; angle_step++) {
+  for (int angle_step = 0; angle_step < 1; angle_step++) {
+
+    //double delta_angle = angle_step*0.00001;
+
+    double grad_error_x = 0.0;
+    double grad_error_y = 0.0;
+    double weight_sum = 0.0;
+    //std::set<int> found_tile_ids;
+    //double angle_sum = 0.0;
+    //double angle_sum_count = 0.0;
+
+    for (int i = 0; i < this->edges.size(); i++) {
+      std::vector<cv::Point2f>* v_points = this->edges[i].v_points;
+      std::vector<cv::Point2f>* n_points = this->edges[i].n_points;
+      Tile* neighbor = (Tile*) this->edges[i].neighbor_tile;
+      if (neighbor->bad_2d_alignment) continue;
+      if (this->ideal_offsets.find(neighbor->tile_id) == this->ideal_offsets.end() &&
+          neighbor->ideal_offsets.find(this->tile_id) == neighbor->ideal_offsets.end()) continue;
+
+      //if (found_tile_ids.find(neighbor->tile_id) != found_tile_ids.end()) {printf("does this ever happen?\n"); continue;}
+      //found_tile_ids.insert(neighbor->tile_id);
+
+      if (v_points->size() == 0 && n_points->size() == 0) continue; 
+      cv::Point2f deviation;
+      if (this->ideal_offsets.find(neighbor->tile_id) != this->ideal_offsets.end()) {
+        cv::Point2f a_point = this->rigid_transform(this->ideal_points[neighbor->tile_id].first);
+        cv::Point2f b_point = neighbor->rigid_transform(this->ideal_points[neighbor->tile_id].second);
+        cv::Point2f delta =  a_point - b_point;
+        deviation = this->ideal_offsets[neighbor->tile_id] - delta;
+      } else {
+        cv::Point2f a_point =
+            this->rigid_transform(neighbor->ideal_points[this->tile_id].second);
+        cv::Point2f b_point =
+            neighbor->rigid_transform(neighbor->ideal_points[this->tile_id].first);
+
+        cv::Point2f delta =  a_point - b_point;
+
+        deviation = -1*neighbor->ideal_offsets[this->tile_id] - delta;
+        //continue;
+      }
+      weight_sum = 1;
+
+      if (std::abs(deviation.x) > 3.0 || true ) {
+        grad_error_x += 2*deviation.x;
+      }
+      if (std::abs(deviation.y) > 3.0 || true ) {
+        grad_error_y += 2*deviation.y;
+      }
+    }
+    cv::Point2f deviation = cv::Point2f(grad_error_x, grad_error_y);
+
+    //if (deviation.x*deviation.x + deviation.y*deviation.y < best_deviation_energy || first_step) {
+    if (first_step /*deviation.x*deviation.x + deviation.y*deviation.y < best_deviation_energy || first_step*/) {
+      //best_deviation_energy = deviation.x*deviation.x + deviation.y*deviation.y;
+      best_grad_error_x = grad_error_x / this->edges.size();
+      best_grad_error_y = grad_error_y / this->edges.size();
+    }
+    if (deviation.x*deviation.x + deviation.y*deviation.y < best_deviation_energy || first_step) {
+      best_deviation_energy = deviation.x*deviation.x + deviation.y*deviation.y;
+    }
+    first_step = false;
+  }
+
+  this->grad_error_x = best_grad_error_x;
+  this->grad_error_y = best_grad_error_y;
+  //printf("gradient %f %f\n", grad_error_x, grad_error_y);
+  //if (weight_sum > 0.5) {
+  //// update the gradients.
+  ////if (grad_error_x / (weight_sum) > 10.0 ||
+  ////    grad_error_y / (weight_sum) > 10.0) {
+  ////  printf("grad error x is %f y is %f\n", grad_error_x, grad_error_y); 
+  ////}
+  //this->offset_x += grad_error_x*learning_rate/(weight_sum);
+  //this->offset_y += grad_error_y*learning_rate/(weight_sum);
+  //printf("offset x is %f\n", this->offset_x);
+  //}
+}
+
+
+//void tfk::Tile::local2DAlignUpdate() {
+//  if (this->bad_2d_alignment) return;
+//  //std::vector<edata>& edges = graph->edgeData[vid];
+//  double global_learning_rate = 0.45;//0.45;
+//  if (this->edges.size() == 0) return;
+//  if (this->edges.size() == 0) return;
+//
+//  double learning_rate = global_learning_rate;
+//  double grad_error_x = 0.0;
+//  double grad_error_y = 0.0;
+//  double weight_sum = 0.0;
+//
+//
+//  //std::set<int> found_tile_ids;
+//  //int index = (this->iteration_count++)%this->edges.size();
+//  for (int i = 0; i < this->edges.size(); i++) {
+//    //if (i != index) continue;
+//    std::vector<cv::Point2f>* v_points = this->edges[i].v_points;
+//    std::vector<cv::Point2f>* n_points = this->edges[i].n_points;
+//    //vdata* neighbor_vertex = graph->getVertexData(edges[i].neighbor_id);
+//    Tile* neighbor = (Tile*) this->edges[i].neighbor_tile;
+//    if (neighbor->bad_2d_alignment) continue;
+//
+//    if (this->ideal_offsets.find(neighbor->tile_id) == this->ideal_offsets.end() &&
+//        neighbor->ideal_offsets.find(this->tile_id) == neighbor->ideal_offsets.end()) continue;
+//
+//
+//    //if (found_tile_ids.find(neighbor->tile_id) != found_tile_ids.end()) continue;
+//    //found_tile_ids.insert(neighbor->tile_id);
+//
+//
+//      cv::Point2f a_point = cv::Point2f(this->x_start+this->offset_x,
+//                                        this->y_start+this->offset_y);
+//      cv::Point2f b_point = cv::Point2f(neighbor->x_start+neighbor->offset_x,
+//                                        neighbor->y_start+neighbor->offset_y);
+//      cv::Point2f delta = a_point-b_point;
+//                              // c_a_point - c_b_point - a_point + b_point
+//                              // c_a_point - a_point + b_point-c_b_point
+//      if (v_points->size() == 0 && n_points->size() == 0) continue; 
+//      cv::Point2f deviation;
+//      if (this->ideal_offsets.find(neighbor->tile_id) != this->ideal_offsets.end()) {
+//        deviation = this->ideal_offsets[neighbor->tile_id] - delta;
+//      } else {
+//        //          c_b_point - c_a_point - b_point + a_point
+//        //          a_point - b_point + c_b_point - c_a_point
+//        //          b_point - a_point + c_a_point - c_b_point
+//
+//
+//        //            c_b_point - c_a_point + b_point - a_point
+//        //            c_a_point - c_b_point + b_point - a_point
+//        //            c_a_point - a_point + b_point - c_b_point
+//
+//        //            - c_b_point + c_a_point - a_point + b_point
+//        deviation = -1*neighbor->ideal_offsets[this->tile_id] - delta;
+//        //continue;
+//      }
+//      float dist = sqrt(deviation.x*deviation.x + deviation.y*deviation.y);
+//      //if (dist > 10.0) {
+//      //  printf("The dist is %f\n", dist);
+//      //}
+//      //this->offset_x += deviation.x*learning_rate;
+//      //this->offset_y += deviation.y*learning_rate;
+//      double damp = 1.0;
+//
+//
+//      weight_sum += damp;
+//
+//      //if (this->mfov_id != neighbor->mfov_id) {
+//      //  damp = 0.5;
+//      //  damp = damp*damp;
+//      //}
+//
+//
+//      if (dist > 0.0) {
+//        if (std::abs(deviation.x) > 3.0 || true ) {
+//          //grad_error_x += 2*deviation.x*damp;
+//          grad_error_x += deviation.x;
+//        }
+//        if (std::abs(deviation.y) > 3.0 || true ) {
+//          grad_error_y += deviation.y;
+//          //grad_error_y += 2*deviation.y*damp;
+//        }
+//     }
+//      //continue;
+//    //double curr_weight = 1.0/v_points->size();
+//
+//    //for (int j = 0; j < v_points->size(); j++) {
+//    //  cv::Point2f ptx1 = this->rigid_transform((*v_points)[j]); //transform_point(vertex_data, (*v_points)[j]);
+//    //  cv::Point2f ptx2 = neighbor->rigid_transform((*n_points)[j]);//transform_point(neighbor_vertex, (*n_points)[j]);
+//
+//    //  double delta_x = ptx2.x - ptx1.x;
+//    //  double delta_y = ptx2.y - ptx1.y;
+//    //  grad_error_x += 2 * delta_x * curr_weight;
+//    //  grad_error_y += 2 * delta_y * curr_weight;
+//    //  weight_sum += curr_weight;
+//    //}
+//  }
+//
+//  //printf("gradient %f %f\n", grad_error_x, grad_error_y);
+//  //if (weight_sum > 0.5) {
+//  //// update the gradients.
+//  ////if (grad_error_x / (weight_sum) > 10.0 ||
+//  ////    grad_error_y / (weight_sum) > 10.0) {
+//  ////  printf("grad error x is %f y is %f\n", grad_error_x, grad_error_y); 
+//  ////}
+//
+//  //if (this->offset_x > 1.0) {
+//  //  grad_error_x -= this->offset_x / std::pow(std::abs(this->offset_x),0.25);
+//  //}
+//  //if (this->offset_y > 1.0) {
+//  //  grad_error_y -= this->offset_y / std::pow(std::abs(this->offset_y),0.25);
+//  //}
+//  if (weight_sum > 0.5) {
+//    this->offset_x += grad_error_x*learning_rate/(weight_sum);
+//    this->offset_y += grad_error_y*learning_rate/(weight_sum);
+//  }
+//  //printf("offset x is %f\n", this->offset_x);
+//  //}
+//}
 
 
 void tfk::Tile::make_symmetric(int phase, std::vector<Tile*>& tile_list) {
@@ -1762,14 +2007,28 @@ tfk::Tile::Tile(TileData& tile_data) {
     //this->filepath = this->filepath.replace(this->filepath.find("/efs"), 4, "/home/gridsan/groups/supertech/connectomix");
 
 
+    printf("filepath %s\n", this->filepath.c_str());
 
-    #ifdef HUMANTEST
-    this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jp2");
-    #else
-    //this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".bmp.jp2");
-    this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jpg");
-    this->filepath = this->filepath.replace(this->filepath.find("sep14iarpa"),10,"compressed2");
+    #ifdef IARPAFULL
+      this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jpg");
+      this->filepath = this->filepath.replace(this->filepath.find("IARPA_FULL"),10,"IARPA_Dataset");
+      this->filepath = this->filepath.replace(this->filepath.find("sep14iarpa"),10,"compressed2");
     #endif
+
+    #ifdef NOPATHCHANGE
+
+    #else
+
+      #ifdef HUMANTEST
+      this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jp2");
+      #else
+      //this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".bmp.jp2");
+      this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jpg");
+      this->filepath = this->filepath.replace(this->filepath.find("sep14iarpa"),10,"compressed2");
+      #endif
+    #endif
+
+
 
     this->p_image = new cv::Mat();
     this->p_kps = new std::vector<cv::KeyPoint>();
@@ -2016,12 +2275,15 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
         //full_image = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
         //full_image = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
 
-
-        #ifdef HUMANTEST
-        cv::Mat tmp;// = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
-        getJP2Image(new_path.c_str(), tmp);
-        #else
+        #ifdef NOPATHCHANGE
         cv::Mat tmp = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+        #else 
+          #ifdef HUMANTEST
+          cv::Mat tmp;// = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+          getJP2Image(new_path.c_str(), tmp);
+          #else
+          cv::Mat tmp = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+          #endif
         #endif
 
         cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
@@ -2132,7 +2394,7 @@ std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_til
   float scale_x = params.scale_x;
   float scale_y = params.scale_y;
 
-  
+
   if (_tmp_image.cols - new_x_finish-new_x_start <= 1.0/scale_x + 1.0 ||
       _tmp_image.rows - new_y_finish-new_y_start <= 1.0/scale_y + 1.0) {
     printf("skipping tile pair due to insufficient overlap. %d, %d\n", _tmp_image.cols - new_x_finish-new_x_start, _tmp_image.rows - new_y_finish-new_y_start);

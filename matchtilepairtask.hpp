@@ -37,7 +37,7 @@ class MatchTilePairTask : public MRTask {
     float avg_size_b;
     float avg_octave_a;
     float avg_octave_b;
-
+    float matches_to_keypoint_ratio;
 
     Tile* a_tile;
     Tile* b_tile;

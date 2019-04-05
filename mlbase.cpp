@@ -251,6 +251,7 @@ namespace tfk {
 
   void MLBase::add_training_example(std::vector<float> new_vector, float new_label, float error) {
     mutex->lock();
+    if (new_vector.size () != size_of_feature_vector) printf("Error!\n");
     ASSERT(new_vector.size() == size_of_feature_vector);
     new_data.push_back(new_vector);
     new_labels.push_back(new_label);

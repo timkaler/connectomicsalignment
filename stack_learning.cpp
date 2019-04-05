@@ -227,7 +227,7 @@ void tfk::Stack::train_fsj(int trials) {
   int64_t failure_type2_count = 0;
   uint8_t padding4[128] __attribute__((unused));
 
-  MLAnn* model = new MLAnn(12-4+6+4, "tfk_test_model");
+  MLAnn* model = new MLAnn(12-4+6+4+1, "tfk_test_model");
   //model->load("tfk_test_model", true);
   //model->enable_training();
   //model->train(false);

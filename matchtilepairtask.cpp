@@ -115,7 +115,7 @@ namespace tfk {
       this->avg_octave_a = 0;
       this->avg_octave_b = 0;
       this->successful_rod = 0;
-
+      this->matches_to_keypoint_ratio = 0;
       //std::vector<int> neighbors = get_all_close_tiles(a_tile->tile_id);
 
       if (a_tile_keypoints.size() < min_features_num) return;
@@ -205,7 +205,7 @@ namespace tfk {
                        atile_kps_desc_in_overlap,
                        btile_kps_desc_in_overlap,
                        trial_rod);//, /*second_pass*/ true); // always do deterministic brute.
-
+        matches_to_keypoint_ratio = (matches.size()*1.0) / (a_tile_keypoints.size());
         
 
 
@@ -574,6 +574,7 @@ namespace tfk {
       //tmp_vector.push_back(val);
       this->feature_vector = tmp_a_tile.tile_pair_feature(b_tile);
       this->feature_vector.push_back(filtered_match_points_a.size());
+      this->feature_vector.push_back(matches_to_keypoint_ratio);
 
       this->feature_vector.push_back(avg_response_a);
       this->feature_vector.push_back(avg_response_b);
@@ -582,6 +583,7 @@ namespace tfk {
       this->feature_vector.push_back(avg_octave_a);
       this->feature_vector.push_back(avg_octave_b);
 
+      //this->feature_vector.push_back(matches_to_keypoint_ratio);
 
       std::vector<float> tmp_feature_vector = a_tile->tile_pair_feature(b_tile);
       if (tmp_feature_vector.size() == 0) {
@@ -650,7 +652,7 @@ namespace tfk {
         }
 
         if (guess_ml == false) {
-          printf("guess ml was false\n");
+          //printf("guess ml was false\n");
         }
 
         //if (!(filtered_match_points_a.size() >= min_features_num)) {

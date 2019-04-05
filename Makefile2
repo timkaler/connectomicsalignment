@@ -7,7 +7,8 @@ LD := $(CXX) #g++
 
 
 
-ARCHFLAGS := -march=native
+ARCHFLAGS := -march=native -DIARPAFULL -DNOPATHCHANGE
+#ARCHFLAGS := -march=native
 #ARCHFLAGS := -march=skylake-avx512 -DHUMANTEST
 
 #CFLAGS += -std=c++17 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=sandybridge -pthread -I/efs/tools/protobuf_c4/include -Iopenjpeg-2.3.0/src/lib/openjp2 -Iopenjpeg/include/openjpeg-2.3
