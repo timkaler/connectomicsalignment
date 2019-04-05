@@ -57,6 +57,8 @@ int main(int argc, char **argv) {
   bool do_3d = false;
   bool do_render = false;
 
+  int num_train_iters = 5000;
+
   // parse the arguments.
   try {
     const int NUM_REQUIRED = 4;
@@ -82,6 +84,7 @@ int main(int argc, char **argv) {
       ("fastscale", "param for fast pass image scale", cxxopts::value<float>(fast_scale))
       ("skipoctfast", "skip first octave for fast", cxxopts::value<bool>(skipoctfast))
       ("skipoctslow", "skip first octave for slow", cxxopts::value<bool>(skipoctslow))
+      ("numtrainiters", "skip first octave for slow", cxxopts::value<int>(num_train_iters))
       ("usefsj", "enable fsj, o.w. fast pass always succeeds", cxxopts::value<bool>(usefsj))
       ("tmpdir", "enable fsj, o.w. fast pass always succeeds", cxxopts::value<std::string>(tmpdir))
       ("help", "Print help")
@@ -166,7 +169,7 @@ int main(int argc, char **argv) {
     } else if (mode == 5) {
       //testing_corralation_test(p_align_data);
     } else if (mode == 6) {
-      train_fsj(p_align_data);
+      train_fsj(p_align_data, num_train_iters);
     } else {
       std::cout << "Invalid mode, stopping program" << std::endl;
     }

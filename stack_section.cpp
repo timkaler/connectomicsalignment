@@ -175,7 +175,7 @@ void tfk::Section::optimize_tile_grid() {
   bool keep_going = false;
   double last_energy = 0.0;
   //int num_angles = 1;
-  for (int i = 0; i < 100000; i++) {
+  for (int i = 0; i < 200000; i++) {
     double MOMENTUM = 0.1;
     // first iteration compute last energy directly.
     if (i == 0) {
@@ -403,7 +403,7 @@ void tfk::Section::align_2d() {
     for (int i = 0; i < tiles.size(); i++) {
       tiles[i]->ml_models = this->ml_models;
       tiles[i]->paramdbs = this->paramdbs;
-      std::vector<Tile*> close_tiles = get_all_close_tiles(tiles[i]);
+      std::vector<Tile*> close_tiles = get_all_close_tiles_with_min_overlap(tiles[i], 50);
       tiles[i]->match_tiles_task = new MatchTilesTask(tiles[i], close_tiles);
     }
     this->compute_keypoints_and_matches();
@@ -2774,6 +2774,13 @@ void tfk::Section::compute_keypoints_and_matches() {
     std::map<int, TileSiftTask*> dependencies;
     while (active_set.size() > 0) {
       printf("Current active set size is %lu percent done %f%%\n", active_set.size(), (pivot_search_start*100.0)/sorted_tiles.size());
+
+
+
+      printf(" begin find all the neighbors \n");
+      TFK_TIMER_VAR(active_set_timer); 
+      TFK_START_TIMER(&active_set_timer); 
+      TFK_STOP_TIMER(&active_set_timer, "begin"); 
       // find all the neighbors.
       for (auto it = active_set.begin(); it != active_set.end(); ++it) {
         Tile* tile = *it;
@@ -2782,7 +2789,7 @@ void tfk::Section::compute_keypoints_and_matches() {
           neighbor_set.insert(overlapping[j]);
         }
       }
-
+      TFK_STOP_TIMER(&active_set_timer, "find all neighors");
       // close open tiles that aren't in active or neighbor set.
       for (auto it = opened_set.begin(); it != opened_set.end(); ++it) {
         Tile* tile = *it;
@@ -2795,6 +2802,7 @@ void tfk::Section::compute_keypoints_and_matches() {
           tile->release_full_image();
         }
       }
+      TFK_STOP_TIMER(&active_set_timer, "close open tiles");
 
       std::vector<Tile*> tiles_to_process_keypoints, tiles_to_process_matches;
 
@@ -2807,6 +2815,7 @@ void tfk::Section::compute_keypoints_and_matches() {
         }
       }
 
+      TFK_STOP_TIMER(&active_set_timer, "open active set tiles1");
       for (auto it = neighbor_set.begin(); it != neighbor_set.end(); ++it) {
         Tile* tile = *it;
         if (opened_set.find(tile) == opened_set.end()) {
@@ -2814,12 +2823,14 @@ void tfk::Section::compute_keypoints_and_matches() {
           tiles_to_process_keypoints.push_back(tile);
         }
       }
+      TFK_STOP_TIMER(&active_set_timer, "open active set tiles2");
 
       for (int i = 0; i < tiles_to_process_keypoints.size(); i++) {
         Tile* tile = tiles_to_process_keypoints[i];
         TileSiftTask* sift_task = new TileSiftTask(this->paramdbs[MATCH_TILE_PAIR_TASK_ID], tile);
         dependencies[tile->tile_id] = sift_task;
       }
+      TFK_STOP_TIMER(&active_set_timer, "open active set tiles3");
 
       #pragma cilk grainsize 1
       cilk_for (int i = 0; i < tiles_to_process_keypoints.size(); i++) {
@@ -2828,6 +2839,7 @@ void tfk::Section::compute_keypoints_and_matches() {
          tile->compute_sift_keypoints3d();
          tile->match_tiles_task->dependencies = dependencies;
       }
+      TFK_STOP_TIMER(&active_set_timer, "keypoints 3D");
 
       std::vector<std::pair<float, Tile*> > sorted_y_tiles;
       for (int i = 0; i < tiles_to_process_matches.size(); i++) {
@@ -2835,6 +2847,8 @@ void tfk::Section::compute_keypoints_and_matches() {
                                                 tiles_to_process_matches[i]));
       }
       std::sort(sorted_y_tiles.begin(), sorted_y_tiles.end());
+
+      TFK_STOP_TIMER(&active_set_timer, "sort tiles by y");
 
       #pragma cilk grainsize 1
       cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
@@ -2844,6 +2858,7 @@ void tfk::Section::compute_keypoints_and_matches() {
         //tiles_to_process_matches[i]->match_tiles_task->dependencies = dependencies;
         //tiles_to_process_matches[i]->match_tiles_task->compute(0.9);
       }
+      TFK_STOP_TIMER(&active_set_timer, "compute stage 1");
 
       #pragma cilk grainsize 1
       cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
@@ -2859,6 +2874,7 @@ void tfk::Section::compute_keypoints_and_matches() {
         //  tiles_to_process_matches[i]->match_tiles_task->compute(1.0);
         //}
       }
+      TFK_STOP_TIMER(&active_set_timer, "compute stage 2");
 
       #pragma cilk grainsize 1
       cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
@@ -2875,7 +2891,7 @@ void tfk::Section::compute_keypoints_and_matches() {
         //  tiles_to_process_matches[i]->match_tiles_task->commit();
         //}
       }
-
+      TFK_STOP_TIMER(&active_set_timer, "commit");
       opened_set.clear();
       for (auto it = active_set.begin(); it != active_set.end(); ++it) {
         opened_set.insert(*it);
@@ -2896,6 +2912,7 @@ void tfk::Section::compute_keypoints_and_matches() {
           pivot = sorted_tiles[i].second;
           pivot_search_start = i;
           pivot_good = true;
+          TFK_STOP_TIMER(&active_set_timer, "cleanup, break");
           break;
         } else {
           active_set.insert(sorted_tiles[i].second);
@@ -2905,6 +2922,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       if (!pivot_good) {
         pivot_search_start = sorted_tiles.size();
       }
+          TFK_STOP_TIMER(&active_set_timer, "cleanup, no break");
     }
 
       // close open tiles that aren't in active or neighbor set.
@@ -2975,6 +2993,18 @@ void tfk::Section::compute_keypoints_and_matches() {
 
   printf("Num vertices is %d\n", graph->num_vertices());
   graph->section_id = this->section_id;
+}
+
+std::vector<tfk::Tile*> tfk::Section::get_all_close_tiles_with_min_overlap(Tile* a_tile, int min_dim_overlap) {
+  std::vector<Tile*> neighbor_tiles(0);
+  for (int i = 0; i < this->tiles.size(); i++) {
+    Tile* b_tile = this->tiles[i];
+    if (a_tile == b_tile) continue;
+    if (a_tile->overlaps_with_threshold(b_tile, min_dim_overlap)) {
+      neighbor_tiles.push_back(b_tile);
+    }
+  }
+  return neighbor_tiles;
 }
 
 
@@ -3071,6 +3101,11 @@ tfk::Section::Section(SectionData& section_data, std::pair<cv::Point2f, cv::Poin
 
     tile->x_finish = tile->x_start + x_diff;
     tile->y_finish = tile->y_start + y_diff;
+
+
+    if (tile->offset_x != 0.0 || tile->offset_y != 0.0) {
+      printf("error the tlie doesn't have offsets 0 %f %f\n", tile->offset_x, tile->offset_y); 
+    }
 
     std::string new_filepath = "new_tiles/sec_"+std::to_string(this->real_section_id) +
         "_tileid_"+std::to_string(tile->tile_id) + ".bmp";

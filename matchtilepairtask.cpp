@@ -201,10 +201,13 @@ namespace tfk {
         trial_rod = 0.92;
         // Match the features
         std::vector< cv::DMatch > matches;
-        match_features(matches,
+        match_features_brute_parallel(matches,
                        atile_kps_desc_in_overlap,
                        btile_kps_desc_in_overlap,
-                       trial_rod, /*second_pass*/ true); // always do deterministic brute.
+                       trial_rod);//, /*second_pass*/ true); // always do deterministic brute.
+
+        
+
 
         // Filter the matches with RANSAC
         std::vector<cv::Point2f> match_points_a, match_points_b;
@@ -269,7 +272,7 @@ namespace tfk {
 
           //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
           this->best_offset = best_offset;
-          this->successful_rod = trial_rod;
+          this->successful_rod = (1.0*filtered_match_points_a.size())/matches.size();
           break;
         } else {
           filtered_match_points_a.clear();
@@ -322,15 +325,15 @@ namespace tfk {
   trial_params.contrast_threshold = CONTRAST_THRESH;////0.015;//.015;
   trial_params.edge_threshold = EDGE_THRESH_2D;//10;//10;
   trial_params.sigma = 1.6; //+ 0.2*0.2;//1.05;//1.05;//1.05;
-  trial_params.scale_x = 0.3;
-  trial_params.scale_y = 0.3;
+  trial_params.scale_x = 0.1;
+  trial_params.scale_y = 0.1;
   trial_params.res = FULL;
 
   if (align_data->use_params) {
     if (align_data->skip_octave_fast) {
       trial_params.num_features = 1001;
     } else {
-      trial_params.num_features = 1000;
+      trial_params.num_features = 1000;//128;//128;//1000;
     }
     trial_params.scale_x = align_data->scale_fast;
     trial_params.scale_y = align_data->scale_fast;
@@ -615,11 +618,8 @@ namespace tfk {
           guess_ml = this->model->predict(this->feature_vector);//this->model->predict(a_tile->feature_vectors[b_tile]);
         }
 
-        //if (filtered_match_points_a.size() < min_features_num) {
-        //  guess_ml = false;
-        //}
-        if (guess_ml == false) {
-          printf("guess ml was false\n");
+        if (filtered_match_points_a.size() < min_features_num) {
+          guess_ml = false;
         }
         } else {
           guess_ml = true;
@@ -649,9 +649,13 @@ namespace tfk {
           }
         }
 
-        if (!(filtered_match_points_a.size() >= min_features_num)) {
-          guess_ml = false;
+        if (guess_ml == false) {
+          printf("guess ml was false\n");
         }
+
+        //if (!(filtered_match_points_a.size() >= min_features_num)) {
+        //  guess_ml = false;
+        //}
 
         //guess_ml = filtered_match_points_a.size() >= min_features_num;
         //if (false && /*guess_ml*/ val >= 0.75) {

@@ -165,30 +165,30 @@ void tfk::Stack::parameter_optimization(int trials, double threshold, std::vecto
 
 
 void tfk::Stack::train_fsj(int trials) {
-  float PX_ERROR_THRESH = 1.5;
+  float PX_ERROR_THRESH = 1.0;
   params best_params;
-  best_params.num_features = 1;
+  best_params.num_features = 1000;
   best_params.num_octaves = 6;
   best_params.contrast_threshold = .015;//CONTRAST_THRESH;
   best_params.edge_threshold = 10;//EDGE_THRESH_2D;
   best_params.sigma = 1.6;//1.6;
-  best_params.scale_x = 1.0;
-  best_params.scale_y = 1.0;
+  best_params.scale_x = 0.5;//1.0;
+  best_params.scale_y = 0.5;//1.0;
   best_params.res = FULL;
 
 
   params trial_params;
-  trial_params.num_features = 4;
+  trial_params.num_features = 1000;
   trial_params.num_octaves = 6;
   trial_params.contrast_threshold = .015;
   trial_params.edge_threshold = 10;
   trial_params.sigma = 1.6;
-  trial_params.scale_x = 0.3;
-  trial_params.scale_y = 0.3;
+  trial_params.scale_x = 0.1;
+  trial_params.scale_y = 0.1;
   trial_params.res = FULL;
 
   MRParams* best_mr_params = new MRParams();
-  best_mr_params->put_int_param("num_features",1);
+  best_mr_params->put_int_param("num_features",1000);
   best_mr_params->put_int_param("num_octaves",6);
   best_mr_params->put_float_param("contrast_threshold",0.015);
   best_mr_params->put_float_param("edge_threshold",10.0);
@@ -196,12 +196,12 @@ void tfk::Stack::train_fsj(int trials) {
   best_mr_params->put_float_param("scale",1.0);
 
   MRParams* trial_mr_params = new MRParams();
-  trial_mr_params->put_int_param("num_features",4);
+  trial_mr_params->put_int_param("num_features",1000);
   trial_mr_params->put_int_param("num_octaves",6);
   trial_mr_params->put_float_param("contrast_threshold",0.015);
   trial_mr_params->put_float_param("edge_threshold",10.0);
   trial_mr_params->put_float_param("sigma",1.6);
-  trial_mr_params->put_float_param("scale",0.3);
+  trial_mr_params->put_float_param("scale",0.1);
 
 
   std::vector<int> random_numbers_1;
@@ -218,12 +218,16 @@ void tfk::Stack::train_fsj(int trials) {
     random_numbers_3.push_back(rand());
   }
 
+  uint8_t padding1[128] __attribute__((unused));
   int64_t success_count = 0;
+  uint8_t padding2[128] __attribute__((unused));
+  
   int64_t failure_count = 0;
-
+  uint8_t padding3[128] __attribute__((unused));
   int64_t failure_type2_count = 0;
+  uint8_t padding4[128] __attribute__((unused));
 
-  MLAnn* model = new MLAnn(12-4+6, "tfk_test_model");
+  MLAnn* model = new MLAnn(12-4+6+4, "tfk_test_model");
   //model->load("tfk_test_model", true);
   //model->enable_training();
   //model->train(false);
@@ -240,7 +244,7 @@ void tfk::Stack::train_fsj(int trials) {
     int tile_index = random_numbers_2[i]%this->sections[section_index]->tiles.size();
 
     Tile* _tile_a = this->sections[section_index]->tiles[tile_index];
-    std::vector<Tile*> close_tiles = this->sections[section_index]->get_all_close_tiles(_tile_a);
+    std::vector<Tile*> close_tiles = this->sections[section_index]->get_all_close_tiles_with_min_overlap(_tile_a, 50);
 
     if (close_tiles.size() == 0) continue;
     int n_index = random_numbers_3[i]%close_tiles.size();
@@ -299,16 +303,17 @@ void tfk::Stack::train_fsj(int trials) {
     int local_failure_count = failure_count;
     int local_success_count = success_count;
     int local_failure_type2_count = failure_type2_count;
+    //if (!res1) __sync_fetch_and_add() continue; // if the fast pass doesn't succeed, that means we're falling onto slow pass anyways.
 
-    if (!res1) continue; // if the fast pass doesn't succeed, that means we're falling onto slow pass anyways.
+    //if (!res1) continue;
 
     if (res1 != res2 || dist > PX_ERROR_THRESH) {
       if (res1 == res2) {
         local_failure_type2_count = __sync_fetch_and_add(&failure_type2_count,1);
         printf("failure dist is %f\n", dist);
       } else {
-        //printf("failure, results don't match. %d, %d, dist %f\n", res1, res2, dist);
-        dist = 1;
+        printf("failure, results don't match. %d, %d, dist %f\n", res1, res2, dist);
+        dist = 100;
       }
       local_failure_count = __sync_fetch_and_add(&failure_count, 1)+1;
       model->add_training_example(task2->get_feature_vector(), 0, dist);
@@ -330,8 +335,8 @@ void tfk::Stack::train_fsj(int trials) {
       //if (!res1) printf("both failed\n");
       //printf("success\n");
       if (dist < PX_ERROR_THRESH/2) {
-      local_success_count = __sync_fetch_and_add(&success_count, 1)+1;
-       model->add_training_example(task2->get_feature_vector(), 1, -1.0);
+         local_success_count = __sync_fetch_and_add(&success_count, 1)+1;
+         model->add_training_example(task2->get_feature_vector(), 1, -1.0);
       }
     }
     if (i%100 == 0 || i == trials-1) {

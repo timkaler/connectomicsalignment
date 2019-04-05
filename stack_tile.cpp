@@ -53,6 +53,26 @@ std::vector<float> tfk::Tile::tile_pair_feature(Tile *other) {
    	}
 
 
+        
+        //cv::Mat tile_p_image_1 = this->get_tile_data(Resolution::FULL);
+        //cv::Mat tile_p_image_2 = this->get_tile_data(Resolution::FULL);
+
+        //std::pair<cv::Point2f, cv::Point2f> offset_info;
+        //std::pair<cv::Mat, cv::Mat> overlap_matrix = this->get_overlap_matrix(other, 1.0, offset_info);
+
+        float extra_feature = -1.0;
+        float extra_feature2 = -1.0;
+        //if (overlap_matrix.first.rows > 10 && overlap_matrix.first.cols > 10) {
+        //  cv::Mat small_box1 = overlap_matrix.first(cv::Rect(0,0,10,10));
+        //  cv::Mat small_box2 = overlap_matrix.second(cv::Rect(0,0,10,10));
+        //  cv::Mat result_TM_SQDIFF;
+        //  cv::Mat result2_TM_SQDIFF;
+        //  cv::matchTemplate(small_box1, small_box2, result_TM_SQDIFF, CV_TM_CCORR);
+        //  cv::matchTemplate(small_box1, small_box2, result2_TM_SQDIFF, CV_TM_CCORR_NORMED);
+        //  extra_feature = result_TM_SQDIFF.at<float>(0,0);
+        //  extra_feature2 = result2_TM_SQDIFF.at<float>(0,0);
+        //  //printf("computed extra feature %f %f\n", extra_feature, extra_feature2);
+        //} 
 	//cv::Mat tile_p_image_1;
 	//cv::Mat tile_p_image_2;
 
@@ -286,6 +306,8 @@ std::vector<float> tfk::Tile::tile_pair_feature(Tile *other) {
 	//coordinates.push_back(result_CCOEFF_NORMED.at<float>(0,0));
 	//coordinates.push_back(result_TM_SQDIFF.at<float>(0,0));
 	std::vector<float> coordinates;
+	coordinates.push_back(extra_feature);
+	coordinates.push_back(extra_feature2);
 	coordinates.push_back(dx*dy);
 	coordinates.push_back(dx);
 	coordinates.push_back(dy);
@@ -658,7 +680,7 @@ std::pair<cv::Mat, cv::Mat> tfk::Tile::get_overlap_matrix(Tile* other, float sca
 	offset_info =
 		std::make_pair(cv::Point2f(1.0*start_x1, 1.0*start_y1),
 				cv::Point2f(1.0*start_x2, 1.0*start_y2));
-	printf("offset info %d %d %d %d\n", start_x1, start_y1, start_x2, start_y2);
+	//printf("offset info %d %d %d %d\n", start_x1, start_y1, start_x2, start_y2);
 
 	// clear any location which only has a value for one of them
 	// note that the transforms are the same size
@@ -1550,9 +1572,9 @@ tfk::Tile::Tile(int section_id, int tile_id, int index, std::string filepath,
   this->index = index;
   this->filepath = filepath;
   this->x_start = x_start;
-  this->x_finish = x_finish;
+  this->x_finish = x_start + 3128;//x_finish;
   this->y_start = y_start;
-  this->y_finish = y_finish;
+  this->y_finish = y_start + 2724;//y_finish;
   this->offset_x = 0.0;
   this->offset_y = 0.0;
   //this->angle = 0.0;
@@ -1645,6 +1667,50 @@ bool tfk::Tile::overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox) {
     return res;
 }
 
+bool tfk::Tile::overlaps_with_threshold(Tile* other, int min_dim_overlap) {
+    int x1_start = this->x_start + this->offset_x;
+    int x1_finish = this->x_finish + this->offset_x;
+    int y1_start = this->y_start + this->offset_y;
+    int y1_finish = this->y_finish + this->offset_y;
+
+    int x2_start = other->x_start + other->offset_x;
+    int x2_finish = other->x_finish + other->offset_x;
+    int y2_start = other->y_start + other->offset_y;
+    int y2_finish = other->y_finish + other->offset_y;
+
+
+    // overlap needs to be big enough.
+
+    /*
+       x1s-----x1e
+          x2s-------x2e
+       (x1e - x2s) 
+
+           x1s-----x2e
+       x2s------x2e
+       (x2e - x1s)
+    */
+
+    int x_size = min(x1_finish - x2_start, x2_finish - x1_start);
+    int y_size = min(y1_finish - y2_start, y2_finish - y1_start);
+
+
+    if (min_dim_overlap == 51) {
+      printf("x_size %d, y_size %d\n", x_size, y_size);
+      printf("x1_start %d, x1_finish %d, x2_start %d x2_finish %d\n", x1_start, x1_finish, x2_start, x2_finish);
+      printf("x1_offset %f, y1_offset %f, x2_offset %f y2_offset %f\n", this->offset_x, this->offset_y, other->offset_x, other->offset_y);
+      min_dim_overlap = 50;
+    }
+
+
+    bool res = false;
+    if ((x1_start < x2_finish) && (x1_finish > x2_start) &&
+        (y1_start < y2_finish) && (y1_finish > y2_start) &&
+        x_size >= min_dim_overlap && y_size >= min_dim_overlap) {
+        res = true;
+    }
+    return res;
+}
 
 bool tfk::Tile::overlaps_with(Tile* other) {
     int x1_start = this->x_start + this->offset_x;
@@ -1673,16 +1739,18 @@ tfk::Tile::Tile(TileData& tile_data) {
     this->full_image_lock = new std::mutex();
     this->percent30_lock = new std::mutex();
     this->image_data_replaced = false;
-    this->shape_dx = tile_data.x_finish() - tile_data.x_start();
-    this->shape_dy = tile_data.y_finish() - tile_data.y_start();
+    //this->shape_dx = tile_data.x_finish() - tile_data.x_start();
+    //this->shape_dy = tile_data.y_finish() - tile_data.y_start();
+    this->shape_dx = 3128;//tile_data.x_finish() - tile_data.x_start();
+    this->shape_dy = 2724;//tile_data.y_finish() - tile_data.y_start();
     this->bad_2d_alignment = false;
     this->section_id = tile_data.section_id();
     this->mfov_id = tile_data.tile_mfov();
     this->index = tile_data.tile_index();
     this->x_start = tile_data.x_start();
-    this->x_finish = tile_data.x_finish();
+    this->x_finish = this->x_start + this->shape_dx;//tile_data.x_finish();
     this->y_start = tile_data.y_start();
-    this->y_finish = tile_data.y_finish();
+    this->y_finish = this->y_start + this->shape_dy;//tile_data.y_finish();
     this->offset_x = 0.0;
     this->offset_y = 0.0;
     //this->angle = 0.0;
@@ -1693,11 +1761,15 @@ tfk::Tile::Tile(TileData& tile_data) {
 
     //this->filepath = this->filepath.replace(this->filepath.find("/efs"), 4, "/home/gridsan/groups/supertech/connectomix");
 
+
+
+    #ifdef HUMANTEST
     this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jp2");
-
+    #else
     //this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".bmp.jp2");
-    //this->filepath = this->filepath.replace(this->filepath.find("sep14iarpa"),10,"compressed2");
-
+    this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jpg");
+    this->filepath = this->filepath.replace(this->filepath.find("sep14iarpa"),10,"compressed2");
+    #endif
 
     this->p_image = new cv::Mat();
     this->p_kps = new std::vector<cv::KeyPoint>();
@@ -1945,12 +2017,12 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
         //full_image = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
 
 
-
-        //cv::Mat tmp = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+        #ifdef HUMANTEST
         cv::Mat tmp;// = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
         getJP2Image(new_path.c_str(), tmp);
-
-
+        #else
+        cv::Mat tmp = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+        #endif
 
         cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
         clahe->setClipLimit(10.0);
@@ -1998,6 +2070,14 @@ std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_til
   //printf("computing sift keypoints 2d with params\n");
 
   cv::Mat _tmp_image = this->get_tile_data(FULL);
+
+
+
+  if (!this->overlaps_with_threshold(other_tile, 50)) {
+    printf("skippin because we don't overlap\n");
+    return;
+  }
+
   //_tmp_image.create(SIFT_D2_SHIFT_3D, SIFT_D1_SHIFT_3D, CV_8UC1);
   //_tmp_image = cv::imread(this->filepath, CV_LOAD_IMAGE_UNCHANGED);
   int buffer_slack = 50;
@@ -2051,6 +2131,18 @@ std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_til
 
   float scale_x = params.scale_x;
   float scale_y = params.scale_y;
+
+  
+  if (_tmp_image.cols - new_x_finish-new_x_start <= 1.0/scale_x + 1.0 ||
+      _tmp_image.rows - new_y_finish-new_y_start <= 1.0/scale_y + 1.0) {
+    printf("skipping tile pair due to insufficient overlap. %d, %d\n", _tmp_image.cols - new_x_finish-new_x_start, _tmp_image.rows - new_y_finish-new_y_start);
+    printf("skipping tile pair due to insufficient overlap info: %d - %d - %d\n", _tmp_image.cols, new_x_finish, new_x_start);
+    printf("this offsets %f %f, other offsets %f %f\n", this->offset_x, this->offset_y, other_tile->offset_x, other_tile->offset_y);
+    printf("this starts %f %f, other starts %f %f\n", this->x_start, this->y_start, other_tile->x_start, other_tile->y_start);
+    this->overlaps_with_threshold(other_tile, 51);
+    return;
+  }
+
   if (this != other_tile) {
     cv::Mat tmp_image = _tmp_image(cv::Rect(new_x_start, new_y_start,
                                             _tmp_image.cols - new_x_finish-new_x_start,

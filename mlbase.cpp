@@ -350,7 +350,7 @@ namespace tfk {
       }
 
       float weight_1 = 1.0;//(1.0*count_2/count_2;
-      float weight_2 = 0.25*(count_1*1.0)/count_2;
+      float weight_2 = 2*1.0*(count_1*1.0)/count_2;
 
 
       for (int i = 0; i < new_training_examples; i++) {
@@ -371,15 +371,15 @@ namespace tfk {
       printf("count 1 %d, count 2 %d\n", count_1, count_2);
       cv::Ptr<cv::ml::TrainData> tdata = cv::ml::TrainData::create(data, cv::ml::ROW_SAMPLE, labels,
           cv::noArray(), cv::noArray(), weights);
-      tdata->setTrainTestSplitRatio(.75, true);
+      tdata->setTrainTestSplitRatio(.5, true);
       //if (reinforcement && trained) {
       //    model->train(tdata, cv::ml::ANN_MLP::UPDATE_WEIGHTS | cv::ml::ANN_MLP::NO_INPUT_SCALE);
       //} else {
       printf("training the model\n");
         //ann_model->setTrainMethod(0, 0.1,0.1);
         ann_model->setTermCriteria(term_crit);
-        //ann_model->setMaxDepth(4);
-        //ann_model->setMinSampleCount(2);
+        ann_model->setMaxDepth(4);
+        ann_model->setMinSampleCount(4);
         ann_model->setCalculateVarImportance(true);
         model->train(tdata);
         printf("after training\n");

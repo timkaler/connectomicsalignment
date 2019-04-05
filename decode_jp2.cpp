@@ -137,7 +137,7 @@ bool getJP2Image(const char* pathToImgWithExtension, cv::Mat & opcv_output)
     opj_codec_t* mopj_codec = NULL; /* Handle to a decompressor */
     mopj_codec = opj_create_decompress(OPJ_CODEC_J2K); /* select JP2 codec for .jp2 files */
     opj_setup_decoder(mopj_codec, mparameters);  /* init the decoder */
-    opj_codec_set_threads(mopj_codec, 4); /* tell the decoder to work on 4 threads */
+    //opj_codec_set_threads(mopj_codec, 1); /* tell the decoder to work on 4 threads */
 
     /* Decode an image with .jp2 format */
     opj_image_t* mopj_img = NULL; /* output image */

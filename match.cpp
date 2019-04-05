@@ -20,8 +20,8 @@ void match_features_brute_parallel(std::vector< cv::DMatch > &matches, cv::Mat &
   std::vector<int> good_matches(descs1.rows);
 
 
-  std::cout << "type is " << descs1.type() << std::endl;
-  std::cout << "rows,cols is  " << descs1.rows << "," << descs1.cols << std::endl;
+  //std::cout << "type is " << descs1.type() << std::endl;
+  //std::cout << "rows,cols is  " << descs1.rows << "," << descs1.cols << std::endl;
 
   cilk_for (int i = 0; i < descs1.rows; i++) {
     float max_value = FLT_MAX;
@@ -32,12 +32,15 @@ void match_features_brute_parallel(std::vector< cv::DMatch > &matches, cv::Mat &
 
     for (int j = 0; j < descs2.rows; j++) {
       float dot_product = 0.0;
+      float*__restrict p1 = descs1.ptr<float>(i);
+      float*__restrict p2 = descs2.ptr<float>(j);
       for (int k = 0; k < 128; k++) {
-        float val = (descs1.at<float>(i,k) - descs2.at<float>(j,k));
+        //float val = (descs1.at<float>(i,k) - descs2.at<float>(j,k));
+        float val = (p1[k] - p2[k]);
         dot_product += val*val;//(descs1(i,k)-descs2(i,k));
       }
 
-      dot_product = sqrt(dot_product);
+      //dot_product = sqrt(dot_product);
 
       if (dot_product < max_value) {
         second_max_value = max_value;
@@ -51,7 +54,7 @@ void match_features_brute_parallel(std::vector< cv::DMatch > &matches, cv::Mat &
     }
 
 
-      if (max_value < second_max_value * rod) {
+      if (sqrt(max_value) < sqrt(second_max_value) * rod) {
         is_good[i] = true;
         good_matches[i] = max_index;
       } else {
@@ -65,7 +68,7 @@ void match_features_brute_parallel(std::vector< cv::DMatch > &matches, cv::Mat &
       matches.push_back(cv::DMatch(i, good_matches[i], 1.0));
     }
   }
-  printf("there are %zu good matches", matches.size());
+  //printf("there are %zu good matches", matches.size());
 }
 
 

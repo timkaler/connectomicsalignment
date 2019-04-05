@@ -216,6 +216,7 @@ class Tile {
 
     bool overlaps_with(std::pair<cv::Point2f, cv::Point2f> bbox);
     bool overlaps_with(Tile* other);
+    bool overlaps_with_threshold(Tile* other, int min_dim_overlap);
     void local2DAlignUpdate();
     void local2DAlignUpdate(double lr);//, int num_angles);
     double local2DAlignUpdateEnergy();
@@ -313,6 +314,7 @@ class Section {
     std::vector<int> get_all_close_tiles_with_min_overlap_percent(Tile* tile, float overlap);
 
     std::vector<Tile*> get_all_close_tiles(Tile* atile_id);
+    std::vector<Tile*> get_all_close_tiles_with_min_overlap(Tile* atile_id, int min_dim_overlap);
     void compute_keypoints_and_matches();
     void compute_tile_matches(Tile* a_tile);
     void compute_tile_matches2(Tile* a_tile);

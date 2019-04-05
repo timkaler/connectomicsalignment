@@ -35,12 +35,12 @@
 #include "./data.hpp"
 #include "./ParamsDatabase.pb.h"
 //#include "decode_jp2.cpp"
-//int sched_yield(void) {
-//for (int i=0; i< 4000; i++) _mm_pause(); usleep(1);
-//
-//return 0;
-//
-//}
+int sched_yield(void) {
+for (int i=0; i< 2000; i++) _mm_pause(); //usleep(1);
+
+return 0;
+
+}
 
 tfk::Stack* make_stack(align_data_t* p_align_data) {
     tfk::Stack* stack = new tfk::Stack(p_align_data->base_section,
@@ -72,7 +72,18 @@ tfk::Stack* make_stack(align_data_t* p_align_data) {
 }
 
 
+__attribute__((noinline))
+void foobar() {
+  printf("keep runtime alive!\n");
+}
+
+
 void align_execute(align_data_t *p_align_data, bool do_3d, bool do_render) {
+
+
+    cilk_spawn foobar();
+
+
     tfk::Stack* stack = make_stack(p_align_data);
     printf("Got past the init\n");
     printf("stack has sections %zu\n", stack->sections.size());
@@ -154,10 +165,14 @@ void align_execute(align_data_t *p_align_data, bool do_3d, bool do_render) {
     printf("Got to the end.\n");
     duration = (std::clock() - start) / (double) CLOCKS_PER_SEC;
     std::cout << "printf: " << duration << '\n';
+
+
+    cilk_sync;
+
     return;
 }
 
-void train_fsj(align_data_t *p_align_data) {
+void train_fsj(align_data_t *p_align_data, int num_train_iters) {
     tfk::Stack* stack = new tfk::Stack(p_align_data->base_section,
                                        p_align_data->n_sections,
                                        p_align_data->input_filepath,
@@ -184,7 +199,7 @@ void train_fsj(align_data_t *p_align_data) {
 
     printf("stack has sections %zu\n", stack->sections.size());
     std::vector<tfk::params> ps;
-    int trials = 20000;
+    int trials = num_train_iters;
 
     stack->train_fsj(trials);
     return;
