@@ -2007,7 +2007,7 @@ tfk::Tile::Tile(TileData& tile_data) {
     //this->filepath = this->filepath.replace(this->filepath.find("/efs"), 4, "/home/gridsan/groups/supertech/connectomix");
 
 
-    printf("filepath %s\n", this->filepath.c_str());
+    //printf("filepath %s\n", this->filepath.c_str());
 
     #ifdef IARPAFULL
       this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jpg");

@@ -35,12 +35,11 @@
 #include "./data.hpp"
 #include "./ParamsDatabase.pb.h"
 //#include "decode_jp2.cpp"
-int sched_yield(void) {
-for (int i=0; i< 2000; i++) _mm_pause(); //usleep(1);
 
-return 0;
-
-}
+//int sched_yield(void) {
+//for (int i=0; i< 4000; i++) _mm_pause(); usleep(1);
+//return 0;
+//}
 
 tfk::Stack* make_stack(align_data_t* p_align_data) {
     tfk::Stack* stack = new tfk::Stack(p_align_data->base_section,
