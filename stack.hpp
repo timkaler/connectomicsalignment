@@ -114,6 +114,9 @@ class Tile {
     //double angle;
 
 
+    std::map<Tile*, std::pair<std::vector<cv::KeyPoint>, cv::Mat> > keypoint2d_cache;
+
+
     double grad_error_x, grad_error_y;//, grad_error_angle;
 
     bool bad_2d_alignment;
@@ -137,6 +140,7 @@ class Tile {
        std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc);
     void compute_sift_keypoints2d_params(tfk::params params,
        std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile);
+    void compute_sift_keypoints2d_params_cache(tfk::params params, Tile* other_tile);
     void release_3d_keypoints();
     float compute_deviation(Tile* b_tile);
 
@@ -239,6 +243,7 @@ class Tile {
     std::vector<cv::Point2f> get_corners();
 
     cv::Mat get_tile_data(Resolution res);
+    cv::Mat get_tile_data_lockfree(Resolution res);
     cv::Mat read_tile_image();
 
     cv::Mat get_feature_vector(Tile *other, int boxes, int type);

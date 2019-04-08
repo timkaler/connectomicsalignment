@@ -2783,7 +2783,7 @@ void tfk::Section::compute_keypoints_and_matches() {
     bool pivot_good = false;
     int pivot_search_start = 0;
     for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-      if (sorted_tiles[i].second->x_start > pivot->x_finish + 60000) {
+      if (sorted_tiles[i].second->x_start > pivot->x_finish + 30000) {
         pivot = sorted_tiles[i].second;
         pivot_search_start = i;
         pivot_good = true;
@@ -2858,7 +2858,10 @@ void tfk::Section::compute_keypoints_and_matches() {
       }
       TFK_STOP_TIMER(&active_set_timer, "open active set tiles3");
 
-      #pragma cilk grainsize 1
+
+
+
+      //#pragma cilk grainsize 1
       cilk_for (int i = 0; i < tiles_to_process_keypoints.size(); i++) {
          Tile* tile = tiles_to_process_keypoints[i];
          dependencies[tile->tile_id]->compute(0.9);
@@ -2876,7 +2879,66 @@ void tfk::Section::compute_keypoints_and_matches() {
 
       TFK_STOP_TIMER(&active_set_timer, "sort tiles by y");
 
-      #pragma cilk grainsize 1
+      // <tile_a, tile_b>
+      //std::vector<std::pair<Tile*, Tile*> > precompute_list;
+      //for (int i = 0; i < tiles_to_process_matches.size(); i++) {
+      //  Tile* t = sorted_y_tiles[i].second;
+      //  t->match_tiles_task->dependencies = dependencies;
+      //  std::vector<Tile*>& neighbors = t->match_tiles_task->neighbors;
+      //  for (int j = 0; j < neighbors.size(); j++) {
+      //    precompute_list.push_back(std::make_pair(t,neighbors[j])); 
+      //    precompute_list.push_back(std::make_pair(neighbors[j],t)); 
+      //  }
+      //}
+
+      //std::sort(precompute_list.begin(), precompute_list.end());
+
+      //std::vector<int> tile_begin_offsets;
+      //for (int i = 0; i < precompute_list.size(); i++) {
+      //  if (i == 0) {
+      //    tile_begin_offsets.push_back(i);
+      //    continue;
+      //  }
+      //  if (precompute_list[i-1].first != precompute_list[i].first) {
+      //    tile_begin_offsets.push_back(i);
+      //  }
+      //}
+      //printf("tile begin offsets has length %zu\n", tile_begin_offsets.size());
+
+      //TFK_STOP_TIMER(&active_set_timer, "build precompute list");
+
+  //params trial_params;
+  //trial_params.num_features = 1001;
+  //trial_params.num_octaves = 6;
+  //trial_params.contrast_threshold = CONTRAST_THRESH;////0.015;//.015;
+  //trial_params.edge_threshold = EDGE_THRESH_2D;//10;//10;
+  //trial_params.sigma = 1.6; //+ 0.2*0.2;//1.05;//1.05;//1.05;
+  //trial_params.scale_x = 0.1;
+  //trial_params.scale_y = 0.1;
+  //trial_params.res = FULL;
+
+  //if (align_data->use_params) {
+  //  if (align_data->skip_octave_fast) {
+  //    trial_params.num_features = 1001;
+  //  } else {
+  //    trial_params.num_features = 1000*align_data->scale_fast;//128;//128;//1000;
+  //  }
+  //  trial_params.scale_x = align_data->scale_fast;
+  //  trial_params.scale_y = align_data->scale_fast;
+  //}
+
+  //    cilk_for(int i = 0; i < tile_begin_offsets.size(); i++) {
+  //      int end = precompute_list.size();
+  //      if (i < tile_begin_offsets.size()-1) {
+  //        end = tile_begin_offsets[i+1];
+  //      }
+  //      for (int j = tile_begin_offsets[i]; j < end; j++) {
+  //        precompute_list[j].first->compute_sift_keypoints2d_params_cache(trial_params, precompute_list[j].second);
+  //      }
+  //    }
+
+
+      //#pragma cilk grainsize 1
       cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
         Tile* t = sorted_y_tiles[i].second;
         t->match_tiles_task->dependencies = dependencies;
@@ -2886,10 +2948,79 @@ void tfk::Section::compute_keypoints_and_matches() {
       }
       TFK_STOP_TIMER(&active_set_timer, "compute stage 1");
 
-      #pragma cilk grainsize 1
+
+      //std::vector<bool> error_check_results(tiles_to_process_matches.size());
+      //
+      //cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
+      //  Tile* t = sorted_y_tiles[i].second;
+      //  error_check_results[i] = t->match_tiles_task->error_check(0.4);
+      //}
+      
+      //precompute_list.clear();
+      //for (int i = 0; i < tiles_to_process_matches.size(); i++) {
+      //  if (!error_check_results[i]) {
+      //    Tile* t = sorted_y_tiles[i].second;
+      //    std::vector<Tile*>& neighbors = t->match_tiles_task->neighbors;
+      //    for (int j = 0; j < neighbors.size(); j++) {
+      //      precompute_list.push_back(std::make_pair(t,neighbors[j])); 
+      //      precompute_list.push_back(std::make_pair(neighbors[j],t)); 
+      //    }
+      //  }
+      //}
+
+      //std::sort(precompute_list.begin(), precompute_list.end());
+
+      //tile_begin_offsets.clear();
+      //for (int i = 0; i < precompute_list.size(); i++) {
+      //  if (i == 0) {
+      //    tile_begin_offsets.push_back(i);
+      //    continue;
+      //  }
+      //  if (precompute_list[i-1].first != precompute_list[i].first) {
+      //    tile_begin_offsets.push_back(i);
+      //  }
+      //}
+      //printf("tile begin offsets has length %zu\n", tile_begin_offsets.size());
+      //TFK_STOP_TIMER(&active_set_timer, "build precompute list");
+
+
+  //params best_params;
+  //best_params.num_features = 1000;
+  //best_params.num_octaves = 6;
+  //best_params.contrast_threshold = CONTRAST_THRESH;//.015;//CONTRAST_THRESH;
+  //best_params.edge_threshold = EDGE_THRESH_2D;//10;//EDGE_THRESH_2D;
+  //best_params.sigma = 1.6;//1.2;//1.6;
+  //best_params.scale_x = 1.0;
+  //best_params.scale_y = 1.0;
+  //best_params.res = FULL;
+
+  //if (align_data->use_params) {
+  //  if (align_data->skip_octave_slow) {
+  //    best_params.num_features = 1001;
+  //  } else {
+  //    best_params.num_features = 1000;
+  //  }
+  //}
+
+
+
+      //#pragma cilk grainsize 1
+      //cilk_for(int i = 0; i < tile_begin_offsets.size(); i++) {
+      //  int end = precompute_list.size();
+      //  if (i < tile_begin_offsets.size()-1) {
+      //    end = tile_begin_offsets[i+1];
+      //  }
+      //  for (int j = tile_begin_offsets[i]; j < end; j++) {
+      //    precompute_list[j].first->compute_sift_keypoints2d_params_cache(best_params, precompute_list[j].second);
+      //  }
+      //}
+
+      TFK_STOP_TIMER(&active_set_timer, "compute stage 2, got keypoints");
+      //#pragma cilk grainsize 1
       cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
         Tile* t = sorted_y_tiles[i].second;
         if (!t->match_tiles_task->error_check(0.4)) {
+        //if (!error_check_results[i]) {
           std::map<int, TileSiftTask*> empty_map;
           t->match_tiles_task->dependencies = empty_map;
           t->match_tiles_task->compute(1.0);
@@ -2902,7 +3033,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       }
       TFK_STOP_TIMER(&active_set_timer, "compute stage 2");
 
-      #pragma cilk grainsize 1
+      //#pragma cilk grainsize 1
       cilk_for (int i = 0; i < tiles_to_process_matches.size(); i++) {
         Tile* t = sorted_y_tiles[i].second;
         if (!t->match_tiles_task->error_check(1.9)) {
@@ -2934,7 +3065,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       //float duration = tdiff(global_start, gettime());
       pivot_good = false;
       for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-        if (sorted_tiles[i].second->x_start > pivot->x_finish + 60000) {
+        if (sorted_tiles[i].second->x_start > pivot->x_finish + 30000) {
           pivot = sorted_tiles[i].second;
           pivot_search_start = i;
           pivot_good = true;

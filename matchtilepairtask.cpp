@@ -189,8 +189,8 @@ namespace tfk {
       if (atile_kps_in_overlap.size() < min_features_num) return;
       if (btile_kps_in_overlap.size() < min_features_num) return;
 
-      a_tile->keypoints_in_overlap[b_tile] = atile_kps_in_overlap.size();
-      b_tile->keypoints_in_overlap[a_tile] = btile_kps_in_overlap.size();
+      //a_tile->keypoints_in_overlap[b_tile] = atile_kps_in_overlap.size();
+      //b_tile->keypoints_in_overlap[a_tile] = btile_kps_in_overlap.size();
 
       float trial_rod;
       for (int trial = 0; trial < 1; trial++) {
@@ -201,10 +201,16 @@ namespace tfk {
         trial_rod = 0.92;
         // Match the features
         std::vector< cv::DMatch > matches;
-        match_features_brute_parallel(matches,
+
+        //match_features_brute_parallel(matches,
+        //               atile_kps_desc_in_overlap,
+        //               btile_kps_desc_in_overlap,
+        //               trial_rod);//, /*second_pass*/ true); // always do deterministic brute.
+        match_features(matches,
                        atile_kps_desc_in_overlap,
                        btile_kps_desc_in_overlap,
-                       trial_rod);//, /*second_pass*/ true); // always do deterministic brute.
+                       trial_rod, true);//, /*second_pass*/ true); // always do deterministic brute.
+
         matches_to_keypoint_ratio = (matches.size()*1.0) / (a_tile_keypoints.size());
         
 
@@ -221,8 +227,8 @@ namespace tfk {
         if (matches.size() < min_features_num) {
           continue;
         }
-        a_tile->matched_keypoints_in_overlap[b_tile] = matches.size();
-        b_tile->matched_keypoints_in_overlap[a_tile] = matches.size();
+        //a_tile->matched_keypoints_in_overlap[b_tile] = matches.size();
+        //b_tile->matched_keypoints_in_overlap[a_tile] = matches.size();
 
         bool* mask = (bool*) calloc(match_points_a.size(), 1);
         double thresh = ransac_thresh;//5.0;
@@ -287,7 +293,7 @@ namespace tfk {
       std::vector<cv::KeyPoint> a_tile_alt_keypoints;
       cv::Mat a_tile_alt_desc;
 
-      this->mr_params = mr_params_local;
+      //this->mr_params = mr_params_local;
 
 
 
@@ -333,7 +339,7 @@ namespace tfk {
     if (align_data->skip_octave_fast) {
       trial_params.num_features = 1001;
     } else {
-      trial_params.num_features = 1000;//128;//128;//1000;
+      trial_params.num_features = 1000*align_data->scale_fast;//128;//128;//1000;
     }
     trial_params.scale_x = align_data->scale_fast;
     trial_params.scale_y = align_data->scale_fast;
@@ -409,8 +415,8 @@ namespace tfk {
     }
 //TODO(wheatman) mark to neighbors as bad
     bool MatchTilePairTask::error_check(float false_negative_rate) {
-      std::vector<cv::Point2f> filtered_match_points_a = matched_points.first;
-      std::vector<cv::Point2f> filtered_match_points_b = matched_points.second;
+      std::vector<cv::Point2f>& filtered_match_points_a = matched_points.first;
+      std::vector<cv::Point2f>& filtered_match_points_b = matched_points.second;
 
       std::vector<float> tmp_vector;
       tmp_vector.push_back(filtered_match_points_a.size()*1.0);

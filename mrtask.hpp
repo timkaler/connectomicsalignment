@@ -57,8 +57,9 @@ class MRTask {
     //         --- returns true if it believes it can provide the desired correctness probability. 
     virtual void compute_with_params(tfk::MRParams* mr_params) = 0;
     virtual void compute(float probability_correct) {
-        this->mr_params = paramDB->get_params_for_accuracy(probability_correct);
-        compute_with_params(this->mr_params);
+        //this->mr_params = paramDB->get_params_for_accuracy(probability_correct);
+        //compute_with_params(this->mr_params);
+        compute_with_params(NULL);
     }
 
     // error_check --- returns true if 

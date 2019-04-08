@@ -43,6 +43,7 @@ namespace tfk {
   }
   */
   MRParams* ParamDB::get_params_for_accuracy(float accuracy) {
+    printf("This should never be called.\n");
     if (possible_params.size() == 0) {
       return NULL;
     }
