@@ -227,7 +227,7 @@ void tfk::Stack::train_fsj(int trials) {
   int64_t failure_type2_count = 0;
   uint8_t padding4[128] __attribute__((unused));
 
-  MLAnn* model = new MLAnn(12-4+6+4+1, "tfk_test_model");
+  MLAnn* model = new MLAnn(12-4+6+4+1, TFK_TMP_DIR + "/tfk_test_model");
   //model->load("tfk_test_model", true);
   //model->enable_training();
   //model->train(false);
@@ -240,6 +240,12 @@ void tfk::Stack::train_fsj(int trials) {
   cilk_for (int i = 0; i < trials; i++) {
     int section_index = random_numbers_1[i]%this->sections.size();
 
+
+    if (this->sections[section_index]->tiles.size() == 0) {
+      printf("section has zero tiles %d\n", this->sections[section_index]->real_section_id);
+      exit(1);
+      continue;
+    }
 
     int tile_index = random_numbers_2[i]%this->sections[section_index]->tiles.size();
 
@@ -347,7 +353,7 @@ void tfk::Stack::train_fsj(int trials) {
   }
 
   model->train(false);
-  model->save("tfk_test_model");
+  model->save(TFK_TMP_DIR + "/tfk_test_model");
 }
 
 

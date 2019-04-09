@@ -269,6 +269,7 @@ namespace tfk {
         }
         free(mask);
         if (num_matches_filtered >= min_features_num && filtered_match_points_a.size() >= 0.05*matches.size()) {
+
           this->avg_response_a = response_sum_a/num_matches_filtered;
           this->avg_response_b = response_sum_b/num_matches_filtered;
           this->avg_size_a = size_sum_a/num_matches_filtered;
@@ -281,6 +282,18 @@ namespace tfk {
           this->successful_rod = (1.0*filtered_match_points_a.size())/matches.size();
           break;
         } else {
+          if (num_matches_filtered > 0 && false) {
+            this->avg_response_a = response_sum_a/num_matches_filtered;
+            this->avg_size_a = size_sum_a/num_matches_filtered;
+            this->avg_octave_a = octave_sum_a/num_matches_filtered;
+            this->avg_response_b = response_sum_b/num_matches_filtered;
+            this->avg_size_b = size_sum_b/num_matches_filtered;
+            this->avg_octave_b = octave_sum_b/num_matches_filtered;
+            //a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
+            this->best_offset = best_offset;
+            this->successful_rod = (1.0*filtered_match_points_a.size())/matches.size();
+          }
+
           filtered_match_points_a.clear();
           filtered_match_points_b.clear();
         }

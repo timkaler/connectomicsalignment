@@ -272,7 +272,9 @@ namespace tfk {
     //  return true;
     //}
     //printf("predict was called\n");
-    //mutex->lock();
+    #ifdef FSJTRAINING
+    mutex->lock();
+    #endif
     cv:: Mat mat_vec = cv::Mat::zeros(1, size_of_feature_vector,CV_32F);
     for (int i = 0; i < size_of_feature_vector; i++) {
         //printf("inside predict value I'm seeing is %f\n", vec[i]);
@@ -283,7 +285,9 @@ namespace tfk {
         bool ret = results.at<float>(0) > 0.5 +FP_PENALTY;
     //std::cout << mat_vec <<std::endl; 
     //bool ret = model->predict(mat_vec);
-    //mutex->unlock();
+    #ifdef FSJTRAINING
+    mutex->unlock();
+    #endif
     //if (!ret) printf("guess ml was false inside predict\n");
     return ret;
   }

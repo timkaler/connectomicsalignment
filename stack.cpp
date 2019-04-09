@@ -94,15 +94,15 @@ void tfk::Stack::init() {
   this->ml_models[MATCH_TILE_PAIR_TASK_ID] = new MLAnn(12-4 +6+4+1);
   this->ml_models[MATCH_TILES_TASK_ID] = new MLAnn(4);
 
-  std::string ml_model_location = "tfk_test_model";
+  std::string ml_model_location = std::string(TFK_TMP_DIR)+"/tfk_test_model";
   printf("the ml model for task MATCH_TILE_PAIR is at %s\n", ml_model_location.c_str());
   try {
-    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load(ml_model_location, true);
-    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->enable_training();
-    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->train(false);
-    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->disable_training();
+    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->load(ml_model_location, false);
+    //this->ml_models[MATCH_TILE_PAIR_TASK_ID]->enable_training();
+    //this->ml_models[MATCH_TILE_PAIR_TASK_ID]->train(false);
+    //this->ml_models[MATCH_TILE_PAIR_TASK_ID]->disable_training();
 
-    this->ml_models[MATCH_TILE_PAIR_TASK_ID]->save("test_tfk_model.ml");
+    //this->ml_models[MATCH_TILE_PAIR_TASK_ID]->save(std::string(TFK_TMP_DIR) + "/test_tfk_model.ml");
   } catch(const std::exception& e) {
     printf("There was an exception!\n");
   }

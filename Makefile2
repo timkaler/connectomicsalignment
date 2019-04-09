@@ -6,9 +6,13 @@ CC := $(CXX) #g++
 LD := $(CXX) #g++
 
 
+# -DFSJTRAINING
+
+
+#ARCHFLAGS := -march=skylake-avx512 -mavx512f -mavx512dq -mavx512cd -mavx512bw -mavx -mavx2 -DHUMANTEST -mmmx -mfxsr -msse -msse2 -msse4 -mssse3 -mfma -mcx16 -mmovbe -mpopcnt -mxsave -mavx -mf16c -mavx2 -mavx512f -mavx512dq -mavx512cd -mavx512bw -mavx512vl -DNO3DKEYPOINTS_MEMTEST
 
 #ARCHFLAGS := -march=native -DIARPAFULL -DNOPATHCHANGE
-#ARCHFLAGS := -march=native
+#ARCHFLAGS := -march=sandybridge -DHUMANTEST
 ARCHFLAGS := -march=skylake-avx512 -mavx512f -mavx512dq -mavx512cd -mavx512bw -mavx -mavx2 -DHUMANTEST -mmmx -mfxsr -msse -msse2 -msse4 -mssse3 -mfma -mcx16 -mmovbe -mpopcnt -mxsave -mavx -mf16c -mavx2 -mavx512f -mavx512dq -mavx512cd -mavx512bw -mavx512vl
 
 #CFLAGS += -std=c++17 -stdlib=libstdc++ $(EXTRA_CFLAGS) -m64 -march=sandybridge -pthread -I/efs/tools/protobuf_c4/include -Iopenjpeg-2.3.0/src/lib/openjp2 -Iopenjpeg/include/openjpeg-2.3

@@ -28,8 +28,8 @@ export PATH=$TAPIR_PREFIX/bin:/efs/tools/protobuf_c4/bin:$PATH
 export CXX=clang++
 #export CPATH=$CPATH:/usr/include/c++/7/
 #export OPENCV_ROOT=/home/armafire/tools/opencv-3-install-test/
-export OPENCV_ROOT=/efs/tools/OpenCV3
-#export OPENCV_ROOT=/efs/tools/OpenCV_noavx2
+#export OPENCV_ROOT=/efs/tools/OpenCV3
+export OPENCV_ROOT=/efs/tools/OpenCV_noavx2
 
 #export OPENCV_ROOT=/efs/tools/OpenCV3_c5
 

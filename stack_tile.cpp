@@ -2021,6 +2021,7 @@ tfk::Tile::Tile(TileData& tile_data) {
 
       #ifdef HUMANTEST
       this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jp2");
+      //this->filepath = this->filepath.replace(this->filepath.find(".png"),4,".j2k");
       #else
       //this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".bmp.jp2");
       this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jpg");
@@ -2422,8 +2423,11 @@ void tfk::Tile::compute_sift_keypoints2d_params(tfk::params params,
 void tfk::Tile::compute_sift_keypoints2d_params_cache(tfk::params params, Tile* other_tile) {
   //printf("computing sift keypoints 2d with params\n");
 
+  #ifdef FSJTRAINING
+  cv::Mat _tmp_image = this->get_tile_data(FULL);
+  #else
   cv::Mat& _tmp_image = this->full_image;// this->get_tile_data_lockfree(FULL);
-
+  #endif
 
 
 
@@ -2602,8 +2606,12 @@ void tfk::Tile::compute_sift_keypoints2d_params(tfk::params params,
 std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc, Tile* other_tile) {
   //printf("computing sift keypoints 2d with params\n");
 
-  cv::Mat& _tmp_image = this->full_image;// this->get_tile_data_lockfree(FULL);
 
+  #ifdef FSJTRAINING
+  cv::Mat _tmp_image = this->get_tile_data(FULL);
+  #else
+  cv::Mat& _tmp_image = this->full_image;// this->get_tile_data_lockfree(FULL);
+  #endif
 
 
   if (!this->overlaps_with_threshold(other_tile, 50)) {
