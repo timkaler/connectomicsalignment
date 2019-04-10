@@ -101,12 +101,12 @@ void TriangleMesh::build_index() {
   std::set<int> index_set = index->get_index_set();
   printf("The total size of the index set is %zu\n", index_set.size());
   //exit(0);
-  Triangle tri = index->find_triangle(cv::Point2f(16806.0, 20157.0));
-  if (tri.index==-1) {
-    printf("Failure!\n");
-    printf("bbox is %f %f %f %f\n", bbox.first.x, bbox.first.y, bbox.second.x, bbox.second.y);
-    exit(0);
-  }
+  //Triangle tri = index->find_triangle(cv::Point2f(16806.0, 20157.0));
+  //if (tri.index==-1) {
+  //  printf("Failure!\n");
+  //  printf("bbox is %f %f %f %f\n", bbox.first.x, bbox.first.y, bbox.second.x, bbox.second.y);
+  //  exit(0);
+  //}
 }
 
 TriangleMesh::TriangleMesh(TriangleMeshProto triangleMesh) {

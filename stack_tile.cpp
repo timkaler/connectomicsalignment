@@ -2020,8 +2020,8 @@ tfk::Tile::Tile(TileData& tile_data) {
     #else
 
       #ifdef HUMANTEST
-      this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jp2");
-      //this->filepath = this->filepath.replace(this->filepath.find(".png"),4,".j2k");
+      //this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jp2");
+      this->filepath = this->filepath.replace(this->filepath.find(".png"),4,".j2k");
       #else
       //this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".bmp.jp2");
       this->filepath = this->filepath.replace(this->filepath.find(".bmp"),4,".jpg");
