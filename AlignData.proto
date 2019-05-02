@@ -189,3 +189,25 @@ message AlignData {
     // cv::Mat *p_section_transforms[MAX_SECTIONS];
     //repeated Matrix p_section_transforms = 13;
 }
+
+message AlignDataHierarchy {
+    
+    optional int32 mode = 1;
+    
+    optional string work_dirpath = 3;
+    optional string output_dirpath = 4;
+    
+    optional uint64 base_section = 5;
+    optional uint64 n_sections = 6;
+    optional bool do_subvolume = 7;
+    optional uint64 min_x = 8;
+    optional uint64 min_y = 9;
+    optional uint64 max_x = 10;
+    optional uint64 max_y = 11;
+    repeated string sec_data_location = 12;
+    
+    // commented out since it is commmented out in the code
+    // cv::Mat *p_section_transforms[MAX_SECTIONS];
+    //repeated Matrix p_section_transforms = 13;
+}
+

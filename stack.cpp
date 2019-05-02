@@ -51,7 +51,7 @@ std::pair<cv::Point2f, cv::Point2f> tfk::Stack::get_bbox() {
 
 void tfk::Stack::init() {
   printf("Initializing the stack.\n");
-  AlignData align_data;
+  AlignDataHierarchy align_data;
   // Read the existing address book.
   std::fstream input(this->input_filepath, std::ios::in | std::ios::binary);
   if (!align_data.ParseFromIstream(&input)) {
@@ -114,7 +114,12 @@ void tfk::Stack::init() {
 
   // then do the section data
   for (int i = this->base_section; i < (this->base_section + this->n_sections); i++) {
-    SectionData section_data = align_data.sec_data(i);
+    SectionData section_data;
+    std::fstream input(align_data.sec_data_location(i), std::ios::in | std::ios::binary);
+    if (!section_data.ParseFromIstream(&input)) {
+      std::cerr << "Failed to parse protocal buffer." << std::endl;
+      exit(1);
+    }
     Section* sec = new Section(section_data, _bounding_box, use_bbox_prefilter);
     sec->align_data = this->align_data;
     sec->section_id = this->sections.size();
