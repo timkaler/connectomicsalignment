@@ -34,6 +34,16 @@ message Saved3DAlignment {
   repeated Saved3DAlignmentTile tiles = 2;
 }
 
+message Saved3DAlignmentShard {
+  required uint64 section_id = 1;
+  repeated Saved3DAlignmentTile tiles = 2;
+}
+
+message Saved3DAlignmentHierarchy {
+  required uint64 section_id = 1;
+  repeated string Saved3DAlignmentShardLocation = 2;
+}
+
 message PairInt {
     required int64 x = 1;
     required int64 y = 2;

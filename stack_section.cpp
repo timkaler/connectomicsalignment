@@ -2408,7 +2408,7 @@ bool tfk::Section::alignment2d_exists() {
 
 void tfk::Section::read_3d_keypoints(std::string filename) {
   printf("right before read 3d keypoints\n");
-  Saved3DAlignment alignment3d;
+  Saved3DAlignmentHierarchy alignment3d;
   std::fstream input(std::string(TFK_TMP_DIR) + "/3d_keypoints_" +
                          std::to_string(this->real_section_id)+".pbuf",
                      std::ios::in | std::ios::binary);
@@ -2416,17 +2416,23 @@ void tfk::Section::read_3d_keypoints(std::string filename) {
   printf("right after parsing 3d keypoints\n");
   input.close();
 
-  printf("right before loop for putting data into tiles\n");
-  cilk_for (int i = 0; i < this->tiles.size(); i++) {
-    Saved3DAlignmentTile tiledata = alignment3d.tiles(i);
-    Tile* tile = this->tiles[i];
-    tile->p_kps_3d = new std::vector<cv::KeyPoint>();
-    tile->p_kps_desc_3d = new cv::Mat();
-    for (int j = 0; j < tiledata.keypoint_size(); j++) {
-      KeyPointProto kproto = tiledata.keypoint(j);
-      std::pair<cv::KeyPoint, cv::Mat> ret = proto_to_keypoint(kproto);
-      tile->p_kps_3d->push_back(ret.first);
-      tile->p_kps_desc_3d->push_back(ret.second);
+  cilk_for (int shard_num = 0; shard_num < alignment3d.saved3dalignmentshardlocation_size(); shard_num++) {
+    std::fstream input(alignment3d.saved3dalignmentshardlocation(shard_num),
+                     std::ios::in | std::ios::binary);
+    Saved3DAlignmentShard shard;
+    shard.ParseFromIstream(&input);
+    input.close();
+    cilk_for(int tile_num = 0; tile_num < shard.tiles_size(); tile_num++) {
+      Saved3DAlignmentTile tiledata = shard.tiles(tile_num);
+      Tile* tile = this->tiles[tiledata.tile_id()];
+      tile->p_kps_3d = new std::vector<cv::KeyPoint>();
+      tile->p_kps_desc_3d = new cv::Mat();
+      for (int j = 0; j < tiledata.keypoint_size(); j++) {
+        KeyPointProto kproto = tiledata.keypoint(j);
+        std::pair<cv::KeyPoint, cv::Mat> ret = proto_to_keypoint(kproto);
+        tile->p_kps_3d->push_back(ret.first);
+        tile->p_kps_desc_3d->push_back(ret.second);
+      }
     }
   }
   printf("right after loop for putting data into tiles\n");
@@ -2656,8 +2662,13 @@ std::pair<cv::KeyPoint, cv::Mat> tfk::Section::proto_to_keypoint(KeyPointProto k
 
 
 void tfk::Section::save_3d_keypoints(std::string filename) {
-  Saved3DAlignment alignment3d;
+  Saved3DAlignmentHierarchy alignment3d;
   alignment3d.set_section_id(this->real_section_id);
+  int shard_num = 0;
+  int tiles_per_shard = 100;
+  Saved3DAlignmentShard current_shard;
+  current_shard.set_section_id(this->real_section_id);
+
   for (int i = 0; i < this->tiles.size(); i++) {
     Saved3DAlignmentTile tiledata;
     tiledata.set_tile_id(i);
@@ -2667,8 +2678,31 @@ void tfk::Section::save_3d_keypoints(std::string filename) {
       *(tiledata.mutable_keypoint(j)) =
           keypoint_to_proto((*(t->p_kps_3d))[j], (*(t->p_kps_desc_3d)).row(j));
     }
-    alignment3d.add_tiles();
-    *(alignment3d.mutable_tiles(i)) = tiledata;
+    current_shard.add_tiles();
+    *(current_shard.mutable_tiles(i%tiles_per_shard)) = tiledata;
+    if (current_shard.tiles_size() == tiles_per_shard) {
+      std::string shard_location = std::string(TFK_TMP_DIR) + "/3d_keypoints_" +
+                          std::to_string(this->real_section_id)+"_shard_" +
+                          std::to_string(shard_num)+".pbuf";
+      std::fstream output(shard_location, std::ios::out | std::ios::trunc | std::ios::binary);
+      current_shard.SerializeToOstream(&output);
+      output.close();
+      alignment3d.add_saved3dalignmentshardlocation(shard_location);
+      shard_num += 1;
+      Saved3DAlignmentShard new_shard;
+      current_shard = new_shard;
+      current_shard.set_section_id(this->real_section_id);
+    }
+  }
+
+  if (current_shard.tiles_size() > 0) {
+    std::string shard_location = std::string(TFK_TMP_DIR) + "/3d_keypoints_" +
+                        std::to_string(this->real_section_id)+"_shard_" +
+                        std::to_string(shard_num)+".pbuf";
+    std::fstream output(shard_location, std::ios::out | std::ios::trunc | std::ios::binary);
+    current_shard.SerializeToOstream(&output);
+    output.close();
+    alignment3d.add_saved3dalignmentshardlocation(shard_location);
   }
 
   std::fstream output(std::string(TFK_TMP_DIR) + "/3d_keypoints_" +
@@ -2783,7 +2817,7 @@ void tfk::Section::compute_keypoints_and_matches() {
     bool pivot_good = false;
     int pivot_search_start = 0;
     for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-      if (sorted_tiles[i].second->x_start > pivot->x_finish + 12000) {
+      if (sorted_tiles[i].second->x_start > pivot->x_finish + 1) {
         pivot = sorted_tiles[i].second;
         pivot_search_start = i;
         pivot_good = true;
