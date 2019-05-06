@@ -2630,11 +2630,15 @@ KeyPointProto tfk::Section::keypoint_to_proto(cv::KeyPoint pt, cv::Mat desc) {
   KeyPointDesc kpdesc;
   kpdesc.set_rows(desc.rows);
   kpdesc.set_cols(desc.cols);
+  ASSERT(desc.rows == 1);
+  ASSERT(desc.cols == 128);
+  char desc_array[desc.rows][desc.cols];
   for (int r = 0; r < desc.rows; r++) {
     for (int c = 0; c < desc.cols; c++) {
-      kpdesc.add_data(desc.at<float>(r, c));
+      desc_array[r][c] = desc.at<float>(r, c);
     }
   }
+  kpdesc.set_data(desc_array, desc.rows*desc.cols);
   *(kpt.mutable_desc()) = kpdesc;
   return kpt;
 }
@@ -2653,7 +2657,7 @@ std::pair<cv::KeyPoint, cv::Mat> tfk::Section::proto_to_keypoint(KeyPointProto k
   int j = 0;
   for (int r = 0; r < desc.rows; r++) {
     for (int c = 0; c < desc.cols; c++) {
-      desc.at<float>(r, c) = 1.0*kpdesc.data(j);
+      desc.at<float>(r, c) = 1.0*kpdesc.data()[j];
       j++;
     }
   }

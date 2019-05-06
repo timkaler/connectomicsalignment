@@ -10,7 +10,7 @@ message Matrix {
 message KeyPointDesc {
   required uint64 rows = 1;
   required uint64 cols = 2;
-  repeated uint32 data = 3;
+  required bytes data = 3;
 }
 
 message KeyPointProto {
