@@ -3035,7 +3035,7 @@ void tfk::Section::compute_keypoints_and_matches() {
       //float duration = tdiff(global_start, gettime());
       pivot_good = false;
       for (int i = pivot_search_start; i < sorted_tiles.size(); i++) {
-        if (sorted_tiles[i].second->x_start > pivot->x_finish + 12000) {
+        if (sorted_tiles[i].second->x_start > pivot->x_finish + 1) {
           pivot = sorted_tiles[i].second;
           pivot_search_start = i;
           pivot_good = true;

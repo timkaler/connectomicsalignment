@@ -114,7 +114,7 @@ class Tile {
     //double angle;
 
 
-    std::map<Tile*, std::pair<std::vector<cv::KeyPoint>, cv::Mat> > keypoint2d_cache;
+    //std::map<Tile*, std::pair<std::vector<cv::KeyPoint>, cv::Mat> > keypoint2d_cache;//removed
 
 
     double grad_error_x, grad_error_y;//, grad_error_angle;

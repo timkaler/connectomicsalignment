@@ -43,7 +43,7 @@ class MatchTilePairTask : public MRTask {
     Tile* b_tile;
     cv::Point2f predicted_offset;
     std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f> > matched_points;
-    std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f> > alt_matched_points;
+    //std::pair<std::vector<cv::Point2f>, std::vector<cv::Point2f> > alt_matched_points; //removed
     cv::Point2f best_offset;
     bool success;
     float successful_rod; 
