@@ -130,22 +130,13 @@ message TileData {
     // cv::Mat *p_kps_desc_3d;
     optional Matrix p_kps_desc_3d = 14;
 
-    optional double a00 = 15;
-    optional double a10 = 16;
-    optional double a11 = 17;
-    optional double a01 = 18;
-
     optional double offset_x = 19;
     optional double offset_y = 20;
-    // bool* ignore;
-    optional bool ignore = 21;
     // std::vector<renderTriangle>* mesh_triangles; 
     repeated RenderTriangle mesh_triangles = 22;
 
 
 
-    optional uint64 level = 23;
-    optional bool bad = 24;
     optional uint64 number_overlaps = 25;
     optional int64 corralation_sum = 26;
 

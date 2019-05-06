@@ -89,20 +89,20 @@ class Tile {
     std::map<int, std::pair<cv::Point2f, cv::Point2f> > ideal_points;
     //std::map<int, double > ideal_angles;
     double energy;
-    int iteration_count;
+    //int iteration_count; //removed
     bool highlight;
 
 
     int random_int;
 
-    std::map<int, cv::Point2f> ideal_offsets_first;
-    std::map<int, cv::Point2f> ideal_offsets_second;
-    bool both_passes;
+    //std::map<int, cv::Point2f> ideal_offsets_first; //removed
+    //std::map<int, cv::Point2f> ideal_offsets_second; //removed
+    //bool both_passes; //removed
 
     std::map<int, float> neighbor_correlations;
     int section_id;
     int tile_id;
-    int mfov_id;
+    int mfov_id;//I think only used reading and writing to protos
     int index;
     std::string filepath;
     cv::Mat * p_image;
@@ -128,13 +128,13 @@ class Tile {
 
     MatchTilesTask* match_tiles_task;
 
-    std::vector<cv::KeyPoint>* p_kps;
-    cv::Mat* p_kps_desc;
-    std::vector<cv::KeyPoint>* alt_p_kps;
-    cv::Mat* alt_p_kps_desc;
+    //std::vector<cv::KeyPoint>* p_kps;//removed
+    //cv::Mat* p_kps_desc;//removed
+    //std::vector<cv::KeyPoint>* alt_p_kps;//removed
+    //cv::Mat* alt_p_kps_desc;//removed
 
-    std::vector<cv::KeyPoint>* p_kps_fallback;
-    cv::Mat* p_kps_desc_fallback;
+    //std::vector<cv::KeyPoint>* p_kps_fallback;//removed
+    //cv::Mat* p_kps_desc_fallback;//removed
 
     void compute_sift_keypoints2d_params(tfk::params params,
        std::vector<cv::KeyPoint>& local_keypoints, cv::Mat& local_desc);
@@ -147,19 +147,19 @@ class Tile {
     std::vector<cv::KeyPoint>* p_kps_3d;
     cv::Mat* p_kps_desc_3d;
 
-    double a00;
-    double a10;
-    double a11;
-    double a01;
+    //double a00;//removed
+    //double a10;//removed
+    //double a11;//removed
+    //double a01;//removed
     double offset_x;
     double offset_y;
 
-    bool* ignore;
+    //bool* ignore; //removed
     std::vector<renderTriangle>* mesh_triangles;
-    int level;
-    bool bad;
+    //int level; //removed
+    //bool bad; //removed
 
-    TileData tile_data;
+    //TileData tile_data;//removed
 
 
     bool has_full_image;
@@ -190,8 +190,8 @@ class Tile {
     std::map<Tile*, std::vector<float>> feature_vectors;
     std::map<Tile*, bool> ml_preds;
 
-    std::map<Tile*, int> keypoints_in_overlap;
-    std::map<Tile*, int> matched_keypoints_in_overlap;
+    //std::map<Tile*, int> keypoints_in_overlap; //removed
+    //std::map<Tile*, int> matched_keypoints_in_overlap; //removed
 
     int incident_bad_edges;
 
@@ -246,7 +246,7 @@ class Tile {
     cv::Mat get_tile_data_lockfree(Resolution res);
     cv::Mat read_tile_image();
 
-    cv::Mat get_feature_vector(Tile *other, int boxes, int type);
+    //cv::Mat get_feature_vector(Tile *other, int boxes, int type);//removed
 };
 
 

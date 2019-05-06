@@ -2330,73 +2330,6 @@ void tfk::Section::compute_tile_matches2(Tile* a_tile) {
 }
 
 
-void tfk::Section::compute_tile_matches(Tile* a_tile) {
-  std::vector<Tile*> _neighbors = get_all_close_tiles(a_tile);
-
-  std::vector<int> neighbors;
-  for (int i = 0; i < _neighbors.size(); i++) {
-    neighbors.push_back(_neighbors[i]->tile_id);
-  }
-
-  int neighbor_success_count = 0;
-  std::vector<int> bad_indices(0);
-  for (int i = 0; i < neighbors.size(); i++) {
-    int btile_id = neighbors[i];
-    Tile* b_tile = this->tiles[btile_id];
-
-    if (a_tile->p_kps->size() < MIN_FEATURES_NUM) continue;
-    if (b_tile->p_kps->size() < MIN_FEATURES_NUM) continue;
-    std::vector< cv::Point2f > filtered_match_points_a(0);
-    std::vector< cv::Point2f > filtered_match_points_b(0);
-
-    this->compute_tile_matches_pair(a_tile, b_tile,
-        *(a_tile->p_kps), *(b_tile->p_kps),
-        *(a_tile->p_kps_desc), *(b_tile->p_kps_desc),
-        filtered_match_points_a,
-        filtered_match_points_b, 16.0);
-
-
-    Tile tmp_a_tile = *a_tile;
-
-    // put b at 0,0
-    if (filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
-      for (int _i = 0; _i < 1000; _i++) {
-        float dx = 0.0;
-        float dy = 0.0;
-        for (int j = 0; j < filtered_match_points_a.size(); j++) {
-          cv::Point2f dp =
-              b_tile->rigid_transform(filtered_match_points_b[j]) -
-                                      tmp_a_tile.rigid_transform(filtered_match_points_a[j]);
-          dx += 2*dp.x * 1.0 / (filtered_match_points_a.size());
-          dy += 2*dp.y * 1.0 / (filtered_match_points_a.size());
-        }
-        tmp_a_tile.offset_x += 0.48*dx;
-        tmp_a_tile.offset_y += 0.48*dy;
-      }
-    }
-
-    float val = tmp_a_tile.error_tile_pair(b_tile);
-
-    if (val >= CORR_THRESH && filtered_match_points_a.size() >= MIN_FEATURES_NUM) {
-      neighbor_success_count++;
-      a_tile->insert_matches(b_tile, filtered_match_points_a, filtered_match_points_b);
-
-      cv::Point2f a_point = cv::Point2f(tmp_a_tile.x_start+tmp_a_tile.offset_x,
-                                        tmp_a_tile.y_start+tmp_a_tile.offset_y);
-      cv::Point2f b_point = cv::Point2f(b_tile->x_start+b_tile->offset_x,
-                                        b_tile->y_start+b_tile->offset_y);
-
-      cv::Point2f delta = a_point-b_point;
-
-      a_tile->ideal_offsets[b_tile->tile_id] = delta;
-      a_tile->neighbor_correlations[b_tile->tile_id] = val;
-    } else {
-      bad_indices.push_back(i);
-    }
-  }
-}
-
-
 
 bool tfk::Section::alignment2d_exists() {
   printf("ALIGNMENT2D EXISTS PATH: %s\n", TFK_TMP_DIR.c_str());
@@ -2860,7 +2793,6 @@ void tfk::Section::compute_keypoints_and_matches() {
         if (active_set.find(tile) == active_set.end() &&
             neighbor_set.find(tile) == neighbor_set.end()) {
           closed_set.insert(tile);
-          tile->release_2d_keypoints();
           delete dependencies[tile->tile_id];
           dependencies.erase(tile->tile_id);
           tile->release_full_image();
@@ -3126,7 +3058,6 @@ void tfk::Section::compute_keypoints_and_matches() {
         if (active_set.find(tile) == active_set.end() &&
             neighbor_set.find(tile) == neighbor_set.end()) {
           closed_set.insert(tile);
-          tile->release_2d_keypoints();
 
           delete dependencies[tile->tile_id];
           dependencies.erase(tile->tile_id);
@@ -3135,7 +3066,6 @@ void tfk::Section::compute_keypoints_and_matches() {
       }
     for (int i = 0; i < this->tiles.size(); i++) {
       this->tiles[i]->release_full_image();
-      this->tiles[i]->release_2d_keypoints();
     }
     this->save_tile_matches();
   } else {
