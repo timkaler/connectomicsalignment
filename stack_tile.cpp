@@ -2069,7 +2069,7 @@ cv::Mat tfk::Tile::get_tile_data(Resolution res) {
           //cv::Mat tmp;// = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
           //getJP2Image(new_path.c_str(), tmp);
           //#else
-          cv::Mat tmp = cv::imread(new_path, CV_LOAD_IMAGE_GRAYSCALE);
+          cv::Mat tmp = cv::imread(new_path, CV_LOAD_IMAGE_UNCHANGED);
           //#endif
         #endif
 
